@@ -206,7 +206,7 @@ const fetchMatchupPredict = async (payload) => {
   }
 };
 
-module.exports = {
+export {
   fetchFutureStars,
   fetchScoutingReport,
   fetchSimilarPlayerIds,

@@ -1,13 +1,13 @@
-const { buildPlayerSearchUrl } = require("./mlbUrlBuilder");
-const { fetchFromMlbApi } = require("./mlbClient");
-const {
+import { buildPlayerSearchUrl } from "./mlbUrlBuilder.js";
+import { fetchFromMlbApi } from "./mlbClient.js";
+import {
   formatExternalPlayer,
   formatExternalStats,
-} = require("./playerFormatter");
-const {
+} from "./playerFormatter.js";
+import {
   fetchExternalPlayerDetails,
   fetchExternalPlayerStats,
-} = require("./playerStatsService");
+} from "./playerStatsService.js";
 
 // 通常の検索: 1件ずつ詳細情報とシーズン統計を取得するため重い処理
 // SearchPage の「Search」ボタン押下時に呼ばれる
@@ -57,7 +57,7 @@ const fetchPlayerSuggestions = async (searchText) => {
   }));
 };
 
-module.exports = {
+export {
   fetchExternalPlayers,
   fetchPlayerSuggestions, // [Suggestions] 候補表示用
 };

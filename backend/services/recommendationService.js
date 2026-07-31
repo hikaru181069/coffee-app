@@ -1,1 +1,1 @@
-module.exports = require("./recommendations");
+export * from "./recommendations/index.js";

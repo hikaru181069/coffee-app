@@ -7,7 +7,7 @@
 // すべて MLB Stats API をプロキシし、フロントで使いやすい形に整形する。
 // リーグ全体を返す leagueController と対になる「単一チーム版」。
 
-const { fetchFromMlbApi } = require("../services/mlb/mlbClient");
+import { fetchFromMlbApi } from "../services/mlb/mlbClient.js";
 
 // チームリーダーで表示するカテゴリ。
 // MLB API は同じ leaderCategory を statGroup(hitting/pitching/catching)ごとに
@@ -218,4 +218,4 @@ const getTeamInjuries = async (req, res) => {
   }
 };
 
-module.exports = { getTeam, getTeamSchedule, getTeamLeaders, getTeamInjuries };
+export { getTeam, getTeamSchedule, getTeamLeaders, getTeamInjuries };

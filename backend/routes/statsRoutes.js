@@ -1,5 +1,5 @@
-const express = require("express");
-const { getLeaders, getHotPlayers, getRisingStars } = require("../controllers/statsController");
+import express from "express";
+import { getLeaders, getHotPlayers, getRisingStars } from "../controllers/statsController.js";
 
 const router = express.Router();
 
@@ -7,6 +7,5 @@ router.get("/leaders", getLeaders);
 router.get("/hot", getHotPlayers);
 router.get("/rising-stars", getRisingStars);
 
-module.exports = router;
-
+export default router;
 // 年度別成績（statsRoutes に追加）

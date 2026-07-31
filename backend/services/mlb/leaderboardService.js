@@ -1,4 +1,4 @@
-const { fetchFromMlbApi } = require("./mlbClient");
+import { fetchFromMlbApi } from "./mlbClient.js";
 
 const MLB_LEADERS_URL = "https://statsapi.mlb.com/api/v1/stats/leaders";
 const CURRENT_SEASON = new Date().getFullYear().toString();
@@ -84,4 +84,4 @@ const fetchPitchingLeaders = async (limit = 10, league = "all") => {
   return formatLeaders(data.leagueLeaders || []);
 };
 
-module.exports = { fetchHittingLeaders, fetchPitchingLeaders };
+export { fetchHittingLeaders, fetchPitchingLeaders };

@@ -1,5 +1,5 @@
-const express = require("express");
-const { getMatchupStats, getMatchupPrediction } = require("../controllers/matchupController");
+import express from "express";
+import { getMatchupStats, getMatchupPrediction } from "../controllers/matchupController.js";
 
 const router = express.Router();
 
@@ -9,4 +9,4 @@ router.get("/", getMatchupStats);
 // GET /api/matchup/predict?pitcherId=X&batterId=Y
 router.get("/predict", getMatchupPrediction);
 
-module.exports = router;
+export default router;

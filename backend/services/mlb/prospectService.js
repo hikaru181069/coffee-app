@@ -1,4 +1,4 @@
-const { fetchFromMlbApi } = require("./mlbClient");
+import { fetchFromMlbApi } from "./mlbClient.js";
 
 const LEADERS_URL = "https://statsapi.mlb.com/api/v1/stats/leaders";
 const PEOPLE_URL  = "https://statsapi.mlb.com/api/v1/people";
@@ -196,4 +196,4 @@ const fetchProspects = async () => {
   return cache;
 };
 
-module.exports = { fetchProspects };
+export { fetchProspects };

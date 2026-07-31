@@ -6,9 +6,9 @@
 //   3. playerId → { archetype, styleScores } のマップをキャッシュ
 //   4. GET /api/archetype/:type や similar players レスポンスから参照される
 
-const { fetchLeagueStats } = require("./leagueStatsService");
-const { fetchArchetypeClassify } = require("../fastApiService");
-const { fetchFromMlbApi } = require("./mlbClient");
+import { fetchLeagueStats } from "./leagueStatsService.js";
+import { fetchArchetypeClassify } from "../fastApiService.js";
+import { fetchFromMlbApi } from "./mlbClient.js";
 
 const CURRENT_SEASON = new Date().getFullYear().toString();
 
@@ -246,7 +246,7 @@ const fetchJapanesePlayers = async () => {
   }).sort((a, b) => a.name.localeCompare(b.name));
 };
 
-module.exports = {
+export {
   fetchArchetypes,
   fetchPlayersByArchetype,
   getPlayerArchetype,

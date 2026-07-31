@@ -11,8 +11,8 @@
  * モックやテスト用DBが必要になるため今後の課題とする。
  */
 
-const request = require("supertest");
-const app = require("../app");
+import request from "supertest";
+import app from "../app.js";
 
 describe("GET /api/positions/:position", () => {
   test("無効なポジションを指定すると400を返す(DB/外部APIには到達しない)", async () => {

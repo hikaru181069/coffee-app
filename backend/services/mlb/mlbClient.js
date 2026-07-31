@@ -1,4 +1,4 @@
-const cache = require("../cacheService");
+import * as cache from "../cacheService.js";
 
 const MLB_CACHE_TTL = 60 * 60; // 1時間
 
@@ -49,7 +49,7 @@ const safelyFetchFromMlbApi = async ({
   }
 };
 
-module.exports = {
+export {
   fetchFromMlbApi,
   fetchMlbResponse,
   safelyFetchFromMlbApi,

@@ -1,12 +1,12 @@
-const fs   = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
-const OAA_FILE              = path.join(__dirname, "../../data/oaa_2026.csv");
-const SPRINT_SPEED_FILE     = path.join(__dirname, "../../data/sprint_speed_2026.csv");
-const ARM_STRENGTH_FILE     = path.join(__dirname, "../../data/arm_strength_2006.csv");
+const OAA_FILE              = path.join(import.meta.dirname, "../../data/oaa_2026.csv");
+const SPRINT_SPEED_FILE     = path.join(import.meta.dirname, "../../data/sprint_speed_2026.csv");
+const ARM_STRENGTH_FILE     = path.join(import.meta.dirname, "../../data/arm_strength_2006.csv");
 // OAAは捕手の守備を評価しない(Baseball Savant側でも捕手はOAAの対象外)ため、
 // 捕手の守備力は別指標のフレーミング(投球を受ける技術によるボール/ストライク損得)で評価する。
-const CATCHER_FRAMING_FILE  = path.join(__dirname, "../../data/catcher_framing_2026.csv");
+const CATCHER_FRAMING_FILE  = path.join(import.meta.dirname, "../../data/catcher_framing_2026.csv");
 
 // 引用符を考慮したCSV行パーサー
 // "last_name, first_name" のようにカンマを含むフィールドを正しく処理する
@@ -178,4 +178,4 @@ const getCatcherFramingMap = () => {
   }
 };
 
-module.exports = { getOaaMap, getOaaPositionMap, getSprintSpeedMap, getArmStrengthMap, getCatcherFramingMap };
+export { getOaaMap, getOaaPositionMap, getSprintSpeedMap, getArmStrengthMap, getCatcherFramingMap };

@@ -1,12 +1,28 @@
+# 秘密情報
+# .env* を丸ごと無視したうえで、ひな形の .env.example だけ追跡する。
+# バックアップ(.env.bak など)を誤ってコミットしないようにするため。
 .env
-docker.txt
-frontend/node_modules
-backend/node_modules
+.env.*
+!.env.example
 backend/.env
-frontend/dist
-frontend/public/images
-memo.txt
-.DS_Store
+
+# 依存関係
+node_modules/
 .venv/
+
+# ビルド成果物・キャッシュ
+frontend/dist
+__pycache__/
+.pytest_cache/
+
+# アップロードされたファイル・自動生成物
 backend/uploads/
+frontend/public/images
+
+# 作業メモ
+docker.txt
+memo.txt
 AGENTS.md
+
+# OS
+.DS_Store

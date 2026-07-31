@@ -1,13 +1,13 @@
-const express = require("express");
-const { protect } = require("../middleware/authMiddleware");
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
 
-const {
+import {
   getFavorites,
   createFavorite,
   createManyFavorites,
   updateFavorite,
   deleteFavorite,
-} = require("../controllers/favoriteController");
+} from "../controllers/favoriteController.js";
 
 const router = express.Router();
 
@@ -17,4 +17,4 @@ router.post("/bulk", protect, createManyFavorites);
 router.put("/:id", protect, updateFavorite);
 router.delete("/:id", protect, deleteFavorite);
 
-module.exports = router;
+export default router;

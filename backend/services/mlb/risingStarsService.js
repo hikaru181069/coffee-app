@@ -1,4 +1,4 @@
-const { fetchFromMlbApi } = require("./mlbClient");
+import { fetchFromMlbApi } from "./mlbClient.js";
 
 const STATS_BASE = "https://statsapi.mlb.com/api/v1";
 const CURRENT_SEASON = new Date().getFullYear().toString();
@@ -75,4 +75,4 @@ const fetchRisingStars = async ({ limit = 6 } = {}) => {
   return { hitters: youngHitters, pitchers: youngPitchers };
 };
 
-module.exports = { fetchRisingStars };
+export { fetchRisingStars };

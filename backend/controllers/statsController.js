@@ -1,14 +1,14 @@
-const {
+import {
   fetchHittingLeaders,
   fetchPitchingLeaders,
-} = require("../services/mlb/leaderboardService");
+} from "../services/mlb/leaderboardService.js";
 
-const {
+import {
   fetchHotHitters,
   fetchHotPitchers,
-} = require("../services/mlb/hotPlayersService");
+} from "../services/mlb/hotPlayersService.js";
 
-const { fetchRisingStars } = require("../services/mlb/risingStarsService");
+import { fetchRisingStars } from "../services/mlb/risingStarsService.js";
 
 const getLeaders = async (req, res) => {
   const type = req.query.type === "pitching" ? "pitching" : "hitting";
@@ -56,4 +56,4 @@ const getRisingStars = async (req, res) => {
   }
 };
 
-module.exports = { getLeaders, getHotPlayers, getRisingStars };
+export { getLeaders, getHotPlayers, getRisingStars };

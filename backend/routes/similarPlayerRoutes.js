@@ -1,9 +1,9 @@
-const express = require("express");
-const { getSimilarPlayers } = require("../controllers/similarPlayerController");
+import express from "express";
+import { getSimilarPlayers } from "../controllers/similarPlayerController.js";
 
 const router = express.Router();
 
 // GET /api/similar-players/:playerId
 router.get("/:playerId", getSimilarPlayers);
 
-module.exports = router;
+export default router;

@@ -3,31 +3,35 @@
 // → テストコードから「実際にポートを開かず・DBに繋がずに」このappを
 //    supertestで直接叩けるようにするため。
 
-const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const path = require("path");
+// dotenv は必ず他のimportより先に置く。
+// ESMはimportを巻き上げて先に評価するため、CommonJSのときのように
+// 「dotenv.config()を書いた行より下のrequire」という順序制御ができない。
+// services/fastApiService.js などがトップレベルで process.env を読むので、
+// 副作用インポート("dotenv/config")で最初に.envを読み込ませる。
+import "dotenv/config";
 
-dotenv.config();
+import express from "express";
+import cors from "cors";
+import path from "path";
 
-const playerRoutes = require("./routes/playerRoutes");
-const authRoutes = require("./routes/authRoutes");
-const externalPlayerRoutes = require("./routes/externalPlayerRoutes");
-const favoriteRoutes = require("./routes/favoriteRoutes");
-const recommendationRoutes = require("./routes/recommendationRoutes");
-const userRoutes = require("./routes/userRoutes");
-const similarPlayerRoutes = require("./routes/similarPlayerRoutes");
-const statsRoutes = require("./routes/statsRoutes");
-const matchupRoutes = require("./routes/matchupRoutes");
-const leagueRoutes = require("./routes/leagueRoutes");
-const teamRoutes = require("./routes/teamRoutes");
-const gameRoutes = require("./routes/gameRoutes");
-const newsRoutes = require("./routes/newsRoutes");
-const scoutRoutes = require("./routes/scoutRoutes");
-const archetypeRoutes = require("./routes/archetypeRoutes");
-const compareRoutes = require("./routes/compareRoutes");
-const positionRoutes = require("./routes/positionRoutes");
-const interactionRoutes = require("./routes/interactionRoutes");
+import playerRoutes from "./routes/playerRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import externalPlayerRoutes from "./routes/externalPlayerRoutes.js";
+import favoriteRoutes from "./routes/favoriteRoutes.js";
+import recommendationRoutes from "./routes/recommendationRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import similarPlayerRoutes from "./routes/similarPlayerRoutes.js";
+import statsRoutes from "./routes/statsRoutes.js";
+import matchupRoutes from "./routes/matchupRoutes.js";
+import leagueRoutes from "./routes/leagueRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
+import gameRoutes from "./routes/gameRoutes.js";
+import newsRoutes from "./routes/newsRoutes.js";
+import scoutRoutes from "./routes/scoutRoutes.js";
+import archetypeRoutes from "./routes/archetypeRoutes.js";
+import compareRoutes from "./routes/compareRoutes.js";
+import positionRoutes from "./routes/positionRoutes.js";
+import interactionRoutes from "./routes/interactionRoutes.js";
 
 const app = express();
 
@@ -45,7 +49,7 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(import.meta.dirname, "uploads")));
 
 app.use("/api/players", playerRoutes);
 app.use("/api/auth", authRoutes);
@@ -76,4 +80,4 @@ app.use((req, res) => {
   });
 });
 
-module.exports = app;
+export default app;

@@ -1,9 +1,9 @@
-const express = require("express");
-const { protect } = require("../middleware/authMiddleware");
-const { recordInteraction } = require("../controllers/interactionController");
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import { recordInteraction } from "../controllers/interactionController.js";
 
 const router = express.Router();
 
 router.post("/", protect, recordInteraction);
 
-module.exports = router;
+export default router;

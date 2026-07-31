@@ -95,7 +95,7 @@ const formatRecentGames = (stats = [], playerType = "hitter") => {
     }));
 };
 
-module.exports = {
+export {
   formatExternalPlayer,
   formatExternalStats,
   formatRecentGames,

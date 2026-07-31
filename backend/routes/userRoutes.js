@@ -1,7 +1,7 @@
-const express = require("express");
-const { protect } = require("../middleware/authMiddleware");
-const upload = require("../middleware/uploadMiddleware");
-const {
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import upload from "../middleware/uploadMiddleware.js";
+import {
   changePassword,
   completeOnboarding,
   deleteAccount,
@@ -9,7 +9,7 @@ const {
   updateFavoriteTeam,
   updateProfile,
   uploadAvatar,
-} = require("../controllers/userController");
+} from "../controllers/userController.js";
 
 const router = express.Router();
 
@@ -21,4 +21,4 @@ router.patch("/me/password", protect, changePassword);
 router.post("/me/avatar", protect, upload.single("avatar"), uploadAvatar);
 router.delete("/me", protect, deleteAccount);
 
-module.exports = router;
+export default router;

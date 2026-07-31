@@ -7,9 +7,9 @@
 //     → FastAPI /compare/analyze でパーセンタイル比較・優劣判定
 //     → フロントに返す
 
-const { fetchExternalPlayerFullDetails } = require("../services/mlb");
-const { fetchLeagueStats } = require("../services/mlb/leagueStatsService");
-const { fetchCompareAnalyze } = require("../services/fastApiService");
+import { fetchExternalPlayerFullDetails } from "../services/mlb/index.js";
+import { fetchLeagueStats } from "../services/mlb/leagueStatsService.js";
+import { fetchCompareAnalyze } from "../services/fastApiService.js";
 
 // Express の hitterStats → FastAPI の ComparePlayerStats 形式に変換
 const toHitterPayload = (playerData) => {
@@ -83,4 +83,4 @@ const getCompareAnalysis = async (req, res) => {
   }
 };
 
-module.exports = { getCompareAnalysis };
+export { getCompareAnalysis };

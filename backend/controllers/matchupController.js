@@ -4,10 +4,10 @@
 //   GET /api/matchup          → MLB Stats API vsPlayer で実際の対戦成績
 //   GET /api/matchup/predict  → FastAPI でスタッツベースの予想成績を算出
 
-const { fetchFromMlbApi } = require("../services/mlb/mlbClient");
-const { fetchExternalPlayerFullDetails } = require("../services/mlb");
-const { fetchLeagueStats } = require("../services/mlb/leagueStatsService");
-const { fetchMatchupPredict } = require("../services/fastApiService");
+import { fetchFromMlbApi } from "../services/mlb/mlbClient.js";
+import { fetchExternalPlayerFullDetails } from "../services/mlb/index.js";
+import { fetchLeagueStats } from "../services/mlb/leagueStatsService.js";
+import { fetchMatchupPredict } from "../services/fastApiService.js";
 
 const getMatchupStats = async (req, res) => {
   const { pitcherId, batterId } = req.query;
@@ -120,4 +120,4 @@ const getMatchupPrediction = async (req, res) => {
   }
 };
 
-module.exports = { getMatchupStats, getMatchupPrediction };
+export { getMatchupStats, getMatchupPrediction };

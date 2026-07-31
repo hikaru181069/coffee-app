@@ -25,7 +25,7 @@ const buildTeamRosterUrl = (teamId) => {
   return `${MLB_TEAM_URL}/${teamId}/roster`;
 };
 
-module.exports = {
+export {
   buildPlayerDetailsUrl,
   buildPlayerSearchUrl,
   buildPlayerStatsUrl,

@@ -1,4 +1,4 @@
-const Player = require("../models/Player");
+import Player from "../models/Player.js";
 
 const getPlayers = async (req, res) => {
   try {
@@ -90,7 +90,7 @@ const deletePlayer = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getPlayers,
   createPlayer,
   searchPlayers,

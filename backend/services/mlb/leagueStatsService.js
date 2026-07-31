@@ -1,5 +1,5 @@
-const { fetchFromMlbApi }                                 = require("./mlbClient");
-const { getOaaMap, getOaaPositionMap, getSprintSpeedMap, getArmStrengthMap, getCatcherFramingMap } = require("./baseballSavantService");
+import { fetchFromMlbApi } from "./mlbClient.js";
+import { getOaaMap, getOaaPositionMap, getSprintSpeedMap, getArmStrengthMap, getCatcherFramingMap } from "./baseballSavantService.js";
 
 const MLB_STATS_URL  = "https://statsapi.mlb.com/api/v1/stats";
 const CURRENT_SEASON = new Date().getFullYear().toString();
@@ -432,7 +432,7 @@ const fetchPopularPlayers = async () => {
   return fetchOnboardingPlayers();
 };
 
-module.exports = {
+export {
   fetchLeagueStats,
   fetchYoungLeaguePlayers,
   fetchYoungPitchers,

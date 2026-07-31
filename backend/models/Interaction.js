@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const interactionSchema = new mongoose.Schema(
   {
@@ -32,4 +32,4 @@ const interactionSchema = new mongoose.Schema(
 // 「直近の行動を新しい順に取得する」クエリ(getUserPreferenceProfile)専用
 interactionSchema.index({ user: 1, createdAt: -1 });
 
-module.exports = mongoose.model("Interaction", interactionSchema);
+export default mongoose.model("Interaction", interactionSchema);

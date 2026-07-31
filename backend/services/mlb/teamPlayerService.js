@@ -1,13 +1,13 @@
-const { buildTeamRosterUrl } = require("./mlbUrlBuilder");
-const { fetchFromMlbApi } = require("./mlbClient");
-const {
+import { buildTeamRosterUrl } from "./mlbUrlBuilder.js";
+import { fetchFromMlbApi } from "./mlbClient.js";
+import {
   formatExternalPlayer,
   formatExternalStats,
-} = require("./playerFormatter");
-const {
+} from "./playerFormatter.js";
+import {
   fetchExternalPlayerDetails,
   fetchExternalPlayerStats,
-} = require("./playerStatsService");
+} from "./playerStatsService.js";
 
 const fetchExternalPlayersByTeam = async (teamId) => {
   const data = await fetchFromMlbApi(
@@ -36,6 +36,6 @@ const fetchExternalPlayersByTeam = async (teamId) => {
   );
 };
 
-module.exports = {
+export {
   fetchExternalPlayersByTeam,
 };

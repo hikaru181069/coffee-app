@@ -1,13 +1,13 @@
-const FavoritePlayer = require("../../models/FavoritePlayer");
-const { fetchLeagueStats, fetchYoungLeaguePlayers } = require("../mlb/leagueStatsService");
-const { fetchDiscoverSimilar, fetchFutureStars } = require("../fastApiService");
-const { fetchExternalPlayerStats } = require("../mlb/playerStatsService");
-const { formatExternalStats } = require("../mlb/playerFormatter");
-const { getOaaMap, getSprintSpeedMap, getArmStrengthMap } = require("../mlb/baseballSavantService");
-const { fallbackPlayers } = require("./fallbackPlayers");
-const { fetchArchetypes } = require("../mlb/archetypeService");
-const { getPreferenceScores } = require("./preferenceService");
-const { buildMatchReason } = require("./reasonService");
+import FavoritePlayer from "../../models/FavoritePlayer.js";
+import { fetchLeagueStats, fetchYoungLeaguePlayers } from "../mlb/leagueStatsService.js";
+import { fetchDiscoverSimilar, fetchFutureStars } from "../fastApiService.js";
+import { fetchExternalPlayerStats } from "../mlb/playerStatsService.js";
+import { formatExternalStats } from "../mlb/playerFormatter.js";
+import { getOaaMap, getSprintSpeedMap, getArmStrengthMap } from "../mlb/baseballSavantService.js";
+import { fallbackPlayers } from "./fallbackPlayers.js";
+import { fetchArchetypes } from "../mlb/archetypeService.js";
+import { getPreferenceScores } from "./preferenceService.js";
+import { buildMatchReason } from "./reasonService.js";
 
 const toNumber = (value) => {
   const n = Number(value);
@@ -403,7 +403,7 @@ const getGroupedRecommendationsForUser = async (userId) => {
   return { hasFavorites: true, groups };
 };
 
-module.exports = {
+export {
   getFutureStarsForUser,
   getRecommendationsForUser,
   getGroupedRecommendationsForUser,

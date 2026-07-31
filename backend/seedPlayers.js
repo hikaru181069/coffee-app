@@ -1,9 +1,9 @@
-const dotenv = require("dotenv");
-const connectDB = require("./config/db");
-const Player = require("./models/Player");
-const players = require("./data/players");
+// app.js と同じ理由で、dotenv は他のimportより先に評価させる。
+import "dotenv/config";
 
-dotenv.config();
+import connectDB from "./config/db.js";
+import Player from "./models/Player.js";
+import players from "./data/players.js";
 
 const seedPlayers = async () => {
   try {

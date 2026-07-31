@@ -1,7 +1,7 @@
-const { fetchExternalPlayerFullDetails } = require("../services/mlb");
-const { fetchLeagueStats } = require("../services/mlb/leagueStatsService");
-const { fetchScoutingReport } = require("../services/fastApiService");
-const { getOaaMap, getSprintSpeedMap, getArmStrengthMap } = require("../services/mlb/baseballSavantService");
+import { fetchExternalPlayerFullDetails } from "../services/mlb/index.js";
+import { fetchLeagueStats } from "../services/mlb/leagueStatsService.js";
+import { fetchScoutingReport } from "../services/fastApiService.js";
+import { getOaaMap, getSprintSpeedMap, getArmStrengthMap } from "../services/mlb/baseballSavantService.js";
 
 const buildHitterPayload = (playerData, leagueStats) => {
   const id          = Number(playerData.mlbPlayerId);
@@ -100,4 +100,4 @@ const getScoutingReport = async (req, res) => {
   }
 };
 
-module.exports = { getScoutingReport };
+export { getScoutingReport };

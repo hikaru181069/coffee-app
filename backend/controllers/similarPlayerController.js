@@ -1,4 +1,4 @@
-const { fetchSimilarPlayers } = require("../services/mlb/similarPlayerService");
+import { fetchSimilarPlayers } from "../services/mlb/similarPlayerService.js";
 
 const getSimilarPlayers = async (req, res) => {
   const { playerId } = req.params;
@@ -12,4 +12,4 @@ const getSimilarPlayers = async (req, res) => {
   }
 };
 
-module.exports = { getSimilarPlayers };
+export { getSimilarPlayers };

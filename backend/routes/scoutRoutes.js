@@ -1,8 +1,8 @@
-const express = require("express");
-const { getScoutingReport } = require("../controllers/scoutController");
+import express from "express";
+import { getScoutingReport } from "../controllers/scoutController.js";
 
 const router = express.Router();
 
 router.get("/:playerId", getScoutingReport);
 
-module.exports = router;
+export default router;

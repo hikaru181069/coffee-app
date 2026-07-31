@@ -5,7 +5,7 @@
 //
 // どちらも MLB Stats API をプロキシし、フロントで使いやすい形に整形する。
 
-const { fetchFromMlbApi } = require("../services/mlb/mlbClient");
+import { fetchFromMlbApi } from "../services/mlb/mlbClient.js";
 
 // division ID → リーグ/地区名のマッピング
 // MLB Stats API の固定 ID（変わらない）
@@ -168,4 +168,4 @@ const getScores = async (req, res) => {
   }
 };
 
-module.exports = { getStandings, getScores, getWildCard };
+export { getStandings, getScores, getWildCard };

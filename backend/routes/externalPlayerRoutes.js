@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 
-const {
+import {
   getExternalPlayerById,
   getExternalPlayersByTeam,
   searchExternalPlayers,
@@ -9,7 +9,7 @@ const {
   getOnboardingPlayers,
   getPlayerBiosHandler,
   getPlayerProfilesHandler,
-} = require("../controllers/externalPlayerController");
+} from "../controllers/externalPlayerController.js";
 
 const router = express.Router();
 
@@ -29,4 +29,4 @@ router.get("/teams/:teamId/players", getExternalPlayersByTeam);
 router.get("/:playerId/year-by-year", getPlayerYearByYear);
 router.get("/:playerId", getExternalPlayerById);
 
-module.exports = router;
+export default router;
