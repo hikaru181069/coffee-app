@@ -17,6 +17,7 @@
 - @docs/architecture.md
 - @docs/api.md
 - @docs/implementation-plan.md
+- @docs/mlb-legacy-inventory.md
 
 方向性や仕様を変更する場合は、CLAUDE.mdへ詳細を追加せず、
 責務に対応するdocsファイルを更新してください。
