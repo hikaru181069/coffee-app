@@ -1,0 +1,53 @@
+/**
+ * coffee-app の画面から、mlb-app 由来のグローバルCSSを打ち消すための最小限のリセット。
+ *
+ * なぜ必要か:
+ *   App.css には要素セレクタの `h1 { font-size: clamp(32px, 6vw, 56px);
+ *   text-align: center; color: var(--ctp-lavender); ... }` がある。
+ *   これは中央寄せの大きな見出しを前提にしたMLB画面向けの指定で、
+ *   coffee-app の画面ではタイトルが巨大になり中央へ寄ってしまう。
+ *
+ * なぜ Tailwind のクラスで上書きできないのか:
+ *   Tailwind v4 はユーティリティを cascade layer（@layer utilities）へ入れる。
+ *   CSSの規則では「レイヤーに属さないスタイル」が「レイヤー内のスタイル」より
+ *   常に優先されるため、詳細度に関係なく App.css の h1 が勝ってしまう。
+ *   （h1 は詳細度0,0,1、.text-xl は0,1,0 なので、本来ならクラスが勝つ）
+ *
+ * なぜ revert-layer を使うのか:
+ *   値を直接書くと、Tailwind側のサイズを変えたときに二重管理になる。
+ *   revert-layer は「1つ前のレイヤーの値へ戻す」ので、
+ *   ここでは Tailwind のユーティリティが適用された状態に戻る。
+ *   結果として、見出しのサイズや色は各コンポーネントの className だけで決まる。
+ *
+ * 代替案として App.css 全体を @layer legacy へ入れる方法も検討したが、
+ * MLBの30画面すべてのカスケードが変わり、既存スタイルが Tailwind に
+ * 負ける箇所が出る恐れがあるため採らなかった。
+ *
+ * App.css からMLB固有のスタイルを整理する Phase 6 で、このファイルは不要になる。
+ */
+/* App.css: h1 { font-size: clamp(32px,6vw,56px); text-align: center; ... } */
+.coffee-page h1 {
+  font-size: revert-layer;
+  line-height: revert-layer;
+  letter-spacing: revert-layer;
+  text-align: revert-layer;
+  color: revert-layer;
+  padding: revert-layer;
+  margin-bottom: revert-layer;
+}
+
+/* App.css: input { max-width: 400px; margin: 0 auto 24px; ... }
+   MLBの検索フォーム（中央に置かれた単独の入力欄）向けの指定で、
+   セクション分けされた記録フォームでは入力欄が中央に寄って幅も足りなくなる。 */
+.coffee-page input {
+  display: revert-layer;
+  width: revert-layer;
+  max-width: revert-layer;
+  margin: revert-layer;
+  padding: revert-layer;
+  font-size: revert-layer;
+  color: revert-layer;
+  background-color: revert-layer;
+  border: revert-layer;
+  border-radius: revert-layer;
+}

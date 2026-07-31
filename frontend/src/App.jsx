@@ -32,6 +32,11 @@ import PositionPage from "./pages/PositionPage";
 import LandingPage from "./pages/LandingPage";
 import DiscoverPage from "./pages/DiscoverPage";
 
+// coffee-app の画面
+import RecordsPage from "./pages/RecordsPage";
+import RecordFormPage from "./pages/RecordFormPage";
+import RecordDetailPage from "./pages/RecordDetailPage";
+
 // [Phase 4] ページ遷移アニメーション
 // location.key を React の key に渡すことで、ページが変わるたびにコンポーネントが
 // 再マウントされ、CSS アニメーション (page-transition) が毎回リセットされる。
@@ -49,6 +54,14 @@ function AnimatedRoutes() {
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
+          {/* coffee-app: 記録の一覧・作成・詳細・編集
+              /records/new を /records/:recordId より先に置く。
+              後ろにすると "new" が recordId として解釈されてしまう */}
+          <Route path="/records" element={<RecordsPage />} />
+          <Route path="/records/new" element={<RecordFormPage />} />
+          <Route path="/records/:recordId" element={<RecordDetailPage />} />
+          <Route path="/records/:recordId/edit" element={<RecordFormPage />} />
+
           <Route path="/" element={<HomePage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/search" element={<SearchPage />} />

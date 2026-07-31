@@ -1,0 +1,140 @@
+import { useCallback, useState } from "react";
+import {
+  validateRecordForm,
+  hasErrors,
+  toApiPayload,
+} from "../validation/recordFormValidation";
+import { toDateTimeLocalValue } from "../utils/recordFormat";
+
+/**
+ * 記録フォームの状態を管理する。
+ *
+ * 作成と編集で同じフォームを使うため、初期値の組み立てもここで行う。
+ * 画面側は「値」「エラー」「変更関数」「送信関数」を受け取るだけでよく、
+ * 入力の持ち方を知らなくて済む。
+ */
+
+/** 現在時刻を datetime-local の形で返す（新規作成の初期値） */
+const nowForInput = () => toDateTimeLocalValue(new Date().toISOString());
+
+const emptyValues = () => ({
+  title: "",
+  consumedAt: nowForInput(),
+  recordType: "home",
+  rating: "",
+  notes: "",
+  cafeName: "",
+  roasterName: "",
+  originId: "",
+  farmName: "",
+  varietyIds: [],
+  processId: "",
+  roastLevelId: "",
+  flavorIds: [],
+});
+
+/**
+ * APIから取得した記録をフォームの値へ変換する。
+ *
+ * APIは参照を { id, name } で返すが、フォームが持つのはIDだけでよい。
+ * また、すべての欄を「文字列または配列」にそろえる。
+ * null が混ざると input が非制御コンポーネントになって警告が出る。
+ */
+const toFormValues = (record) => ({
+  title: record.title ?? "",
+  consumedAt: toDateTimeLocalValue(record.consumedAt),
+  recordType: record.recordType ?? "home",
+  rating: record.rating === null || record.rating === undefined ? "" : String(record.rating),
+  notes: record.notes ?? "",
+  cafeName: record.cafeName ?? "",
+  roasterName: record.roasterName ?? "",
+  originId: record.origin?.id ?? "",
+  farmName: record.farmName ?? "",
+  varietyIds: (record.varieties ?? []).map((variety) => variety.id),
+  processId: record.process?.id ?? "",
+  roastLevelId: record.roastLevel?.id ?? "",
+  flavorIds: (record.flavors ?? []).map((flavor) => flavor.id),
+});
+
+/**
+ * @param {object|null} record 編集対象。新規作成なら null
+ * @param {Function} onSubmit  APIへ送る関数。payload を受け取る
+ */
+export const useRecordForm = (record, onSubmit) => {
+  const [values, setValues] = useState(emptyValues);
+  const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 編集対象は後から届く（API取得の完了を待つ）ので、届いたら
+  // フォームへ流し込む。
+  //
+  // useEffect ではなく「レンダリング中に前回の値と比べる」書き方をしている。
+  // effect で setValues すると、一度空のフォームを描画してから
+  // 値入りのフォームを描き直すことになり、入力欄が一瞬ちらつく。
+  // React が「前回のpropと比較して状態を調整する」ために推奨している形。
+  const [syncedRecord, setSyncedRecord] = useState(null);
+  if (record && record !== syncedRecord) {
+    setSyncedRecord(record);
+    setValues(toFormValues(record));
+  }
+
+  /** 1つの欄を変更する。入力中はその欄のエラーだけ消す */
+  const setValue = useCallback((field, value) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }, []);
+
+  /** 複数選択（品種・フレーバー）の1件をトグルする */
+  const toggleValue = useCallback((field, id) => {
+    setValues((prev) => {
+      const current = prev[field] ?? [];
+      const next = current.includes(id)
+        ? current.filter((value) => value !== id)
+        : [...current, id];
+
+      return { ...prev, [field]: next };
+    });
+  }, []);
+
+  const submit = useCallback(async () => {
+    // 二重送信を防ぐ。保存ボタンのdisabledだけに頼ると、
+    // Enterキーでの送信や連打で通り抜けることがある
+    if (isSubmitting) return null;
+
+    const validationErrors = validateRecordForm(values);
+    if (hasErrors(validationErrors)) {
+      setErrors(validationErrors);
+      setSubmitError(null);
+      return null;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setErrors({});
+
+    try {
+      return await onSubmit(toApiPayload(values));
+    } catch (caught) {
+      // サーバーが項目ごとの理由を返してきたら、各入力欄の下へ出す。
+      // それ以外（通信エラーなど）はフォーム全体のメッセージにする
+      const fieldErrors = caught.fieldErrors ?? {};
+
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(fieldErrors);
+      }
+      setSubmitError(caught);
+
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [isSubmitting, values, onSubmit]);
+
+  return { values, errors, submitError, isSubmitting, setValue, toggleValue, submit };
+};

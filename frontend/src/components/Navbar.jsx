@@ -44,6 +44,25 @@ const DiscoverIcon = () => (
     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
   </svg>
 );
+// coffee-app の Records 用。コーヒーカップ
+const RecordsIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M17 8h1a4 4 0 010 8h-1" />
+    <path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4z" />
+    <line x1="6" y1="2" x2="6" y2="4" />
+    <line x1="10" y1="2" x2="10" y2="4" />
+    <line x1="14" y1="2" x2="14" y2="4" />
+  </svg>
+);
 const SearchIcon = () => (
   <svg
     width="16"
@@ -185,6 +204,10 @@ const LogoutIcon = () => (
 // (vision.mdの「検索するものではなく発見するもの」という方針に合わせる)。
 const PRIMARY_ITEMS = [
   { to: "/", label: "Home", Icon: HomeIcon, end: true },
+  // coffee-app の記録一覧。URLを直接打たずに到達できるようにする。
+  // ナビ全体の再構成（docs/design.md の Home/Records/New Record/Graph/Profile）は
+  // 画面が出そろう Phase 6 で行う
+  { to: "/records", label: "Records", Icon: RecordsIcon },
   { to: "/discover", label: "Discover", Icon: DiscoverIcon },
 ];
 
