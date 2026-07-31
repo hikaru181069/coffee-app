@@ -27,7 +27,7 @@ services:
       # ホスト側に node_modules が無くても(あってもOSが違っても)問題なく動く。
       - /app/node_modules
     environment:
-      # ここでのホスト名(mongodb, redis, fastapi)は docker-compose.yml 内の
+      # ここでのホスト名(mongodb, fastapi)は docker-compose.yml 内の
       # サービス名。Docker Composeが内部ネットワークで名前解決してくれるため、
       # localhost ではなくサービス名で他のコンテナに到達できる。
       PORT: 5001

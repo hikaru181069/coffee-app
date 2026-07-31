@@ -15,8 +15,8 @@ frontend/dist
 __pycache__/
 .pytest_cache/
 
-# アップロードされたファイル・自動生成物
-backend/uploads/
+# 個人的な画像（MLB選手写真・プライベート写真が混在しているため、
+# コードから未参照であっても追跡対象に含めない）
 frontend/public/images
 
 # 作業メモ
