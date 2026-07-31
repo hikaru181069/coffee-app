@@ -1,4 +1,8 @@
 import * as masterDataRepository from "../../repositories/masterDataRepository.js";
+import {
+  serializeMasterData,
+  serializeAllMasterData,
+} from "./masterDataSerializer.js";
 
 /**
  * マスターデータのユースケース。
@@ -11,8 +15,10 @@ import * as masterDataRepository from "../../repositories/masterDataRepository.j
  */
 
 /** マスター一覧を取得する（docs/api.md の GET /master-data/:type） */
-export const listMasterData = (type, options) =>
-  masterDataRepository.findMany(type, options);
+export const listMasterData = async (type, options) => {
+  const docs = await masterDataRepository.findMany(type, options);
+  return serializeMasterData(type, docs);
+};
 
 /**
  * フォームの初期表示用に全種類をまとめて取得する。
@@ -21,7 +27,10 @@ export const listMasterData = (type, options) =>
  * 同時に必要とするので、5回リクエストさせずに1回で返せるようにする
  * （docs/api.md の GET /master-data）。
  */
-export const listAllMasterData = () => masterDataRepository.findAllTypes();
+export const listAllMasterData = async () => {
+  const byType = await masterDataRepository.findAllTypes();
+  return serializeAllMasterData(byType);
+};
 
 /**
  * CoffeeRecord が参照しようとしているマスターIDが実在するか確認する。

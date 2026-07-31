@@ -13,6 +13,25 @@ import CoffeeRecord from "../models/CoffeeRecord.js";
  *     「自分の記録だけ」を保証する場所を1か所に固定するため
  */
 
+/**
+ * 参照しているマスターデータの名前を一緒に引く。
+ *
+ * 画面は産地IDではなく「Ethiopia」を表示したいので、
+ * IDだけ返すとフロントが5種類のマスターを別途取得して突き合わせる
+ * ことになる。1回の問い合わせで名前まで解決する。
+ *
+ * 取得するのは _id と name（焙煎度は order も）だけに絞る。
+ * 一覧で20件返すとマスターの結合も20件分走るため、
+ * 使わない項目まで運ばない。
+ */
+const withMasterData = (query) =>
+  query
+    .populate("originId", "name")
+    .populate("varietyIds", "name")
+    .populate("processId", "name")
+    .populate("roastLevelId", "name order")
+    .populate("flavorIds", "name category");
+
 /** 記録を1件作成する */
 export const create = (data) => CoffeeRecord.create(data);
 
@@ -23,15 +42,24 @@ export const create = (data) => CoffeeRecord.create(data);
  * こうすると他ユーザーの記録は「見つからない」扱いになり、
  * 呼び出し側が所有者確認を忘れても情報が漏れない。
  */
-export const findOneByIdForUser = (recordId, userId) =>
-  CoffeeRecord.findOne({ _id: recordId, userId });
+export const findOneByIdForUser = (recordId, userId, { populate = false } = {}) => {
+  const query = CoffeeRecord.findOne({ _id: recordId, userId });
+  return populate ? withMasterData(query) : query;
+};
 
-/** 自分の記録を新しい順に取得する */
-export const findManyForUser = (userId, { filter = {}, skip = 0, limit = 20 } = {}) =>
-  CoffeeRecord.find({ userId, ...filter })
-    .sort({ consumedAt: -1 })
-    .skip(skip)
-    .limit(limit);
+/**
+ * 自分の記録を取得する。
+ *
+ * sort は呼び出し側（service）が組み立てたものを受け取る。
+ * ここで既定値を持つと「どの並び順が使われるか」が2か所に散るため。
+ */
+export const findManyForUser = (
+  userId,
+  { filter = {}, sort = { consumedAt: -1 }, skip = 0, limit = 20, populate = false } = {},
+) => {
+  const query = CoffeeRecord.find({ userId, ...filter }).sort(sort).skip(skip).limit(limit);
+  return populate ? withMasterData(query) : query;
+};
 
 /** ページネーションの total を出すための件数取得 */
 export const countForUser = (userId, filter = {}) =>
