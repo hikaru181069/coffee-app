@@ -23,6 +23,7 @@ frontend/public/images
 docker.txt
 memo.txt
 AGENTS.md
+IMPLEMENTATION.md
 
 # OS
 .DS_Store
