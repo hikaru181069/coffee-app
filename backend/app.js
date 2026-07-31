@@ -14,6 +14,12 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 
+// coffee-app のルート
+import coffeeRecordRoutes from "./routes/coffeeRecordRoutes.js";
+import masterDataRoutes from "./routes/masterDataRoutes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+
+// mlb-app から引き継いだルート（docs/mlb-legacy-inventory.md 参照）
 import playerRoutes from "./routes/playerRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import externalPlayerRoutes from "./routes/externalPlayerRoutes.js";
@@ -51,6 +57,12 @@ app.use(
 app.use(express.json());
 app.use("/uploads", express.static(path.join(import.meta.dirname, "uploads")));
 
+// ── coffee-app ──────────────────────────────────────────────
+app.use("/api/coffee-records", coffeeRecordRoutes);
+app.use("/api/master-data", masterDataRoutes);
+
+// ── mlb-app から引き継いだルート ────────────────────────────
+// Phase 6 で棚卸しする（docs/mlb-legacy-inventory.md）
 app.use("/api/players", playerRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/external/players", externalPlayerRoutes);
@@ -74,10 +86,18 @@ app.get("/", (req, res) => {
   res.send("Backend server is running");
 });
 
+// 既存のMLBルート向けの404。応答形式は旧来のまま維持する
+// （既存APIの互換性を理由なく壊さないため）
 app.use((req, res) => {
   res.status(404).json({
     message: "Route not found",
   });
 });
+
+// エラーミドルウェアは全ルートの後ろに置く。
+// ここより前に登録されたハンドラで投げられたエラーだけが届く。
+// Express 5 は async ハンドラの reject も自動でここへ渡すので、
+// controller 側に try/catch は不要。
+app.use(errorHandler);
 
 export default app;
