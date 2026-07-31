@@ -1,9 +1,18 @@
 """
-MLB Similar Players API
-FastAPI サービス — 選手の成績ベクトルをもとに類似選手を計算して返す
+Coffee App Analysis Service
+FastAPI サービス — DBに依存しない計算処理だけを担当する
 
 データの流れ:
   Express (Node.js) → FastAPI → Express → React
+
+責務(docs/architecture.md):
+  DB非依存の計算・将来の味覚分析・類似度計算。
+  MongoDBへの直接アクセスと認証は行わない。
+
+注意:
+  以下のエンドポイントは mlb-app から引き継いだもので、
+  コーヒードメインでは未使用。Phase 6 で棚卸しする。
+  (docs/mlb-legacy-inventory.md を参照)
 
 エンドポイント一覧:
   GET  /                       ヘルスチェック
@@ -23,7 +32,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routers import archetype, compare, discover, matchup, preference, recommend, similar, scouting
 
-app = FastAPI(title="MLB Similar Players API", version="1.0.0")
+app = FastAPI(title="Coffee App Analysis Service", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,4 +53,4 @@ app.include_router(scouting.router)
 
 @app.get("/")
 def health_check():
-    return {"status": "ok", "service": "MLB Similar Players API"}
+    return {"status": "ok", "service": "Coffee App Analysis Service"}

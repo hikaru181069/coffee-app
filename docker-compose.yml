@@ -1,7 +1,7 @@
 services:
   mongodb:
     image: mongo:8.0
-    container_name: mlb-app-mongodb
+    container_name: coffee-app-mongodb
     ports:
       - "27017:27017"
     volumes:
@@ -9,13 +9,13 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: mlb-app-redis
+    container_name: coffee-app-redis
     ports:
       - "6379:6379"
 
   fastapi:
     build: ./fastapi-service
-    container_name: mlb-app-fastapi
+    container_name: coffee-app-fastapi
     ports:
       - "8000:8000"
     volumes:
@@ -23,7 +23,7 @@ services:
 
   backend:
     build: ./backend
-    container_name: mlb-app-backend
+    container_name: coffee-app-backend
     ports:
       - "5001:5001"
     volumes:
@@ -37,7 +37,7 @@ services:
       # サービス名。Docker Composeが内部ネットワークで名前解決してくれるため、
       # localhost ではなくサービス名で他のコンテナに到達できる。
       PORT: 5001
-      MONGO_URI: mongodb://mongodb:27017/mlbApp
+      MONGO_URI: mongodb://mongodb:27017/coffeeApp
       REDIS_URL: redis://redis:6379
       FASTAPI_URL: http://fastapi:8000
       FRONTEND_URL: http://localhost:5173
@@ -51,7 +51,7 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: mlb-app-frontend
+    container_name: coffee-app-frontend
     ports:
       - "5173:5173"
     volumes:
