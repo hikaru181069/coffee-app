@@ -44,6 +44,25 @@ const DiscoverIcon = () => (
     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
   </svg>
 );
+// coffee-app の Graph 用。つながりを示すノード+線
+const GraphIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="6" cy="6" r="3" />
+    <circle cx="18" cy="6" r="3" />
+    <circle cx="12" cy="18" r="3" />
+    <line x1="8.5" y1="7.5" x2="10" y2="15.5" />
+    <line x1="15.5" y1="7.5" x2="14" y2="15.5" />
+  </svg>
+);
 // coffee-app の Records 用。コーヒーカップ
 const RecordsIcon = () => (
   <svg
@@ -208,6 +227,7 @@ const PRIMARY_ITEMS = [
   // ナビ全体の再構成（docs/design.md の Home/Records/New Record/Graph/Profile）は
   // 画面が出そろう Phase 6 で行う
   { to: "/records", label: "Records", Icon: RecordsIcon },
+  { to: "/graph", label: "Graph", Icon: GraphIcon },
   { to: "/discover", label: "Discover", Icon: DiscoverIcon },
 ];
 
