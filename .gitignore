@@ -5,6 +5,7 @@
 .env.*
 !.env.example
 backend/.env
+recovery-codes.txt
 
 # 依存関係
 node_modules/
