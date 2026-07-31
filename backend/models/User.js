@@ -15,27 +15,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    favoriteTeam: {
-      id: {
-        type: Number,
-      },
-      name: {
-        type: String,
-        default: "",
-      },
-      abbreviation: {
-        type: String,
-        default: "",
-      },
-    },
-    hasCompletedOnboarding: {
-      type: Boolean,
-      default: false,
-    },
-    avatarUrl: {
-      type: String,
-      default: "",
-    },
   },
   {
     timestamps: true,

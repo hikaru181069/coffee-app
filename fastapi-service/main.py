@@ -9,28 +9,17 @@ FastAPI サービス — DBに依存しない計算処理だけを担当する
   DB非依存の計算・将来の味覚分析・類似度計算。
   MongoDBへの直接アクセスと認証は行わない。
 
-注意:
-  以下のエンドポイントは mlb-app から引き継いだもので、
-  コーヒードメインでは未使用。Phase 6 で棚卸しする。
-  (docs/mlb-legacy-inventory.md を参照)
+MVPでは知識グラフの変換をExpress内の純粋関数（backend/core/graph）で
+行っており（docs/architecture.md の Architecture Decision）、
+このサービスに実装済みの機能は無い。将来、味覚の類似度計算など
+DB非依存の重い計算処理が必要になった時点でルーターを追加する。
 
 エンドポイント一覧:
-  GET  /                       ヘルスチェック
-  POST /similar                類似選手（レガシー）
-  POST /recommend              推薦スコアリング
-  POST /recommend/future-stars Rising Stars
-  POST /discover/similar       プレイヤー発見
-  POST /discover/preference    行動履歴からの好み一致度・dislike減点
-  POST /scouting-report        スカウティングレポート
-  POST /archetype/classify     パーセンタイルベース 多ラベルアーキタイプ分類
-  POST /compare/analyze        2選手の統計的優劣分析
-  POST /matchup/predict        投手 vs 打者の予想成績
+  GET / ヘルスチェック
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from routers import archetype, compare, discover, matchup, preference, recommend, similar, scouting
 
 app = FastAPI(title="Coffee App Analysis Service", version="0.1.0")
 
@@ -40,15 +29,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.include_router(archetype.router)
-app.include_router(compare.router)
-app.include_router(discover.router)
-app.include_router(matchup.router)
-app.include_router(preference.router)
-app.include_router(recommend.router)
-app.include_router(similar.router)
-app.include_router(scouting.router)
 
 
 @app.get("/")
