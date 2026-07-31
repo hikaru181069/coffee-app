@@ -68,17 +68,20 @@ function LandingPage() {
 
         {/* 仕組みの説明(非リンク)。Record → Connect → Discover の3ステップで伝える */}
         <section className={heroStyles.howItWorks}>
-          {HOW_IT_WORKS.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className={heroStyles.stepCard}>
-              <span className={heroStyles.stepIcon}>
-                <Icon size={18} strokeWidth={2} aria-hidden="true" />
-              </span>
-              <div>
-                <p className={heroStyles.stepTitle}>{title}</p>
-                <p className={heroStyles.stepDesc}>{desc}</p>
+          {HOW_IT_WORKS.map((step) => {
+            const { icon: Icon, title, desc } = step;
+            return (
+              <div key={title} className={heroStyles.stepCard}>
+                <span className={heroStyles.stepIcon}>
+                  <Icon size={18} strokeWidth={2} aria-hidden="true" />
+                </span>
+                <div>
+                  <p className={heroStyles.stepTitle}>{title}</p>
+                  <p className={heroStyles.stepDesc}>{desc}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </section>
 
       </div>

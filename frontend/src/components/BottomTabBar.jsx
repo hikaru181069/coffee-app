@@ -15,19 +15,22 @@ const TABS = [
 function BottomTabBar() {
   return (
     <nav aria-label="下部ナビゲーション" className="bottom-tab-bar md:hidden">
-      {TABS.map(({ to, Icon, label, end }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={end}
-          className={({ isActive }) =>
-            `bottom-tab${isActive ? " bottom-tab--active" : ""}`
-          }
-        >
-          <Icon size={22} strokeWidth={2} />
-          <span className="bottom-tab-label">{label}</span>
-        </NavLink>
-      ))}
+      {TABS.map((tab) => {
+        const { to, Icon, label, end } = tab;
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) =>
+              `bottom-tab${isActive ? " bottom-tab--active" : ""}`
+            }
+          >
+            <Icon size={22} strokeWidth={2} />
+            <span className="bottom-tab-label">{label}</span>
+          </NavLink>
+        );
+      })}
     </nav>
   );
 }

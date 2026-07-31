@@ -82,6 +82,7 @@ export function ToastProvider({ children }) {
 
 // カスタムフック: Context を取得するための薄いラッパー
 // ToastProvider の外で呼ばれた場合にわかりやすいエラーを出す
+// eslint-disable-next-line react-refresh/only-export-components -- Provider と hook を同一ファイルに置く一般的な構成
 export const useToast = () => {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error("useToast must be used inside ToastProvider");

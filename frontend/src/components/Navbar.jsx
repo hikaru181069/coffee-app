@@ -142,12 +142,15 @@ function Navbar() {
       </NavLink>
 
       <nav aria-label="メインナビゲーション" className="flex flex-col gap-0.5">
-        {PRIMARY_ITEMS.map(({ to, label, Icon, end }) => (
-          <NavLink key={to} to={to} end={end} className={sidebarLinkClass} onClick={close}>
-            <Icon />
-            {label}
-          </NavLink>
-        ))}
+        {PRIMARY_ITEMS.map((item) => {
+          const { to, label, Icon, end } = item;
+          return (
+            <NavLink key={to} to={to} end={end} className={sidebarLinkClass} onClick={close}>
+              <Icon />
+              {label}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* 認証エリア（sticky で常に下端に固定） */}
