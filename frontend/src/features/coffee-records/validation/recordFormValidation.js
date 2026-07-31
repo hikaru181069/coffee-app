@@ -1,0 +1,104 @@
+/**
+ * 記録フォームの入力検証（クライアント側）。
+ *
+ * サーバー側の validators/coffeeRecordValidator.js が本来の門番で、
+ * ここはそれを置き換えるものではない。目的が違う:
+ *
+ *   サーバー … 不正なデータをDBへ入れない（信頼できる検証）
+ *   ここ     … 送信する前に気づかせる（体感の速さ）
+ *
+ * そのため条件はサーバー側と意図的にそろえてある。
+ * ずれると「画面では通るのにAPIで400」という分かりにくい状態になる。
+ *
+ * DOMにもAPIにも依存しない純粋関数にして、
+ * フォームの状態管理から切り離してある。
+ */
+
+const MAX_LENGTH = {
+  title: 120,
+  notes: 2000,
+  cafeName: 120,
+  roasterName: 120,
+  farmName: 120,
+};
+
+const RECORD_TYPES = ["home", "cafe"];
+
+/**
+ * フォームの値を検証する。
+ *
+ * @param {object} values フォームの状態（すべて文字列または配列）
+ * @returns {object} { フィールド名: メッセージ }。問題が無ければ空オブジェクト
+ */
+export const validateRecordForm = (values = {}) => {
+  const errors = {};
+
+  // ── 必須項目 ──────────────────────────────────────
+  const title = (values.title ?? "").trim();
+  if (title === "") {
+    errors.title = "タイトルを入力してください";
+  } else if (title.length > MAX_LENGTH.title) {
+    errors.title = `${MAX_LENGTH.title}文字以内で入力してください`;
+  }
+
+  if (!values.consumedAt) {
+    errors.consumedAt = "日付を入力してください";
+  } else if (Number.isNaN(new Date(values.consumedAt).getTime())) {
+    errors.consumedAt = "日付の形式が正しくありません";
+  }
+
+  if (!RECORD_TYPES.includes(values.recordType)) {
+    errors.recordType = "記録タイプを選択してください";
+  }
+
+  // ── 任意項目 ──────────────────────────────────────
+  // rating は「未評価」を許すので、空のときは検証しない
+  if (values.rating !== "" && values.rating !== null && values.rating !== undefined) {
+    const rating = Number(values.rating);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      errors.rating = "評価は1〜5で選択してください";
+    }
+  }
+
+  for (const field of ["notes", "cafeName", "roasterName", "farmName"]) {
+    const value = (values[field] ?? "").trim();
+    if (value.length > MAX_LENGTH[field]) {
+      errors[field] = `${MAX_LENGTH[field]}文字以内で入力してください`;
+    }
+  }
+
+  return errors;
+};
+
+/** 検証結果に問題があるか */
+export const hasErrors = (errors) => Object.keys(errors).length > 0;
+
+/**
+ * フォームの状態をAPIへ送る形へ変換する。
+ *
+ * フォームはすべて文字列で持っているので、
+ * ここで数値・null・配列へ直す。
+ *
+ * 未選択の項目に "" ではなく null を送る理由:
+ *   サーバーは null を「選択を外す」として扱う。
+ *   "" を送るとObjectIdとして解釈できず400になる。
+ */
+export const toApiPayload = (values) => ({
+  title: values.title.trim(),
+  consumedAt: values.consumedAt,
+  recordType: values.recordType,
+
+  rating: values.rating === "" ? null : Number(values.rating),
+  notes: values.notes.trim(),
+
+  // カフェ記録でなければ店名は送らない（家で飲んだ記録に店名が残らないように）
+  cafeName: values.recordType === "cafe" ? values.cafeName.trim() : "",
+  roasterName: values.roasterName.trim(),
+
+  originId: values.originId || null,
+  farmName: values.farmName.trim(),
+  varietyIds: values.varietyIds ?? [],
+  processId: values.processId || null,
+  roastLevelId: values.roastLevelId || null,
+  flavorIds: values.flavorIds ?? [],
+});
