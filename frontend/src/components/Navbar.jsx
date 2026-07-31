@@ -141,7 +141,7 @@ function Navbar() {
         <span className="text-base font-black tracking-tight">Coffee App</span>
       </NavLink>
 
-      <nav className="flex flex-col gap-0.5">
+      <nav aria-label="メインナビゲーション" className="flex flex-col gap-0.5">
         {PRIMARY_ITEMS.map(({ to, label, Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={sidebarLinkClass} onClick={close}>
             <Icon />

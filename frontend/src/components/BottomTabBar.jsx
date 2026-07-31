@@ -14,7 +14,7 @@ const TABS = [
 
 function BottomTabBar() {
   return (
-    <nav className="bottom-tab-bar md:hidden">
+    <nav aria-label="下部ナビゲーション" className="bottom-tab-bar md:hidden">
       {TABS.map(({ to, Icon, label, end }) => (
         <NavLink
           key={to}

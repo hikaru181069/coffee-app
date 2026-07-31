@@ -71,7 +71,7 @@ function LandingPage() {
           {HOW_IT_WORKS.map(({ icon: Icon, title, desc }) => (
             <div key={title} className={heroStyles.stepCard}>
               <span className={heroStyles.stepIcon}>
-                <Icon size={18} strokeWidth={2} />
+                <Icon size={18} strokeWidth={2} aria-hidden="true" />
               </span>
               <div>
                 <p className={heroStyles.stepTitle}>{title}</p>
