@@ -3,7 +3,9 @@ services:
     image: mongo:8.0
     container_name: coffee-app-mongodb
     ports:
-      - "27017:27017"
+      # mlb-appのmongodbコンテナがホスト側27017を使用中のため、別番号を割り当てる
+      # (コンテナ内部は27017のまま。コンテナ間通信はサービス名で行うため影響なし)
+      - "27018:27017"
     volumes:
       - mongodb_data:/data/db
 
@@ -11,7 +13,8 @@ services:
     build: ./fastapi-service
     container_name: coffee-app-fastapi
     ports:
-      - "8000:8000"
+      # mlb-appのfastapiコンテナがホスト側8000を使用中のため、別番号を割り当てる
+      - "8001:8000"
     volumes:
       - ./fastapi-service:/app
 
@@ -19,7 +22,8 @@ services:
     build: ./backend
     container_name: coffee-app-backend
     ports:
-      - "5001:5001"
+      # mlb-appのbackendコンテナがホスト側5001を使用中のため、別番号を割り当てる
+      - "5002:5001"
     volumes:
       - ./backend:/app
       # 匿名volume: コンテナ内でnpm installした node_modules を、
@@ -33,7 +37,7 @@ services:
       PORT: 5001
       MONGO_URI: mongodb://mongodb:27017/coffeeApp
       FASTAPI_URL: http://fastapi:8000
-      FRONTEND_URL: http://localhost:5173
+      FRONTEND_URL: http://localhost:5174
       # ローカル開発専用の値。本番のJWT_SECRETとは無関係(ローカルMongoは
       # ユーザーデータも空なので、値が一致している必要はない)。
       JWT_SECRET: local-dev-secret-change-me
@@ -45,7 +49,8 @@ services:
     build: ./frontend
     container_name: coffee-app-frontend
     ports:
-      - "5173:5173"
+      # mlb-appのfrontendコンテナがホスト側5173を使用中のため、別番号を割り当てる
+      - "5174:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -54,7 +59,8 @@ services:
       # コンテナ名(backend)ではなく localhost を指定する。
       # Viteはビルド時にこの値をJSに埋め込み、そのJSは手元のブラウザで
       # 実行される＝Dockerの内部ネットワークの外側から呼ばれるため。
-      VITE_API_URL: http://localhost:5001
+      # ホスト側ポートを5002へ変更したため、ここも合わせる。
+      VITE_API_URL: http://localhost:5002
     depends_on:
       - backend
 

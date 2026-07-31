@@ -175,9 +175,11 @@ docker compose up -d --build
 
 MongoDB / FastAPI / Backend / Frontend の4サービスが起動します。環境変数は `docker-compose.yml` にローカル開発専用の値が定義済みなので、`.env` の用意は不要です。
 
-- Frontend: http://localhost:5173
-- Backend: http://localhost:5001
-- FastAPI: http://localhost:8000
+- Frontend: http://localhost:5174
+- Backend: http://localhost:5002
+- FastAPI: http://localhost:8001
+
+> ポート番号は `docker-compose.yml` のホスト側ポートに合わせています。他のプロジェクトと被らなければ、5173/5001/8000のような一般的な番号に変更しても構いません。
 
 ソースコードを編集するとホットリロード（nodemon / Vite / uvicorn --reload）で反映されます。停止は `docker compose down`（`-v` を付けるとDBのデータも削除）。
 
