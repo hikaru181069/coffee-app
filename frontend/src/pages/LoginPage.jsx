@@ -31,7 +31,7 @@ function LoginPage() {
       setErrorMessage("");
       const data = await loginUser({ email, password });
       saveAuthData(data);
-      navigate(data.hasCompletedOnboarding ? "/" : "/onboarding/favorites");
+      navigate("/");
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage(
@@ -65,7 +65,7 @@ function LoginPage() {
         <p className="auth-card-kicker">Welcome Back</p>
         <h1>Login</h1>
         <p className="auth-card-desc">
-          Sign in to access your favorites and recommendations.
+          ログインして、あなたのコーヒー記録を続けましょう。
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>

@@ -1,46 +1,41 @@
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Plus, Share2 } from "lucide-react";
 
+import "../features/coffee-records/coffee-records.css";
 import { getCurrentUser } from "../services/api/userApi";
-import { getForYouRecommendations } from "../services/api/recommendationApi";
-import { getPlayersByArchetype } from "../services/api/archetypeApi";
 import { clearAuthData, getAuthToken } from "../utils/authStorage";
 import { isUnauthorizedError } from "../services/api/apiError";
+import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeRecords";
+import RecordCard from "../features/coffee-records/components/RecordCard";
+import {
+  RecordListSkeleton,
+  RecordsEmptyState,
+} from "../features/coffee-records/components/RecordListStates";
+import { primaryButtonClass } from "../features/coffee-records/components/formStyles";
 
-import HomeHero from "../components/HomeHero";
+/**
+ * ホーム画面。
+ *
+ * docs/design.md の Home 構成のうち、MVPで価値が高い3つに絞った:
+ *   Welcome（挨拶）/ New Record CTA / Recent Records
+ * 「よく登場する産地・フレーバー」のような集計表示は、同じ情報を
+ * Graph画面でノードのrecordCountとして既に見られるため、ここでは
+ * 重複させずGraphへの導線だけを置く（Progressive Disclosure）。
+ */
 
-import styles from "./HomePage.module.css";
-
-// Home画面の「Browse by Style」で使うアーキタイプ一覧。
-// 既存の/api/archetype/:typeをそのまま使う。
-const ARCHETYPES = [
-  { type: "power-hitter", label: "Power Hitter" },
-  { type: "speedster", label: "Speedster" },
-  { type: "contact-hitter", label: "Contact Hitter" },
-  { type: "ace", label: "Ace" },
-  { type: "power-pitcher", label: "Power Pitcher" },
-  { type: "workhorse", label: "Workhorse" },
-  { type: "elite-defender", label: "Elite Defender" },
-];
+const RECENT_RECORDS_LIMIT = 5;
 
 const getGreeting = () => {
-  const h = new Date().getHours();
-  if (h < 5) return "Good night";
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+  const hour = new Date().getHours();
+  if (hour < 5) return "こんばんは";
+  if (hour < 12) return "おはようございます";
+  if (hour < 18) return "こんにちは";
+  return "こんばんは";
 };
 
-// ── ホームページ ───────────────────────────────────────────────────────────
-// 「発見を最優先・情報を詰め込みすぎない」という方針のもと、Home全体の役割を
-// 「今日イチオシの1人を見せる入口」に絞った。Popular Players・Recently Viewed・
-// Categories別行・Toolsタイルなどは、既存のサイドバー/ボトムタブバーの
-// ナビゲーションで到達できるため、ここでは重複させない。
 function HomePage() {
   const [user, setUser] = useState(null);
-  const [forYouData, setForYouData] = useState(null);
-  const [forYouLoading, setForYouLoading] = useState(true);
-  const [samplePlayer, setSamplePlayer] = useState(null);
   const token = getAuthToken();
 
   useEffect(() => {
@@ -51,80 +46,69 @@ function HomePage() {
       });
   }, [token]);
 
-  useEffect(() => {
-    getForYouRecommendations(token)
-      .catch(() => ({ groups: [], fallback: [] }))
-      .then((data) => {
-        setForYouData(data);
-        setForYouLoading(false);
-      });
-  }, [token]);
-
-  // お気に入りが0件でForYouデータが空になる場合のためのフォールバック。
-  // 単なる空状態のテキストだけだと、初めてこのアプリを開いた人には
-  // Heroの一番の見せ場(スカウトレポート)が全く伝わらない。代わりに、
-  // 既存のarchetypeエンドポイント(styleScores計算済み)から人気選手を1人取り、
-  // 「サンプル」として同じダッシュボードを見せる。
-  useEffect(() => {
-    getPlayersByArchetype("power-hitter")
-      .catch(() => [])
-      .then((players) => setSamplePlayer(players[0] ?? null));
-  }, []);
-
-  // 全グループのmatchesをまとめ、matchScore(類似度×行動学習の好みスコアの
-  // ブレンド値。バックエンド側でグループ内の並び替えにも使っているのと同じ値)
-  // が最も高い1人だけを「今日イチオシの1人」として採用する。複数人を切り替えて
-  // じっくり見る体験はDiscover画面の役割なので、Homeでは前後送りを付けない。
-  // seedPlayerを各matchに付与しておくことで、Heroの「お気に入りとの比較」表示
-  // (どの favorite を根拠に推薦されたか)がそのまま使える。
-  const heroPick = forYouData?.groups?.length
-    ? (forYouData.groups
-        .flatMap((group) => group.matches.map((match) => ({ ...match, seedPlayer: group.seedPlayer })))
-        .sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0))[0] ?? null)
-    : null;
-
-  // 個人化された推薦(heroPick)が無い場合だけサンプルにフォールバックする。
-  // ローディング中に一瞬サンプルが出てしまわないよう、forYouLoading完了後のみ判定する。
-  const showSample = !forYouLoading && !heroPick && samplePlayer;
-  const displayPlayer = heroPick ?? (showSample ? samplePlayer : null);
+  // 最近の記録だけを取る。一覧の全機能（フィルター・ページ送り）は
+  // RecordsPageの役割なので、ここでは最小限のfilterで5件に絞る
+  const { records, isLoading, error } = useCoffeeRecords({
+    page: 1,
+    limit: RECENT_RECORDS_LIMIT,
+    recordType: "",
+    ratingMin: "",
+  });
 
   return (
-    <div className="home-discovery">
-      <header className="home-discovery-header">
-        <p className="home-greeting">
-          {getGreeting()}
-          {user?.name ? `, ${user.name}` : ""}
-        </p>
+    <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-ctp-text">
+            {getGreeting()}
+            {user?.name ? `、${user.name}さん` : ""}
+          </h1>
+          <p className="mt-1 text-sm text-ctp-subtext0">今日はどんな一杯を飲みましたか？</p>
+        </div>
+
+        <Link to="/records/new" className={primaryButtonClass}>
+          <Plus size={16} aria-hidden="true" />
+          記録する
+        </Link>
       </header>
 
-      <HomeHero
-        key={displayPlayer?.mlbPlayerId ?? "empty"}
-        player={displayPlayer}
-        loading={forYouLoading}
-        isSample={!heroPick && Boolean(showSample)}
-      />
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-ctp-text">最近の記録</h2>
+          <Link
+            to="/records"
+            className="text-xs text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
+          >
+            すべて見る
+          </Link>
+        </div>
 
-      {/* プレイスタイル別に探す */}
-      <section className="discovery-section">
-        <div className="discovery-section-header">
-          <div className="discovery-section-title-row">
-            <h2 className="discovery-section-title">Browse by Style</h2>
-            <Link to="/positions" className="discovery-see-all">
-              Browse by Position →
-            </Link>
-          </div>
-          <p className="discovery-section-desc">
-            Explore players by playing style
-          </p>
-        </div>
-        <div className="discovery-archetypes">
-          {ARCHETYPES.map((a) => (
-            <Link key={a.type} to={`/archetype/${a.type}`} className={styles.archetypePill}>
-              {a.label}
-            </Link>
-          ))}
-        </div>
+        {isLoading && <RecordListSkeleton count={3} />}
+        {!isLoading && error && (
+          <p className="text-sm text-ctp-red">{error.message}</p>
+        )}
+        {!isLoading && !error && records.length === 0 && <RecordsEmptyState />}
+        {!isLoading && !error && records.length > 0 && (
+          <ul className="flex flex-col gap-3">
+            {records.map((record) => (
+              <RecordCard key={record.id} record={record} />
+            ))}
+          </ul>
+        )}
       </section>
+
+      {!isLoading && records.length > 0 && (
+        <Link
+          to="/graph"
+          className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-ctp-surface1 bg-ctp-mantle px-4 py-3 transition-colors duration-150 hover:border-ctp-overlay0"
+        >
+          <span className="flex items-center gap-2 text-sm text-ctp-text">
+            <Share2 size={16} aria-hidden="true" className="text-ctp-lavender" />
+            あなたのコーヒーのつながりを見る
+          </span>
+          <span className="text-xs text-ctp-subtext0">Graphへ →</span>
+        </Link>
+      )}
     </div>
   );
 }

@@ -24,23 +24,6 @@ export const getCurrentUser = async (token) => {
   return data;
 };
 
-export const updateFavoriteTeam = async (favoriteTeam, token) => {
-  const response = await fetch(`${API_URL}/api/users/me/favorite-team`, {
-    method: "PATCH",
-    headers: createAuthHeaders(token),
-    body: JSON.stringify({ favoriteTeam }),
-  });
-  const data = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(data.message || "Failed to update favorite team.");
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
-};
-
 export const updateProfile = async ({ name }, token) => {
   const response = await fetch(`${API_URL}/api/users/me`, {
     method: "PATCH",
@@ -51,26 +34,6 @@ export const updateProfile = async ({ name }, token) => {
 
   if (!response.ok) {
     const error = new Error(data.message || "Failed to update profile.");
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
-};
-
-export const uploadAvatar = async (file, token) => {
-  const formData = new FormData();
-  formData.append("avatar", file);
-
-  const response = await fetch(`${API_URL}/api/users/me/avatar`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
-  const data = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(data.message || "Failed to upload avatar.");
     error.status = response.status;
     throw error;
   }
@@ -104,22 +67,6 @@ export const deleteAccount = async (token) => {
 
   if (!response.ok) {
     const error = new Error(data.message || "Failed to delete account.");
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
-};
-
-export const completeOnboarding = async (token) => {
-  const response = await fetch(`${API_URL}/api/users/me/onboarding-complete`, {
-    method: "PATCH",
-    headers: createAuthHeaders(token),
-  });
-  const data = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(data.message || "Failed to complete onboarding.");
     error.status = response.status;
     throw error;
   }
