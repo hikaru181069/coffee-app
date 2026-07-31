@@ -2,13 +2,16 @@
 // サイドバーナビの代わりにスマホで使いやすい片手操作を実現する。
 
 import { NavLink } from "react-router-dom";
-import { Home, Sparkles, Trophy, Star, User } from "lucide-react";
+import { Coffee, Home, Sparkles, Star, User } from "lucide-react";
 
+// タブは5つまでに抑える（それ以上はラベルが読めなくなる）。
+// coffee-app の Records を入れるため、League は控えめな導線
+// （サイドバーの Tools）に譲った
 const TABS = [
   { to: "/",          Icon: Home,      label: "Home",    end: true },
+  { to: "/records",   Icon: Coffee,    label: "Records"            },
   { to: "/discover",  Icon: Sparkles,  label: "Discover"           },
   { to: "/favorites", Icon: Star,      label: "Favorites"          },
-  { to: "/league",    Icon: Trophy,    label: "League"             },
   { to: "/profile",   Icon: User,      label: "Profile"            },
 ];
 
