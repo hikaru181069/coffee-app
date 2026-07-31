@@ -14,6 +14,30 @@ Express API
     +---- FastAPI（必要な計算のみ）
 ```
 
+## Module Format
+
+frontend / backend とも **ES Modules（ESM）** を使用します。
+
+- `frontend/package.json`: `"type": "module"`（Viteの標準）
+- `backend/package.json`: `"type": "module"`
+
+理由:
+
+- リポジトリ内でimport構文が統一され、frontendとbackendを行き来しても書き方が変わらない
+- Node.jsの標準仕様であり、新規の学習コストが低い
+- top-level awaitなど新しい構文をそのまま使える
+
+ESMを使ううえでの注意点:
+
+- 相対importには拡張子が必須（`./config/db.js`）
+- ディレクトリのimportは解決されないため `./services/mlb/index.js` と明示する
+- `__dirname` は使えないため `import.meta.dirname` を使う（Node 20.11以降）
+- **importは巻き上げられて先に評価される**ため、`dotenv.config()` を
+  途中の行に書いても、それより上のimportには間に合わない。
+  環境変数をトップレベルで読むモジュールがあるので、
+  エントリポイントの先頭で `import "dotenv/config"` を実行する
+- JestでESMを扱うには `--experimental-vm-modules` が必要
+
 ## Responsibility
 
 ### React
