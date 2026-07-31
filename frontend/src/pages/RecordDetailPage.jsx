@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Coffee, Pencil, Star, Store, Trash2 } from "lucide-react";
+import { Coffee, Pencil, Share2, Star, Store, Trash2 } from "lucide-react";
 
 import "../features/coffee-records/coffee-records.css";
 import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecord";
@@ -25,8 +25,14 @@ import { useToast } from "../contexts/ToastContext";
  * docs/design.md の「Record Detail」に対応する:
  *   基本情報 / Coffee Details / Notes / Edit / Delete
  *
- * 「関連ノード」と「Graphで見る」は Phase 5（知識グラフUI）で足す。
- * グラフ画面がまだ無い段階でリンクだけ置いても、押した先が無い。
+ * 「Graphで見る」は Phase 5（知識グラフUI）でグラフ画面ができたため追加した。
+ * ?focus=record:xxx でグラフ側にその記録ノードを自動選択させる。
+ *
+ * docs/design.md にある「関連ノード」（詳細画面に直接、関連する記録の
+ * 一覧を埋め込む案）は今回実装していない。Graph画面へ遷移すれば同じ
+ * 情報（属性ノードを選ぶと関連記録一覧が出る）を見られるため、
+ * 重複した一覧をここにも持たせる優先度は低いと判断した。
+ * 必要であれば改めて追加する。
  */
 function RecordDetailPage() {
   const { recordId } = useParams();
@@ -199,6 +205,13 @@ function RecordDetailPage() {
         <Link to={`/records/${record.id}/edit`} className={secondaryButtonClass}>
           <Pencil size={15} aria-hidden="true" />
           編集
+        </Link>
+        {/* Phase 5で知識グラフ画面ができたので実装する。
+            ?focus=record:xxx でグラフ側にそのノードを自動選択させる
+            （features/graph/hooks GraphPage の handleGraphReady を参照） */}
+        <Link to={`/graph?focus=record:${record.id}`} className={secondaryButtonClass}>
+          <Share2 size={15} aria-hidden="true" />
+          Graphで見る
         </Link>
         <button
           type="button"

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./contexts/ToastContext";
@@ -36,6 +37,11 @@ import DiscoverPage from "./pages/DiscoverPage";
 import RecordsPage from "./pages/RecordsPage";
 import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
+// GraphPageはReact Flow・d3-forceを含み、他の画面より明確に重い
+// （このライブラリだけでbundleが約60KB gzip増える）。
+// このルートを開かないユーザーにその分を読み込ませないよう、
+// 遅延読み込みにする。
+const GraphPage = lazy(() => import("./pages/GraphPage"));
 
 // [Phase 4] ページ遷移アニメーション
 // location.key を React の key に渡すことで、ページが変わるたびにコンポーネントが
@@ -61,6 +67,18 @@ function AnimatedRoutes() {
           <Route path="/records/new" element={<RecordFormPage />} />
           <Route path="/records/:recordId" element={<RecordDetailPage />} />
           <Route path="/records/:recordId/edit" element={<RecordFormPage />} />
+          <Route
+            path="/graph"
+            element={
+              <Suspense
+                fallback={
+                  <p className="p-6 text-center text-sm text-ctp-subtext0">読み込み中...</p>
+                }
+              >
+                <GraphPage />
+              </Suspense>
+            }
+          />
 
           <Route path="/" element={<HomePage />} />
           <Route path="/discover" element={<DiscoverPage />} />
