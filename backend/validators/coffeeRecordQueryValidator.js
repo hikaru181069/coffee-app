@@ -1,4 +1,4 @@
-import { isObjectIdString } from "../utils/objectId.js";
+import { validateRecordFilterQuery } from "./recordFilterValidator.js";
 
 /**
  * 一覧API（GET /api/coffee-records）のクエリ文字列を検証・変換する。
@@ -8,9 +8,11 @@ import { isObjectIdString } from "../utils/objectId.js";
  *
  * 未指定の項目は既定値で埋める。service 側で「未指定なら〜」という
  * 分岐を書かなくて済むようにするため。
+ *
+ * recordType・originId・flavorId・ratingMin・期間の検証は
+ * validateRecordFilterQuery() へ切り出してある。
+ * グラフAPI（graphQueryValidator.js）と同じ検証が必要なため。
  */
-
-const RECORD_TYPES = ["home", "cafe"];
 
 /** docs/api.md の sort に対応する。キーを固定して任意のフィールド指定を許さない */
 const SORT_OPTIONS = {
@@ -85,76 +87,9 @@ export const validateCoffeeRecordListQuery = (rawQuery = {}) => {
   }
 
   // ── 絞り込み ──────────────────────────────────────
-  if (!isMissing(rawQuery.recordType)) {
-    if (!RECORD_TYPES.includes(rawQuery.recordType)) {
-      details.push({
-        field: "recordType",
-        message: `recordTypeは ${RECORD_TYPES.join(" または ")} を指定してください`,
-      });
-    } else {
-      query.filter.recordType = rawQuery.recordType;
-    }
-  }
-
-  if (!isMissing(rawQuery.originId)) {
-    if (!isObjectIdString(rawQuery.originId)) {
-      details.push({ field: "originId", message: "originIdの形式が正しくありません" });
-    } else {
-      query.filter.originId = rawQuery.originId;
-    }
-  }
-
-  if (!isMissing(rawQuery.flavorId)) {
-    if (!isObjectIdString(rawQuery.flavorId)) {
-      details.push({ field: "flavorId", message: "flavorIdの形式が正しくありません" });
-    } else {
-      // flavorIds は配列なので、値を1つ指定すると「含む」条件になる
-      query.filter.flavorIds = rawQuery.flavorId;
-    }
-  }
-
-  if (!isMissing(rawQuery.ratingMin)) {
-    const ratingMin = toInteger(rawQuery.ratingMin);
-    if (ratingMin === null || ratingMin < 1 || ratingMin > 5) {
-      details.push({
-        field: "ratingMin",
-        message: "ratingMinは1〜5の整数で指定してください",
-      });
-    } else {
-      query.filter.rating = { $gte: ratingMin };
-    }
-  }
-
-  // ── 期間 ──────────────────────────────────────────
-  // dateFrom と dateTo は同じ consumedAt に対する条件なので、
-  // 片方ずつ組み立てて最後にまとめる
-  const consumedAt = {};
-
-  if (!isMissing(rawQuery.dateFrom)) {
-    const from = new Date(rawQuery.dateFrom);
-    if (Number.isNaN(from.getTime())) {
-      details.push({ field: "dateFrom", message: "dateFromの形式が正しくありません" });
-    } else {
-      consumedAt.$gte = from;
-    }
-  }
-
-  if (!isMissing(rawQuery.dateTo)) {
-    const to = new Date(rawQuery.dateTo);
-    if (Number.isNaN(to.getTime())) {
-      details.push({ field: "dateTo", message: "dateToの形式が正しくありません" });
-    } else {
-      consumedAt.$lte = to;
-    }
-  }
-
-  if (consumedAt.$gte && consumedAt.$lte && consumedAt.$gte > consumedAt.$lte) {
-    details.push({ field: "dateFrom", message: "開始日が終了日より後になっています" });
-  }
-
-  if (Object.keys(consumedAt).length > 0) {
-    query.filter.consumedAt = consumedAt;
-  }
+  const filterResult = validateRecordFilterQuery(rawQuery);
+  details.push(...filterResult.details);
+  query.filter = filterResult.filter;
 
   return { valid: details.length === 0, details, query };
 };

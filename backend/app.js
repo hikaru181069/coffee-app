@@ -17,6 +17,7 @@ import path from "path";
 // coffee-app のルート
 import coffeeRecordRoutes from "./routes/coffeeRecordRoutes.js";
 import masterDataRoutes from "./routes/masterDataRoutes.js";
+import graphRoutes from "./routes/graphRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 // mlb-app から引き継いだルート（docs/mlb-legacy-inventory.md 参照）
@@ -60,6 +61,7 @@ app.use("/uploads", express.static(path.join(import.meta.dirname, "uploads")));
 // ── coffee-app ──────────────────────────────────────────────
 app.use("/api/coffee-records", coffeeRecordRoutes);
 app.use("/api/master-data", masterDataRoutes);
+app.use("/api/graph", graphRoutes);
 
 // ── mlb-app から引き継いだルート ────────────────────────────
 // Phase 6 で棚卸しする（docs/mlb-legacy-inventory.md）

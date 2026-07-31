@@ -70,10 +70,13 @@ export const countForUser = (userId, filter = {}) =>
  *
  * グラフは「自分の記録すべて」から導出するのでページネーションしない
  * （docs/knowledge-graph.md の Graph Generation）。
- * Phase 4 で graphService から使う。
+ * populate はデフォルトで有効にしている。グラフのノードラベルは
+ * 産地・品種などの「名前」を必要とし、IDのままでは使えないため。
  */
-export const findAllForUser = (userId, filter = {}) =>
-  CoffeeRecord.find({ userId, ...filter }).sort({ consumedAt: -1 });
+export const findAllForUser = (userId, filter = {}, { populate = true } = {}) => {
+  const query = CoffeeRecord.find({ userId, ...filter }).sort({ consumedAt: -1 });
+  return populate ? withMasterData(query) : query;
+};
 
 /** 記録を1件更新する。他ユーザーの記録は更新できない */
 export const updateOneForUser = (recordId, userId, update) =>
