@@ -1,5 +1,5 @@
-const express = require("express");
-const { getPlayersByArchetype } = require("../controllers/archetypeController");
+import express from "express";
+import { getPlayersByArchetype } from "../controllers/archetypeController.js";
 
 const router = express.Router();
 
@@ -7,4 +7,4 @@ const router = express.Router();
 // 例: /api/archetype/power-hitter → Power Hitter の選手一覧
 router.get("/:type", getPlayersByArchetype);
 
-module.exports = router;
+export default router;

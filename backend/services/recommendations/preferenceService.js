@@ -1,6 +1,6 @@
-const Interaction = require("../../models/Interaction");
-const { fetchArchetypes } = require("../mlb/archetypeService");
-const { fetchDiscoverPreference } = require("../fastApiService");
+import Interaction from "../../models/Interaction.js";
+import { fetchArchetypes } from "../mlb/archetypeService.js";
+import { fetchDiscoverPreference } from "../fastApiService.js";
 
 // 直近何件の行動履歴を見るか(favorite/view側・dislike側それぞれ)
 const INTERACTION_LIMIT = 200;
@@ -55,4 +55,4 @@ const getPreferenceScores = async (userId, candidates) => {
   );
 };
 
-module.exports = { getPreferenceScores };
+export { getPreferenceScores };

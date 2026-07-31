@@ -1,6 +1,6 @@
-const bcrypt = require("bcryptjs");
-const User = require("../models/User");
-const FavoritePlayer = require("../models/FavoritePlayer");
+import bcrypt from "bcryptjs";
+import User from "../models/User.js";
+import FavoritePlayer from "../models/FavoritePlayer.js";
 
 const createUserResponse = (user) => {
   return {
@@ -148,7 +148,7 @@ const deleteAccount = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   changePassword,
   completeOnboarding,
   deleteAccount,

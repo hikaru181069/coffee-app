@@ -22,6 +22,6 @@ const fallbackPlayers = [
   },
 ];
 
-module.exports = {
+export {
   fallbackPlayers,
 };

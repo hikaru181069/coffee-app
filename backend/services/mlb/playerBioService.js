@@ -1,4 +1,4 @@
-const { fetchFromMlbApi } = require("./mlbClient");
+import { fetchFromMlbApi } from "./mlbClient.js";
 
 // 生年月日・出身校・ドラフト年・身長体重・利き手など、選手ごとに変わらない
 // 静的な事実。一度取得したらプロセス生存中はキャッシュしっぱなしでよい(TTL不要)。
@@ -97,4 +97,4 @@ const getPlayerProfiles = async (playerIds) => {
   return result;
 };
 
-module.exports = { getPlayerBios, getPlayerProfiles };
+export { getPlayerBios, getPlayerProfiles };

@@ -7,12 +7,12 @@
 //   4. FastAPI /discover/similar で cosine similarity を計算
 //   5. マッチした選手の詳細を MLB API から取得して返す
 
-const { fetchExternalPlayerDetails, fetchExternalPlayerStats } = require("./playerStatsService");
-const { formatExternalPlayer, formatExternalStats } = require("./playerFormatter");
-const { fetchLeagueStats, fetchYoungLeaguePlayers, fetchYoungPitchers } = require("./leagueStatsService");
-const { fetchDiscoverSimilar } = require("../fastApiService");
-const { getPlayerArchetype } = require("./archetypeService");
-const { getOaaMap, getSprintSpeedMap, getArmStrengthMap } = require("./baseballSavantService");
+import { fetchExternalPlayerDetails, fetchExternalPlayerStats } from "./playerStatsService.js";
+import { formatExternalPlayer, formatExternalStats } from "./playerFormatter.js";
+import { fetchLeagueStats, fetchYoungLeaguePlayers, fetchYoungPitchers } from "./leagueStatsService.js";
+import { fetchDiscoverSimilar } from "../fastApiService.js";
+import { getPlayerArchetype } from "./archetypeService.js";
+import { getOaaMap, getSprintSpeedMap, getArmStrengthMap } from "./baseballSavantService.js";
 
 // 対象選手のスタッツを FastAPI に渡せる形式に変換する
 const toDiscoverTarget = (player, hitterStats, pitcherStats) => ({
@@ -149,4 +149,4 @@ const fetchSimilarPlayers = async (playerId) => {
   };
 };
 
-module.exports = { fetchSimilarPlayers };
+export { fetchSimilarPlayers };

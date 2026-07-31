@@ -1,4 +1,4 @@
-const { fetchPlayersByPosition } = require("../services/mlb/positionService");
+import { fetchPlayersByPosition } from "../services/mlb/positionService.js";
 
 const VALID_POSITIONS = new Set([
   "C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "OF", "DH", "SP", "RP",
@@ -20,4 +20,4 @@ const getPlayersByPosition = async (req, res) => {
   }
 };
 
-module.exports = { getPlayersByPosition };
+export { getPlayersByPosition };

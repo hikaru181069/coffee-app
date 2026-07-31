@@ -1,10 +1,10 @@
-const {
+import {
   getFutureStarsForUser,
   getRecommendationsForUser,
   getGroupedRecommendationsForUser,
-} = require("./recommendationService");
+} from "./recommendationService.js";
 
-module.exports = {
+export {
   getFutureStarsForUser,
   getRecommendationsForUser,
   getGroupedRecommendationsForUser,

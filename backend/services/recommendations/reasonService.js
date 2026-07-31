@@ -44,4 +44,4 @@ const buildMatchReason = ({ seedName, seedArchetypes, matchArchetypes, seedScore
   return `Similar to ${seedName}`;
 };
 
-module.exports = { buildMatchReason };
+export { buildMatchReason };

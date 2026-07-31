@@ -1,4 +1,4 @@
-const { logInteraction } = require("../services/interactionService");
+import { logInteraction } from "../services/interactionService.js";
 
 // クライアントから直接記録できるアクション種別
 // (favoriteはfavoriteController側で記録済みのためここには含めない)。
@@ -23,4 +23,4 @@ const recordInteraction = async (req, res) => {
   res.status(204).end();
 };
 
-module.exports = { recordInteraction };
+export { recordInteraction };

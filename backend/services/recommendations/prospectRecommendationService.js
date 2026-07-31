@@ -1,8 +1,8 @@
-const FavoritePlayer = require("../../models/FavoritePlayer");
-const { fetchProspects }           = require("../mlb/prospectService");
-const { fetchFutureStars, fetchDiscoverSimilar } = require("../fastApiService");
-const { fetchExternalPlayerStats } = require("../mlb/playerStatsService");
-const { formatExternalStats }      = require("../mlb/playerFormatter");
+import FavoritePlayer from "../../models/FavoritePlayer.js";
+import { fetchProspects } from "../mlb/prospectService.js";
+import { fetchFutureStars, fetchDiscoverSimilar } from "../fastApiService.js";
+import { fetchExternalPlayerStats } from "../mlb/playerStatsService.js";
+import { formatExternalStats } from "../mlb/playerFormatter.js";
 
 const toNumber = (v) => {
   const n = Number(v);
@@ -186,4 +186,4 @@ const getProspectsForUser = async (userId) => {
   return { hitters, pitchers };
 };
 
-module.exports = { getProspectsForUser };
+export { getProspectsForUser };

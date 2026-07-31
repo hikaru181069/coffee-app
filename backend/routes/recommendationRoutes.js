@@ -1,12 +1,12 @@
-const express = require("express");
-const { protect } = require("../middleware/authMiddleware");
-const {
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import {
   getFutureStars,
   getRecommendations,
   getQuizRecommendations,
   getProspectRecommendations,
   getForYouRecommendations,
-} = require("../controllers/recommendationController");
+} from "../controllers/recommendationController.js";
 
 const router = express.Router();
 
@@ -16,4 +16,4 @@ router.get("/quiz", protect, getQuizRecommendations);
 router.get("/prospects", protect, getProspectRecommendations);
 router.get("/", protect, getRecommendations);
 
-module.exports = router;
+export default router;

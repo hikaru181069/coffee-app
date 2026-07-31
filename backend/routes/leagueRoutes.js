@@ -1,5 +1,5 @@
-const express = require("express");
-const { getStandings, getScores, getWildCard } = require("../controllers/leagueController");
+import express from "express";
+import { getStandings, getScores, getWildCard } from "../controllers/leagueController.js";
 
 const router = express.Router();
 
@@ -9,4 +9,4 @@ router.get("/standings", getStandings);
 router.get("/scores", getScores);
 router.get("/wildcard", getWildCard);
 
-module.exports = router;
+export default router;

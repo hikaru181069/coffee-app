@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const favoritePlayerSchema = new mongoose.Schema(
   {
@@ -91,4 +91,4 @@ const favoritePlayerSchema = new mongoose.Schema(
 
 favoritePlayerSchema.index({ user: 1, mlbPlayerId: 1 }, { unique: true });
 
-module.exports = mongoose.model("FavoritePlayer", favoritePlayerSchema);
+export default mongoose.model("FavoritePlayer", favoritePlayerSchema);

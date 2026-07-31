@@ -1,12 +1,12 @@
-const {
+import {
   formatExternalPlayer,
   formatExternalStats,
   formatRecentGames,
-} = require("./playerFormatter");
-const {
+} from "./playerFormatter.js";
+import {
   fetchExternalPlayerDetails,
   fetchExternalPlayerStats,
-} = require("./playerStatsService");
+} from "./playerStatsService.js";
 
 const fetchExternalPlayerFullDetails = async (playerId) => {
   const detailedPlayer = await fetchExternalPlayerDetails(playerId);
@@ -27,6 +27,6 @@ const fetchExternalPlayerFullDetails = async (playerId) => {
   };
 };
 
-module.exports = {
+export {
   fetchExternalPlayerFullDetails,
 };

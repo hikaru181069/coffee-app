@@ -1,5 +1,5 @@
-const FavoritePlayer = require("../models/FavoritePlayer");
-const { logInteraction } = require("../services/interactionService");
+import FavoritePlayer from "../models/FavoritePlayer.js";
+import { logInteraction } from "../services/interactionService.js";
 
 const LIMITS = { hitter: 15, pitcher: 10 };
 
@@ -174,7 +174,7 @@ const deleteFavorite = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   createManyFavorites,
   getFavorites,
   createFavorite,

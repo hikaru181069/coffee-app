@@ -1,8 +1,8 @@
-const {
+import {
   buildPlayerDetailsUrl,
   buildPlayerStatsUrl,
-} = require("./mlbUrlBuilder");
-const { fetchFromMlbApi, fetchMlbResponse } = require("./mlbClient");
+} from "./mlbUrlBuilder.js";
+import { fetchFromMlbApi, fetchMlbResponse } from "./mlbClient.js";
 
 const fetchExternalPlayerDetails = async (playerId) => {
   const data = await fetchFromMlbApi(
@@ -36,7 +36,7 @@ const fetchExternalPlayerStats = async ({
   }
 };
 
-module.exports = {
+export {
   fetchExternalPlayerDetails,
   fetchExternalPlayerStats,
 };

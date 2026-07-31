@@ -1,9 +1,9 @@
-const express = require("express");
-const { getNews, getTeamNews } = require("../controllers/newsController");
+import express from "express";
+import { getNews, getTeamNews } from "../controllers/newsController.js";
 
 const router = express.Router();
 
 router.get("/",             getNews);      // GET /api/news
 router.get("/team/:teamId", getTeamNews);  // GET /api/news/team/:teamId
 
-module.exports = router;
+export default router;

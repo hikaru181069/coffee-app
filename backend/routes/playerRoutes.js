@@ -1,16 +1,16 @@
-const express = require("express");
-const { protect } = require("../middleware/authMiddleware");
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-const {
+import {
   getPlayers,
   createPlayer,
   searchPlayers,
   getPlayerById,
   updatePlayer,
   deletePlayer,
-} = require("../controllers/playerController");
+} from "../controllers/playerController.js";
 
 router.get("/", getPlayers);
 router.post("/", protect, createPlayer);
@@ -19,4 +19,4 @@ router.get("/:id", getPlayerById);
 router.put("/:id", protect, updatePlayer);
 router.delete("/:id", protect, deletePlayer);
 
-module.exports = router;
+export default router;

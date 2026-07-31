@@ -7,7 +7,7 @@
 //   game/:id/linescore → イニングごとの得点・R/H/E 合計
 //   game/:id/boxscore  → 両軍の打者/投手スタッツ
 
-const { fetchFromMlbApi } = require("../services/mlb/mlbClient");
+import { fetchFromMlbApi } from "../services/mlb/mlbClient.js";
 
 const toNumber = (value) => {
   const n = Number(value);
@@ -209,4 +209,4 @@ const getGameHighlights = async (req, res) => {
   }
 };
 
-module.exports = { getGame, getGamePlays, getGameHighlights };
+export { getGame, getGamePlays, getGameHighlights };

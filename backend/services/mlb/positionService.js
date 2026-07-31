@@ -1,5 +1,5 @@
-const { fetchLeagueStats } = require("./leagueStatsService");
-const { fetchFromMlbApi } = require("./mlbClient");
+import { fetchLeagueStats } from "./leagueStatsService.js";
+import { fetchFromMlbApi } from "./mlbClient.js";
 
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 let cache = null;
@@ -101,4 +101,4 @@ const fetchPlayersByPosition = async (position) => {
   return hitters.filter((p) => p.position.toUpperCase() === pos);
 };
 
-module.exports = { fetchPlayersByPosition };
+export { fetchPlayersByPosition };

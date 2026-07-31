@@ -1,13 +1,13 @@
-const {
+import {
   fetchExternalPlayerFullDetails,
   fetchExternalPlayersByTeam,
   fetchExternalPlayers,
   fetchPlayerSuggestions,
   getPlayerBios,
   getPlayerProfiles,
-} = require("../services/mlb");
-const { fetchFromMlbApi } = require("../services/mlb/mlbClient");
-const { fetchPopularPlayers } = require("../services/mlb/leagueStatsService");
+} from "../services/mlb/index.js";
+import { fetchFromMlbApi } from "../services/mlb/mlbClient.js";
+import { fetchPopularPlayers } from "../services/mlb/leagueStatsService.js";
 
 const searchExternalPlayers = async (req, res) => {
   try {
@@ -152,7 +152,7 @@ const getPlayerProfilesHandler = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getExternalPlayersByTeam,
   searchExternalPlayers,
   getExternalPlayerById,

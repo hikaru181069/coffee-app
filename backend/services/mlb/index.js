@@ -1,13 +1,13 @@
-const {
+import {
   fetchExternalPlayerFullDetails,
-} = require("./playerDetailService");
-const { fetchExternalPlayers, fetchPlayerSuggestions } = require("./playerSearchService");
-const {
+} from "./playerDetailService.js";
+import { fetchExternalPlayers, fetchPlayerSuggestions } from "./playerSearchService.js";
+import {
   fetchExternalPlayersByTeam,
-} = require("./teamPlayerService");
-const { getPlayerBios, getPlayerProfiles } = require("./playerBioService");
+} from "./teamPlayerService.js";
+import { getPlayerBios, getPlayerProfiles } from "./playerBioService.js";
 
-module.exports = {
+export {
   fetchExternalPlayerFullDetails,
   fetchExternalPlayers,
   fetchPlayerSuggestions,

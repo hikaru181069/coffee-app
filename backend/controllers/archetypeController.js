@@ -1,8 +1,8 @@
-const {
+import {
   fetchPlayersByArchetype,
   fetchFutureMvpPlayers,
   fetchJapanesePlayers,
-} = require("../services/mlb/archetypeService");
+} from "../services/mlb/archetypeService.js";
 
 // スタットの閾値分類ではない「特殊カテゴリー」。:type にこのslugが来た場合は
 // 通常のアーキタイプ分類マップを見ずに、専用のロジックへ振り分ける。
@@ -23,4 +23,4 @@ const getPlayersByArchetype = async (req, res) => {
   }
 };
 
-module.exports = { getPlayersByArchetype };
+export { getPlayersByArchetype };

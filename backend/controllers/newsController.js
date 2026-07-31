@@ -2,7 +2,7 @@
 // MLB公式RSSフィード（無料・認証不要）をバックエンドで取得・パースして返す。
 // フロントが直接XMLを扱わなくて済むよう、JSONに整形して返す。
 
-const { fetchMlbResponse } = require("../services/mlb/mlbClient");
+import { fetchMlbResponse } from "../services/mlb/mlbClient.js";
 
 const MLB_RSS_URL = "https://www.mlb.com/feeds/news/rss.xml";
 
@@ -84,4 +84,4 @@ const getTeamNews = async (req, res) => {
   }
 };
 
-module.exports = { getNews, getTeamNews };
+export { getNews, getTeamNews };

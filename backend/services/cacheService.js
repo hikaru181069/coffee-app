@@ -1,4 +1,4 @@
-const Redis = require("ioredis");
+import Redis from "ioredis";
 
 const client = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
   lazyConnect: true,
@@ -34,4 +34,4 @@ const del = async (key) => {
   }
 };
 
-module.exports = { get, set, del };
+export { get, set, del };

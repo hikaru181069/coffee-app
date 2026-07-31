@@ -1,15 +1,15 @@
-const {
+import {
   getFutureStarsForUser,
   getRecommendationsForUser,
   getGroupedRecommendationsForUser,
-} = require("../services/recommendations");
+} from "../services/recommendations/index.js";
 
-const {
+import {
   fetchQuizHitters,
   fetchQuizPitchers,
-} = require("../services/mlb/quizRecommendationService");
+} from "../services/mlb/quizRecommendationService.js";
 
-const { getProspectsForUser } = require("../services/recommendations/prospectRecommendationService");
+import { getProspectsForUser } from "../services/recommendations/prospectRecommendationService.js";
 
 const getRecommendations = async (req, res) => {
   try {
@@ -71,7 +71,7 @@ const getForYouRecommendations = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getFutureStars,
   getRecommendations,
   getQuizRecommendations,

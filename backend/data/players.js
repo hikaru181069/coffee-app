@@ -37,4 +37,4 @@ const players = [
   },
 ];
 
-module.exports = players;
+export default players;

@@ -6,10 +6,10 @@
  * DBにも外部APIにも依存しない純粋な変換関数なので、モック無しでテストできる。
  */
 
-const {
+import {
   formatExternalStats,
   formatRecentGames,
-} = require("../services/mlb/playerFormatter");
+} from "../services/mlb/playerFormatter.js";
 
 describe("formatExternalStats", () => {
   test("hittingグループがあればhitterStatsを組み立てる", () => {
