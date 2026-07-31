@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* App.cssの:root(--ctp-*)と同じLinear実測値。Tailwindの@themeはCSS変数を
+   参照できずここに直接値を書く必要があるため、値を手動で同期している。
+   どちらかを変える時はもう片方も忘れずに更新すること。 */
+@theme {
+  --color-ctp-base: #08090a;
+  --color-ctp-mantle: #0f1011;
+  --color-ctp-crust: #08090a;
+  --color-ctp-surface0: #1c1c1f;
+  --color-ctp-surface1: #232326;
+  --color-ctp-surface2: #28282c;
+  --color-ctp-overlay0: #3e3e44;
+  --color-ctp-text: #f7f8f8;
+  --color-ctp-subtext0: #8a8f98;
+  --color-ctp-subtext1: #b4bcd0;
+  --color-ctp-blue: #5e6ad2;
+  --color-ctp-sapphire: #74c7ec;
+  --color-ctp-lavender: #b4befe;
+  --color-ctp-green: #a6e3a1;
+  --color-ctp-teal: #94e2d5;
+  --color-ctp-peach: #fab387;
+  --color-ctp-yellow: #f9e2af;
+  --color-ctp-red: #f38ba8;
+  --color-ctp-maroon: #eba0ac;
+  --color-ctp-mauve: #cba6f7;
+  --color-ctp-pink: #f5c2e7;
+}
+
+:root {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #f7f8f8;
+  /* ▼ 背景色: #1e1e2e (Base) か #181825 (Mantle) で切り替え */
+  --app-bg: #08090a;
+  background-color: var(--app-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--app-bg);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}

@@ -1,0 +1,69 @@
+name: Test
+
+# on: 「いつ実行するか」のトリガー設定
+# main への push と、main への pull request が作られたときに実行する
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── FastAPI（推薦エンジン）のユニットテスト ─────────────────────────
+  fastapi-tests:
+    runs-on: ubuntu-latest # GitHubが用意するUbuntuの仮想マシン上で実行する
+
+    steps:
+      # 1. リポジトリのコードをこの仮想マシンにコピーしてくる
+      - uses: actions/checkout@v4
+
+      # 2. Pythonをセットアップする
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # 3. 依存ライブラリをインストールする（pytestもrequirements.txtに含めている）
+      - name: Install dependencies
+        run: pip install -r fastapi-service/requirements.txt
+
+      # 4. テストを実行する
+      - name: Run pytest
+        run: cd fastapi-service && pytest -v
+
+  # ── Backend（Express）のユニットテスト ───────────────────────────────
+  # DB・外部APIに依存しない純粋な変換ロジック/バリデーションのみが対象なので、
+  # MongoDBのコンテナ等は用意していない。
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: cd backend && npm ci
+
+      - name: Run tests
+        run: cd backend && npm test
+
+  # ── フロントエンドのビルド確認 ───────────────────────────────────────
+  # ユニットテストはまだ無いが、「ビルドが壊れていないか」だけでも
+  # 自動チェックしておく最小限のCI。
+  frontend-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Build
+        run: cd frontend && npm run build

@@ -1,0 +1,172 @@
+/* linear.app本家のヒーローを参考にした構成:
+   大きな見出し一文だけ+単語ごとのブラー→フェードイン演出、
+   背景にはごく微かなノイズテクスチャ(製品画面のスクリーンショットは使わない
+   — Landingは未ログインの訪問者向けなので、特定の選手データはまだ見せない)。
+   CTAは「Get Started」1つだけに絞る。 */
+
+/* ナビ上部のGet Startedボタン。.home-link はアプリ全体(9ファイル)で使う
+   共通CTAクラスのため、その緑グラデーションは変更せず、Landingページの
+   このボタンだけ単色インディゴで上書きする(a.navCtaで.home-linkより
+   詳細度を上げる。PlayerCard.module.cssのa.glassCardと同じ手法)。 */
+a.navCta {
+  background: var(--ctp-blue);
+  box-shadow: none;
+}
+
+a.navCta:hover {
+  background: var(--ctp-blue);
+  opacity: 0.9;
+  box-shadow: none;
+}
+
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 120px 24px 100px;
+  overflow: hidden;
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.kicker {
+  position: relative;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ctp-subtext0);
+  margin: 0 0 24px;
+}
+
+.title {
+  position: relative;
+  font-size: clamp(40px, 6vw, 68px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--ctp-text);
+  max-width: 900px;
+  margin: 0 0 40px;
+}
+
+.word {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(10px);
+  transform: translateY(20%);
+  animation: word-reveal 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes word-reveal {
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: 999px;
+  background: var(--ctp-blue);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  opacity: 0;
+  animation: cta-reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) 900ms forwards;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+@keyframes cta-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word,
+  .cta {
+    animation: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+  }
+}
+
+/* 仕組みの説明(3ステップ)。クリックできない純粋な説明カード。 */
+.howItWorks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 24px 100px;
+}
+
+.stepCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.stepIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--ctp-blue);
+  flex-shrink: 0;
+}
+
+.stepTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ctp-text);
+  margin: 0 0 4px;
+}
+
+.stepDesc {
+  font-size: 13px;
+  color: var(--ctp-subtext0);
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .howItWorks {
+    grid-template-columns: 1fr;
+  }
+}

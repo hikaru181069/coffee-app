@@ -1,0 +1,25 @@
+### 
+
+GET http://localhost:5001/api/players/search?q=sho HTTP/1.1
+
+
+### 
+
+GET http://localhost:5001/api/players/search?q=judge HTTP/1.1
+
+
+### 
+
+GET http://localhost:5001/api/players/search?q=betts HTTP/1.1
+
+
+### 
+
+
+### 
+
+
+### 
+
+GET http://localhost:5001/api/external/players/search?q=shohei%20ohtani
+ HTTP/1.1 HTTP/1.1

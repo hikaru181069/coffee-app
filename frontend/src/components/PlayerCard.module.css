@@ -1,0 +1,113 @@
+/* Linear風: 写真を主役にせず、名前・データを主役にする。
+   アクセントカラーは1色(--ctp-blue)だけに絞り、虹色にしない。 */
+
+/* Home Hero(HomeHero.module.css)と同じガラス質感をカード規模に縮小して適用する。
+   写真は載せない(小さいカードを多数並べる用途のため画像負荷・密度の面で見送り)。
+   グローバルな.player-cardクラス(App.css)のbackground/borderを上書きするため、
+   要素セレクタと組み合わせて specificity を確実に上げる(a.glassCard)。 */
+a.glassCard {
+  background:
+    radial-gradient(160% 140% at 20% -10%, color-mix(in srgb, var(--team-color, var(--ctp-blue)) 14%, transparent), transparent 60%),
+    rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--ctp-surface1);
+}
+
+.headText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--ctp-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  color: var(--ctp-subtext0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teamLogo {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.bio {
+  font-size: 0.78rem;
+  color: var(--ctp-subtext0);
+  margin: 4px 0;
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 52px 1fr 22px;
+  align-items: center;
+  gap: 8px;
+}
+
+.barLabel {
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ctp-subtext0);
+  white-space: nowrap;
+}
+
+.barTrack {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ctp-surface1);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ctp-blue);
+}
+
+.barValue {
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ctp-subtext1);
+  text-align: right;
+}

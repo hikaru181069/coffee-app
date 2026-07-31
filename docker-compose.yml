@@ -1,0 +1,70 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: mlb-app-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: mlb-app-redis
+    ports:
+      - "6379:6379"
+
+  fastapi:
+    build: ./fastapi-service
+    container_name: mlb-app-fastapi
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./fastapi-service:/app
+
+  backend:
+    build: ./backend
+    container_name: mlb-app-backend
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./backend:/app
+      # 匿名volume: コンテナ内でnpm installした node_modules を、
+      # 上の行(ホストのソースコード全体)で上書きされないように保護する。
+      # ホスト側に node_modules が無くても(あってもOSが違っても)問題なく動く。
+      - /app/node_modules
+    environment:
+      # ここでのホスト名(mongodb, redis, fastapi)は docker-compose.yml 内の
+      # サービス名。Docker Composeが内部ネットワークで名前解決してくれるため、
+      # localhost ではなくサービス名で他のコンテナに到達できる。
+      PORT: 5001
+      MONGO_URI: mongodb://mongodb:27017/mlbApp
+      REDIS_URL: redis://redis:6379
+      FASTAPI_URL: http://fastapi:8000
+      FRONTEND_URL: http://localhost:5173
+      # ローカル開発専用の値。本番のJWT_SECRETとは無関係(ローカルMongoは
+      # ユーザーデータも空なので、値が一致している必要はない)。
+      JWT_SECRET: local-dev-secret-change-me
+    depends_on:
+      - mongodb
+      - redis
+      - fastapi
+
+  frontend:
+    build: ./frontend
+    container_name: mlb-app-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      # 注意: これはブラウザ(ホストPC側)から呼ばれるURLなので、
+      # コンテナ名(backend)ではなく localhost を指定する。
+      # Viteはビルド時にこの値をJSに埋め込み、そのJSは手元のブラウザで
+      # 実行される＝Dockerの内部ネットワークの外側から呼ばれるため。
+      VITE_API_URL: http://localhost:5001
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:

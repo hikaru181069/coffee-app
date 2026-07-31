@@ -1,0 +1,25 @@
+/* Home画面のみで使う調整用スタイル。
+   discovery-archetypes / archetype-badge 等はArchetypePage.jsxとも共有されている
+   グローバルクラスなので、App.css側の定義は変更せず、ここでは:global()で
+   Home画面限定の上書きだけを行う。 */
+
+/* Browse by Style: 他ページの虹色バッジ(archetype-badge)は使わず、
+   Home Heroの単色トーンに合わせたモノクロのピルに置き換える。 */
+.archetypePill {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--ctp-surface0);
+  border: 1px solid var(--ctp-surface1);
+  color: var(--ctp-subtext1);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 140ms ease, color 140ms ease;
+}
+
+.archetypePill:hover {
+  border-color: var(--ctp-blue);
+  color: var(--ctp-blue);
+}
