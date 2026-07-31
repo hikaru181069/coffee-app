@@ -22,7 +22,7 @@ function RegisterPage() {
       setErrorMessage("");
       const data = await registerUser(formData);
       saveAuthData(data);
-      navigate("/onboarding/favorites");
+      navigate("/");
     } catch (error) {
       console.error("Register error:", error);
       setErrorMessage(error.message || "Failed to register. Please check your input.");
@@ -37,7 +37,7 @@ function RegisterPage() {
         <p className="auth-card-kicker">Get Started</p>
         <h1>Register</h1>
         <p className="auth-card-desc">
-          Create an account to save players and get personalized recommendations.
+          アカウントを作成して、コーヒー体験の記録を始めましょう。
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>

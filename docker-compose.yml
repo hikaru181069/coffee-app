@@ -7,12 +7,6 @@ services:
     volumes:
       - mongodb_data:/data/db
 
-  redis:
-    image: redis:7-alpine
-    container_name: coffee-app-redis
-    ports:
-      - "6379:6379"
-
   fastapi:
     build: ./fastapi-service
     container_name: coffee-app-fastapi
@@ -33,12 +27,11 @@ services:
       # ホスト側に node_modules が無くても(あってもOSが違っても)問題なく動く。
       - /app/node_modules
     environment:
-      # ここでのホスト名(mongodb, redis, fastapi)は docker-compose.yml 内の
+      # ここでのホスト名(mongodb, fastapi)は docker-compose.yml 内の
       # サービス名。Docker Composeが内部ネットワークで名前解決してくれるため、
       # localhost ではなくサービス名で他のコンテナに到達できる。
       PORT: 5001
       MONGO_URI: mongodb://mongodb:27017/coffeeApp
-      REDIS_URL: redis://redis:6379
       FASTAPI_URL: http://fastapi:8000
       FRONTEND_URL: http://localhost:5173
       # ローカル開発専用の値。本番のJWT_SECRETとは無関係(ローカルMongoは
@@ -46,7 +39,6 @@ services:
       JWT_SECRET: local-dev-secret-change-me
     depends_on:
       - mongodb
-      - redis
       - fastapi
 
   frontend:

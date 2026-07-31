@@ -1,33 +1,32 @@
 import { Link, Navigate } from "react-router-dom";
-import { Target, TrendingUp, Star } from "lucide-react";
+import { Coffee, Share2, Sparkles } from "lucide-react";
 import { getAuthToken } from "../utils/authStorage";
 import heroStyles from "./LandingHero.module.css";
 
-const MLB_LOGO = "https://www.mlbstatic.com/team-logos/league-on-dark/1.svg";
+const HERO_TITLE = "Record your coffee. Discover your taste.";
 
-const HERO_TITLE = "Find the players you'll love next.";
-
-// Home Hero(HomeHero.jsx)のScout Notesと同じアイコンを使い、実際の機能との
-// 視覚的な一貫性を保つ。あくまで説明用のカードでリンクは持たせない
-// (以前のTILES/Browse by StyleはProtectedRoute配下へのリンクで、
-// 未ログインで訪問すると/landingへ戻されるだけの壊れたループになっていた)。
+// Record → Connect → Discover の3ステップをそのまま説明カードにする
+// （docs/vision.md の Core Experience）。あくまで説明用のカードで
+// リンクは持たせない（未ログインで機能ページへ飛んでも
+// ProtectedRouteに/landingへ戻されるだけの壊れたループになるため）。
 const HOW_IT_WORKS = [
   {
-    icon: Star,
-    title: "Add Your Favorites",
-    desc: "Star the players you already like.",
+    icon: Coffee,
+    title: "Record",
+    desc: "飲んだコーヒーを産地・フレーバーとともに記録する。",
   },
   {
-    icon: TrendingUp,
-    title: "AI Analyzes Play Styles",
-    desc: "Power, speed, contact, defense — all scored.",
+    icon: Share2,
+    title: "Connect",
+    desc: "産地・品種・精製方法・フレーバーが記録どうしで自動につながる。",
   },
   {
-    icon: Target,
-    title: "Discover New Favorites",
-    desc: "Get matched with players who play just like them.",
+    icon: Sparkles,
+    title: "Discover",
+    desc: "知識グラフから、自分の好みや未知の関係を発見する。",
   },
 ];
+
 function LandingPage() {
   const token = getAuthToken();
   if (token) return <Navigate to="/" replace />;
@@ -37,7 +36,7 @@ function LandingPage() {
 
       {/* ミニナビ */}
       <nav className="landing-nav">
-        <img src={MLB_LOGO} alt="MLB" className="landing-nav-logo" />
+        <span className="landing-nav-logo" aria-hidden="true" style={{ fontSize: "1.5rem" }}>☕</span>
         <div className="landing-nav-actions">
           <Link to="/login" className="landing-nav-login">Login</Link>
           <Link to="/register" className={`home-link ${heroStyles.navCta}`}>Get Started</Link>
@@ -46,12 +45,12 @@ function LandingPage() {
 
       <div className="landing-body">
 
-        {/* ヒーロー: linear.app本家を参考に、大きな見出し一文+単語ごとの
-            ブラー→フェードイン演出のみに絞る。訪問者はまだアプリを使ったことが
-            ないため、特定の選手データはここでは見せない。CTAはGet Started 1つのみ。 */}
+        {/* ヒーロー: 大きな見出し一文+単語ごとのブラー→フェードイン演出のみに絞る。
+            訪問者はまだアプリを使ったことがないため、特定の記録データは見せない。
+            CTAはGet Started 1つのみ。 */}
         <section className={heroStyles.hero}>
           <div className={heroStyles.grain} aria-hidden="true" />
-          <p className={heroStyles.kicker}>MLB Player Discovery</p>
+          <p className={heroStyles.kicker}>Coffee Journal & Knowledge Graph</p>
           <h1 className={heroStyles.title}>
             {HERO_TITLE.split(" ").map((word, i) => (
               <span key={`${word}-${i}`}>
@@ -67,19 +66,22 @@ function LandingPage() {
           <Link className={heroStyles.cta} to="/register">Get Started</Link>
         </section>
 
-        {/* 仕組みの説明(非リンク)。3ステップで「どう機能するか」を伝える */}
+        {/* 仕組みの説明(非リンク)。Record → Connect → Discover の3ステップで伝える */}
         <section className={heroStyles.howItWorks}>
-          {HOW_IT_WORKS.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className={heroStyles.stepCard}>
-              <span className={heroStyles.stepIcon}>
-                <Icon size={18} strokeWidth={2} />
-              </span>
-              <div>
-                <p className={heroStyles.stepTitle}>{title}</p>
-                <p className={heroStyles.stepDesc}>{desc}</p>
+          {HOW_IT_WORKS.map((step) => {
+            const { icon: Icon, title, desc } = step;
+            return (
+              <div key={title} className={heroStyles.stepCard}>
+                <span className={heroStyles.stepIcon}>
+                  <Icon size={18} strokeWidth={2} aria-hidden="true" />
+                </span>
+                <div>
+                  <p className={heroStyles.stepTitle}>{title}</p>
+                  <p className={heroStyles.stepDesc}>{desc}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </section>
 
       </div>

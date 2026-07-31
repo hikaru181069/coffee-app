@@ -5,17 +5,13 @@ import { unauthorizedError } from "../utils/AppError.js";
 /**
  * JWTを検証し、req.user に認証済みユーザーを載せる。
  *
- * middleware/authMiddleware.js の protect と役割は同じだが、
- * エラー応答が docs/architecture.md の形式
- * （{ error: { code, message, details } }）になっている点が異なる。
+ * エラー応答は docs/architecture.md の形式
+ * （{ error: { code, message, details } }）に統一している。
  *
- * なぜ protect を書き換えず新設したのか:
- *   protect は既存のMLBルート18本が使っており、応答形式を変えると
- *   それらのAPIの互換性を壊す（CLAUDE.md「動作している認証を不要に
- *   書き換えない」「既存APIの互換性を理由なく壊さない」）。
- *   MLBルートは Phase 6 で削除予定なので、そのとき protect も一緒に
- *   消して、この authenticate に一本化する。
- *   → docs/mlb-legacy-inventory.md に記載
+ * かつては middleware/authMiddleware.js の protect が別に存在した
+ * （MLBルートが応答形式の違うこちらに依存していたため）が、
+ * Phase 6 でMLBルートを削除した際に protect も削除し、認証は
+ * この authenticate 一本になっている（docs/mlb-legacy-inventory.md）。
  *
  * ここが「userIdは認証情報から取得する」の起点になる。
  * 以降のcontrollerは req.user._id だけを見て、リクエスト本文の

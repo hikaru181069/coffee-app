@@ -1,39 +1,16 @@
 import { lazy, Suspense } from "react";
-import { Route, Routes, useLocation, Navigate } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./contexts/ToastContext";
 import "./App.css";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
-import PlayersPage from "./pages/PlayersPage";
-import PlayerDetailPage from "./pages/PlayerDetailPage";
 import LoginPage from "./pages/LoginPage";
-import ExternalPlayersPage from "./pages/ExternalPlayersPage";
-import SearchPage from "./pages/SearchPage";
-import FavoritesPage from "./pages/FavoritesPage";
-import FavoriteEditPage from "./pages/FavoriteEditPage";
 import RegisterPage from "./pages/RegisterPage";
-import OnboardingFavoritesPage from "./pages/OnboardingFavoritesPage";
-import TeamPage from "./pages/TeamPage";
-import GamePage from "./pages/GamePage";
-import NewsPage from "./pages/NewsPage";
 import BottomTabBar from "./components/BottomTabBar";
-import StatsPage from "./pages/StatsPage";
-import ComparePage from "./pages/ComparePage";
-import MatchupPage from "./pages/MatchupPage";
-import LeaguePage from "./pages/LeaguePage";
 import ProfilePage from "./pages/ProfilePage";
-import RecommendationsPage from "./pages/RecommendationsPage";
-import ScoutPage from "./pages/ScoutPage";
-import ArchetypePage from "./pages/ArchetypePage";
-import ProspectsPage from "./pages/ProspectsPage";
-import ForYouPage from "./pages/ForYouPage";
-import PositionsPage from "./pages/PositionsPage";
-import PositionPage from "./pages/PositionPage";
 import LandingPage from "./pages/LandingPage";
-import DiscoverPage from "./pages/DiscoverPage";
 
-// coffee-app の画面
 import RecordsPage from "./pages/RecordsPage";
 import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
@@ -43,10 +20,15 @@ import RecordDetailPage from "./pages/RecordDetailPage";
 // 遅延読み込みにする。
 const GraphPage = lazy(() => import("./pages/GraphPage"));
 
-// [Phase 4] ページ遷移アニメーション
+// ページ遷移アニメーション。
 // location.key を React の key に渡すことで、ページが変わるたびにコンポーネントが
 // 再マウントされ、CSS アニメーション (page-transition) が毎回リセットされる。
 // Navbar は AnimatedRoutes の外にあるため、ナビ時にちらつかない。
+//
+// 注意: この仕組みは setSearchParams などURLを書き換える操作でも
+// location.key が変わり、意図せずページ全体を再マウントさせる
+// （features/graph/pages/GraphPage.jsx で実際に踏んだ）。
+// URLだけを書き換えたい場合は window.history.replaceState を使うこと。
 function AnimatedRoutes() {
   const location = useLocation();
   return (
@@ -56,17 +38,19 @@ function AnimatedRoutes() {
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/onboarding/favorites" element={<OnboardingFavoritesPage />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
-          {/* coffee-app: 記録の一覧・作成・詳細・編集
+          <Route path="/" element={<HomePage />} />
+
+          {/* 記録の一覧・作成・詳細・編集。
               /records/new を /records/:recordId より先に置く。
               後ろにすると "new" が recordId として解釈されてしまう */}
           <Route path="/records" element={<RecordsPage />} />
           <Route path="/records/new" element={<RecordFormPage />} />
           <Route path="/records/:recordId" element={<RecordDetailPage />} />
           <Route path="/records/:recordId/edit" element={<RecordFormPage />} />
+
           <Route
             path="/graph"
             element={
@@ -80,62 +64,30 @@ function AnimatedRoutes() {
             }
           />
 
-          <Route path="/" element={<HomePage />} />
-          <Route path="/discover" element={<DiscoverPage />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/favorites" element={<FavoritesPage />} />
-          <Route path="/favorites/:favoriteId" element={<FavoriteEditPage />} />
-          <Route path="/team/:teamId" element={<TeamPage />} />
-          <Route path="/game/:gamePk" element={<GamePage />} />
-          <Route path="/news" element={<NewsPage />} />
-          <Route path="/stats" element={<StatsPage />} />
-          <Route path="/compare" element={<ComparePage />} />
-          <Route path="/matchup" element={<MatchupPage />} />
-          <Route path="/league" element={<LeaguePage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/recommendations" element={<RecommendationsPage />} />
-          <Route path="/scout" element={<ScoutPage />} />
-          <Route path="/scout/:playerId" element={<ScoutPage />} />
-          <Route path="/players" element={<PlayersPage />} />
-          <Route path="/external-players" element={<ExternalPlayersPage />} />
-          <Route path="/players/:playerId" element={<PlayerDetailPage />} />
-          <Route path="/archetype/:type" element={<ArchetypePage />} />
-          <Route path="/prospects" element={<ProspectsPage />} />
-          <Route path="/foryou" element={<ForYouPage />} />
-          <Route path="/positions" element={<PositionsPage />} />
-          <Route path="/position/:pos" element={<PositionPage />} />
         </Route>
       </Routes>
     </div>
   );
 }
 
-// [Phase 14] Footer
-// fantinel.dev 参考: 技術スタック・作者情報をコンパクトにまとめたフッター。
+// フッター: 技術スタック・作者情報をコンパクトにまとめる。
 // サイドバーと同じ ml-52 オフセットを適用してコンテンツ幅に揃える。
 function Footer() {
-  const techStack = ["MongoDB", "Express", "React", "Node.js", "FastAPI", "MLB Stats API", "JWT"];
+  const techStack = ["MongoDB", "Express", "React", "Node.js", "FastAPI", "JWT"];
   return (
     <footer className="site-footer md:ml-52">
       <div className="footer-inner">
-        {/* 左: ロゴ + キャッチコピー */}
         <div className="footer-brand">
-          <img
-            src="https://www.mlbstatic.com/team-logos/league-on-dark/1.svg"
-            alt="MLB"
-            className="footer-logo"
-          />
-          <span className="footer-title">MLB App</span>
+          <span className="footer-title">☕ Coffee App</span>
         </div>
 
-        {/* 中央: 技術スタックバッジ */}
         <div className="footer-stack">
           {techStack.map((tech) => (
             <span key={tech} className="footer-badge">{tech}</span>
           ))}
         </div>
 
-        {/* 右: クレジット */}
         <p className="footer-credit">
           Built by Hikaru · MERN Portfolio
         </p>

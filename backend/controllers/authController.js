@@ -19,8 +19,6 @@ const createAuthResponse = (user) => {
     _id: user._id,
     name: user.name,
     email: user.email,
-    favoriteTeam: user.favoriteTeam,
-    hasCompletedOnboarding: user.hasCompletedOnboarding,
     token: createToken(user._id),
   };
 };
