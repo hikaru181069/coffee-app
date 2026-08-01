@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 /**
  * ラベル・入力欄・エラーメッセージをまとめる枠。
  *
@@ -9,6 +11,7 @@
  * 画面上部にまとめて出すと、どの欄の話か分からなくなる。
  */
 function FormField({ id, label, required = false, hint, error, children }) {
+  const { t } = useTranslation();
   const errorId = error ? `${id}-error` : undefined;
   const hintId = hint ? `${id}-hint` : undefined;
 
@@ -18,10 +21,10 @@ function FormField({ id, label, required = false, hint, error, children }) {
         {label}
         {required ? (
           <span className="rounded bg-ctp-surface1 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ctp-subtext1">
-            必須
+            {t("common.required")}
           </span>
         ) : (
-          <span className="text-[11px] font-normal text-ctp-subtext0">任意</span>
+          <span className="text-[11px] font-normal text-ctp-subtext0">{t("common.optional")}</span>
         )}
       </label>
 

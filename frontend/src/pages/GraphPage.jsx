@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ReactFlowProvider } from "@xyflow/react";
+import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
 import { useGraph } from "../features/graph/hooks/useGraph";
@@ -27,6 +28,7 @@ import {
 const DEFAULT_FILTERS = { nodeTypes: [], recordType: "", ratingMin: "" };
 
 function GraphPage() {
+  const { t } = useTranslation();
   // 初回マウント時点のURLから focus パラメータを1回だけ取り出す。
   // useState の初期化関数は最初のレンダリングでしか呼ばれないため、
   // 以後のURL変化を継続して監視するものではない
@@ -125,7 +127,7 @@ function GraphPage() {
       <header>
         <h1 className="text-xl font-bold text-ctp-text">Graph</h1>
         <p className="mt-1 text-sm text-ctp-subtext0">
-          記録した産地やフレーバーのつながりを探索できます。
+          {t("graph.subtitle")}
         </p>
       </header>
 

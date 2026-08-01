@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 /**
  * 1〜5の評価を星で選ぶ入力。
@@ -13,6 +14,7 @@ import { Star } from "lucide-react";
  *   見た目だけ星に差し替え、実体は radio のままにする。
  */
 function RatingInput({ id, value, onChange, disabled = false }) {
+  const { t } = useTranslation();
   const selected = value === "" ? 0 : Number(value);
 
   return (
@@ -57,7 +59,7 @@ function RatingInput({ id, value, onChange, disabled = false }) {
 
       {/* 星の数を文字でも示す（色・形だけで状態を表現しない） */}
       <span className="text-sm text-ctp-subtext1">
-        {selected === 0 ? "未評価" : `${selected} / 5`}
+        {selected === 0 ? t("common.unrated") : `${selected} / 5`}
       </span>
 
       {selected > 0 && !disabled && (
@@ -66,7 +68,7 @@ function RatingInput({ id, value, onChange, disabled = false }) {
           onClick={() => onChange("")}
           className="text-xs text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
         >
-          クリア
+          {t("common.clear")}
         </button>
       )}
     </div>

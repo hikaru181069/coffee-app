@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import FormField from "./FormField";
 import RatingInput from "./RatingInput";
@@ -12,6 +13,7 @@ import {
   cardClass,
 } from "./formStyles";
 import { RECORD_TYPES } from "../utils/recordFormat";
+import { getErrorMessage } from "../../../utils/errorMessage";
 
 /**
  * 記録の入力フォーム。作成と編集で共用する。
@@ -42,6 +44,7 @@ function RecordForm({
   masterDataError,
   submitLabel,
 }) {
+  const { t } = useTranslation();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const handleSubmit = (event) => {
@@ -62,13 +65,13 @@ function RecordForm({
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
       {/* ── 基本情報 ─────────────────────────────── */}
       <section className={`${cardClass} flex flex-col gap-5`}>
-        <FormField id="title" label="タイトル" required error={errors.title}>
+        <FormField id="title" label={t("recordForm.title")} required error={errors.title}>
           <input
             id="title"
             type="text"
             value={values.title}
             onChange={(event) => setValue("title", event.target.value)}
-            placeholder="例: Ethiopia Yirgacheffe"
+            placeholder={t("recordForm.titlePlaceholder")}
             maxLength={120}
             disabled={isSubmitting}
             aria-invalid={Boolean(errors.title)}
@@ -77,7 +80,7 @@ function RecordForm({
           />
         </FormField>
 
-        <FormField id="consumedAt" label="飲んだ日時" required error={errors.consumedAt}>
+        <FormField id="consumedAt" label={t("recordForm.consumedAt")} required error={errors.consumedAt}>
           <input
             id="consumedAt"
             type="datetime-local"
@@ -90,7 +93,7 @@ function RecordForm({
           />
         </FormField>
 
-        <FormField id="recordType" label="どこで飲んだか" required error={errors.recordType}>
+        <FormField id="recordType" label={t("recordForm.recordTypeLabel")} required error={errors.recordType}>
           <div role="radiogroup" aria-labelledby="recordType" className="flex gap-2">
             {RECORD_TYPES.map((type) => (
               <label
@@ -110,20 +113,20 @@ function RecordForm({
                   disabled={isSubmitting}
                   className="sr-only"
                 />
-                {type.label}
+                {t(type.labelKey)}
               </label>
             ))}
           </div>
         </FormField>
 
         {isCafe && (
-          <FormField id="cafeName" label="店名" error={errors.cafeName}>
+          <FormField id="cafeName" label={t("recordForm.cafeName")} error={errors.cafeName}>
             <input
               id="cafeName"
               type="text"
               value={values.cafeName}
               onChange={(event) => setValue("cafeName", event.target.value)}
-              placeholder="例: Blue Bottle Coffee"
+              placeholder={t("recordForm.cafeNamePlaceholder")}
               maxLength={120}
               disabled={isSubmitting}
               className={controlClass(errors.cafeName)}
@@ -131,7 +134,7 @@ function RecordForm({
           </FormField>
         )}
 
-        <FormField id="rating" label="評価" error={errors.rating}>
+        <FormField id="rating" label={t("common.rating")} error={errors.rating}>
           <RatingInput
             id="rating"
             value={values.rating}
@@ -140,12 +143,12 @@ function RecordForm({
           />
         </FormField>
 
-        <FormField id="notes" label="メモ" error={errors.notes}>
+        <FormField id="notes" label={t("recordForm.notes")} error={errors.notes}>
           <textarea
             id="notes"
             value={values.notes}
             onChange={(event) => setValue("notes", event.target.value)}
-            placeholder="味の印象、淹れ方、そのときのことなど"
+            placeholder={t("recordForm.notesPlaceholder")}
             maxLength={2000}
             disabled={isSubmitting}
             aria-invalid={Boolean(errors.notes)}
@@ -164,9 +167,9 @@ function RecordForm({
           className="flex w-full items-center justify-between gap-3 text-left"
         >
           <span>
-            <span className="block text-sm font-semibold text-ctp-text">コーヒーの詳細</span>
+            <span className="block text-sm font-semibold text-ctp-text">{t("records.detailsHeading")}</span>
             <span className="mt-0.5 block text-xs text-ctp-subtext0">
-              産地や品種を選ぶと、記録どうしがつながります（すべて任意）
+              {t("recordForm.detailsHint")}
             </span>
           </span>
           <ChevronDown
@@ -182,11 +185,11 @@ function RecordForm({
           <div id="coffee-details" className="mt-5 flex flex-col gap-5">
             {masterDataError && (
               <p className="rounded-lg border border-ctp-peach/40 bg-ctp-peach/10 px-3 py-2 text-xs text-ctp-peach">
-                選択肢を読み込めませんでした。この部分は空欄のままでも記録は保存できます。
+                {t("recordForm.masterDataError")}
               </p>
             )}
 
-            <FormField id="originId" label="産地" error={errors.originId}>
+            <FormField id="originId" label={t("recordForm.origin")} error={errors.originId}>
               <select
                 id="originId"
                 value={values.originId}
@@ -194,7 +197,7 @@ function RecordForm({
                 disabled={isSubmitting || isMasterDataLoading}
                 className={controlClass(errors.originId)}
               >
-                <option value="">選択しない</option>
+                <option value="">{t("common.notSelected")}</option>
                 {masterData.origins.map((origin) => (
                   <option key={origin.id} value={origin.id}>
                     {origin.name}
@@ -205,8 +208,8 @@ function RecordForm({
 
             <FormField
               id="farmName"
-              label="農園"
-              hint="候補が無いため自由入力です"
+              label={t("recordForm.farmName")}
+              hint={t("recordForm.farmNameHint")}
               error={errors.farmName}
             >
               <input
@@ -214,14 +217,14 @@ function RecordForm({
                 type="text"
                 value={values.farmName}
                 onChange={(event) => setValue("farmName", event.target.value)}
-                placeholder="例: Konga Washing Station"
+                placeholder={t("recordForm.farmNamePlaceholder")}
                 maxLength={120}
                 disabled={isSubmitting}
                 className={controlClass(errors.farmName)}
               />
             </FormField>
 
-            <FormField id="varietyIds" label="品種" hint="複数選べます">
+            <FormField id="varietyIds" label={t("recordForm.variety")} hint={t("recordForm.multiSelectHint")}>
               <ChipMultiSelect
                 id="varietyIds"
                 options={masterData.varieties}
@@ -231,7 +234,7 @@ function RecordForm({
               />
             </FormField>
 
-            <FormField id="processId" label="精製方法" error={errors.processId}>
+            <FormField id="processId" label={t("recordForm.process")} error={errors.processId}>
               <select
                 id="processId"
                 value={values.processId}
@@ -239,7 +242,7 @@ function RecordForm({
                 disabled={isSubmitting || isMasterDataLoading}
                 className={controlClass(errors.processId)}
               >
-                <option value="">選択しない</option>
+                <option value="">{t("common.notSelected")}</option>
                 {masterData.processes.map((process) => (
                   <option key={process.id} value={process.id}>
                     {process.name}
@@ -248,7 +251,7 @@ function RecordForm({
               </select>
             </FormField>
 
-            <FormField id="roastLevelId" label="焙煎度" error={errors.roastLevelId}>
+            <FormField id="roastLevelId" label={t("recordForm.roastLevel")} error={errors.roastLevelId}>
               <select
                 id="roastLevelId"
                 value={values.roastLevelId}
@@ -256,7 +259,7 @@ function RecordForm({
                 disabled={isSubmitting || isMasterDataLoading}
                 className={controlClass(errors.roastLevelId)}
               >
-                <option value="">選択しない</option>
+                <option value="">{t("common.notSelected")}</option>
                 {masterData.roastLevels.map((roastLevel) => (
                   <option key={roastLevel.id} value={roastLevel.id}>
                     {roastLevel.name}
@@ -265,7 +268,7 @@ function RecordForm({
               </select>
             </FormField>
 
-            <FormField id="flavorIds" label="フレーバー" hint="複数選べます">
+            <FormField id="flavorIds" label={t("recordForm.flavor")} hint={t("recordForm.multiSelectHint")}>
               <ChipMultiSelect
                 id="flavorIds"
                 options={masterData.flavors}
@@ -275,13 +278,13 @@ function RecordForm({
               />
             </FormField>
 
-            <FormField id="roasterName" label="焙煎者・ロースター" error={errors.roasterName}>
+            <FormField id="roasterName" label={t("recordForm.roasterName")} error={errors.roasterName}>
               <input
                 id="roasterName"
                 type="text"
                 value={values.roasterName}
                 onChange={(event) => setValue("roasterName", event.target.value)}
-                placeholder="例: Onibus Coffee"
+                placeholder={t("recordForm.roasterNamePlaceholder")}
                 maxLength={120}
                 disabled={isSubmitting}
                 className={controlClass(errors.roasterName)}
@@ -294,12 +297,12 @@ function RecordForm({
       {/* 項目に紐づかないエラー（通信エラーなど）はここへ出す */}
       {submitError && !submitError.isValidationError && (
         <p role="alert" className="rounded-lg border border-ctp-red/40 bg-ctp-red/10 px-3 py-2 text-sm text-ctp-red">
-          {submitError.message}
+          {getErrorMessage(submitError, t)}
         </p>
       )}
       {submitError?.isValidationError && (
         <p role="alert" className="rounded-lg border border-ctp-red/40 bg-ctp-red/10 px-3 py-2 text-sm text-ctp-red">
-          入力内容を確認してください。
+          {t("recordForm.checkInput")}
         </p>
       )}
 
@@ -312,11 +315,11 @@ function RecordForm({
           disabled={isSubmitting}
           className={secondaryButtonClass}
         >
-          キャンセル
+          {t("common.cancel")}
         </button>
         <button type="submit" disabled={isSubmitting} className={primaryButtonClass}>
           {isSubmitting && <Loader2 size={16} aria-hidden="true" className="animate-spin" />}
-          {isSubmitting ? "保存中..." : submitLabel}
+          {isSubmitting ? t("common.saving") : submitLabel}
         </button>
       </div>
     </form>

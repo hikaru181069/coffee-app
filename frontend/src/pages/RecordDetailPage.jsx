@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Coffee, Pencil, Share2, Star, Store, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
 import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecord";
@@ -18,6 +19,7 @@ import {
   recordTypeLabel,
 } from "../features/coffee-records/utils/recordFormat";
 import { useToast } from "../contexts/ToastContext";
+import { getErrorMessage } from "../utils/errorMessage";
 
 /**
  * 記録の詳細画面。
@@ -35,6 +37,7 @@ import { useToast } from "../contexts/ToastContext";
  * 必要であれば改めて追加する。
  */
 function RecordDetailPage() {
+  const { t, i18n } = useTranslation();
   const { recordId } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -51,10 +54,10 @@ function RecordDetailPage() {
     setIsDeleting(true);
     try {
       await deleteCoffeeRecord(recordId);
-      addToast("記録を削除しました", "success");
+      addToast(t("records.toastDeleted"), "success");
       navigate("/records", { replace: true });
     } catch (caught) {
-      addToast(caught.message, "error");
+      addToast(getErrorMessage(caught, t), "error");
       setIsDeleting(false);
       setIsConfirmOpen(false);
     }
@@ -75,12 +78,12 @@ function RecordDetailPage() {
       <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
         {error.isNotFound ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
-            <p className="text-sm font-medium text-ctp-text">記録が見つかりません</p>
+            <p className="text-sm font-medium text-ctp-text">{t("records.notFoundTitle")}</p>
             <p className="text-sm text-ctp-subtext0">
-              削除されたか、URLが正しくない可能性があります。
+              {t("records.notFoundDesc")}
             </p>
             <Link to="/records" className={secondaryButtonClass}>
-              一覧へ戻る
+              {t("common.backToList")}
             </Link>
           </div>
         ) : (
@@ -92,7 +95,7 @@ function RecordDetailPage() {
 
   if (!record) return null;
 
-  const details = collectCoffeeDetails(record);
+  const details = collectCoffeeDetails(record, t, i18n.language);
   const flavors = record.flavors ?? [];
 
   return (
@@ -101,7 +104,7 @@ function RecordDetailPage() {
         to="/records"
         className="text-sm text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
       >
-        ← 一覧へ戻る
+        ← {t("common.backToList")}
       </Link>
 
       {/* ── 基本情報 ─────────────────────────────── */}
@@ -109,7 +112,7 @@ function RecordDetailPage() {
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-ctp-text">{record.title}</h1>
           <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ctp-subtext0">
-            <span>{formatConsumedAt(record.consumedAt)}</span>
+            <span>{formatConsumedAt(record.consumedAt, i18n.language)}</span>
             <span aria-hidden="true">·</span>
             <span className="inline-flex items-center gap-1">
               {record.recordType === "cafe" ? (
@@ -117,7 +120,7 @@ function RecordDetailPage() {
               ) : (
                 <Coffee size={13} aria-hidden="true" />
               )}
-              {recordTypeLabel(record.recordType)}
+              {recordTypeLabel(record.recordType, t)}
             </span>
             {record.cafeName && (
               <>
@@ -151,7 +154,7 @@ function RecordDetailPage() {
       {/* ── Coffee Details ───────────────────────── */}
       {(details.length > 0 || flavors.length > 0) && (
         <section className={`${cardClass} mt-5`}>
-          <h2 className="text-sm font-semibold text-ctp-text">コーヒーの詳細</h2>
+          <h2 className="text-sm font-semibold text-ctp-text">{t("records.detailsHeading")}</h2>
 
           {details.length > 0 && (
             <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -166,7 +169,7 @@ function RecordDetailPage() {
 
           {flavors.length > 0 && (
             <div className="mt-4">
-              <h3 className="text-xs text-ctp-subtext0">フレーバー</h3>
+              <h3 className="text-xs text-ctp-subtext0">{t("records.flavorsHeading")}</h3>
               <ul className="mt-1.5 flex flex-wrap gap-1.5">
                 {flavors.map((flavor) => (
                   <li
@@ -185,7 +188,7 @@ function RecordDetailPage() {
       {/* ── Notes ────────────────────────────────── */}
       {record.notes && (
         <section className={`${cardClass} mt-4`}>
-          <h2 className="text-sm font-semibold text-ctp-text">メモ</h2>
+          <h2 className="text-sm font-semibold text-ctp-text">{t("records.notesHeading")}</h2>
           {/* whitespace-pre-wrap: 入力時の改行を表示にも反映する */}
           <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ctp-subtext1">
             {record.notes}
@@ -196,7 +199,7 @@ function RecordDetailPage() {
       {/* 詳細が何も無いときは、次に何ができるかを示す */}
       {details.length === 0 && flavors.length === 0 && !record.notes && (
         <p className="mt-5 rounded-xl border border-dashed border-ctp-overlay0/60 px-4 py-6 text-center text-sm text-ctp-subtext0">
-          産地やフレーバーを追加すると、ほかの記録とのつながりが見えるようになります。
+          {t("records.detailEmptyHint")}
         </p>
       )}
 
@@ -204,14 +207,14 @@ function RecordDetailPage() {
       <div className="mt-6 flex flex-wrap gap-2">
         <Link to={`/records/${record.id}/edit`} className={secondaryButtonClass}>
           <Pencil size={15} aria-hidden="true" />
-          編集
+          {t("common.edit")}
         </Link>
         {/* Phase 5で知識グラフ画面ができたので実装する。
             ?focus=record:xxx でグラフ側にそのノードを自動選択させる
             （features/graph/hooks GraphPage の handleGraphReady を参照） */}
         <Link to={`/graph?focus=record:${record.id}`} className={secondaryButtonClass}>
           <Share2 size={15} aria-hidden="true" />
-          Graphで見る
+          {t("common.viewOnGraph")}
         </Link>
         <button
           type="button"
@@ -219,14 +222,14 @@ function RecordDetailPage() {
           className={dangerButtonClass}
         >
           <Trash2 size={15} aria-hidden="true" />
-          削除
+          {t("common.delete")}
         </button>
       </div>
 
       <ConfirmDialog
         isOpen={isConfirmOpen}
-        title="この記録を削除しますか？"
-        description={`「${record.title}」を削除します。この操作は取り消せません。`}
+        title={t("records.confirmDeleteTitle")}
+        description={t("records.confirmDeleteDescription", { title: record.title })}
         isProcessing={isDeleting}
         onConfirm={handleDelete}
         onCancel={() => setIsConfirmOpen(false)}

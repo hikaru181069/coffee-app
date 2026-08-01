@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Coffee, MapPin, Star, Store } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { formatConsumedAtShort, recordTypeLabel } from "../utils/recordFormat";
 
@@ -11,6 +12,7 @@ import { formatConsumedAtShort, recordTypeLabel } from "../utils/recordFormat";
  * 情報が頭に入らない。詳しくは詳細画面で見る。
  */
 function RecordCard({ record }) {
+  const { t, i18n } = useTranslation();
   const flavors = record.flavors ?? [];
 
   return (
@@ -23,7 +25,7 @@ function RecordCard({ record }) {
           <div className="min-w-0">
             <h3 className="truncate text-base font-semibold text-ctp-text">{record.title}</h3>
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ctp-subtext0">
-              <span>{formatConsumedAtShort(record.consumedAt)}</span>
+              <span>{formatConsumedAtShort(record.consumedAt, i18n.language)}</span>
               <span aria-hidden="true">·</span>
               {/* 記録タイプはアイコンと文字の両方で示す（色だけで区別しない） */}
               <span className="inline-flex items-center gap-1">
@@ -32,7 +34,7 @@ function RecordCard({ record }) {
                 ) : (
                   <Coffee size={12} aria-hidden="true" />
                 )}
-                {recordTypeLabel(record.recordType)}
+                {recordTypeLabel(record.recordType, t)}
               </span>
               {record.cafeName && (
                 <>
@@ -47,7 +49,7 @@ function RecordCard({ record }) {
             <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-ctp-surface0 px-2 py-1 text-xs font-semibold text-ctp-yellow">
               <Star size={12} aria-hidden="true" fill="currentColor" strokeWidth={0} />
               {record.rating}
-              <span className="sr-only">段階中5</span>
+              <span className="sr-only">{t("records.outOf5Sr")}</span>
             </span>
           )}
         </div>

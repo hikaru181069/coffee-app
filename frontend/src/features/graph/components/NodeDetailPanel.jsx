@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { Star, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../utils/nodeVisuals";
 import { secondaryButtonClass } from "../../coffee-records/components/formStyles";
 import { formatConsumedAtShort } from "../../coffee-records/utils/recordFormat";
+import { getErrorMessage } from "../../../utils/errorMessage";
 
 /**
  * 選択中ノードのサイドパネル。
@@ -19,6 +21,7 @@ import { formatConsumedAtShort } from "../../coffee-records/utils/recordFormat";
  *   属性ノード     … type・label・recordCount・関連記録一覧
  */
 function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
+  const { t, i18n } = useTranslation();
   if (!node) return null;
 
   const visual = getNodeVisual(node.data.type);
@@ -27,21 +30,21 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
   return (
     <aside
       role="complementary"
-      aria-label="選択中のノード"
+      aria-label={t("graph.selectedNodeAriaLabel")}
       className="fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-ctp-surface1 bg-ctp-mantle p-4 shadow-xl sm:absolute sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-80 sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <Icon size={18} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
           <div>
-            <p className="text-xs text-ctp-subtext0">{visual.label}</p>
+            <p className="text-xs text-ctp-subtext0">{t(visual.labelKey)}</p>
             <h2 className="text-sm font-semibold text-ctp-text">{node.data.label}</h2>
           </div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          aria-label="閉じる"
+          aria-label={t("common.close")}
           className="rounded p-1 text-ctp-subtext0 hover:bg-ctp-surface1 hover:text-ctp-text"
         >
           <X size={16} aria-hidden="true" />
@@ -56,16 +59,18 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
           </div>
         )}
 
-        {error && <p className="text-sm text-ctp-red">{error.message}</p>}
+        {error && <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>}
 
         {!isLoading && !error && detail?.kind === "record" && (
-          <RecordNodeDetail record={detail.record} />
+          <RecordNodeDetail record={detail.record} language={i18n.language} t={t} />
         )}
 
         {!isLoading && !error && detail?.kind === "attribute" && (
           <AttributeNodeDetail
             recordCount={node.data.metadata.recordCount}
             relatedRecords={detail.relatedRecords}
+            language={i18n.language}
+            t={t}
           />
         )}
       </div>
@@ -74,12 +79,12 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
 }
 
 /** recordノードを選んだときの中身 */
-function RecordNodeDetail({ record }) {
+function RecordNodeDetail({ record, language, t }) {
   if (!record) return null;
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm text-ctp-subtext1">{formatConsumedAtShort(record.consumedAt)}</p>
+      <p className="text-sm text-ctp-subtext1">{formatConsumedAtShort(record.consumedAt, language)}</p>
       {record.rating !== null && (
         <p className="flex items-center gap-1 text-sm text-ctp-yellow">
           <Star size={14} aria-hidden="true" fill="currentColor" strokeWidth={0} />
@@ -90,17 +95,17 @@ function RecordNodeDetail({ record }) {
         <p className="line-clamp-3 text-sm text-ctp-subtext1">{record.notes}</p>
       )}
       <Link to={`/records/${record.id}`} className={`${secondaryButtonClass} mt-2`}>
-        記録の詳細を見る
+        {t("graph.viewRecordDetail")}
       </Link>
     </div>
   );
 }
 
 /** 属性ノード（産地・農園・品種・精製方法・焙煎度・フレーバー）を選んだときの中身 */
-function AttributeNodeDetail({ recordCount, relatedRecords }) {
+function AttributeNodeDetail({ recordCount, relatedRecords, language, t }) {
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-ctp-subtext0">{recordCount} 件の記録で登場</p>
+      <p className="text-sm text-ctp-subtext0">{t("graph.appearsInCount", { count: recordCount })}</p>
 
       <ul className="flex flex-col gap-2">
         {(relatedRecords ?? []).map((record) => (
@@ -111,7 +116,7 @@ function AttributeNodeDetail({ recordCount, relatedRecords }) {
             >
               <p className="truncate text-sm font-medium text-ctp-text">{record.title}</p>
               <p className="mt-0.5 flex items-center gap-2 text-xs text-ctp-subtext0">
-                <span>{formatConsumedAtShort(record.consumedAt)}</span>
+                <span>{formatConsumedAtShort(record.consumedAt, language)}</span>
                 {record.rating !== null && (
                   <span className="flex items-center gap-0.5 text-ctp-yellow">
                     <Star size={10} aria-hidden="true" fill="currentColor" strokeWidth={0} />

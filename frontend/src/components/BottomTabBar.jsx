@@ -3,6 +3,7 @@
 
 import { NavLink } from "react-router-dom";
 import { Coffee, Home, Share2, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // docs/design.md の Main Navigation（Home / Records / Graph / Profile）に対応する。
 const TABS = [
@@ -13,8 +14,9 @@ const TABS = [
 ];
 
 function BottomTabBar() {
+  const { t } = useTranslation();
   return (
-    <nav aria-label="下部ナビゲーション" className="bottom-tab-bar md:hidden">
+    <nav aria-label={t("nav.bottomNavigation")} className="bottom-tab-bar md:hidden">
       {TABS.map((tab) => {
         const { to, Icon, label, end } = tab;
         return (

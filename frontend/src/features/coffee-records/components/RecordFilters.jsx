@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { controlClass } from "./formStyles";
 import { RECORD_TYPES } from "../utils/recordFormat";
@@ -13,10 +14,11 @@ import { RECORD_TYPES } from "../utils/recordFormat";
  * URLと同期させたくなったときに、この中を触らずに済む。
  */
 function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilters }) {
+  const { t } = useTranslation();
   const update = (field, value) => onChange({ ...filters, [field]: value, page: 1 });
 
   return (
-    <section aria-label="絞り込み" className="flex flex-col gap-3">
+    <section aria-label={t("records.filterAriaLabel")} className="flex flex-col gap-3">
       {/* 記録タイプは選択頻度が高いので、セレクトではなくボタンで常時見せる */}
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -29,7 +31,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
               : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0"
           }`}
         >
-          すべて
+          {t("common.all")}
         </button>
         {RECORD_TYPES.map((type) => (
           <button
@@ -43,7 +45,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
                 : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0"
             }`}
           >
-            {type.label}
+            {t(type.labelKey)}
           </button>
         ))}
 
@@ -54,7 +56,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
             className="ml-auto inline-flex items-center gap-1 text-xs text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
           >
             <X size={12} aria-hidden="true" />
-            絞り込みを解除
+            {t("common.clearFilters")}
           </button>
         )}
       </div>
@@ -63,7 +65,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-origin" className="text-xs text-ctp-subtext0">
-            産地
+            {t("recordForm.origin")}
           </label>
           <select
             id="filter-origin"
@@ -71,7 +73,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
             onChange={(event) => update("originId", event.target.value)}
             className={controlClass(false)}
           >
-            <option value="">すべての産地</option>
+            <option value="">{t("records.allOrigins")}</option>
             {masterData.origins.map((origin) => (
               <option key={origin.id} value={origin.id}>
                 {origin.name}
@@ -82,7 +84,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
 
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-flavor" className="text-xs text-ctp-subtext0">
-            フレーバー
+            {t("recordForm.flavor")}
           </label>
           <select
             id="filter-flavor"
@@ -90,7 +92,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
             onChange={(event) => update("flavorId", event.target.value)}
             className={controlClass(false)}
           >
-            <option value="">すべてのフレーバー</option>
+            <option value="">{t("records.allFlavors")}</option>
             {masterData.flavors.map((flavor) => (
               <option key={flavor.id} value={flavor.id}>
                 {flavor.name}
@@ -101,7 +103,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
 
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-rating" className="text-xs text-ctp-subtext0">
-            評価
+            {t("common.rating")}
           </label>
           <select
             id="filter-rating"
@@ -109,10 +111,10 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
             onChange={(event) => update("ratingMin", event.target.value)}
             className={controlClass(false)}
           >
-            <option value="">評価で絞らない</option>
+            <option value="">{t("records.ratingUnfiltered")}</option>
             {[5, 4, 3, 2].map((score) => (
               <option key={score} value={score}>
-                {score} 以上
+                {t("common.scoreOrMore", { score })}
               </option>
             ))}
           </select>

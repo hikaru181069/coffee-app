@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
 import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecord";
@@ -26,6 +27,7 @@ import { useToast } from "../contexts/ToastContext";
  *   /records/:recordId/edit   → recordId あり         → 編集
  */
 function RecordFormPage() {
+  const { t } = useTranslation();
   const { recordId } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -52,14 +54,14 @@ function RecordFormPage() {
         ? await updateCoffeeRecord(recordId, payload)
         : await createCoffeeRecord(payload);
 
-      addToast(isEditing ? "記録を更新しました" : "記録を作成しました", "success");
+      addToast(isEditing ? t("records.toastUpdated") : t("records.toastCreated"), "success");
 
       // 保存後は詳細画面へ。一覧へ戻すと「保存されたか」を確認しづらい
       navigate(`/records/${saved.id}`, { replace: true });
 
       return saved;
     },
-    [isEditing, recordId, addToast, navigate],
+    [isEditing, recordId, addToast, navigate, t],
   );
 
   const form = useRecordForm(record, handleSubmit);
@@ -82,12 +84,12 @@ function RecordFormPage() {
       <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
         {isNotFound ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
-            <p className="text-sm font-medium text-ctp-text">記録が見つかりません</p>
+            <p className="text-sm font-medium text-ctp-text">{t("records.notFoundTitle")}</p>
             <p className="text-sm text-ctp-subtext0">
-              削除されたか、URLが正しくない可能性があります。
+              {t("records.notFoundDesc")}
             </p>
             <Link to="/records" className={secondaryButtonClass}>
-              一覧へ戻る
+              {t("common.backToList")}
             </Link>
           </div>
         ) : (
@@ -104,14 +106,14 @@ function RecordFormPage() {
           to={isEditing ? `/records/${recordId}` : "/records"}
           className="text-sm text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
         >
-          ← {isEditing ? "詳細へ戻る" : "一覧へ戻る"}
+          ← {isEditing ? t("records.backToDetail") : t("common.backToList")}
         </Link>
         <h1 className="mt-2 text-xl font-bold text-ctp-text">
-          {isEditing ? "記録を編集" : "コーヒーを記録する"}
+          {isEditing ? t("records.editTitle") : t("records.newTitle")}
         </h1>
         {!isEditing && (
           <p className="mt-1 text-sm text-ctp-subtext0">
-            タイトルと日時だけでも保存できます。詳しい情報は後から足せます。
+            {t("records.newSubtitle")}
           </p>
         )}
       </header>
@@ -128,7 +130,7 @@ function RecordFormPage() {
         masterData={masterData}
         isMasterDataLoading={isMasterDataLoading}
         masterDataError={masterDataError}
-        submitLabel={isEditing ? "変更を保存" : "記録する"}
+        submitLabel={isEditing ? t("records.submitEdit") : t("records.submitCreate")}
       />
     </div>
   );

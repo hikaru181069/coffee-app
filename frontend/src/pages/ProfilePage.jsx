@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
 import { changePassword, deleteAccount, getCurrentUser, updateProfile } from "../services/api/userApi";
@@ -13,6 +14,7 @@ import {
   primaryButtonClass,
 } from "../features/coffee-records/components/formStyles";
 import { useToast } from "../contexts/ToastContext";
+import { getErrorMessage } from "../utils/errorMessage";
 
 /**
  * プロフィール画面。
@@ -24,6 +26,7 @@ import { useToast } from "../contexts/ToastContext";
  * ため、書き直さず再利用している。
  */
 function ProfilePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { addToast } = useToast();
   const token = getAuthToken();
@@ -44,7 +47,7 @@ function ProfilePage() {
         setUser(data);
         setName(data.name);
       })
-      .catch((error) => addToast(error.message, "error"));
+      .catch((error) => addToast(getErrorMessage(error, t), "error"));
     // 初回読み込みのみ。addToastは毎レンダリングで新しい参照になり得るため依存に含めない
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -58,9 +61,9 @@ function ProfilePage() {
       const updated = await updateProfile({ name: name.trim() }, token);
       setUser(updated);
       saveAuthUserName(updated.name);
-      addToast("名前を更新しました", "success");
+      addToast(t("profile.toastNameUpdated"), "success");
     } catch (error) {
-      addToast(error.message, "error");
+      addToast(getErrorMessage(error, t), "error");
     } finally {
       setIsSavingName(false);
     }
@@ -74,9 +77,9 @@ function ProfilePage() {
     try {
       await changePassword(passwordForm, token);
       setPasswordForm({ currentPassword: "", newPassword: "" });
-      addToast("パスワードを変更しました", "success");
+      addToast(t("profile.toastPasswordChanged"), "success");
     } catch (error) {
-      addToast(error.message, "error");
+      addToast(getErrorMessage(error, t), "error");
     } finally {
       setIsChangingPassword(false);
     }
@@ -91,7 +94,7 @@ function ProfilePage() {
       clearAuthData();
       navigate("/login", { replace: true });
     } catch (error) {
-      addToast(error.message, "error");
+      addToast(getErrorMessage(error, t), "error");
       setIsDeleting(false);
       setIsConfirmOpen(false);
     }
@@ -105,7 +108,7 @@ function ProfilePage() {
 
       <section className={`${cardClass} mt-5`}>
         <form onSubmit={handleSaveName} className="flex flex-col gap-4">
-          <FormField id="profile-name" label="名前" required>
+          <FormField id="profile-name" label={t("profile.name")} required>
             <input
               id="profile-name"
               type="text"
@@ -116,7 +119,7 @@ function ProfilePage() {
             />
           </FormField>
 
-          <FormField id="profile-email" label="メールアドレス">
+          <FormField id="profile-email" label={t("profile.email")}>
             <input
               id="profile-email"
               type="email"
@@ -128,16 +131,16 @@ function ProfilePage() {
 
           <div>
             <button type="submit" disabled={isSavingName} className={primaryButtonClass}>
-              {isSavingName ? "保存中..." : "名前を保存"}
+              {isSavingName ? t("common.saving") : t("profile.saveName")}
             </button>
           </div>
         </form>
       </section>
 
       <section className={`${cardClass} mt-4`}>
-        <h2 className="text-sm font-semibold text-ctp-text">パスワードを変更</h2>
+        <h2 className="text-sm font-semibold text-ctp-text">{t("profile.changePasswordHeading")}</h2>
         <form onSubmit={handleChangePassword} className="mt-4 flex flex-col gap-4">
-          <FormField id="current-password" label="現在のパスワード" required>
+          <FormField id="current-password" label={t("profile.currentPassword")} required>
             <input
               id="current-password"
               type="password"
@@ -150,7 +153,7 @@ function ProfilePage() {
             />
           </FormField>
 
-          <FormField id="new-password" label="新しいパスワード" required hint="6文字以上">
+          <FormField id="new-password" label={t("profile.newPassword")} required hint={t("profile.newPasswordHint")}>
             <input
               id="new-password"
               type="password"
@@ -165,30 +168,30 @@ function ProfilePage() {
 
           <div>
             <button type="submit" disabled={isChangingPassword} className={primaryButtonClass}>
-              {isChangingPassword ? "変更中..." : "パスワードを変更"}
+              {isChangingPassword ? t("profile.changingPassword") : t("profile.changePasswordButton")}
             </button>
           </div>
         </form>
       </section>
 
       <section className={`${cardClass} mt-4 border-ctp-red/30`}>
-        <h2 className="text-sm font-semibold text-ctp-red">アカウントを削除</h2>
+        <h2 className="text-sm font-semibold text-ctp-red">{t("profile.deleteAccountHeading")}</h2>
         <p className="mt-1 text-xs text-ctp-subtext0">
-          自分の記録もすべて削除されます。この操作は取り消せません。
+          {t("profile.deleteAccountWarning")}
         </p>
         <button
           type="button"
           onClick={() => setIsConfirmOpen(true)}
           className={`${dangerButtonClass} mt-3`}
         >
-          アカウントを削除する
+          {t("profile.deleteAccountButton")}
         </button>
       </section>
 
       <ConfirmDialog
         isOpen={isConfirmOpen}
-        title="アカウントを削除しますか？"
-        description="すべてのコーヒー記録とアカウント情報が完全に削除されます。この操作は取り消せません。"
+        title={t("profile.confirmDeleteTitle")}
+        description={t("profile.confirmDeleteDescription")}
         isProcessing={isDeleting}
         onConfirm={handleDeleteAccount}
         onCancel={() => setIsConfirmOpen(false)}

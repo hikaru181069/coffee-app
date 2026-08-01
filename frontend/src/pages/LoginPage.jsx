@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   clearAuthData,
   getAuthToken,
@@ -8,8 +9,10 @@ import {
   saveAuthData,
 } from "../utils/authStorage";
 import { loginUser } from "../services/api/authApi";
+import { getErrorMessage } from "../utils/errorMessage";
 
 function LoginPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -34,9 +37,7 @@ function LoginPage() {
       navigate("/");
     } catch (error) {
       console.error("Login error:", error);
-      setErrorMessage(
-        error.message || "Failed to login. Please check your email and password.",
-      );
+      setErrorMessage(error.message ? getErrorMessage(error, t) : t("auth.login.fallbackError"));
     } finally {
       setSubmitting(false);
     }
@@ -47,9 +48,11 @@ function LoginPage() {
       <div className="home-page px-6 py-16">
         <div className="home-empty-state">
           <span className="empty-state-icon"><CheckCircle size={36} strokeWidth={1.5} /></span>
-          <p className="empty-state-title">Already logged in as {userName || "user"}</p>
+          <p className="empty-state-title">
+            {t("auth.alreadyLoggedInAs", { name: userName || "user" })}
+          </p>
           <div className="home-actions">
-            <Link className="home-link" to="/">Go to Home</Link>
+            <Link className="home-link" to="/">{t("auth.goToHome")}</Link>
             <button className="home-link danger" type="button" onClick={handleLogout}>
               Logout
             </button>
@@ -65,7 +68,7 @@ function LoginPage() {
         <p className="auth-card-kicker">Welcome Back</p>
         <h1>Login</h1>
         <p className="auth-card-desc">
-          ログインして、あなたのコーヒー記録を続けましょう。
+          {t("auth.login.desc")}
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
