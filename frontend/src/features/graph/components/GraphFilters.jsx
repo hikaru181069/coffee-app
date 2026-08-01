@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { getNodeVisual, ATTRIBUTE_NODE_TYPES } from "../utils/nodeVisuals";
 import { RECORD_TYPES } from "../../coffee-records/utils/recordFormat";
 
@@ -12,6 +13,8 @@ import { RECORD_TYPES } from "../../coffee-records/utils/recordFormat";
  * RecordFilters.jsx と同じ形で追加できる）。
  */
 function GraphFilters({ filters, onChange }) {
+  const { t } = useTranslation();
+
   const toggleNodeType = (type) => {
     const current = filters.nodeTypes ?? [];
     const next = current.includes(type)
@@ -25,7 +28,7 @@ function GraphFilters({ filters, onChange }) {
     (filters.nodeTypes ?? []).length === 0 || filters.nodeTypes.includes(type);
 
   return (
-    <section aria-label="グラフの絞り込み" className="flex flex-col gap-3">
+    <section aria-label={t("graph.filterAriaLabel")} className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -37,7 +40,7 @@ function GraphFilters({ filters, onChange }) {
               : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0"
           }`}
         >
-          すべて
+          {t("common.all")}
         </button>
         {RECORD_TYPES.map((type) => (
           <button
@@ -51,21 +54,21 @@ function GraphFilters({ filters, onChange }) {
                 : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0"
             }`}
           >
-            {type.label}
+            {t(type.labelKey)}
           </button>
         ))}
 
         <label className="ml-auto flex items-center gap-1.5 text-xs text-ctp-subtext0">
-          評価
+          {t("common.rating")}
           <select
             value={filters.ratingMin}
             onChange={(event) => onChange({ ...filters, ratingMin: event.target.value })}
             className="rounded-lg border border-ctp-overlay0/60 bg-ctp-surface0 px-2 py-1 text-xs text-ctp-text"
           >
-            <option value="">絞らない</option>
+            <option value="">{t("graph.ratingUnfiltered")}</option>
             {[5, 4, 3, 2].map((score) => (
               <option key={score} value={score}>
-                {score} 以上
+                {t("common.scoreOrMore", { score })}
               </option>
             ))}
           </select>
@@ -95,7 +98,7 @@ function GraphFilters({ filters, onChange }) {
             >
               {active && <Check size={11} aria-hidden="true" strokeWidth={2.5} />}
               <Icon size={12} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
-              {visual.label}
+              {t(visual.labelKey)}
             </button>
           );
         })}

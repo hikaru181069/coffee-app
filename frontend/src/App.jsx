@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./contexts/ToastContext";
 import "./App.css";
@@ -30,6 +31,7 @@ const GraphPage = lazy(() => import("./pages/GraphPage"));
 // （features/graph/pages/GraphPage.jsx で実際に踏んだ）。
 // URLだけを書き換えたい場合は window.history.replaceState を使うこと。
 function AnimatedRoutes() {
+  const { t } = useTranslation();
   const location = useLocation();
   return (
     <div key={location.key} className="page-transition">
@@ -56,7 +58,7 @@ function AnimatedRoutes() {
             element={
               <Suspense
                 fallback={
-                  <p className="p-6 text-center text-sm text-ctp-subtext0">読み込み中...</p>
+                  <p className="p-6 text-center text-sm text-ctp-subtext0">{t("common.loading")}</p>
                 }
               >
                 <GraphPage />

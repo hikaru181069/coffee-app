@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Share2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
 import { getCurrentUser } from "../services/api/userApi";
@@ -13,6 +14,7 @@ import {
   RecordsEmptyState,
 } from "../features/coffee-records/components/RecordListStates";
 import { primaryButtonClass } from "../features/coffee-records/components/formStyles";
+import { getErrorMessage } from "../utils/errorMessage";
 
 /**
  * ホーム画面。
@@ -26,15 +28,16 @@ import { primaryButtonClass } from "../features/coffee-records/components/formSt
 
 const RECENT_RECORDS_LIMIT = 5;
 
-const getGreeting = () => {
+const getGreeting = (t) => {
   const hour = new Date().getHours();
-  if (hour < 5) return "こんばんは";
-  if (hour < 12) return "おはようございます";
-  if (hour < 18) return "こんにちは";
-  return "こんばんは";
+  if (hour < 5) return t("home.greeting.evening");
+  if (hour < 12) return t("home.greeting.morning");
+  if (hour < 18) return t("home.greeting.afternoon");
+  return t("home.greeting.evening");
 };
 
 function HomePage() {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const token = getAuthToken();
 
@@ -60,32 +63,32 @@ function HomePage() {
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-ctp-text">
-            {getGreeting()}
-            {user?.name ? `、${user.name}さん` : ""}
+            {getGreeting(t)}
+            {user?.name ? t("home.nameSuffix", { name: user.name }) : ""}
           </h1>
-          <p className="mt-1 text-sm text-ctp-subtext0">今日はどんな一杯を飲みましたか？</p>
+          <p className="mt-1 text-sm text-ctp-subtext0">{t("home.subtitle")}</p>
         </div>
 
         <Link to="/records/new" className={primaryButtonClass}>
           <Plus size={16} aria-hidden="true" />
-          記録する
+          {t("records.newRecordCta")}
         </Link>
       </header>
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ctp-text">最近の記録</h2>
+          <h2 className="text-sm font-semibold text-ctp-text">{t("home.recentRecords")}</h2>
           <Link
             to="/records"
             className="text-xs text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
           >
-            すべて見る
+            {t("common.viewAll")}
           </Link>
         </div>
 
         {isLoading && <RecordListSkeleton count={3} />}
         {!isLoading && error && (
-          <p className="text-sm text-ctp-red">{error.message}</p>
+          <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>
         )}
         {!isLoading && !error && records.length === 0 && <RecordsEmptyState />}
         {!isLoading && !error && records.length > 0 && (
@@ -104,9 +107,9 @@ function HomePage() {
         >
           <span className="flex items-center gap-2 text-sm text-ctp-text">
             <Share2 size={16} aria-hidden="true" className="text-ctp-lavender" />
-            あなたのコーヒーのつながりを見る
+            {t("home.viewConnections")}
           </span>
-          <span className="text-xs text-ctp-subtext0">Graphへ →</span>
+          <span className="text-xs text-ctp-subtext0">{t("home.goToGraph")}</span>
         </Link>
       )}
     </div>

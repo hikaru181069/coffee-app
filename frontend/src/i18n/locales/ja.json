@@ -1,0 +1,196 @@
+{
+  "nav": {
+    "mainNavigation": "メインナビゲーション",
+    "bottomNavigation": "下部ナビゲーション"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "loadFailed": "読み込みに失敗しました",
+    "retry": "再試行",
+    "cancel": "キャンセル",
+    "clearFilters": "絞り込みを解除",
+    "all": "すべて",
+    "scoreOrMore": "{{score}} 以上",
+    "notSelected": "選択しない",
+    "noOptions": "選択肢がありません",
+    "required": "必須",
+    "optional": "任意",
+    "saving": "保存中...",
+    "deleting": "削除中...",
+    "deleteConfirmLabel": "削除する",
+    "delete": "削除",
+    "edit": "編集",
+    "backToList": "一覧へ戻る",
+    "viewOnGraph": "Graphで見る",
+    "viewAll": "すべて見る",
+    "close": "閉じる",
+    "unrated": "未評価",
+    "clear": "クリア",
+    "rating": "評価",
+    "prev": "前へ",
+    "next": "次へ"
+  },
+  "landing": {
+    "steps": {
+      "record": {
+        "desc": "飲んだコーヒーを産地・フレーバーとともに記録する。"
+      },
+      "connect": {
+        "desc": "産地・品種・精製方法・フレーバーが記録どうしで自動につながる。"
+      },
+      "discover": {
+        "desc": "知識グラフから、自分の好みや未知の関係を発見する。"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "desc": "ログインして、あなたのコーヒー記録を続けましょう。",
+      "fallbackError": "ログインに失敗しました。メールアドレスとパスワードをご確認ください。"
+    },
+    "register": {
+      "desc": "アカウントを作成して、コーヒー体験の記録を始めましょう。",
+      "fallbackError": "登録に失敗しました。入力内容をご確認ください。"
+    },
+    "alreadyLoggedInAs": "{{name}}としてログイン済みです",
+    "goToHome": "Homeへ"
+  },
+  "home": {
+    "greeting": {
+      "morning": "おはようございます",
+      "afternoon": "こんにちは",
+      "evening": "こんばんは"
+    },
+    "nameSuffix": "、{{name}}さん",
+    "subtitle": "今日はどんな一杯を飲みましたか？",
+    "recentRecords": "最近の記録",
+    "viewConnections": "あなたのコーヒーのつながりを見る",
+    "goToGraph": "Graphへ →"
+  },
+  "records": {
+    "newRecordCta": "記録する",
+    "countLabel": "{{count}} 件の記録",
+    "subtitleEmpty": "飲んだコーヒーを記録しましょう",
+    "paginationAriaLabel": "ページ送り",
+    "filterAriaLabel": "絞り込み",
+    "allOrigins": "すべての産地",
+    "allFlavors": "すべてのフレーバー",
+    "ratingUnfiltered": "評価で絞らない",
+    "emptyTitle": "まだ記録がありません",
+    "emptyDesc": "最初の1杯を記録すると、産地やフレーバーのつながりが見えはじめます。",
+    "emptyCta": "最初の記録をつくる",
+    "noMatchTitle": "条件に合う記録がありません",
+    "noMatchDesc": "絞り込みを変えてみてください。",
+    "notFoundTitle": "記録が見つかりません",
+    "notFoundDesc": "削除されたか、URLが正しくない可能性があります。",
+    "backToDetail": "詳細へ戻る",
+    "editTitle": "記録を編集",
+    "newTitle": "コーヒーを記録する",
+    "newSubtitle": "タイトルと日時だけでも保存できます。詳しい情報は後から足せます。",
+    "submitCreate": "記録する",
+    "submitEdit": "変更を保存",
+    "toastCreated": "記録を作成しました",
+    "toastUpdated": "記録を更新しました",
+    "toastDeleted": "記録を削除しました",
+    "detailsHeading": "コーヒーの詳細",
+    "flavorsHeading": "フレーバー",
+    "notesHeading": "メモ",
+    "detailEmptyHint": "産地やフレーバーを追加すると、ほかの記録とのつながりが見えるようになります。",
+    "outOf5Sr": "段階中5",
+    "confirmDeleteTitle": "この記録を削除しますか？",
+    "confirmDeleteDescription": "「{{title}}」を削除します。この操作は取り消せません。"
+  },
+  "recordForm": {
+    "title": "タイトル",
+    "titlePlaceholder": "例: Ethiopia Yirgacheffe",
+    "consumedAt": "飲んだ日時",
+    "recordTypeLabel": "どこで飲んだか",
+    "home": "家で",
+    "cafe": "カフェで",
+    "cafeName": "店名",
+    "cafeNamePlaceholder": "例: Blue Bottle Coffee",
+    "notes": "メモ",
+    "notesPlaceholder": "味の印象、淹れ方、そのときのことなど",
+    "detailsHint": "産地や品種を選ぶと、記録どうしがつながります（すべて任意）",
+    "masterDataError": "選択肢を読み込めませんでした。この部分は空欄のままでも記録は保存できます。",
+    "origin": "産地",
+    "farmName": "農園",
+    "farmNameHint": "候補が無いため自由入力です",
+    "farmNamePlaceholder": "例: Konga Washing Station",
+    "variety": "品種",
+    "process": "精製方法",
+    "roastLevel": "焙煎度",
+    "flavor": "フレーバー",
+    "multiSelectHint": "複数選べます",
+    "roasterName": "焙煎者・ロースター",
+    "roasterNamePlaceholder": "例: Onibus Coffee",
+    "checkInput": "入力内容を確認してください。"
+  },
+  "profile": {
+    "name": "名前",
+    "email": "メールアドレス",
+    "saveName": "名前を保存",
+    "changingPassword": "変更中...",
+    "changePasswordHeading": "パスワードを変更",
+    "changePasswordButton": "パスワードを変更",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "newPasswordHint": "6文字以上",
+    "deleteAccountHeading": "アカウントを削除",
+    "deleteAccountWarning": "自分の記録もすべて削除されます。この操作は取り消せません。",
+    "deleteAccountButton": "アカウントを削除する",
+    "confirmDeleteTitle": "アカウントを削除しますか？",
+    "confirmDeleteDescription": "すべてのコーヒー記録とアカウント情報が完全に削除されます。この操作は取り消せません。",
+    "toastNameUpdated": "名前を更新しました",
+    "toastPasswordChanged": "パスワードを変更しました"
+  },
+  "graph": {
+    "subtitle": "記録した産地やフレーバーのつながりを探索できます。",
+    "filterAriaLabel": "グラフの絞り込み",
+    "ratingUnfiltered": "絞らない",
+    "emptyTitle": "まだつながりがありません",
+    "emptyDesc": "コーヒーを記録すると、産地やフレーバーのつながりがここに現れます。",
+    "selectedNodeAriaLabel": "選択中のノード",
+    "viewRecordDetail": "記録の詳細を見る",
+    "appearsInCount": "{{count}} 件の記録で登場",
+    "nodeTypes": {
+      "record": "記録",
+      "origin": "産地",
+      "farm": "農園",
+      "variety": "品種",
+      "process": "精製方法",
+      "roastLevel": "焙煎度",
+      "flavor": "フレーバー"
+    }
+  },
+  "validation": {
+    "titleRequired": "タイトルを入力してください",
+    "maxLength": "{{max}}文字以内で入力してください",
+    "dateRequired": "日付を入力してください",
+    "dateInvalid": "日付の形式が正しくありません",
+    "recordTypeRequired": "記録タイプを選択してください",
+    "ratingRange": "評価は1〜5で選択してください"
+  },
+  "errors": {
+    "byCode": {
+      "VALIDATION_ERROR": "入力内容を確認してください",
+      "UNAUTHORIZED": "ログインが必要です",
+      "FORBIDDEN": "この操作を行う権限がありません",
+      "NOT_FOUND": "対象が見つかりません",
+      "CONFLICT": "すでに登録されています",
+      "NETWORK_ERROR": "サーバーに接続できません。通信環境を確認してください。",
+      "UNKNOWN_ERROR": "エラーが発生しました。時間をおいて再度お試しください。",
+      "INTERNAL_ERROR": "サーバー内部でエラーが発生しました"
+    },
+    "legacy": {
+      "invalidCredentials": "メールアドレスまたはパスワードが正しくありません",
+      "userExists": "このメールアドレスは既に登録されています",
+      "loginFailed": "ログインに失敗しました",
+      "registerFailed": "登録に失敗しました",
+      "loadUserFailed": "ユーザー情報の取得に失敗しました",
+      "updateProfileFailed": "プロフィールの更新に失敗しました",
+      "changePasswordFailed": "パスワードの変更に失敗しました",
+      "deleteAccountFailed": "アカウントの削除に失敗しました"
+    }
+  }
+}

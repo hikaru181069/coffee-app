@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { getNodeVisual, ATTRIBUTE_NODE_TYPES } from "../utils/nodeVisuals";
 
 /**
@@ -9,6 +10,7 @@ import { getNodeVisual, ATTRIBUTE_NODE_TYPES } from "../utils/nodeVisuals";
  * （色だけで状態を表現しない、の実践）。
  */
 function GraphLegend() {
+  const { t } = useTranslation();
   const types = ["record", ...ATTRIBUTE_NODE_TYPES];
 
   return (
@@ -20,7 +22,7 @@ function GraphLegend() {
         return (
           <span key={type} className="inline-flex items-center gap-1 text-[11px] text-ctp-subtext1">
             <Icon size={12} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
-            {visual.label}
+            {t(visual.labelKey)}
           </span>
         );
       })}

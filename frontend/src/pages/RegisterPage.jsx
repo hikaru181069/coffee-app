@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { registerUser } from "../services/api/authApi";
 import { saveAuthData } from "../utils/authStorage";
+import { getErrorMessage } from "../utils/errorMessage";
 
 function RegisterPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState("");
@@ -25,7 +28,7 @@ function RegisterPage() {
       navigate("/");
     } catch (error) {
       console.error("Register error:", error);
-      setErrorMessage(error.message || "Failed to register. Please check your input.");
+      setErrorMessage(error.message ? getErrorMessage(error, t) : t("auth.register.fallbackError"));
     } finally {
       setSubmitting(false);
     }
@@ -37,7 +40,7 @@ function RegisterPage() {
         <p className="auth-card-kicker">Get Started</p>
         <h1>Register</h1>
         <p className="auth-card-desc">
-          アカウントを作成して、コーヒー体験の記録を始めましょう。
+          {t("auth.register.desc")}
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>

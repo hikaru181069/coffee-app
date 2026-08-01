@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { dangerButtonClass, secondaryButtonClass } from "./formStyles";
 
@@ -22,12 +23,15 @@ function ConfirmDialog({
   isOpen,
   title,
   description,
-  confirmLabel = "削除する",
-  cancelLabel = "キャンセル",
+  confirmLabel,
+  cancelLabel,
   isProcessing = false,
   onConfirm,
   onCancel,
 }) {
+  const { t } = useTranslation();
+  const resolvedConfirmLabel = confirmLabel ?? t("common.deleteConfirmLabel");
+  const resolvedCancelLabel = cancelLabel ?? t("common.cancel");
   const cancelButtonRef = useRef(null);
 
   useEffect(() => {
@@ -77,7 +81,7 @@ function ConfirmDialog({
             disabled={isProcessing}
             className={secondaryButtonClass}
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             type="button"
@@ -85,7 +89,7 @@ function ConfirmDialog({
             disabled={isProcessing}
             className={dangerButtonClass}
           >
-            {isProcessing ? "削除中..." : confirmLabel}
+            {isProcessing ? t("common.deleting") : resolvedConfirmLabel}
           </button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
 import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeRecords";
@@ -37,6 +38,7 @@ const DEFAULT_FILTERS = {
 };
 
 function RecordsPage() {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
   const { records, pagination, isLoading, error, reload } = useCoffeeRecords(filters);
@@ -89,15 +91,15 @@ function RecordsPage() {
           <h1 className="text-xl font-bold text-ctp-text">Records</h1>
           <p className="mt-1 text-sm text-ctp-subtext0">
             {pagination && pagination.total > 0
-              ? `${pagination.total} 件の記録`
-              : "飲んだコーヒーを記録しましょう"}
+              ? t("records.countLabel", { count: pagination.total })
+              : t("records.subtitleEmpty")}
           </p>
         </div>
 
         {/* 主要CTAは1画面に1つ（docs/design.md） */}
         <Link to="/records/new" className={primaryButtonClass}>
           <Plus size={16} aria-hidden="true" />
-          記録する
+          {t("records.newRecordCta")}
         </Link>
       </header>
 
@@ -115,14 +117,14 @@ function RecordsPage() {
 
       {/* ページ送り。1ページに収まるときは出さない */}
       {pagination && pagination.totalPages > 1 && (
-        <nav aria-label="ページ送り" className="mt-6 flex items-center justify-center gap-3">
+        <nav aria-label={t("records.paginationAriaLabel")} className="mt-6 flex items-center justify-center gap-3">
           <button
             type="button"
             onClick={() => goToPage(pagination.page - 1)}
             disabled={pagination.page <= 1 || isLoading}
             className={secondaryButtonClass}
           >
-            前へ
+            {t("common.prev")}
           </button>
           <span className="text-sm text-ctp-subtext1">
             {pagination.page} / {pagination.totalPages}
@@ -133,7 +135,7 @@ function RecordsPage() {
             disabled={pagination.page >= pagination.totalPages || isLoading}
             className={secondaryButtonClass}
           >
-            次へ
+            {t("common.next")}
           </button>
         </nav>
       )}

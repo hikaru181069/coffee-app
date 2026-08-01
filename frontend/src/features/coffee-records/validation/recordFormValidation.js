@@ -28,27 +28,28 @@ const RECORD_TYPES = ["home", "cafe"];
  * フォームの値を検証する。
  *
  * @param {object} values フォームの状態（すべて文字列または配列）
+ * @param {Function} t react-i18nextのt関数
  * @returns {object} { フィールド名: メッセージ }。問題が無ければ空オブジェクト
  */
-export const validateRecordForm = (values = {}) => {
+export const validateRecordForm = (values = {}, t) => {
   const errors = {};
 
   // ── 必須項目 ──────────────────────────────────────
   const title = (values.title ?? "").trim();
   if (title === "") {
-    errors.title = "タイトルを入力してください";
+    errors.title = t("validation.titleRequired");
   } else if (title.length > MAX_LENGTH.title) {
-    errors.title = `${MAX_LENGTH.title}文字以内で入力してください`;
+    errors.title = t("validation.maxLength", { max: MAX_LENGTH.title });
   }
 
   if (!values.consumedAt) {
-    errors.consumedAt = "日付を入力してください";
+    errors.consumedAt = t("validation.dateRequired");
   } else if (Number.isNaN(new Date(values.consumedAt).getTime())) {
-    errors.consumedAt = "日付の形式が正しくありません";
+    errors.consumedAt = t("validation.dateInvalid");
   }
 
   if (!RECORD_TYPES.includes(values.recordType)) {
-    errors.recordType = "記録タイプを選択してください";
+    errors.recordType = t("validation.recordTypeRequired");
   }
 
   // ── 任意項目 ──────────────────────────────────────
@@ -56,14 +57,14 @@ export const validateRecordForm = (values = {}) => {
   if (values.rating !== "" && values.rating !== null && values.rating !== undefined) {
     const rating = Number(values.rating);
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      errors.rating = "評価は1〜5で選択してください";
+      errors.rating = t("validation.ratingRange");
     }
   }
 
   for (const field of ["notes", "cafeName", "roasterName", "farmName"]) {
     const value = (values[field] ?? "").trim();
     if (value.length > MAX_LENGTH[field]) {
-      errors[field] = `${MAX_LENGTH[field]}文字以内で入力してください`;
+      errors[field] = t("validation.maxLength", { max: MAX_LENGTH[field] });
     }
   }
 

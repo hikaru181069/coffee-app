@@ -1,6 +1,8 @@
 import { Link, Navigate } from "react-router-dom";
 import { Coffee, Share2, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { getAuthToken } from "../utils/authStorage";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import heroStyles from "./LandingHero.module.css";
 
 const HERO_TITLE = "Record your coffee. Discover your taste.";
@@ -9,25 +11,28 @@ const HERO_TITLE = "Record your coffee. Discover your taste.";
 // （docs/vision.md の Core Experience）。あくまで説明用のカードで
 // リンクは持たせない（未ログインで機能ページへ飛んでも
 // ProtectedRouteに/landingへ戻されるだけの壊れたループになるため）。
+// descだけ翻訳キーにする。title・アイコンは docs/vision.md の英語表記を
+// そのまま使う（Record/Connect/Discoverは言語を問わずブランド語として扱う）。
 const HOW_IT_WORKS = [
   {
     icon: Coffee,
     title: "Record",
-    desc: "飲んだコーヒーを産地・フレーバーとともに記録する。",
+    descKey: "landing.steps.record.desc",
   },
   {
     icon: Share2,
     title: "Connect",
-    desc: "産地・品種・精製方法・フレーバーが記録どうしで自動につながる。",
+    descKey: "landing.steps.connect.desc",
   },
   {
     icon: Sparkles,
     title: "Discover",
-    desc: "知識グラフから、自分の好みや未知の関係を発見する。",
+    descKey: "landing.steps.discover.desc",
   },
 ];
 
 function LandingPage() {
+  const { t } = useTranslation();
   const token = getAuthToken();
   if (token) return <Navigate to="/" replace />;
 
@@ -38,6 +43,7 @@ function LandingPage() {
       <nav className="landing-nav">
         <span className="landing-nav-logo" aria-hidden="true" style={{ fontSize: "1.5rem" }}>☕</span>
         <div className="landing-nav-actions">
+          <LanguageSwitcher />
           <Link to="/login" className="landing-nav-login">Login</Link>
           <Link to="/register" className={`home-link ${heroStyles.navCta}`}>Get Started</Link>
         </div>
@@ -69,7 +75,7 @@ function LandingPage() {
         {/* 仕組みの説明(非リンク)。Record → Connect → Discover の3ステップで伝える */}
         <section className={heroStyles.howItWorks}>
           {HOW_IT_WORKS.map((step) => {
-            const { icon: Icon, title, desc } = step;
+            const { icon: Icon, title, descKey } = step;
             return (
               <div key={title} className={heroStyles.stepCard}>
                 <span className={heroStyles.stepIcon}>
@@ -77,7 +83,7 @@ function LandingPage() {
                 </span>
                 <div>
                   <p className={heroStyles.stepTitle}>{title}</p>
-                  <p className={heroStyles.stepDesc}>{desc}</p>
+                  <p className={heroStyles.stepDesc}>{t(descKey)}</p>
                 </div>
               </div>
             );

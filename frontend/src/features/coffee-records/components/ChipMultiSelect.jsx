@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 /**
  * 複数選択をチップ（タグ）で行う入力。品種とフレーバーで使う。
@@ -12,8 +13,9 @@ import { Check } from "lucide-react";
  * キーボード操作と支援技術への伝わり方は標準のまま保てる。
  */
 function ChipMultiSelect({ id, options, selectedIds, onToggle, disabled = false, emptyMessage }) {
+  const { t } = useTranslation();
   if (options.length === 0) {
-    return <p className="text-sm text-ctp-subtext0">{emptyMessage ?? "選択肢がありません"}</p>;
+    return <p className="text-sm text-ctp-subtext0">{emptyMessage ?? t("common.noOptions")}</p>;
   }
 
   return (
