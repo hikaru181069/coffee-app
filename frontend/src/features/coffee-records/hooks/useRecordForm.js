@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   validateRecordForm,
   hasErrors,
@@ -61,6 +62,7 @@ const toFormValues = (record) => ({
  * @param {Function} onSubmit  APIへ送る関数。payload を受け取る
  */
 export const useRecordForm = (record, onSubmit) => {
+  const { t } = useTranslation();
   const [values, setValues] = useState(emptyValues);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
@@ -107,7 +109,7 @@ export const useRecordForm = (record, onSubmit) => {
     // Enterキーでの送信や連打で通り抜けることがある
     if (isSubmitting) return null;
 
-    const validationErrors = validateRecordForm(values);
+    const validationErrors = validateRecordForm(values, t);
     if (hasErrors(validationErrors)) {
       setErrors(validationErrors);
       setSubmitError(null);
@@ -134,7 +136,7 @@ export const useRecordForm = (record, onSubmit) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, values, onSubmit]);
+  }, [isSubmitting, values, onSubmit, t]);
 
   return { values, errors, submitError, isSubmitting, setValue, toggleValue, submit };
 };

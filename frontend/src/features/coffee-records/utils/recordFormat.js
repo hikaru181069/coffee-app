@@ -3,15 +3,22 @@
  *
  * DBは Date、APIはISO文字列、HTMLの input は独自形式、と
  * 3つの表現が混ざるので、変換を1か所へ集める。
+ *
+ * ラベル文字列は多言語化のため、テキストではなく翻訳キー（labelKey）を
+ * 持たせている。呼び出し側が t(type.labelKey) の形で翻訳する。
+ * DOM・APIに依存しない純粋関数のままにするため、ここではreact-i18nextの
+ * t関数をimportせず、呼び出し側から受け取る形にしている。
  */
 
 export const RECORD_TYPES = [
-  { value: "home", label: "家で" },
-  { value: "cafe", label: "カフェで" },
+  { value: "home", labelKey: "recordForm.home" },
+  { value: "cafe", labelKey: "recordForm.cafe" },
 ];
 
-export const recordTypeLabel = (value) =>
-  RECORD_TYPES.find((type) => type.value === value)?.label ?? value;
+export const recordTypeLabel = (value, t) => {
+  const labelKey = RECORD_TYPES.find((type) => type.value === value)?.labelKey;
+  return labelKey ? t(labelKey) : value;
+};
 
 /**
  * ISO文字列を <input type="datetime-local"> が受け付ける形へ変換する。
@@ -45,14 +52,17 @@ export const fromDateTimeLocalValue = (value) => {
   return date.toISOString();
 };
 
-/** 一覧・詳細に出す日付表記 */
-export const formatConsumedAt = (isoString) => {
+/** i18nextの言語コード（"ja"/"en"）をIntlのロケールへ変換する */
+const toIntlLocale = (language) => (language === "en" ? "en-US" : "ja-JP");
+
+/** 一覧・詳細に出す日付表記。languageは現在の表示言語（"ja"/"en"） */
+export const formatConsumedAt = (isoString, language) => {
   if (!isoString) return "";
 
   const date = new Date(isoString);
   if (Number.isNaN(date.getTime())) return "";
 
-  return new Intl.DateTimeFormat("ja-JP", {
+  return new Intl.DateTimeFormat(toIntlLocale(language), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -61,14 +71,14 @@ export const formatConsumedAt = (isoString) => {
   }).format(date);
 };
 
-/** 一覧のカードなど、狭い場所に出す短い日付 */
-export const formatConsumedAtShort = (isoString) => {
+/** 一覧のカードなど、狭い場所に出す短い日付。languageは現在の表示言語（"ja"/"en"） */
+export const formatConsumedAtShort = (isoString, language) => {
   if (!isoString) return "";
 
   const date = new Date(isoString);
   if (Number.isNaN(date.getTime())) return "";
 
-  return new Intl.DateTimeFormat("ja-JP", {
+  return new Intl.DateTimeFormat(toIntlLocale(language), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -80,21 +90,27 @@ export const formatConsumedAtShort = (isoString) => {
  *
  * 詳細画面とカードの両方で「設定されている項目だけ」を出したいので、
  * 空の項目を落とす処理をここに置く。
+ *
+ * @param {object} record
+ * @param {Function} t react-i18nextのt関数
+ * @param {string} language 現在の表示言語（区切り文字の切替に使う）
  */
-export const collectCoffeeDetails = (record) => {
+export const collectCoffeeDetails = (record, t, language) => {
   if (!record) return [];
 
+  const listSeparator = language === "en" ? ", " : "、";
+
   const details = [
-    { key: "origin", label: "産地", value: record.origin?.name },
-    { key: "farmName", label: "農園", value: record.farmName },
+    { key: "origin", label: t("recordForm.origin"), value: record.origin?.name },
+    { key: "farmName", label: t("recordForm.farmName"), value: record.farmName },
     {
       key: "varieties",
-      label: "品種",
-      value: record.varieties?.map((variety) => variety.name).join("、"),
+      label: t("recordForm.variety"),
+      value: record.varieties?.map((variety) => variety.name).join(listSeparator),
     },
-    { key: "process", label: "精製方法", value: record.process?.name },
-    { key: "roastLevel", label: "焙煎度", value: record.roastLevel?.name },
-    { key: "roasterName", label: "焙煎者", value: record.roasterName },
+    { key: "process", label: t("recordForm.process"), value: record.process?.name },
+    { key: "roastLevel", label: t("recordForm.roastLevel"), value: record.roastLevel?.name },
+    { key: "roasterName", label: t("recordForm.roasterName"), value: record.roasterName },
   ];
 
   return details.filter((detail) => detail.value);
