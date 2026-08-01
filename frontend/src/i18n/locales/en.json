@@ -1,0 +1,198 @@
+{
+  "nav": {
+    "mainNavigation": "Main navigation",
+    "bottomNavigation": "Bottom navigation"
+  },
+  "common": {
+    "loading": "Loading...",
+    "loadFailed": "Failed to load",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "clearFilters": "Clear filters",
+    "all": "All",
+    "scoreOrMore": "{{score}}+",
+    "notSelected": "Not selected",
+    "noOptions": "No options available",
+    "required": "Required",
+    "optional": "Optional",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "deleteConfirmLabel": "Delete",
+    "delete": "Delete",
+    "edit": "Edit",
+    "backToList": "Back to list",
+    "viewOnGraph": "View on Graph",
+    "viewAll": "View all",
+    "close": "Close",
+    "unrated": "Unrated",
+    "clear": "Clear",
+    "rating": "Rating",
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "landing": {
+    "steps": {
+      "record": {
+        "desc": "Record the coffee you drank, along with its origin and flavors."
+      },
+      "connect": {
+        "desc": "Origins, varieties, processes, and flavors automatically connect across your records."
+      },
+      "discover": {
+        "desc": "Discover your preferences and unexpected connections through the knowledge graph."
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "desc": "Log in to keep recording your coffee experiences.",
+      "fallbackError": "Failed to login. Please check your email and password."
+    },
+    "register": {
+      "desc": "Create an account to start recording your coffee experiences.",
+      "fallbackError": "Failed to register. Please check your input."
+    },
+    "alreadyLoggedInAs": "Already logged in as {{name}}",
+    "goToHome": "Go to Home"
+  },
+  "home": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "nameSuffix": ", {{name}}",
+    "subtitle": "What did you drink today?",
+    "recentRecords": "Recent Records",
+    "viewConnections": "See your coffee connections",
+    "goToGraph": "Go to Graph →"
+  },
+  "records": {
+    "newRecordCta": "New Record",
+    "countLabel_one": "{{count}} record",
+    "countLabel_other": "{{count}} records",
+    "subtitleEmpty": "Start recording the coffee you drink",
+    "paginationAriaLabel": "Pagination",
+    "filterAriaLabel": "Filters",
+    "allOrigins": "All origins",
+    "allFlavors": "All flavors",
+    "ratingUnfiltered": "Any rating",
+    "emptyTitle": "No records yet",
+    "emptyDesc": "Record your first cup to start seeing connections between origins and flavors.",
+    "emptyCta": "Create your first record",
+    "noMatchTitle": "No records match your filters",
+    "noMatchDesc": "Try changing your filters.",
+    "notFoundTitle": "Record not found",
+    "notFoundDesc": "It may have been deleted, or the URL may be incorrect.",
+    "backToDetail": "Back to detail",
+    "editTitle": "Edit Record",
+    "newTitle": "Record a Coffee",
+    "newSubtitle": "You can save with just a title and date. Add more details later.",
+    "submitCreate": "Save Record",
+    "submitEdit": "Save Changes",
+    "toastCreated": "Record created",
+    "toastUpdated": "Record updated",
+    "toastDeleted": "Record deleted",
+    "detailsHeading": "Coffee Details",
+    "flavorsHeading": "Flavors",
+    "notesHeading": "Notes",
+    "detailEmptyHint": "Add an origin or flavor to start seeing connections with your other records.",
+    "outOf5Sr": "out of 5",
+    "confirmDeleteTitle": "Delete this record?",
+    "confirmDeleteDescription": "\"{{title}}\" will be deleted. This action cannot be undone."
+  },
+  "recordForm": {
+    "title": "Title",
+    "titlePlaceholder": "e.g. Ethiopia Yirgacheffe",
+    "consumedAt": "Date & Time",
+    "recordTypeLabel": "Where did you drink it",
+    "home": "Home",
+    "cafe": "Cafe",
+    "cafeName": "Cafe Name",
+    "cafeNamePlaceholder": "e.g. Blue Bottle Coffee",
+    "notes": "Notes",
+    "notesPlaceholder": "Tasting notes, brew method, the occasion, etc.",
+    "detailsHint": "Selecting an origin or variety connects your records (all optional)",
+    "masterDataError": "Could not load options. You can still save the record with this section left blank.",
+    "origin": "Origin",
+    "farmName": "Farm",
+    "farmNameHint": "Free text, as there is no preset list",
+    "farmNamePlaceholder": "e.g. Konga Washing Station",
+    "variety": "Variety",
+    "process": "Process",
+    "roastLevel": "Roast Level",
+    "flavor": "Flavor",
+    "multiSelectHint": "You can select multiple",
+    "roasterName": "Roaster",
+    "roasterNamePlaceholder": "e.g. Onibus Coffee",
+    "checkInput": "Please check your input."
+  },
+  "profile": {
+    "name": "Name",
+    "email": "Email",
+    "saveName": "Save Name",
+    "changingPassword": "Changing...",
+    "changePasswordHeading": "Change Password",
+    "changePasswordButton": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "newPasswordHint": "6 characters or more",
+    "deleteAccountHeading": "Delete Account",
+    "deleteAccountWarning": "All of your records will also be deleted. This action cannot be undone.",
+    "deleteAccountButton": "Delete Account",
+    "confirmDeleteTitle": "Delete your account?",
+    "confirmDeleteDescription": "All of your coffee records and account information will be permanently deleted. This action cannot be undone.",
+    "toastNameUpdated": "Name updated",
+    "toastPasswordChanged": "Password changed"
+  },
+  "graph": {
+    "subtitle": "Explore the connections between your recorded origins and flavors.",
+    "filterAriaLabel": "Graph filters",
+    "ratingUnfiltered": "No filter",
+    "emptyTitle": "No connections yet",
+    "emptyDesc": "Record some coffee to see connections between origins and flavors appear here.",
+    "selectedNodeAriaLabel": "Selected node",
+    "viewRecordDetail": "View record detail",
+    "appearsInCount_one": "Appears in {{count}} record",
+    "appearsInCount_other": "Appears in {{count}} records",
+    "nodeTypes": {
+      "record": "Record",
+      "origin": "Origin",
+      "farm": "Farm",
+      "variety": "Variety",
+      "process": "Process",
+      "roastLevel": "Roast Level",
+      "flavor": "Flavor"
+    }
+  },
+  "validation": {
+    "titleRequired": "Please enter a title",
+    "maxLength": "Please keep it within {{max}} characters",
+    "dateRequired": "Please enter a date",
+    "dateInvalid": "The date format is invalid",
+    "recordTypeRequired": "Please select a record type",
+    "ratingRange": "Please select a rating from 1 to 5"
+  },
+  "errors": {
+    "byCode": {
+      "VALIDATION_ERROR": "Please check your input",
+      "UNAUTHORIZED": "You need to log in",
+      "FORBIDDEN": "You don't have permission to do this",
+      "NOT_FOUND": "Not found",
+      "CONFLICT": "This already exists",
+      "NETWORK_ERROR": "Could not connect to the server. Please check your connection.",
+      "UNKNOWN_ERROR": "Something went wrong. Please try again later.",
+      "INTERNAL_ERROR": "An internal server error occurred"
+    },
+    "legacy": {
+      "invalidCredentials": "Invalid email or password",
+      "userExists": "This email is already registered",
+      "loginFailed": "Failed to login",
+      "registerFailed": "Failed to register",
+      "loadUserFailed": "Failed to load user",
+      "updateProfileFailed": "Failed to update profile",
+      "changePasswordFailed": "Failed to change password",
+      "deleteAccountFailed": "Failed to delete account"
+    }
+  }
+}
