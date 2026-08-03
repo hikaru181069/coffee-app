@@ -76,8 +76,12 @@ Coffee Appの中心体験は、Record → Connect → Discoverである。
 
 ### 6.1 Color
 
-Catppuccin Mochaをベースにした配色（`frontend/src/index.css`の
-`--color-ctp-*`、Tailwindの`@theme`として定義）。
+Linear（linear.app）の本番CSSから実際に取得した値をそのまま使っている
+配色（`frontend/src/App.css`の`--ctp-*`、`frontend/src/index.css`の
+`--color-ctp-*`としてTailwindの`@theme`へ再定義）。変数名は
+mlb-app時代の命名（`ctp-`）を既存コードを書き換えずに引き継いでいる
+だけで、Catppuccinを意匠として参照しているわけではない
+（このアプリの配色はCatppuccinとは無関係）。
 派手な単色ブランドカラーではなく、背景の階調と少数のアクセントで
 Linear/Obsidianに近い落ち着いた見た目を作る。
 
@@ -96,7 +100,7 @@ Linear/Obsidianに近い落ち着いた見た目を作る。
 アクセントカラーは意味を固定して使う（装飾目的で増やさない）:
 
 - `ctp-blue`（#5e6ad2）: プライマリアクション・フォーカスリング。
-  偶然にもLinearの公式ブランドカラーと一致している
+  Linear本家のブランドカラーそのもの
 - `ctp-red`: エラー・削除などの危険操作
 - `ctp-yellow`: 評価（★）
 - `ctp-lavender`: 知識グラフへの導線・グラフ関連のアクセント
