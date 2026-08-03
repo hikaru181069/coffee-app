@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Star, X } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../utils/nodeVisuals";
 import { secondaryButtonClass } from "../../coffee-records/components/formStyles";
@@ -70,7 +70,6 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
             recordCount={node.data.metadata.recordCount}
             relatedRecords={detail.relatedRecords}
             language={i18n.language}
-            t={t}
           />
         )}
       </div>
@@ -84,11 +83,13 @@ function RecordNodeDetail({ record, language, t }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm text-ctp-subtext1">{formatConsumedAtShort(record.consumedAt, language)}</p>
+      <p className="font-mono text-sm text-ctp-subtext1">
+        {formatConsumedAtShort(record.consumedAt, language)}
+      </p>
       {record.rating !== null && (
         <p className="flex items-center gap-1 text-sm text-ctp-yellow">
           <Star size={14} aria-hidden="true" fill="currentColor" strokeWidth={0} />
-          {record.rating} / 5
+          <span className="font-mono">{record.rating} / 5</span>
         </p>
       )}
       {record.notes && (
@@ -102,10 +103,16 @@ function RecordNodeDetail({ record, language, t }) {
 }
 
 /** 属性ノード（産地・農園・品種・精製方法・焙煎度・フレーバー）を選んだときの中身 */
-function AttributeNodeDetail({ recordCount, relatedRecords, language, t }) {
+function AttributeNodeDetail({ recordCount, relatedRecords, language }) {
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-ctp-subtext0">{t("graph.appearsInCount", { count: recordCount })}</p>
+      <p className="text-sm text-ctp-subtext0">
+        <Trans
+          i18nKey="graph.appearsInCount"
+          count={recordCount}
+          components={{ mono: <span className="font-mono" /> }}
+        />
+      </p>
 
       <ul className="flex flex-col gap-2">
         {(relatedRecords ?? []).map((record) => (
@@ -116,11 +123,11 @@ function AttributeNodeDetail({ recordCount, relatedRecords, language, t }) {
             >
               <p className="truncate text-sm font-medium text-ctp-text">{record.title}</p>
               <p className="mt-0.5 flex items-center gap-2 text-xs text-ctp-subtext0">
-                <span>{formatConsumedAtShort(record.consumedAt, language)}</span>
+                <span className="font-mono">{formatConsumedAtShort(record.consumedAt, language)}</span>
                 {record.rating !== null && (
                   <span className="flex items-center gap-0.5 text-ctp-yellow">
                     <Star size={10} aria-hidden="true" fill="currentColor" strokeWidth={0} />
-                    {record.rating}
+                    <span className="font-mono">{record.rating}</span>
                   </span>
                 )}
               </p>

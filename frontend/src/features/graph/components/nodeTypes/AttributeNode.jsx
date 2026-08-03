@@ -28,7 +28,7 @@ function AttributeNode({ data, selected }) {
       <Icon size={14} aria-hidden="true" className={`flex-shrink-0 ${visual.colorClass}`} strokeWidth={1.75} />
       <span className="truncate text-[10px] font-medium text-ctp-text">{data.label}</span>
       {recordCount > 1 && (
-        <span className="flex-shrink-0 rounded-full bg-ctp-surface0 px-1 text-[8px] text-ctp-subtext0">
+        <span className="flex-shrink-0 rounded-full bg-ctp-surface0 px-1 font-mono text-[8px] text-ctp-subtext0">
           {recordCount}
         </span>
       )}

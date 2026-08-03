@@ -45,7 +45,7 @@ function HomeRecordCard({ record }) {
           {record.rating !== null && (
             <span className="inline-flex flex-shrink-0 items-center gap-0.5 text-xs font-semibold text-ctp-yellow">
               <Star size={12} aria-hidden="true" fill="currentColor" strokeWidth={0} />
-              {record.rating}
+              <span className="font-mono">{record.rating}</span>
               <span className="sr-only">{t("records.outOf5Sr")}</span>
             </span>
           )}

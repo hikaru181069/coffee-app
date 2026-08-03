@@ -155,8 +155,8 @@
     "emptyDesc": "Record some coffee to see connections between origins and flavors appear here.",
     "selectedNodeAriaLabel": "Selected node",
     "viewRecordDetail": "View record detail",
-    "appearsInCount_one": "Appears in {{count}} record",
-    "appearsInCount_other": "Appears in {{count}} records",
+    "appearsInCount_one": "Appears in <mono>{{count}}</mono> record",
+    "appearsInCount_other": "Appears in <mono>{{count}}</mono> records",
     "nodeTypes": {
       "record": "Record",
       "origin": "Origin",
