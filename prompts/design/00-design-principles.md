@@ -68,7 +68,109 @@ Coffee Appの中心体験は、Record → Connect → Discoverである。
 4. 詳細属性
 5. 管理操作
 
-## 6. Responsive and Accessibility
+## 6. UI Definitions
+
+2026-08にFigmaで設計し実装したHome画面と、参照先のLinear（linear.app）を
+基準にする。新しい画面を作るときは、ここに書かれたトークンをまず参照し、
+新しい色・書体・角丸・余白を画面ごとに増やさない。
+
+### 6.1 Color
+
+Catppuccin Mochaをベースにした配色（`frontend/src/index.css`の
+`--color-ctp-*`、Tailwindの`@theme`として定義）。
+派手な単色ブランドカラーではなく、背景の階調と少数のアクセントで
+Linear/Obsidianに近い落ち着いた見た目を作る。
+
+背景の階調（暗い順）:
+
+- `ctp-crust` / `ctp-base`（#08090a）: 画面の最背面
+- `ctp-mantle`（#0f1011）: カード・パネルの背景
+- `ctp-surface0` / `ctp-surface1` / `ctp-surface2`: 段階的に明るいUI要素（バッジ、区切り）
+- `ctp-overlay0`: 枠線
+
+テキスト:
+
+- `ctp-text`（#f7f8f8）: 主要テキスト
+- `ctp-subtext0` / `ctp-subtext1`: 補助テキスト
+
+アクセントカラーは意味を固定して使う（装飾目的で増やさない）:
+
+- `ctp-blue`（#5e6ad2）: プライマリアクション・フォーカスリング。
+  偶然にもLinearの公式ブランドカラーと一致している
+- `ctp-red`: エラー・削除などの危険操作
+- `ctp-yellow`: 評価（★）
+- `ctp-lavender`: 知識グラフへの導線・グラフ関連のアクセント
+- 産地アクセントバー（`utils/originAccent.js`）は上記2色（blue/red）を除いた
+  9色から、産地名のハッシュ値で決定的に選ぶ。同じ産地は常に同じ色になる。
+
+### 6.2 Typography
+
+- 見出し・本文はInterのみを使う（`--app-font`）。書体を画面ごとに増やさない。
+- タイプサイズは5段階に絞る（実測: `text-sm`が最多、`text-xs`が次点。
+  中間・大サイズは目的を限定する）:
+  - 12px (`text-xs`): 補助情報・バッジ内
+  - 14px (`text-sm`): 本文の基準。UIの大部分はこのサイズ
+  - 16px (`text-base`): カード内タイトル（記録カードのタイトルなど）
+  - 20px (`text-xl`): ページ見出し(h1)・挨拶文
+  - 24px (`text-2xl`): 現状`RecordDetailPage`のh1のみで使用。`text-xl`との
+    使い分けが曖昧なため、次回の見直し候補として残す
+- font-weightは`normal`/`medium`/`semibold`/`bold`の4種のみ。増やさない。
+- **数値・日付・カウントのようなコード的要素にはSpace Mono
+  （`--app-font-mono`）を使う。** 見出し・本文はInterのまま変えない。
+  適用対象の例:
+  - 評価の数字（★の隣の`4.0`など。星のグリフ自体はInterのまま）
+  - 記録日時の表示（`formatConsumedAt` / `formatConsumedAtShort`の出力）
+  - グラフのノード件数（`recordCount`・`appearsInCount`など）
+  「事実としての数値」と「文章としてのテキスト」を書体で区別することで、
+  Obsidianのノート・技術的な雰囲気を補強する。
+
+### 6.3 Iconography
+
+- アイコンは`lucide-react`のみを使う。
+- 知識グラフのノード種別ごとのアイコンは`docs/design.md`の
+  「Graph Visual Semantics」で定義済み（色だけで種別を区別しない）。
+- strokeWidthは既定値(2)で統一する。個別のアイコンだけ太さを変えない。
+- サイズは文脈で使い分ける（新しい中間サイズを増やさない）:
+  - 12px: バッジ内の小さいアイコン（評価の★など）
+  - 14–16px: 本文中のインラインアイコン
+  - 18–24px: CTAなど強調したい操作
+- 単色のみ。1つのアイコンに複数色を使わない。
+
+### 6.4 Radius / Spacing
+
+- 角丸は3段階のみ: `rounded-xl`（カード・パネルなど主要コンテナ）、
+  `rounded-lg`（カード内の入れ子要素）、`rounded-full`（ピル・バッジ・
+  産地アクセントバーなど）。中間の値を画面ごとに作らない。
+- 余白は4pxグリッド（Tailwindの既定spacingスケール）の範囲内のみ使う。
+  任意のpx値を直接書かない。
+- カード内側の余白は`p-4`（モバイル）/`p-5`（sm以上）を基準、一覧行は
+  `px-3`〜`px-4` `py-1`〜`py-2`程度のコンパクトな余白を基準とする。
+
+### 6.5 Borders over Shadows
+
+Linearに合わせ、`box-shadow`はほとんど使わない。要素は境界線
+（`border-ctp-surface1` / `border-ctp-overlay0`）で同一平面上に
+整然と並べる。
+
+`shadow-*`は「画面上に浮いている要素」だけに限定する:
+
+- `shadow-xl`: モーダル・ボトムシート（`ConfirmDialog`、`NodeDetailPanel`）
+- `shadow-sm`: グラフキャンバス上のノード（`AttributeNode`、`RecordNode`）
+
+それ以外の要素（カード、セクション、バッジなど）には影を付けない。
+
+### 6.6 Motion
+
+Linearの「素早く、跳ねない」動きに合わせ、2段階のみ使う
+（実測: `duration-150`が最多）:
+
+- `duration-150`: 色・背景のホバー遷移（既定）
+- `duration-200`〜`300`: 開閉・transformを伴う構造的な動き
+  （メニューの開閉、パネルのスライドなど）
+
+バウンドやスケールで大きく弾ませるイージングは使わない。
+
+## 7. Responsive and Accessibility
 
 - 最小タップ領域を確保する
 - 色だけに依存しない
@@ -76,7 +178,7 @@ Coffee Appの中心体験は、Record → Connect → Discoverである。
 - フォーカス状態を明示する
 - 読みやすいコントラストを維持する
 
-## 7. Non-Goals
+## 8. Non-Goals
 
 - 情報量を増やすこと自体を価値にしない
 - 高度な分析画面にしない
