@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { getOriginAccentClass } from "../utils/originAccent";
+import { hasCoffeeDetails } from "../utils/recordFormat";
 
 /**
  * Home画面専用の記録カード。
@@ -17,6 +18,12 @@ import { getOriginAccentClass } from "../utils/originAccent";
  * 評価(★)はdocs/design.mdのInformation Hierarchyで「①名前と体験」の次に
  * 来る「②評価と感想」にあたるため、タイトルと同じ行に復活させている
  * （③つながりにあたる産地・フレーバーより先に見せる）。
+ *
+ * 産地・品種・精製方法・フレーバーなどが1つも無い記録は、
+ * docs/knowledge-graph.md のグラフ生成上ノード・エッジを一切生まない
+ * （Record Firstで最小入力を許すほど、Connect Automaticallyが働かない
+ * 記録が増えてしまう）。カードを空白のまま見せると気づけないため、
+ * RecordDetailPage.jsxと同じヒント文（records.detailEmptyHint）を出す。
  */
 function HomeRecordCard({ record }) {
   const { t } = useTranslation();
@@ -59,6 +66,10 @@ function HomeRecordCard({ record }) {
           <p className="mt-2 truncate text-xs text-ctp-subtext1">
             {flavors.map((flavor) => flavor.name).join(" • ")}
           </p>
+        )}
+
+        {!hasCoffeeDetails(record) && (
+          <p className="mt-2 text-xs text-ctp-subtext0">{t("records.detailEmptyHint")}</p>
         )}
       </Link>
     </li>

@@ -116,6 +116,21 @@ export const collectCoffeeDetails = (record, t, language) => {
   return details.filter((detail) => detail.value);
 };
 
-/** 記録に何かしらのコーヒー要素が設定されているか */
+/**
+ * 記録に何かしらのコーヒー要素が設定されているか。
+ *
+ * collectCoffeeDetailsはラベル文言のためにt関数を必須にしているが、
+ * ここでは値の有無だけを見たいのでtに依存せず直接判定する
+ * （tを渡さずcollectCoffeeDetailsを呼ぶと`t is not a function`になる）。
+ */
 export const hasCoffeeDetails = (record) =>
-  collectCoffeeDetails(record).length > 0 || (record?.flavors?.length ?? 0) > 0;
+  Boolean(
+    record &&
+      (record.origin?.name ||
+        record.farmName ||
+        (record.varieties?.length ?? 0) > 0 ||
+        record.process?.name ||
+        record.roastLevel?.name ||
+        record.roasterName ||
+        (record.flavors?.length ?? 0) > 0),
+  );
