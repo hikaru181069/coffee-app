@@ -68,7 +68,69 @@ Coffee Appの中心体験は、Record → Connect → Discoverである。
 4. 詳細属性
 5. 管理操作
 
-## 6. Responsive and Accessibility
+## 6. UI Definitions
+
+2026-08にFigmaで設計し実装したHome画面を、UIの基準とする。
+新しい画面を作るときは、ここに書かれたトークンをまず参照し、
+新しい色・書体・角丸・余白を画面ごとに増やさない。
+
+### 6.1 Color
+
+Catppuccin Mochaをベースにした配色（`frontend/src/index.css`の
+`--color-ctp-*`、Tailwindの`@theme`として定義）。
+派手な単色ブランドカラーではなく、背景の階調と少数のアクセントで
+Linear/Obsidianに近い落ち着いた見た目を作る。
+
+背景の階調（暗い順）:
+
+- `ctp-crust` / `ctp-base`（#08090a）: 画面の最背面
+- `ctp-mantle`（#0f1011）: カード・パネルの背景
+- `ctp-surface0` / `ctp-surface1` / `ctp-surface2`: 段階的に明るいUI要素（バッジ、区切り）
+- `ctp-overlay0`: 枠線
+
+テキスト:
+
+- `ctp-text`（#f7f8f8）: 主要テキスト
+- `ctp-subtext0` / `ctp-subtext1`: 補助テキスト
+
+アクセントカラーは意味を固定して使う（装飾目的で増やさない）:
+
+- `ctp-blue`: プライマリアクション・フォーカスリング
+- `ctp-red`: エラー・削除などの危険操作
+- `ctp-yellow`: 評価（★）
+- `ctp-lavender`: 知識グラフへの導線・グラフ関連のアクセント
+- 産地アクセントバー（`utils/originAccent.js`）は上記2色（blue/red）を除いた
+  9色から、産地名のハッシュ値で決定的に選ぶ。同じ産地は常に同じ色になる。
+
+### 6.2 Typography
+
+- UI全体でInterのみを使う（`--app-font`）。書体を画面ごとに増やさない。
+- Space Mono（`--app-font-mono`）はフォントとしては読み込み済みだが、
+  現時点でどのコンポーネントからも参照されていない。将来、数値や
+  レシピの分量など「等幅で見せたい値」が出たときのために残しているのか、
+  単なる読み込み忘れかは未確認。使う予定が無ければ読み込みを外すべきか、
+  次回判断すること。
+
+### 6.3 Iconography
+
+- アイコンは`lucide-react`のみを使う。
+- 知識グラフのノード種別ごとのアイコンは`docs/design.md`の
+  「Graph Visual Semantics」で定義済み（色だけで種別を区別しない）。
+- サイズは文脈で使い分ける（新しい中間サイズを増やさない）:
+  - 12px: バッジ内の小さいアイコン（評価の★など）
+  - 14–16px: 本文中のインラインアイコン
+  - 18–24px: CTAなど強調したい操作
+
+### 6.4 Radius / Spacing
+
+- 角丸は3段階のみ: `rounded-xl`（カード・パネルなど主要コンテナ）、
+  `rounded-lg`（カード内の入れ子要素）、`rounded-full`（ピル・バッジ・
+  産地アクセントバーなど）。中間の値を画面ごとに作らない。
+- 余白はTailwindの既定スケールのみを使う（任意の px 値を直接書かない）。
+  よく使う値: インライン要素の間隔は`gap-2`/`gap-3`、ページの横余白は
+  `px-4`（モバイル）/`px-6`（sm以上）、セクション間は`mb-6`。
+
+## 7. Responsive and Accessibility
 
 - 最小タップ領域を確保する
 - 色だけに依存しない
@@ -76,7 +138,7 @@ Coffee Appの中心体験は、Record → Connect → Discoverである。
 - フォーカス状態を明示する
 - 読みやすいコントラストを維持する
 
-## 7. Non-Goals
+## 8. Non-Goals
 
 - 情報量を増やすこと自体を価値にしない
 - 高度な分析画面にしない
