@@ -4,6 +4,10 @@
    参照できずここに直接値を書く必要があるため、値を手動で同期している。
    どちらかを変える時はもう片方も忘れずに更新すること。 */
 @theme {
+  /* 数値・日付・件数など「事実としての値」用。本文はInterのまま
+     （prompts/design/00-design-principles.md 6.2 Typography） */
+  --font-mono: "Space Mono", monospace;
+
   --color-ctp-base: #08090a;
   --color-ctp-mantle: #0f1011;
   --color-ctp-crust: #08090a;

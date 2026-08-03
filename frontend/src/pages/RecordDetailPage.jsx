@@ -112,7 +112,7 @@ function RecordDetailPage() {
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-ctp-text">{record.title}</h1>
           <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ctp-subtext0">
-            <span>{formatConsumedAt(record.consumedAt, i18n.language)}</span>
+            <span className="font-mono">{formatConsumedAt(record.consumedAt, i18n.language)}</span>
             <span aria-hidden="true">·</span>
             <span className="inline-flex items-center gap-1">
               {record.recordType === "cafe" ? (
@@ -143,7 +143,7 @@ function RecordDetailPage() {
                 strokeWidth={1.5}
               />
             ))}
-            <span className="ml-1 text-sm font-semibold text-ctp-text">
+            <span className="ml-1 font-mono text-sm font-semibold text-ctp-text">
               {record.rating}
               <span className="sr-only"> / 5</span>
             </span>

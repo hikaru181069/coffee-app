@@ -154,7 +154,7 @@
     "emptyDesc": "コーヒーを記録すると、産地やフレーバーのつながりがここに現れます。",
     "selectedNodeAriaLabel": "選択中のノード",
     "viewRecordDetail": "記録の詳細を見る",
-    "appearsInCount": "{{count}} 件の記録で登場",
+    "appearsInCount": "<mono>{{count}}</mono> 件の記録で登場",
     "nodeTypes": {
       "record": "記録",
       "origin": "産地",

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Share2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
@@ -11,6 +11,11 @@ import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeReco
 import HomeRecordCard from "../features/coffee-records/components/HomeRecordCard";
 import { RecordListSkeleton } from "../features/coffee-records/components/RecordListStates";
 import { getErrorMessage } from "../utils/errorMessage";
+
+// GraphPreviewはReact Flowを含み、GraphPageと同じ理由（App.jsxのコメント参照）で
+// bundleを太らせる。Home自体は遅延読み込みしていないページなので、
+// ここだけlazyにしてReact Flowを初回読み込みから外す。
+const GraphPreview = lazy(() => import("../features/graph/components/GraphPreview"));
 
 /**
  * ホーム画面。
@@ -27,9 +32,21 @@ import { getErrorMessage } from "../utils/errorMessage";
  *     Record First（docs/product-principles.md）をより強く表現するため。
  *   - Recent Recordsのカードは横並びグリッドにし、表示する情報を
  *     産地・銘柄・精製方法・フレーバーに絞った（HomeRecordCard.jsx）。
- *     日付・評価・記録タイプは一覧画面（RecordCard.jsx）に残っているので
+ *     日付・記録タイプは一覧画面（RecordCard.jsx）に残っているので
  *     情報としては失われない。Homeは「思い出す」ための場所と位置づけ、
  *     詳しい絞り込みや状態はRecordsPageに譲る。
+ *
+ * 2026-08、知識グラフを「作る」ものではなく「育つ」ものとして位置づける
+ * プロダクト方針（docs/vision.md / docs/product-principles.md）に合わせて
+ * さらに調整した:
+ *   - New Record CTAは、記録が1件も無い最初の訪問時だけ大きく見せる。
+ *     すでに記録があるリピーターには、同じCTAを毎回大きく出す必要は無いため
+ *     小さいボタンへ縮小する（Progressive Disclosure）。
+ *   - Recent Recordsの評価(★)を復活させた。Information Hierarchy
+ *     （docs/design.md）で「②評価と感想」は「③つながり」より優先度が高いため。
+ *   - 画面下部のGraphへの導線を、テキストだけのバナーから
+ *     育っているグラフの縮小プレビュー（GraphPreview）へ差し替えた。
+ *     「グラフが育っている」という実感そのものをHomeで見せるため。
  */
 
 const RECENT_RECORDS_LIMIT = 5;
@@ -64,6 +81,9 @@ function HomePage() {
     ratingMin: "",
   });
 
+  // 記録がすでにあるユーザーには、毎回大きなCTAを出す必要が無い
+  const isRepeatVisitor = !isLoading && records.length > 0;
+
   return (
     <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
       <header className="mb-6">
@@ -74,17 +94,22 @@ function HomePage() {
         <p className="mt-1 text-sm text-ctp-subtext0">{t("home.subtitle")}</p>
       </header>
 
-      {/* Record Coffee: 主要CTA。ヘッダーの小さいボタンではなく独立した
-          セクションにすることで、Record Firstをより強く表現する */}
+      {/* Record Coffee: 主要CTA。初回（記録が無い）は独立したセクションとして
+          大きく見せ、Record Firstを強く表現する。すでに記録があるリピーター
+          には、同じ強さで毎回出す必要が無いため小さいボタンへ縮小する */}
       <section className="mb-6">
-        <h2 className="mb-3 text-sm font-semibold text-ctp-text">
-          {t("home.recordCoffeeHeading")}
-        </h2>
+        {!isRepeatVisitor && (
+          <h2 className="mb-3 text-sm font-semibold text-ctp-text">
+            {t("home.recordCoffeeHeading")}
+          </h2>
+        )}
         <Link
           to="/records/new"
-          className="flex flex-col items-center justify-center gap-2 rounded-xl border border-ctp-overlay0/60 py-10 text-ctp-subtext0 transition-colors duration-150 hover:border-ctp-overlay0 hover:text-ctp-text focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
+          className={`flex items-center justify-center gap-2 rounded-xl border border-ctp-overlay0/60 text-ctp-subtext0 transition-colors duration-150 hover:border-ctp-overlay0 hover:text-ctp-text focus:outline-none focus:ring-2 focus:ring-ctp-blue/50 ${
+            isRepeatVisitor ? "py-3" : "flex-col py-10"
+          }`}
         >
-          <Plus size={24} aria-hidden="true" />
+          <Plus size={isRepeatVisitor ? 18 : 24} aria-hidden="true" />
           <span className="text-sm">{t("home.recordTodayCta")}</span>
         </Link>
       </section>
@@ -118,18 +143,9 @@ function HomePage() {
         )}
       </section>
 
-      {!isLoading && records.length > 0 && (
-        <Link
-          to="/graph"
-          className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-ctp-surface1 bg-ctp-mantle px-4 py-3 transition-colors duration-150 hover:border-ctp-overlay0"
-        >
-          <span className="flex items-center gap-2 text-sm text-ctp-text">
-            <Share2 size={16} aria-hidden="true" className="text-ctp-lavender" />
-            {t("home.viewConnections")}
-          </span>
-          <span className="text-xs text-ctp-subtext0">{t("home.goToGraph")}</span>
-        </Link>
-      )}
+      <Suspense fallback={null}>
+        <GraphPreview />
+      </Suspense>
     </div>
   );
 }
