@@ -62,7 +62,9 @@
       "evening": "Good evening"
     },
     "nameSuffix": ", {{name}}",
-    "subtitle": "What did you drink today?",
+    "subtitle": "What coffee did you have today?",
+    "recordCoffeeHeading": "Record Coffee",
+    "recordTodayCta": "Record today's coffee",
     "recentRecords": "Recent Records",
     "viewConnections": "See your coffee connections",
     "goToGraph": "Go to Graph →"

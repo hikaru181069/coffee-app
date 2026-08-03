@@ -63,6 +63,8 @@
     },
     "nameSuffix": "、{{name}}さん",
     "subtitle": "今日はどんな一杯を飲みましたか？",
+    "recordCoffeeHeading": "コーヒーを記録する",
+    "recordTodayCta": "今日のコーヒーを記録する",
     "recentRecords": "最近の記録",
     "viewConnections": "あなたのコーヒーのつながりを見る",
     "goToGraph": "Graphへ →"
