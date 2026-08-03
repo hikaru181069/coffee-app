@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 
+import { getOriginAccentClass } from "../utils/originAccent";
+
 /**
  * Home画面専用の記録カード。
  *
@@ -22,7 +24,10 @@ function HomeRecordCard({ record }) {
       >
         {record.origin && (
           <div className="flex items-center gap-2">
-            <span aria-hidden="true" className="h-3 w-0.5 rounded-full bg-ctp-lavender" />
+            <span
+              aria-hidden="true"
+              className={`h-3 w-0.5 rounded-full ${getOriginAccentClass(record.origin.name)}`}
+            />
             <span className="text-[11px] font-semibold uppercase tracking-wide text-ctp-subtext0">
               {record.origin.name}
             </span>
