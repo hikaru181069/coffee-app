@@ -198,6 +198,15 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
   const fgRef = useRef(null);
   const isDraggingRef = useRef(false);
   const hasSettledRef = useRef(false);
+  // 収束前（開いた瞬間の追従アニメーション中）にユーザーがズーム・パン・
+  // ドラッグのいずれかに触れたら、以後は二度とカメラを自動フィットしない。
+  // onEngineTickは収束前は毎フレームzoomToFit(0, 40)を呼んでおり、
+  // これは即座に（アニメーション無しで）カメラを戻すため、収束前に
+  // ユーザーがズーム・パンを試みても1フレーム以内に元へ戻され、
+  // 「何も反応しない」ように見えてしまう不具合を踏んだ。
+  // ノードドラッグはisDraggingRefで個別に保護されていたが、背景パンは
+  // 保護が無かった（d3-zoom側のドラッグ処理でありisDraggingRefの対象外）
+  const userInteractedRef = useRef(false);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [hoveredNodeId, setHoveredNodeId] = useState(null);
 
@@ -220,6 +229,24 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     const observer = new ResizeObserver(updateSize);
     observer.observe(el);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+
+    // wheel/pointerdownはここでは観測するだけ（preventDefault等はしない）。
+    // force-graph自身のズーム・パン・ドラッグ処理はそのまま動かしつつ、
+    // 「ユーザーが触れた」事実だけを記録する
+    const markInteracted = () => {
+      userInteractedRef.current = true;
+    };
+    el.addEventListener("wheel", markInteracted, { passive: true });
+    el.addEventListener("pointerdown", markInteracted);
+    return () => {
+      el.removeEventListener("wheel", markInteracted);
+      el.removeEventListener("pointerdown", markInteracted);
+    };
   }, []);
 
   const { nodes, links } = useMemo(() => {
@@ -257,6 +284,7 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
   // 次の収束を「開いた瞬間」として扱い、カメラを追従させ直す
   useEffect(() => {
     hasSettledRef.current = false;
+    userInteractedRef.current = false;
   }, [nodes, links]);
 
   useEffect(() => {
@@ -356,16 +384,15 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
           }}
           onEngineTick={() => {
             // 開いた瞬間の収束アニメーション中だけカメラを追従させる。
-            // ドラッグで再加熱した後は追従しない
-            // （React Flow版で、ドラッグ中もカメラを動かして
-            // ポインタ操作と競合しちらついた反省から）
-            if (!hasSettledRef.current && !isDraggingRef.current) {
+            // ドラッグで再加熱した後や、ユーザーが一度でもズーム・パンに
+            // 触れた後は追従しない（ファイル冒頭のuserInteractedRefコメント参照）
+            if (!hasSettledRef.current && !isDraggingRef.current && !userInteractedRef.current) {
               fgRef.current?.zoomToFit(0, 40);
             }
           }}
           onEngineStop={() => {
             hasSettledRef.current = true;
-            if (!isDraggingRef.current) fgRef.current?.zoomToFit(400, 40);
+            if (!isDraggingRef.current && !userInteractedRef.current) fgRef.current?.zoomToFit(400, 40);
           }}
           enableNodeDrag={interactive}
           enableZoomInteraction={interactive}
