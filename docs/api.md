@@ -136,6 +136,27 @@ responseは@docs/insights.mdを参照。
 }
 ```
 
+## Search
+
+### GET `/search`
+
+自分の記録・属性を横断して検索する。
+
+query:
+
+- q（検索語。未指定・空文字なら空の結果を返す。400にはしない）
+
+responseは@docs/search.mdを参照。
+
+```json
+{
+  "data": {
+    "entities": [],
+    "records": []
+  }
+}
+```
+
 ## Status Codes
 
 - 200: 取得・更新成功

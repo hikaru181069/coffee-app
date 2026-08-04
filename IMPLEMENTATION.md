@@ -223,6 +223,27 @@ docs/mvp.mdのOut of Scope（「AI推薦」「自然言語による味覚分析�
 - `InsightBanner`は`/graph`へのLinkにした。docs/product-principles.md「Discovery Must Be Actionable」（発見は単なる数値表示で終わらせない）に沿い、一文を提示するだけで終わらせずグラフでの探索へつなげるため（GraphPreview.jsxと同じ見た目・同じ理由）
 - ブラウザで実機確認済み: デモデータ（15件）で実際に`topCombination`（Ethiopia×Washed、平均5、2件）が検出され、Home画面に日英両方で正しく表示されること、クリックで`/graph`へ遷移することを確認
 
+### 2026-08: 横断検索を追加（産地・品種・フレーバー・カフェ・精製方法・コーヒー名）＋カフェをグラフノード化
+
+「コーヒー名検索だけでなく、産地・品種・フレーバー・カフェ・精製方法を横断して検索でき、結果に『エチオピア / 8件の記録 / よく関連するフレーバー：ベリー、フローラル』のように関連情報を添えたい」という要望から実装。`feat/search-and-cafe`ブランチで実装。カフェは元々知識グラフのノード種別に含まれていなかった（`cafeName`は自由記述でfarmNameと同じ理由で未対応）ため、検索でカフェも扱えるようにする前提として、まずカフェをグラフノード化した。
+
+**カフェのグラフノード化**（farmNameと全く同じパターンで実装）:
+- `backend/core/graph/nodeId.js`に`cafeNodeId`、`graphBuilder.js`の`collectAttributeRefs`にcafeの分岐、`ATTRIBUTE_NODE_TYPES`にcafeを追加
+- `frontend/src/features/graph/utils/nodeVisuals.js`（アイコンはlucideの`Store`、色は未使用だった`ctp-maroon`）・`canvasIcons.js`（canvas描画用のSVG pathデータ）にcafeを追加。`GraphLegend.jsx`・`GraphFilters.jsx`は`ATTRIBUTE_NODE_TYPES`を参照しているため変更不要
+- `docs/domain-model.md`（Cafeセクション新設。recordTypeの`cafe`とは別概念であることを明記）・`docs/knowledge-graph.md`（Stable IDs）・`docs/design.md`（Graph Visual Semantics）を更新
+- `backend/tests/graphBuilder.test.js`にcafeノード生成（正規化による統合）のテストを追加
+
+**横断検索**:
+- `backend/core/search/searchBuilder.js`（新規、DB/HTTP非依存の純粋関数）: `graphBuilder.js`の`buildGraph`をそのまま再利用し、属性ノード（origin/farm/variety/process/roastLevel/flavor/cafe）を部分一致で検索。属性同士の直接エッジは持たないため、ヒットした属性が付いた記録を経由して間接的に共起する別属性（flavor以外がヒットならflavor、flavorがヒットならorigin）を登場回数順に最大3件添える。記録タイトルの一致は別途、記録そのものを返す（既存の`RecordCard.jsx`をそのまま再利用するため）
+- `backend/services/coffee/searchService.js` / `controllers/searchController.js` / `routes/searchRoutes.js`（新規）: `graphService.js`等と同じ構成。`app.js`へ`GET /api/search?q=...`を登録。クエリが空でも400にせず空の結果を返す
+- `backend/tests/searchBuilder.test.js`（集計ロジック）、`tests/searchApi.test.js`（HTTPレベル、他ユーザーを含めないことの確認）を新規追加
+- `frontend/src/features/search/`（新規）: `api/searchApi.js`、`hooks/useSearch.js`（300msデバウンス。setStateはeffect内で定義したasync関数の中でのみ行う。effect本体で直接setStateすると`react-hooks/set-state-in-effect`に引っかかるため、`useGraph.js`等と同じパターンに揃えた）、`components/SearchBox.jsx` / `SearchResults.jsx` / `EntityResultCard.jsx`
+- `frontend/src/pages/RecordsPage.jsx`: 検索ボックスを追加。検索クエリが入力されている間は、通常のフィルター・一覧・ページ送りを検索結果表示へ丸ごと差し替える（見た目・意味が異なる2つの状態を1つの一覧に混ぜないため）
+- `EntityResultCard`は`/graph?focus=<nodeId>`へのLinkにした（`RecordDetailPage`の「Graphで見る」と同じ`?focus=`の仕組みをそのまま利用）。docs/product-principles.md「Discovery Must Be Actionable」に沿い、検索結果を提示するだけで終わらせずグラフでの探索へつなげるため
+- `frontend/src/i18n/locales/ja.json` / `en.json`: `search.*`の文言、`graph.nodeTypes.cafe`を追加
+- 新規`docs/search.md`（`docs/knowledge-graph.md`/`docs/insights.md`と同じ構成）、`docs/api.md`に`GET /api/search`を追記、`CLAUDE.md`の参照ファイル一覧に追加
+- ブラウザで実機確認済み: デモデータで「ethiopia」検索→産地カード（4件の記録、関連フレーバー: Floral・Berry・Citrus）と記録名一致4件が表示、「blue bottle」検索→カフェカード（1件の記録）が表示、カードクリックで`/graph?focus=cafe:...`へ遷移しノードが選択された状態でGraph画面が開くこと、日英両方の表示を確認
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -315,7 +336,9 @@ GraphPage
 
 Post-MVPの各エントリはfrontend/docsのみの変更のため、都度`cd frontend && npm run lint && npm run build`のみ実行し、エラー無しを確認している（backend/fastapi-serviceに変更が及ぶ場合は、その回のみ該当テストも実行する）。
 
-Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実行し、Test Suites: 14 passed, Tests: 242 passed（Insight関連16件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み。
+Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実行し、Test Suites: 14 passed, Tests: 242 passed（Insight関連16件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み。2026-08にmainへmerge済み。
+
+横断検索・カフェのグラフノード化（`feat/search-and-cafe`）追加時に`cd backend && npm test`を再実行し、Test Suites: 16 passed, Tests: 260 passed（search関連17件・cafeノード関連1件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み（テスト実行中に一度、システムのメモリ逼迫と思われる原因でMongoDB接続タイムアウトが発生したが、再実行で全件成功することを確認し、コードの問題ではないと判断した）。
 
 ---
 
@@ -328,14 +351,15 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 - 知識グラフの`dateFrom` / `dateTo`フィルターはAPI・純粋関数側には実装済みだが、フロントエンドのフィルターUIには未反映
 - Space Monoは評価・日付・グラフの件数にのみ適用済み。`RecordsPage`の件数表示（`records.countLabel`）など、他の数値表示への適用可否は未判断
 - `feat/graph-dynamic-visuals`（React Flow版、放棄済み。`feat/graph-force-graph-2d`は2026-08にmain済み）は削除候補
-- `feat/insights`ブランチは未merge
 - Insightの優先度選択（`insightBuilder.js`のPRIORITY）は現状固定順。ユーザーの記録傾向によっては同じ種類のInsightばかり出続ける可能性があり、「全件見る」画面や表示の入れ替わりは未実装
+- `feat/search-and-cafe`ブランチは未merge
+- 検索結果の属性カード一覧（`entities`）は現状recordCount順のみで、多数の属性がヒットしたときの上限や、さらに絞り込む手段は未実装
 
 ## 次に実装すべき最小単位
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. `feat/insights`をユーザーが実機確認したうえでmainへmergeする
+1. `feat/search-and-cafe`をユーザーが実機確認したうえでmainへmergeする
 2. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
 3. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
 4. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する

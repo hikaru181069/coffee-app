@@ -115,5 +115,6 @@ Coffee Detailsとして段階的に見せる項目:
 - process: droplets
 - roastLevel: flame
 - flavor: sparkle
+- cafe: store
 
 具体的なアイコンライブラリは既存依存関係を確認して決定してください。

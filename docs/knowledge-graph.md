@@ -63,6 +63,7 @@ MongoDBのCoffeeRecordとマスターデータを正とします。
 - process:{processId}
 - roastLevel:{roastLevelId}
 - flavor:{flavorId}
+- cafe:{normalizedCafeName}
 
 異なる種類で同じ値が存在しても衝突しません。
 
@@ -91,9 +92,12 @@ MVP:
 - origin
 - flavor
 - process
-- search
 - topN
 - relation depth
+
+横断検索（旧「search」項目）はGraph画面のフィルターではなく、
+Records画面に置く独立した機能として実装しました（docs/search.md）。
+検索結果からGraphへは`?focus=`での深いリンクで遷移します。
 
 ## Interaction
 

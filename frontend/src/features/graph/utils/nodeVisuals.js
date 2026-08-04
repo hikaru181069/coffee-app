@@ -1,11 +1,11 @@
-import { Coffee, Droplets, Flame, Globe, Leaf, Sparkles, Sprout } from "lucide-react";
+import { Coffee, Droplets, Flame, Globe, Leaf, Sparkles, Sprout, Store } from "lucide-react";
 
 /**
  * ノード種別ごとの見た目（アイコン・色）とラベルの翻訳キー。
  *
  * docs/design.md の「Graph Visual Semantics」に対応する:
  *   record: card/circle, origin: globe, farm: leaf, variety: seed,
- *   process: droplets, roastLevel: flame, flavor: sparkle
+ *   process: droplets, roastLevel: flame, flavor: sparkle, cafe: store
  *
  * 色だけで種別を区別しない（docs/design.md の UI Rules）ため、
  * 種別ごとに異なるアイコンも必ず割り当てる。GraphLegend と
@@ -29,6 +29,7 @@ export const NODE_VISUALS = {
   process: { icon: Droplets, labelKey: "graph.nodeTypes.process", colorClass: "text-ctp-sky", ringClass: "ring-ctp-sky/50", canvasColor: "#89dceb" },
   roastLevel: { icon: Flame, labelKey: "graph.nodeTypes.roastLevel", colorClass: "text-ctp-peach", ringClass: "ring-ctp-peach/50", canvasColor: "#fab387" },
   flavor: { icon: Sparkles, labelKey: "graph.nodeTypes.flavor", colorClass: "text-ctp-pink", ringClass: "ring-ctp-pink/50", canvasColor: "#f5c2e7" },
+  cafe: { icon: Store, labelKey: "graph.nodeTypes.cafe", colorClass: "text-ctp-maroon", ringClass: "ring-ctp-maroon/50", canvasColor: "#eba0ac" },
 };
 
 /** 属性ノードの種別一覧（凡例・フィルターの並び順に使う。recordは含めない） */
@@ -39,6 +40,7 @@ export const ATTRIBUTE_NODE_TYPES = [
   "process",
   "roastLevel",
   "flavor",
+  "cafe",
 ];
 
 export const getNodeVisual = (type) => NODE_VISUALS[type] ?? NODE_VISUALS.record;
