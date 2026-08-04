@@ -86,6 +86,20 @@ export const formatConsumedAtShort = (isoString, language) => {
 };
 
 /**
+ * "2026-01" のような年月文字列を、Stats画面の月別推移グラフに出す
+ * 短いラベルへ変換する。languageは現在の表示言語（"ja"/"en"）
+ */
+export const formatMonthLabel = (monthString, language) => {
+  if (!monthString) return "";
+
+  const [year, month] = monthString.split("-").map(Number);
+  const date = new Date(year, month - 1, 1);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat(toIntlLocale(language), { year: "2-digit", month: "short" }).format(date);
+};
+
+/**
  * 記録が参照しているコーヒーの要素を、表示用の一覧にまとめる。
  *
  * 詳細画面とカードの両方で「設定されている項目だけ」を出したいので、

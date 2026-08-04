@@ -2,15 +2,16 @@
 // サイドバーナビの代わりにスマホで使いやすい片手操作を実現する。
 
 import { NavLink } from "react-router-dom";
-import { Coffee, Home, Share2, User } from "lucide-react";
+import { BarChart3, Coffee, Home, Share2, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-// docs/design.md の Main Navigation（Home / Records / Graph / Profile）に対応する。
+// docs/design.md の Main Navigation（Home / Records / Graph / Stats / Profile）に対応する。
 const TABS = [
-  { to: "/",        Icon: Home,   label: "Home",    end: true },
-  { to: "/records", Icon: Coffee, label: "Records"            },
-  { to: "/graph",   Icon: Share2, label: "Graph"               },
-  { to: "/profile", Icon: User,   label: "Profile"             },
+  { to: "/",        Icon: Home,      label: "Home",    end: true },
+  { to: "/records", Icon: Coffee,    label: "Records"            },
+  { to: "/graph",   Icon: Share2,    label: "Graph"               },
+  { to: "/stats",   Icon: BarChart3, label: "Stats"               },
+  { to: "/profile", Icon: User,      label: "Profile"             },
 ];
 
 function BottomTabBar() {

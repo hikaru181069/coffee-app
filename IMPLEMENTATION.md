@@ -284,6 +284,23 @@ docs/mvp.mdのOut of Scope（「AI推薦」「自然言語による味覚分析�
 - `frontend/src/features/graph/utils/previewIllustration.js`: 右側の小さめの正方形寄りの枠に収まるよう、viewBoxを`200x64`（横長）から`140x100`へ変更
 - ブラウザで実機確認済み: Home画面下部でテキストが左、イラストが右のレイアウトになっていること、クリックで`/graph`へ遷移することを確認
 
+### 2026-08: 統計ページ（Stats）を追加
+
+「これまで飲んだコーヒーについての統計ページが欲しい」という要望。Insight（`docs/insights.md`。傾向を一文で意味づけする）が生の集計値を見せない設計だったのに対し、Statsは総記録数・月別推移・評価分布・家/カフェ比較・産地/品種/精製方法/フレーバー/カフェの上位ランキングという生の数字をふりかえれる場所として、ナビゲーションに独立した項目として追加した（ユーザーと相談し、Homeへの埋め込みではなく新規ページ・新規ナビ項目を選択）。`feat/stats-page`ブランチで実装。
+
+- `backend/core/stats/statsBuilder.js`（新規、DB/HTTP非依存の純粋関数）: `core/insights/insightBuilder.js`と同じグルーピングパターンを再利用し、Overview・上位5件ランキング（産地/品種/精製方法/フレーバー/カフェ、`core/graph/nodeId.js`と同じstable ID形式）・評価分布（★1〜5、0件でも全スロットを返す）・家/カフェ比較・月別推移を算出
+- `backend/services/coffee/statsService.js`・`controllers/statsController.js`・`routes/statsRoutes.js`を追加、`app.js`に`GET /api/stats`を登録（フィルターは持たない。「記録全体のふりかえり」を示す機能のため）
+- `backend/tests/statsBuilder.test.js`（集計ロジック10件）、`tests/statsApi.test.js`（認証・空記録・ユーザー分離のHTTPテスト3件）を追加
+- `frontend/src/features/stats/`: `api/statsApi.js`・`hooks/useStats.js`（`useInsights.js`と同じloading/error/data構成）、表示部品として`OverviewStats.jsx`・`MonthlyTrendChart.jsx`・`RatingDistributionChart.jsx`（いずれもCSSのみの棒グラフ、グラフ描画ライブラリは追加していない）・`HomeVsCafeCard.jsx`・`TopRankingList.jsx`（ランキング項目はエンティティ詳細ページ`/entities/:nodeId`へのLink）
+- `frontend/src/features/coffee-records/utils/recordFormat.js`に`formatMonthLabel`を追加（月別推移グラフの軸ラベル用）
+- 新規`frontend/src/pages/StatsPage.jsx`（ルート`/stats`）。記録が1件も無い場合は集計値を並べず、次の行動を示すメッセージのみ表示
+- ナビゲーションに追加: `Navbar.jsx`（サイドバー、手描きSVGアイコンを新規追加）・`BottomTabBar.jsx`（下部タブ、`lucide-react`の`BarChart3`）
+- `frontend/src/i18n/locales/ja.json` / `en.json`に`stats.*`キーを追加
+- 新規`docs/stats.md`、`docs/api.md`に`GET /api/stats`、`docs/design.md`のMain Navigation/Screensに追記、`CLAUDE.md`の参照ファイル一覧に追加
+- 実装中に一度、ESLintの`no-unused-vars`（`varsIgnorePattern: '^[A-Z_]'`）が関数パラメータの分割代入リネーム（`{ icon: Icon }`）ではアイコンのJSX参照を検出できず誤検知することを確認。既存コード（`LandingPage.jsx`）と同じ回避策（`const Icon = icon;`を関数本体に書く）に合わせて修正
+- テスト結果: `cd backend && npm test` Test Suites: 19 passed, Tests: 286 passed。`cd frontend && npm run lint && npm run build`も成功
+- ブラウザで実機確認済み: デモデータでOverview（記録数15・平均評価4.1・産地7種・品種7種・フレーバー13種・63日）、月別推移、評価分布、家/カフェ比較、産地〜カフェの5種類のランキングが表示されることを確認。ランキングの「Ethiopia」をクリックして`/entities/origin:...`へ正しく遷移し、産地詳細ページ（4件の記録・平均評価4.8・関連する品種/精製方法/フレーバー/カフェ・関連記録4件）が表示されることを確認。日本語切り替えで見出し・数値・月ラベル（「26年7月」等）・件数の複数形もすべて翻訳されることを確認
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -382,6 +399,8 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 
 エンティティ詳細ページ（`feat/entity-detail-pages`。`feat/search-and-cafe`から分岐したため、これをmainへmergeすると両方の変更が同時に入る）追加時に`cd backend && npm test`を再実行し、Test Suites: 17 passed, Tests: 273 passed（entityDetail関連9件・graphApiの新エンドポイント関連4件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み。
 
+統計ページ（`feat/stats-page`）追加時に`cd backend && npm test`を再実行し、Test Suites: 19 passed, Tests: 286 passed（stats関連13件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み。
+
 ---
 
 ## 未解決事項
@@ -396,13 +415,16 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 - Insightの優先度選択（`insightBuilder.js`のPRIORITY）は現状固定順。ユーザーの記録傾向によっては同じ種類のInsightばかり出続ける可能性があり、「全件見る」画面や表示の入れ替わりは未実装
 - 検索結果の属性カード一覧（`entities`）は現状recordCount順のみで、多数の属性がヒットしたときの上限や、さらに絞り込む手段は未実装
 - エンティティ詳細ページの関連属性は種別ごと最大5件まで。件数が多い属性（例: フレーバーが10種類以上共起する）を全部見る手段は未実装
+- Statsページは全期間の記録から計算しており、期間フィルター（直近3か月/今年など）は未実装（`docs/stats.md`の設計通り、Insightと同じく「記録全体のふりかえり」を示すための意図的な仕様だが、記録件数が増えた場合は要検討）
+- `BottomTabBar`のタブがStats追加で5個になった。ブラウザ自動化ツールでモバイル幅のビューポートを再現できず、狭い画面での折り返し・ラベル省略の見た目は未確認（実機での確認を推奨）
 
 ## 次に実装すべき最小単位
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
-2. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
-3. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
-4. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
-5. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
+1. `BottomTabBar`（5タブ化）をモバイル実機またはエミュレータで見た目確認する
+2. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+3. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
+4. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
+5. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
+6. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加

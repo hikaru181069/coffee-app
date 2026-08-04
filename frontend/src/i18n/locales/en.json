@@ -208,6 +208,24 @@
     "relatedHeading": "Related in the graph",
     "recordsHeading": "Related records"
   },
+  "stats": {
+    "heading": "Stats",
+    "subtitle": "A look back at the coffee you've recorded.",
+    "emptyDesc": "Trends will appear here as you record more coffee.",
+    "monthlyTrendHeading": "Records per month",
+    "ratingDistributionHeading": "Rating distribution",
+    "homeVsCafeHeading": "Home vs. Café",
+    "overview": {
+      "recordCount": "Records",
+      "avgRating": "Average rating",
+      "originCount": "Origins",
+      "varietyCount": "Varieties",
+      "flavorCount": "Flavors",
+      "daysSinceStart": "Since your first record",
+      "daysCount_one": "{{count}} day",
+      "daysCount_other": "{{count}} days"
+    }
+  },
   "validation": {
     "titleRequired": "Please enter a title",
     "maxLength": "Please keep it within {{max}} characters",

@@ -64,6 +64,23 @@ const RecordsIcon = () => (
     <line x1="14" y1="2" x2="14" y2="4" />
   </svg>
 );
+// Stats用。棒グラフ
+const StatsIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <line x1="6" y1="20" x2="6" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="18" y1="20" x2="18" y2="14" />
+  </svg>
+);
 const UserIcon = () => (
   <svg
     width="16"
@@ -96,12 +113,13 @@ const LogoutIcon = () => (
   </svg>
 );
 
-// docs/design.md の Main Navigation（Home / Records / Graph / Profile）に対応する。
+// docs/design.md の Main Navigation（Home / Records / Graph / Stats / Profile）に対応する。
 // New Record は各画面の「記録する」CTAから遷移するため、ナビ自体には持たせない。
 const PRIMARY_ITEMS = [
   { to: "/", label: "Home", Icon: HomeIcon, end: true },
   { to: "/records", label: "Records", Icon: RecordsIcon },
   { to: "/graph", label: "Graph", Icon: GraphIcon },
+  { to: "/stats", label: "Stats", Icon: StatsIcon },
 ];
 
 // NavLink の isActive に応じてクラスを切り替えるヘルパー関数
