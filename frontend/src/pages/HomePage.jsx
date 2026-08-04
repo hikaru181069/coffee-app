@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -12,12 +12,10 @@ import HomeRecordCard from "../features/coffee-records/components/HomeRecordCard
 import { RecordListSkeleton } from "../features/coffee-records/components/RecordListStates";
 import { getErrorMessage } from "../utils/errorMessage";
 import InsightBanner from "../features/insights/components/InsightBanner";
-
-// GraphPreviewはreact-force-graph-2d（canvas描画・物理演算）を含み、
-// GraphPageと同じ理由（App.jsxのコメント参照）でbundleを太らせる。
-// Home自体は遅延読み込みしていないページなので、ここだけlazyにして
-// react-force-graph-2dを初回読み込みから外す。
-const GraphPreview = lazy(() => import("../features/graph/components/GraphPreview"));
+// GraphPreviewは以前はreact-force-graph-2dを縮小描画しておりlazy importが
+// 必要だったが、静的なイラスト+件数表示へ変更した際に依存が無くなった
+// ため、他のコンポーネントと同じ通常のimportに戻した。
+import GraphPreview from "../features/graph/components/GraphPreview";
 
 /**
  * ホーム画面。
@@ -53,6 +51,12 @@ const GraphPreview = lazy(() => import("../features/graph/components/GraphPrevie
  * 2026-08、Insight機能（docs/insights.md）を追加した。グラフは見る側が
  * 自分で関係性を読み取る必要があるため、アプリ側から意味のある一文
  * （InsightBanner）をGraphPreviewの上に配置し、発見体験を後押しする。
+ *
+ * 2026-08、GraphPreviewの中身を、実データの縮小描画から静的なイラスト+
+ * 見出し+タグライン+ノード数・つながり数の実数字へ変更した。160px程度の
+ * 高さでは実データを描いてもノードが小さすぎて読めず、「知識ベース感」を
+ * 伝える役割を果たせていなかったため（features/graph/components/
+ * GraphPreview.jsxのコメント参照）。
  */
 
 const RECENT_RECORDS_LIMIT = 5;
@@ -151,9 +155,7 @@ function HomePage() {
 
       <InsightBanner />
 
-      <Suspense fallback={null}>
-        <GraphPreview />
-      </Suspense>
+      <GraphPreview />
     </div>
   );
 }

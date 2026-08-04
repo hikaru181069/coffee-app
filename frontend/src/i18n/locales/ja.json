@@ -66,8 +66,13 @@
     "recordCoffeeHeading": "コーヒーを記録する",
     "recordTodayCta": "今日のコーヒーを記録する",
     "recentRecords": "最近の記録",
-    "viewConnections": "あなたのコーヒーのつながりを見る",
-    "goToGraph": "Graphへ →"
+    "knowledgeGraph": {
+      "heading": "知識グラフ",
+      "tagline": "あなたのコーヒーの知識が育っています。",
+      "nodeCount": "{{count}}件のノード",
+      "edgeCount": "{{count}}件のつながり",
+      "explore": "グラフを見る"
+    }
   },
   "records": {
     "newRecordCta": "記録する",
