@@ -66,8 +66,15 @@
     "recordCoffeeHeading": "Record Coffee",
     "recordTodayCta": "Record today's coffee",
     "recentRecords": "Recent Records",
-    "viewConnections": "See your coffee connections",
-    "goToGraph": "Go to Graph →"
+    "knowledgeGraph": {
+      "heading": "Knowledge Graph",
+      "tagline": "Your coffee knowledge is growing.",
+      "nodeCount_one": "{{count}} Node",
+      "nodeCount_other": "{{count}} Nodes",
+      "edgeCount_one": "{{count}} Connection",
+      "edgeCount_other": "{{count}} Connections",
+      "explore": "Explore Graph"
+    }
   },
   "records": {
     "newRecordCta": "New Record",

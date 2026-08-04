@@ -259,6 +259,15 @@ docs/mvp.mdのOut of Scope（「AI推薦」「自然言語による味覚分析�
 - 新規`docs/entity-detail.md`（`docs/knowledge-graph.md`/`docs/search.md`と同じ構成）、`docs/api.md`に`GET /api/graph/nodes/:nodeId`を追記、`CLAUDE.md`の参照ファイル一覧に追加
 - ブラウザで実機確認済み: デモデータで産地「Ethiopia」の詳細ページ（4件の記録、平均評価4.8、最後に飲んだ日、品種/精製方法/焙煎度/フレーバー/カフェのランキング、関連記録4件）を確認。品種「Heirloom」チップをクリックしてそのエンティティ詳細ページへ正しく遷移（異なる統計・関連属性が表示される）、「グラフで見る」ボタンで`/graph?focus=variety:...`へ遷移しノードが選択された状態でサイドパネルに「詳細を見る」リンクが表示されることを確認
 
+### 2026-08: HomeのGraphカードを「実データの縮小描画」から「静的イラスト+件数」へ変更
+
+保留にしていた「Homeのgraphプレビューが読みにくい」問題を、ユーザー提示のレイアウト案（抽象イラスト＋見出し＋タグライン＋ノード数/つながり数＋Explore CTA）で解消。branchは切らず、frontendのみの変更のためmainへ直接commit。
+
+- `frontend/src/features/graph/components/GraphPreview.jsx`を全面書き換え。`GraphCanvas`（react-force-graph-2d）の縮小描画をやめ、静的なSVGイラスト（`GraphIllustration`、実データを反映しない装飾）+ 見出し「Knowledge Graph」+ タグライン + `graph.summary`の`nodeCount`/`edgeCount`（既存の`useGraph`が返す値をそのまま利用、バックエンド変更なし）+ 「Explore Graph →」に差し替えた
+- react-force-graph-2dへの依存が無くなったため、`frontend/src/pages/HomePage.jsx`側の`lazy`/`Suspense`によるbundle分離も不要になり、通常のimportへ戻した（build出力で`GraphPreview`/`GraphCanvas`の専用chunkが無くなったことを確認）
+- `frontend/src/i18n/locales/ja.json` / `en.json`: 使われなくなった`home.viewConnections` / `home.goToGraph`を削除し、`home.knowledgeGraph.*`を追加
+- ブラウザで実機確認済み: Home画面下部に「Knowledge Graph / Your coffee knowledge is growing. / 54 Nodes 84 Connections / Explore Graph →」（日本語では「知識グラフ / あなたのコーヒーの知識が育っています。/ 54件のノード 84件のつながり / グラフを見る →」）が表示され、クリックで`/graph`へ遷移することを確認
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -370,16 +379,14 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 - `feat/graph-dynamic-visuals`（React Flow版、放棄済み。`feat/graph-force-graph-2d`は2026-08にmain済み）は削除候補
 - Insightの優先度選択（`insightBuilder.js`のPRIORITY）は現状固定順。ユーザーの記録傾向によっては同じ種類のInsightばかり出続ける可能性があり、「全件見る」画面や表示の入れ替わりは未実装
 - 検索結果の属性カード一覧（`entities`）は現状recordCount順のみで、多数の属性がヒットしたときの上限や、さらに絞り込む手段は未実装
-- `feat/entity-detail-pages`ブランチ（`feat/search-and-cafe`を含む）は未merge
 - エンティティ詳細ページの関連属性は種別ごと最大5件まで。件数が多い属性（例: フレーバーが10種類以上共起する）を全部見る手段は未実装
 
 ## 次に実装すべき最小単位
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. `feat/entity-detail-pages`をユーザーが実機確認したうえでmainへmergeする（`feat/search-and-cafe`の変更も含む）
-2. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
-3. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
-4. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
-6. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面への遷移のみ）
-7. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
+1. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+2. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
+3. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
+4. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
+5. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
