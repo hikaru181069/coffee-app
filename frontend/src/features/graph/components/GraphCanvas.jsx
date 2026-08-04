@@ -25,16 +25,32 @@ import { getNodeIconImage } from "../utils/canvasIcons";
  * chargeStrengthだけ強めに調整している。原因はまだ特定できていない
  * （d3-force-3dとd3-forceで内部実装が違う可能性がある）。
  *
- * 既知の未解決不具合: onNodeClick / onBackgroundClickが発火しない
- * （ノードクリックで詳細パネルが開かない）。force-graphのpointerup
- * ハンドラは`state.isPointerPressed`と`state.isPointerDragging`を見て
- * クリックかどうかを判定するが、実機・自動化どちらでも
- * pointerdown→pointerup（trusted、座標移動ゼロ）が正しく発火している
- * にもかかわらずクリックが認識されない。onBackgroundClickの除去、
- * enableNodeDrag=falseなど複数パターンを検証したが再現しつづけており、
- * ライブラリ内部（force-graph.mjs）の問題と見ている。ホバー（別経路、
- * 毎フレームのポインタ位置に基づく）・ドラッグでの物理反応・
- * 収束アニメーションはすべて正常に動作している。
+ * 既知の不具合と対処（force-graph.mjs本体を読んで原因を特定した）:
+ *
+ * 1. onNodeClick / onBackgroundClickが発火しない
+ *    force-graphは`pointermove`のたびに「onBackgroundClickが設定されて
+ *    いれば、pointerType==='mouse'の移動量を一切問わずisPointerDragging=true
+ *    にする」ヒューリスティックを持つ（ズーム操作と誤検知させないための
+ *    実装）。実際のマウスクリックはpointerdown→pointerupの間にほぼ必ず
+ *    1px以上動くため、このヒューリスティックが常に発火し、pointerup側で
+ *    「ドラッグ後なのでクリックとして扱わない」と判定されてしまう。
+ *    さらにパン操作（enablePanInteraction）自体もd3-zoomの'zoom'イベントで
+ *    同じisPointerDragging=trueを立てるため、onBackgroundClickを外すだけ
+ *    では解決しない。
+ *    → ライブラリ側のクリック判定に頼らず、pointerdown/pointerupの座標を
+ *      自前で比較し、閾値以内ならscreen2GraphCoordsで求めたグラフ座標に
+ *      対してdrawNodeと同じ当たり判定（円・角丸矩形）を自前で行う
+ *      （下記 findNodeAtClientPoint）。
+ *
+ * 2. width/heightを明示的に渡すとズーム・ドラッグが効かなくなる
+ *    width/heightのonChangeはadjustCanvasSizeを呼び、その中で
+ *    zoom.translateBy(...)を実行する。これはd3-zoomの'zoom'ハンドラを
+ *    発火させ、上記1と同じ理由でisPointerDragging=trueを立てる。
+ *    ResizeObserverでsizeを継続更新していると、この再発火が操作中にも
+ *    起こり得てズーム・ドラッグを壊す。
+ *    → sizeは「初回の非ゼロ計測値で固定し、以後ResizeObserverが発火しても
+ *      更新しない」方式にする。ウィンドウの動的リサイズには追従しなくなるが、
+ *      安定した操作性を優先する（下記のuseEffect参照）。
  */
 const FORCE_PARAMS = {
   linkDistance: 90,
@@ -50,6 +66,8 @@ const ATTRIBUTE_BASE_HALF_WIDTH = 30;
 const ATTRIBUTE_HALF_HEIGHT = 14;
 const ATTRIBUTE_DEGREE_CAP = 8;
 const ATTRIBUTE_DEGREE_SCALE = 2;
+
+const CLICK_TOLERANCE_PX = 6;
 
 // frontend/src/App.css の --ctp-* と同じ値（canvasはTailwindクラスを
 // 使えないため、utils/nodeVisuals.js の canvasColor と同様に直接持つ）
@@ -187,7 +205,16 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     const el = containerRef.current;
     if (!el) return undefined;
 
-    const updateSize = () => setSize({ width: el.clientWidth, height: el.clientHeight });
+    // 初回の非ゼロ計測値で固定する。ResizeObserverが以後も発火し続けて
+    // width/heightをforce-graphへ渡し直すと、ズーム・ドラッグが効かなく
+    // なる不具合を踏んだ（ファイル冒頭のコメント参照）
+    const updateSize = () => {
+      setSize((prev) => {
+        if (prev.width > 0 && prev.height > 0) return prev;
+        const next = { width: el.clientWidth, height: el.clientHeight };
+        return next.width > 0 && next.height > 0 ? next : prev;
+      });
+    };
     updateSize();
 
     const observer = new ResizeObserver(updateSize);
@@ -251,8 +278,55 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
   // （実際に踏んだ不具合。ホバーするたびにレイアウトが再抽選されていた）
   const graphData = useMemo(() => ({ nodes, links }), [nodes, links]);
 
+  // onNodeClick/onBackgroundClickが機能しないためのクリック代替実装。
+  // pointerdown→pointerupの移動量が閾値以内なら「クリック」とみなし、
+  // screen2GraphCoordsで求めたグラフ座標にdrawNodeと同じ形（円・角丸矩形）の
+  // 当たり判定を自前で行う。ホバー状態（hoveredNodeId）には頼らない
+  // ——isPointerDragging誤検知（ファイル冒頭コメント参照）と同じ理由で、
+  // クリックの瞬間にホバーがnullへリセットされることがあるため
+  const pointerDownRef = useRef(null);
+
+  const findNodeAtClientPoint = (clientX, clientY) => {
+    const canvas = containerRef.current?.querySelector("canvas");
+    if (!canvas || !fgRef.current) return null;
+    const rect = canvas.getBoundingClientRect();
+    const { x, y } = fgRef.current.screen2GraphCoords(clientX - rect.left, clientY - rect.top);
+    return (
+      nodes.find((node) => {
+        if (node.x == null || node.y == null) return false;
+        if (node.type === "record") {
+          const dx = node.x - x;
+          const dy = node.y - y;
+          return Math.sqrt(dx * dx + dy * dy) <= recordRadius(node);
+        }
+        const halfWidth = attributeHalfWidth(node);
+        return Math.abs(node.x - x) <= halfWidth && Math.abs(node.y - y) <= ATTRIBUTE_HALF_HEIGHT;
+      }) ?? null
+    );
+  };
+
+  const handlePointerDown = (event) => {
+    if (!interactive) return;
+    pointerDownRef.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const handlePointerUp = (event) => {
+    if (!interactive || !pointerDownRef.current) return;
+    const dx = event.clientX - pointerDownRef.current.x;
+    const dy = event.clientY - pointerDownRef.current.y;
+    pointerDownRef.current = null;
+    if (Math.sqrt(dx * dx + dy * dy) > CLICK_TOLERANCE_PX) return;
+    const node = findNodeAtClientPoint(event.clientX, event.clientY);
+    onSelectNode(node ? { id: node.id, data: node } : null);
+  };
+
   return (
-    <div ref={containerRef} className="h-full w-full">
+    <div
+      ref={containerRef}
+      className="h-full w-full"
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+    >
       {size.width > 0 && size.height > 0 && (
         <ForceGraph2D
           ref={fgRef}
@@ -270,12 +344,10 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
             return dimmed ? "rgba(62, 62, 68, 0.25)" : "rgba(62, 62, 68, 0.9)";
           }}
           linkWidth={1}
-          onNodeClick={(node) => onSelectNode({ id: node.id, data: node })}
           onNodeHover={(node) => {
             if (!interactive) return;
             setHoveredNodeId(node?.id ?? null);
           }}
-          onBackgroundClick={() => onSelectNode(null)}
           onNodeDrag={() => {
             isDraggingRef.current = true;
           }}
