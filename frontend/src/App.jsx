@@ -72,31 +72,6 @@ function AnimatedRoutes() {
   );
 }
 
-// フッター: 技術スタック・作者情報をコンパクトにまとめる。
-// サイドバーと同じ ml-52 オフセットを適用してコンテンツ幅に揃える。
-function Footer() {
-  const techStack = ["MongoDB", "Express", "React", "Node.js", "FastAPI", "JWT"];
-  return (
-    <footer className="site-footer md:ml-52">
-      <div className="footer-inner">
-        <div className="footer-brand">
-          <span className="footer-title">☕ Coffee App</span>
-        </div>
-
-        <div className="footer-stack">
-          {techStack.map((tech) => (
-            <span key={tech} className="footer-badge">{tech}</span>
-          ))}
-        </div>
-
-        <p className="footer-credit">
-          Built by Hikaru · MERN Portfolio
-        </p>
-      </div>
-    </footer>
-  );
-}
-
 function App() {
   const location = useLocation();
   const isLanding = location.pathname === "/landing";
@@ -108,7 +83,6 @@ function App() {
         <AnimatedRoutes />
       </main>
       {!isLanding && <BottomTabBar />}
-      {!isLanding && <Footer />}
     </ToastProvider>
   );
 }

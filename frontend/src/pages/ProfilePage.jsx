@@ -24,7 +24,14 @@ import { getErrorMessage } from "../utils/errorMessage";
  * 明記されていないが、既存の認証構成（mlb-appから再利用）が持つ
  * これらのAPIはコーヒードメインに固有の要素を含まず、そのまま使える
  * ため、書き直さず再利用している。
+ *
+ * 技術スタックの表示とクレジット表記は、以前はログイン後の全ページ下部に
+ * 常時出るフッターだった。docs/design.mdの「派手な実績表示で惹きつけない、
+ * 道具としての静けさ」という方針と噛み合わないという指摘を受け、
+ * 見たい人が能動的にたどり着く場所であるProfile画面の末尾へ移した。
  */
+const TECH_STACK = ["MongoDB", "Express", "React", "Node.js", "FastAPI", "JWT"];
+
 function ProfilePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -196,6 +203,15 @@ function ProfilePage() {
         onConfirm={handleDeleteAccount}
         onCancel={() => setIsConfirmOpen(false)}
       />
+
+      <div className="mt-8 flex flex-col items-center gap-3 border-t border-ctp-surface1 pt-6 pb-2">
+        <div className="footer-stack">
+          {TECH_STACK.map((tech) => (
+            <span key={tech} className="footer-badge">{tech}</span>
+          ))}
+        </div>
+        <p className="footer-credit">Built by Hikaru · MERN Portfolio</p>
+      </div>
     </div>
   );
 }

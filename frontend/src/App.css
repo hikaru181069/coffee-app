@@ -781,44 +781,9 @@ input {
 }
 
 /* [Phase 14] Footer
-   fantinel.dev 参考: ページ下部にコンパクトな技術スタック・クレジット表示。
-   サイドバー分 (ml-52) を同様にオフセットして本文幅に揃える。 */
-.site-footer {
-  border-top: 1px solid var(--ctp-surface1);
-  background: var(--ctp-mantle);
-  padding: 20px 24px;
-  margin-top: auto;
-}
-
-.footer-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-  max-width: 820px;
-  margin: 0 auto;
-}
-
-.footer-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.footer-logo {
-  width: 22px;
-  height: 22px;
-  opacity: 0.7;
-}
-
-.footer-title {
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: var(--ctp-subtext1);
-  letter-spacing: 0.02em;
-}
-
+   fantinel.dev 参考: 技術スタック・クレジット表示。
+   以前は全ページ下部の固定フッターだったが、ProfilePage末尾へ移した
+   （このファイル内のコメント、および IMPLEMENTATION.md 参照）。 */
 .footer-stack {
   display: flex;
   flex-wrap: wrap;
@@ -841,14 +806,6 @@ input {
   color: var(--ctp-overlay0);
   margin: 0;
   white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-  .footer-inner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
 }
 
 /* ── フルブリードヒーロー ────────────────────────────────────────────────────
