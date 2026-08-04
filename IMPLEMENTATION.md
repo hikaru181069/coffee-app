@@ -156,7 +156,19 @@ Homeの評価で「産地・品種・精製方法・フレーバーが1つも無
 - 開いた瞬間の収束アニメーション・ドラッグへの物理反応・ホバー強調はいずれもライブラリ標準機能で実現でき、自前の`useLiveForceLayout`は不要になった
 - 副産物: `main.jsx`にトップレベルの`AppErrorBoundary`を新設。この移行作業中に依存関係の読み込み不備でGraphPageのレンダーが丸ごと落ち、エラーバウンダリが1つも無かったため画面全体が手がかりの無い真っ黒な状態になった経験から追加した
 - 移行の途中、実際に踏んだ実装ミス2件: ①`d3Force`のカスタム力設定エフェクトが`[nodes, links]`だけに依存しており、初回レンダー（`size`がまだ0で`ForceGraph2D`が未描画）のタイミングでは`fgRef.current`がnullのため何もできず、以降二度と実行されないバグ（`size.width/height`も依存配列に追加して修正）。②`main.jsx`の編集を往復した際に`import { StrictMode }`が重複しVite/oxcのパースエラーで画面が壊れた（見落としに気づくまで時間を要した）
-- **既知の未解決不具合**: `onNodeClick` / `onBackgroundClick`が発火せず、ノードクリックで詳細パネルが開かない。`pointerdown`/`pointerup`イベント自体はtrusted・座標移動ゼロで正しく発火しているにもかかわらずクリックとして認識されない。`onBackgroundClick`の除去、`enableNodeDrag=false`など複数パターンを検証したが再現し続けており、`force-graph`内部（`state.isPointerPressed` / `state.isPointerDragging`まわり）の問題と見ている。ホバー・ドラッグ物理反応・収束アニメーションは正常動作。**ユーザーによる実機確認と、必要なら追加調査が必要**
+
+### 2026-08: react-force-graph-2dのズーム・ドラッグ・クリック不具合を解決
+
+上記の置き換え後、ユーザーが実機で確認したところ「拡大できません。ドラッグできません。ノードが小さすぎて情報がわかりません。」と報告。`force-graph`本体（`node_modules/force-graph/dist/force-graph.mjs`）をDocker内で直接読み、原因を特定した。
+
+**ズーム・ドラッグが効かない原因**: `width`/`height` propの`onChange`が`adjustCanvasSize`を呼び、その中で`state.zoom.translateBy(...)`を実行する。これはd3-zoomの`'zoom'`ハンドラを発火させ、`state.isPointerDragging = true`を立てる副作用を持つ。`GraphCanvas.jsx`は`ResizeObserver`で計測した`size`を毎回`width`/`height`propへ渡していたため、操作中にも再発火してズーム・ドラッグを壊していた。
+→ 対処: `size`は「初回の非ゼロ計測値で固定し、以後`ResizeObserver`が発火しても更新しない」方式に変更（`frontend/src/features/graph/components/GraphCanvas.jsx`のサイズ計測`useEffect`）。ウィンドウの動的リサイズには追従しなくなるが、安定した操作性を優先した。副作用として、この固定によりcanvasの実サイズが常にコンテナと一致するようになり、「ノードが小さすぎる」問題も同時に解消された（以前は`width`/`height`を渡さない一時的な回避策を試しており、その場合canvasが`window.innerWidth/innerHeight`基準になりコンテナ幅をはみ出す副作用があったが、この対処で不要になった）。
+
+**クリックが効かない原因**（前回のエントリで「未解決」としていたもの）: `force-graph`は`pointermove`のたびに「`onBackgroundClick`が設定されていれば、`pointerType==='mouse'`の移動量を一切問わず`isPointerDragging=true`にする」ヒューリスティックを持つ。実際のマウスクリックはpointerdown→pointerupの間にほぼ必ず1px以上動くため常に発火し、`pointerup`側で「ドラッグ後なのでクリックと扱わない」と判定されていた。さらにパン操作自体もd3-zoomの`'zoom'`イベントで同じフラグを立てるため、`onBackgroundClick`を外すだけでは解決しなかった。
+→ 対処: ライブラリの内部クリック判定に頼るのをやめ、`onNodeClick`/`onBackgroundClick`を削除。代わりに`GraphCanvas.jsx`のコンテナに`pointerdown`/`pointerup`を自前で仕込み、移動量が閾値（6px）以内なら`screen2GraphCoords`でグラフ座標へ変換し、`drawNode`と同じ当たり判定（円・角丸矩形）をノード配列に対して自前で行う（`findNodeAtClientPoint`）。ホバー状態（`hoveredNodeId`）には頼らない——上記のisPointerDragging誤検知と同じ理由で、クリックの瞬間にホバーがnullへリセットされることがあるため。
+
+- ブラウザで実機確認済み: スクロールでのズーム、ノードドラッグ（物理反応込み）、ノードクリック（詳細パネル表示）、背景クリック（選択解除）、Home埋め込みのミニプレビュー、いずれも正常動作
+- 変更ファイル: `frontend/src/features/graph/components/GraphCanvas.jsx`のみ
 
 ---
 
@@ -254,8 +266,8 @@ Post-MVPの各エントリはfrontend/docsのみの変更のため、都度`cd f
 
 ## 未解決事項
 
-- **`GraphCanvas`でノードクリックが効かない（最重要）**: `onNodeClick` / `onBackgroundClick`が発火せず、記録詳細画面のGraph部分でノードをクリックしても`NodeDetailPanel`が開かない。上記エントリ参照
 - 収束後のグラフレイアウトが以前（React Flow版）より詰まって見える。`chargeStrength`を強めても改善が小さく、根本原因は未特定（`FORCE_PARAMS`のコメント参照）
+- `GraphCanvas`のsizeは初回計測値で固定しており、マウント後にウィンドウをリサイズしてもグラフのキャンバスサイズは追従しない（ズーム・ドラッグ・クリックの安定動作を優先したトレードオフ。上記エントリ参照）
 - FastAPIサービスは現状ヘルスチェックのみで、コーヒードメインの実処理を持たない（`docs/architecture.md`の方針通りの意図的な状態であり、バグではない）
 - 知識グラフの`dateFrom` / `dateTo`フィルターはAPI・純粋関数側には実装済みだが、フロントエンドのフィルターUIには未反映
 - Homeのフッター（技術バッジ・`Built by Hikaru`表記）がログイン後の全ページに出ており、ポートフォリオとしての説明責任と「静かな道具」というプロダクト方針がせめぎ合っている（要判断）
@@ -266,8 +278,8 @@ Post-MVPの各エントリはfrontend/docsのみの変更のため、都度`cd f
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. **`GraphCanvas`のノードクリック不具合を解決する**。`force-graph`のバージョン固定や別バージョンでの検証、GitHub Issueの確認、最悪の場合は独自のクリック判定（`onNodeHover`で捕まえた対象に対して別途click/touchイベントを紐付けるなど）を検討する
-2. `feat/graph-force-graph-2d`のドラッグ時の挙動・クリック不具合をユーザーが実機で確認したうえでmainへmergeする（`feat/graph-dynamic-visuals`は削除）
+1. `feat/graph-force-graph-2d`をユーザーが実機で最終確認したうえでmainへmergeする（`feat/graph-dynamic-visuals`は削除）
+2. 収束後レイアウトの詰まり具合をさらに調整する（優先度は低い。実用上は問題ないため）
 3. 収束後のレイアウト密度を調整する
 4. Homeフッターの扱いを決める（Landing限定にする／簡素化するなど）
 5. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
