@@ -237,15 +237,24 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
 
     // wheel/pointerdownはここでは観測するだけ（preventDefault等はしない）。
     // force-graph自身のズーム・パン・ドラッグ処理はそのまま動かしつつ、
-    // 「ユーザーが触れた」事実だけを記録する
+    // 「ユーザーが触れた」事実だけを記録する。
+    //
+    // captureフェーズで登録するのが必須: d3-zoom自身のwheel/mousedown
+    // ハンドラ（canvas要素に直接登録されている）は内部で
+    // event.stopImmediatePropagation()を呼ぶため、bubbleフェーズで
+    // 親要素（このコンテナ）に登録したリスナーには一切イベントが
+    // 届かない。captureフェーズはDOMツリーを上から下へ辿る際に先に
+    // 発火するため、canvas側の後続のstopPropagationの影響を受けない
+    // （実際に踏んだ不具合: wheelでのズームが「初回だけ効かず、
+    // 待てば効く」ように見えた原因）
     const markInteracted = () => {
       userInteractedRef.current = true;
     };
-    el.addEventListener("wheel", markInteracted, { passive: true });
-    el.addEventListener("pointerdown", markInteracted);
+    el.addEventListener("wheel", markInteracted, { passive: true, capture: true });
+    el.addEventListener("pointerdown", markInteracted, { capture: true });
     return () => {
-      el.removeEventListener("wheel", markInteracted);
-      el.removeEventListener("pointerdown", markInteracted);
+      el.removeEventListener("wheel", markInteracted, { capture: true });
+      el.removeEventListener("pointerdown", markInteracted, { capture: true });
     };
   }, []);
 

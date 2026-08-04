@@ -180,6 +180,14 @@ Homeの評価で「産地・品種・精製方法・フレーバーが1つも無
 
 - ブラウザで実機確認済み: 新規タブでページ読み込み後1〜2秒というほぼ即座のタイミングでズーム・ドラッグ・クリックを行っても正しく反応し、かつ操作結果が自動フィットに巻き戻されず維持されることを確認
 
+**追記2（同日）**: ユーザーから「キャッシュ直後（＝ページを開いた直後）はズームできない。数秒待てばズームできる」と再度報告。上記`userInteractedRef`の対処自体は妥当だったが、実装に見落としがあった。
+
+原因: `markInteracted`（`userInteractedRef.current = true`にするだけのハンドラ）を`wheel`/`pointerdown`いずれもコンテナ要素（canvasの親div）へbubbleフェーズで登録していた。ところがd3-zoom自身のwheel/mousedownハンドラは`canvas`要素へ直接登録されており、内部で`event.stopImmediatePropagation()`を呼ぶ。これにより、canvasで発生したwheel/pointerdownイベントはd3-zoom側の処理で止められ、親要素であるコンテナには一切バブリングしてこない。結果として`markInteracted`は実質的に一度も呼ばれず、`userInteractedRef`は自然に`hasSettledRef`が`true`になるまで（＝数秒待つまで）trueにならなかった。待てば動いたのは、`userInteractedRef`のおかげではなく、単に収束が終わって`zoomToFit`の呼び出し自体が止まったから。
+
+→ 対処: `markInteracted`の登録を`{ capture: true }`に変更。captureフェーズはDOMツリーを上から下へ辿る際に先に発火するため、canvas側の後続の`stopImmediatePropagation`より前に必ず実行される。
+
+- ブラウザで実機確認済み: ページ読み込み1秒後に即座にホイールでズームし、その直後（ズーム直後）とその後の収束完了後（10秒待機後）で`canvas.__zoom`の値を比較し、完全に同一の値のまま変化しないこと（＝自動フィットに一切巻き戻されないこと）を確認
+
 ---
 
 ## 変更ファイル（現在の構成）
