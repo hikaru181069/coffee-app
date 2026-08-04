@@ -16,6 +16,7 @@ import masterDataRoutes from "./routes/masterDataRoutes.js";
 import graphRoutes from "./routes/graphRoutes.js";
 import insightRoutes from "./routes/insightRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
+import statsRoutes from "./routes/statsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -42,6 +43,7 @@ app.use("/api/master-data", masterDataRoutes);
 app.use("/api/graph", graphRoutes);
 app.use("/api/insights", insightRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/stats", statsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 

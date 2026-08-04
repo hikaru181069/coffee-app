@@ -203,6 +203,23 @@
     "relatedHeading": "グラフ上の関連",
     "recordsHeading": "関連する記録"
   },
+  "stats": {
+    "heading": "統計",
+    "subtitle": "これまで記録したコーヒーのふりかえりです。",
+    "emptyDesc": "記録が増えると、ここに傾向が表示されます。",
+    "monthlyTrendHeading": "月ごとの記録数",
+    "ratingDistributionHeading": "評価の分布",
+    "homeVsCafeHeading": "家とカフェ",
+    "overview": {
+      "recordCount": "記録数",
+      "avgRating": "平均評価",
+      "originCount": "産地の種類",
+      "varietyCount": "品種の種類",
+      "flavorCount": "フレーバーの種類",
+      "daysSinceStart": "記録を始めてから",
+      "daysCount": "{{count}}日"
+    }
+  },
   "validation": {
     "titleRequired": "タイトルを入力してください",
     "maxLength": "{{max}}文字以内で入力してください",

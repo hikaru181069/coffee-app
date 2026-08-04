@@ -16,6 +16,7 @@ import RecordsPage from "./pages/RecordsPage";
 import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
 import EntityDetailPage from "./pages/EntityDetailPage";
+import StatsPage from "./pages/StatsPage";
 // GraphPageはreact-force-graph-2d（canvas描画・物理演算）を含み、
 // 他の画面より明確に重い。このルートを開かないユーザーにその分を
 // 読み込ませないよう、遅延読み込みにする。
@@ -70,6 +71,8 @@ function AnimatedRoutes() {
               </Suspense>
             }
           />
+
+          <Route path="/stats" element={<StatsPage />} />
 
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
