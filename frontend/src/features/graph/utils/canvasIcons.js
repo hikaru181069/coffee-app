@@ -54,6 +54,15 @@ const ICON_PATHS = {
     { tag: "path", d: "M22 4h-4" },
     { tag: "circle", cx: 4, cy: 20, r: 2 },
   ],
+  // Store（cafe）
+  store: [
+    { tag: "path", d: "M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5" },
+    {
+      tag: "path",
+      d: "M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244",
+    },
+    { tag: "path", d: "M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05" },
+  ],
 };
 
 const TYPE_TO_ICON_KEY = {
@@ -64,6 +73,7 @@ const TYPE_TO_ICON_KEY = {
   process: "droplets",
   roastLevel: "flame",
   flavor: "sparkles",
+  cafe: "store",
 };
 
 const buildSvgMarkup = (iconKey, color) => {

@@ -164,7 +164,8 @@
       "variety": "Variety",
       "process": "Process",
       "roastLevel": "Roast Level",
-      "flavor": "Flavor"
+      "flavor": "Flavor",
+      "cafe": "Café"
     }
   },
   "insights": {
@@ -177,6 +178,19 @@
     "topProcessRating": "You tend to rate {{label}}-processed coffee highly (avg {{avgRating}}).",
     "topFlavor": "You often pick coffee with {{label}} flavor notes.",
     "topOrigin": "You often choose {{label}} coffee."
+  },
+  "search": {
+    "placeholder": "Search origins, varieties, flavors, cafés, processes, or coffee names",
+    "ariaLabel": "Cross-cutting search",
+    "recordCount_one": "{{count}} record",
+    "recordCount_other": "{{count}} records",
+    "related": {
+      "flavor": "Often paired with: {{labels}}",
+      "origin": "Often found in: {{labels}}"
+    },
+    "entitiesHeading": "Related",
+    "recordsHeading": "Matching records",
+    "noResults": "No results for \"{{query}}\""
   },
   "validation": {
     "titleRequired": "Please enter a title",

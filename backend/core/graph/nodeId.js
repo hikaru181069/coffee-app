@@ -28,5 +28,11 @@ export const flavorNodeId = (flavorId) => `flavor:${flavorId}`;
  */
 export const farmNodeId = (normalizedFarmName) => `farm:${normalizedFarmName}`;
 
+/**
+ * cafeもfarmと同じ理由（別コレクションを持たない自由記述）で、
+ * 正規化した名前をIDにする。
+ */
+export const cafeNodeId = (normalizedCafeName) => `cafe:${normalizedCafeName}`;
+
 /** 2ノード間のエッジIDを組み立てる（同じ組み合わせのエッジが重複しないようにする） */
 export const edgeId = (sourceNodeId, targetNodeId) => `${sourceNodeId}-${targetNodeId}`;

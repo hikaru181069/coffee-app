@@ -18,6 +18,9 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "../features/coffee-records/components/formStyles";
+import SearchBox from "../features/search/components/SearchBox";
+import SearchResults from "../features/search/components/SearchResults";
+import { useSearch } from "../features/search/hooks/useSearch";
 
 /**
  * 記録の一覧画面。
@@ -26,6 +29,12 @@ import {
  * API通信は useCoffeeRecords、表示の部品は features/ 側にある
  * （CLAUDE.md: pageコンポーネントにAPI通信・フォーム状態・変換ロジック・
  * 巨大なJSXをすべて置かない）。
+ *
+ * 2026-08、横断検索（docs/search.md）を追加した。検索クエリが入力されて
+ * いる間は、通常のフィルター・一覧・ページ送りを検索結果表示へ丸ごと
+ * 差し替える。検索結果（属性の集計カード＋記録タイトルの一致）は
+ * 通常の絞り込み結果と見た目・意味が異なるため、同じ一覧に混ぜて
+ * 出すと状態がわかりにくくなると判断した。
  */
 
 const DEFAULT_FILTERS = {
@@ -40,9 +49,12 @@ const DEFAULT_FILTERS = {
 function RecordsPage() {
   const { t } = useTranslation();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [searchQuery, setSearchQuery] = useState("");
+  const isSearching = searchQuery.trim() !== "";
 
   const { records, pagination, isLoading, error, reload } = useCoffeeRecords(filters);
   const { masterData } = useMasterData();
+  const search = useSearch(searchQuery);
 
   const hasActiveFilters = useMemo(
     () =>
@@ -104,19 +116,35 @@ function RecordsPage() {
       </header>
 
       <div className="mb-5">
-        <RecordFilters
-          filters={filters}
-          onChange={setFilters}
-          onClear={clearFilters}
-          masterData={masterData}
-          hasActiveFilters={hasActiveFilters}
-        />
+        <SearchBox value={searchQuery} onChange={setSearchQuery} />
       </div>
 
-      {renderList()}
+      {isSearching ? (
+        <SearchResults
+          query={searchQuery.trim()}
+          entities={search.entities}
+          records={search.records}
+          isLoading={search.isLoading}
+          error={search.error}
+        />
+      ) : (
+        <>
+          <div className="mb-5">
+            <RecordFilters
+              filters={filters}
+              onChange={setFilters}
+              onClear={clearFilters}
+              masterData={masterData}
+              hasActiveFilters={hasActiveFilters}
+            />
+          </div>
 
-      {/* ページ送り。1ページに収まるときは出さない */}
-      {pagination && pagination.totalPages > 1 && (
+          {renderList()}
+        </>
+      )}
+
+      {/* ページ送り。1ページに収まるときは出さない。検索中はページ送り自体を持たない */}
+      {!isSearching && pagination && pagination.totalPages > 1 && (
         <nav aria-label={t("records.paginationAriaLabel")} className="mt-6 flex items-center justify-center gap-3">
           <button
             type="button"

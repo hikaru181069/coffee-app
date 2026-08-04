@@ -91,6 +91,17 @@ CoffeeRecord上のfarmNameとして扱います。
 
 将来、同一農園の記録が増えた時点でFarmコレクションへ移行できます。
 
+## Cafe
+
+farmと同じ理由で、cafeも独立マスターにせず
+CoffeeRecord上のcafeNameとして扱います。
+
+「Record Type」の`cafe`（家で飲んだか、外のカフェで飲んだかの区分）とは
+別の概念です。cafeNameは「どの店で飲んだか」という具体的な店名で、
+knowledge graphでは店名ごとに1つのノードとして表れます
+（同じ店名の記録が複数あれば1ノードに統合されます。farmNameと同じ
+正規化ルール）。
+
 ## Knowledge Graph Terms
 
 ### Node
@@ -106,6 +117,7 @@ node types:
 - process
 - roastLevel
 - flavor
+- cafe
 
 ### Edge
 
@@ -119,6 +131,7 @@ MVPではCoffeeRecordを中心とする関係を生成します。
 - record → PROCESS → process
 - record → ROAST_LEVEL → roastLevel
 - record → FLAVOR → flavor
+- record → CAFE → cafe
 
 属性同士の直接エッジはMVPでは保存しません。
 同じ記録に共起することで間接的に関連を発見できます。

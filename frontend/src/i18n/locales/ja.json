@@ -162,7 +162,8 @@
       "variety": "品種",
       "process": "精製方法",
       "roastLevel": "焙煎度",
-      "flavor": "フレーバー"
+      "flavor": "フレーバー",
+      "cafe": "カフェ"
     }
   },
   "insights": {
@@ -175,6 +176,18 @@
     "topProcessRating": "{{label}}精製のコーヒーを高く評価する傾向があります（平均{{avgRating}}）。",
     "topFlavor": "「{{label}}」のフレーバーをよく選んでいます。",
     "topOrigin": "{{label}}産のコーヒーをよく選んでいます。"
+  },
+  "search": {
+    "placeholder": "産地・品種・フレーバー・カフェ・精製方法・コーヒー名で検索",
+    "ariaLabel": "横断検索",
+    "recordCount": "{{count}}件の記録",
+    "related": {
+      "flavor": "よく関連するフレーバー：{{labels}}",
+      "origin": "よく関連する産地：{{labels}}"
+    },
+    "entitiesHeading": "関連する項目",
+    "recordsHeading": "記録名の一致",
+    "noResults": "「{{query}}」に一致する結果が見つかりません"
   },
   "validation": {
     "titleRequired": "タイトルを入力してください",

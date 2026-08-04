@@ -22,6 +22,7 @@ const buildRecord = (overrides = {}) => ({
   process: null,
   roastLevel: null,
   flavors: [],
+  cafeName: "",
   ...overrides,
 });
 
@@ -120,6 +121,18 @@ describe("ノードの重複排除", () => {
     const farmNodes = graph.nodes.filter((node) => node.type === "farm");
     expect(farmNodes).toHaveLength(1);
     expect(farmNodes[0].metadata.recordCount).toBe(2);
+  });
+
+  test("cafeは正規化した名前で統合される（farmと同じ扱い）", () => {
+    const graph = buildGraph([
+      buildRecord({ id: "a", cafeName: "Blue Bottle Coffee" }),
+      buildRecord({ id: "b", cafeName: "  blue bottle coffee  " }),
+    ]);
+
+    const cafeNodes = graph.nodes.filter((node) => node.type === "cafe");
+    expect(cafeNodes).toHaveLength(1);
+    expect(cafeNodes[0].metadata.recordCount).toBe(2);
+    expect(cafeNodes[0].label).toBe("Blue Bottle Coffee");
   });
 
   test("異なる種類の属性で偶然同じIDでも衝突しない（stable IDのプレフィックス）", () => {
