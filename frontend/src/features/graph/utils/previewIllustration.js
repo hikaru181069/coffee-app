@@ -16,12 +16,14 @@
  */
 
 const RECENT_RECORD_LIMIT = 5;
-const VIEWBOX_WIDTH = 200;
-const VIEWBOX_HEIGHT = 64;
+// カード右側に収める正方形寄りの比率（GraphPreview.jsxのGraphIllustration参照。
+// 以前はカード上部に横長で置いていた）
+const VIEWBOX_WIDTH = 140;
+const VIEWBOX_HEIGHT = 100;
 // ノードを意図的に枠の外まではみ出させる余白。イラストが「全体のごく
 // 一部」に見えるようにするため（下の数字表示と矛盾しないように）
-const EDGE_PADDING_X = 18;
-const EDGE_PADDING_Y = 10;
+const EDGE_PADDING_X = 14;
+const EDGE_PADDING_Y = 12;
 
 /** 文字列から決定的な疑似乱数を作る。ノードIDが同じなら常に同じ位置になる */
 const hashString = (value) => {

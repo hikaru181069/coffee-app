@@ -276,6 +276,14 @@ docs/mvp.mdのOut of Scope（「AI推薦」「自然言語による味覚分析�
 - `frontend/src/features/graph/components/GraphPreview.jsx`の`GraphIllustration`を書き換え、実データ（`getNodeVisual(type).canvasColor`で種別ごとに色分け）を`opacity-40`で薄く表示する形にした
 - ブラウザで実機確認済み: 実際の産地・フレーバー等の色が混ざった、密に絡み合ったノード群が薄く表示されることを確認。bundleサイズに変化が無いこと（react-force-graph-2d等の新規依存が増えていないこと）をbuild出力で確認
 
+### 2026-08: GraphカードのレイアウトをY方向の積み上げから左テキスト+右イラストへ変更
+
+ユーザーから「バランスが良い」というレイアウト改善案。カード上部に横長で置いていたイラストを右側へ移動し、見出し・タグライン・件数・CTAは左側にまとめた。
+
+- `frontend/src/features/graph/components/GraphPreview.jsx`: Linkのルート要素を`flex items-center gap-6`にし、テキスト側を`min-w-0 flex-1`、イラストを`flex-shrink-0`の固定サイズに変更。狭い画面（`sm`未満）ではイラストを非表示にし、テキストだけの1カラムに戻す（装飾要素より本文を優先）
+- `frontend/src/features/graph/utils/previewIllustration.js`: 右側の小さめの正方形寄りの枠に収まるよう、viewBoxを`200x64`（横長）から`140x100`へ変更
+- ブラウザで実機確認済み: Home画面下部でテキストが左、イラストが右のレイアウトになっていること、クリックで`/graph`へ遷移することを確認
+
 ---
 
 ## 変更ファイル（現在の構成）

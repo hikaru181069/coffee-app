@@ -25,6 +25,10 @@ const PREVIEW_FILTERS = { nodeTypes: [], recordType: "", ratingMin: "" };
  *
  * 記録が無い、または取得に失敗した場合は何も表示しない
  * （Home側の記録一覧が空状態を案内するため、ここで重ねて出す必要はない）。
+ *
+ * 2026-08、イラストを上部から右側へ移動した（ユーザーからのレイアウト
+ * 改善案）。テキスト側を`flex-1`にして、狭い画面ではイラストを隠し
+ * テキストだけの1カラムにする（装飾要素より本文を優先する）。
  */
 function GraphPreview() {
   const { t } = useTranslation();
@@ -37,22 +41,24 @@ function GraphPreview() {
   return (
     <Link
       to="/graph"
-      className="mt-6 block rounded-xl border border-ctp-surface1 bg-ctp-mantle p-5 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
+      className="mt-6 flex items-center gap-6 rounded-xl border border-ctp-surface1 bg-ctp-mantle p-5 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
     >
-      <GraphIllustration layout={layout} />
+      <div className="min-w-0 flex-1">
+        <h3 className="text-base font-bold text-ctp-text">{t("home.knowledgeGraph.heading")}</h3>
+        <p className="mt-1 text-sm text-ctp-subtext0">{t("home.knowledgeGraph.tagline")}</p>
 
-      <h3 className="mt-4 text-base font-bold text-ctp-text">{t("home.knowledgeGraph.heading")}</h3>
-      <p className="mt-1 text-sm text-ctp-subtext0">{t("home.knowledgeGraph.tagline")}</p>
+        <div className="mt-4 flex items-center gap-4 font-mono text-sm text-ctp-subtext1">
+          <span>{t("home.knowledgeGraph.nodeCount", { count: graph.summary.nodeCount })}</span>
+          <span>{t("home.knowledgeGraph.edgeCount", { count: graph.summary.edgeCount })}</span>
+        </div>
 
-      <div className="mt-4 flex items-center gap-4 font-mono text-sm text-ctp-subtext1">
-        <span>{t("home.knowledgeGraph.nodeCount", { count: graph.summary.nodeCount })}</span>
-        <span>{t("home.knowledgeGraph.edgeCount", { count: graph.summary.edgeCount })}</span>
+        <span className="mt-4 inline-flex items-center gap-1 text-xs text-ctp-subtext0">
+          {t("home.knowledgeGraph.explore")}
+          <ArrowRight size={14} aria-hidden="true" />
+        </span>
       </div>
 
-      <span className="mt-4 inline-flex items-center gap-1 text-xs text-ctp-subtext0">
-        {t("home.knowledgeGraph.explore")}
-        <ArrowRight size={14} aria-hidden="true" />
-      </span>
+      <GraphIllustration layout={layout} />
     </Link>
   );
 }
@@ -65,10 +71,14 @@ function GraphPreview() {
  * 当たり判定は持たせない（親のLinkがカード全体をクリック対象にする）。
  */
 function GraphIllustration({ layout }) {
-  if (!layout) return <div className="h-12 w-full max-w-[200px]" aria-hidden="true" />;
+  if (!layout) return null;
 
   return (
-    <svg viewBox={layout.viewBox} aria-hidden="true" className="h-12 w-full max-w-[200px] overflow-hidden opacity-40">
+    <svg
+      viewBox={layout.viewBox}
+      aria-hidden="true"
+      className="hidden h-24 w-32 flex-shrink-0 overflow-hidden opacity-40 sm:block"
+    >
       {layout.edges.map((edge) => (
         <line
           key={edge.id}
