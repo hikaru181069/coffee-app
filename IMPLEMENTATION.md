@@ -200,6 +200,14 @@ Homeの評価で「産地・品種・精製方法・フレーバーが1つも無
 - 当たり判定（`paintNodePointerArea`）はチップの形状・サイズのみを対象とし、下に出たラベル部分は含めない（Obsidianのグラフでもクリック対象はドット自体であるのに合わせた）。チップの縮小に伴い当たり判定の対象範囲も自動的に縮小されるが、クリックには実機で問題ないことを確認済み
 - ブラウザで実機確認済み: 「Pink Bourbon」「Kenya Nyeri AA」「Guatemala Hueh...」など主要なラベルが読める程度まで改善。密集した箇所ではラベル同士が重なる場合があるが（ラベル同士の衝突回避は未実装）、省略されて意味不明になるケースは大幅に減少。ノードクリック（詳細パネル表示）、Home埋め込みのミニプレビューともに正常動作を確認
 
+### 2026-08: Homeフッター（技術バッジ・クレジット）をProfileページへ移動
+
+未解決事項として記録していた「Homeのフッターがログイン後の全ページに出ており、ポートフォリオとしての説明責任と『静かな道具』というプロダクト方針がせめぎ合っている」を解消。ユーザーと相談し、常時表示をやめて見たい人が能動的にたどり着く場所（Profileページ末尾）へ移す方針にした。
+
+- `frontend/src/App.jsx`: `Footer`コンポーネントと`<main>`外の呼び出しを削除
+- `frontend/src/pages/ProfilePage.jsx`: 退会セクションの下に技術バッジ（`TECH_STACK`定数）とクレジット表記を追加。`footer-stack` / `footer-badge` / `footer-credit`のCSSクラスはそのまま再利用し、全ページ帯だった`.site-footer` / `.footer-inner` / `.footer-brand` / `.footer-logo` / `.footer-title`は他に参照が無いことを確認したうえで`App.css`から削除
+- ブラウザで実機確認済み: Home/Records/Graphにフッターが出ないこと、Profile末尾に技術バッジ・クレジットが表示されることを確認
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -301,18 +309,15 @@ Post-MVPの各エントリはfrontend/docsのみの変更のため、都度`cd f
 - 物理シミュレーションがまだクラスタ状に固まっているごく早いタイミング（開いた直後）でユーザーが操作すると、`userInteractedRef`により以後の自動フィットが完全に止まり、窮屈な配置のまま固定される。実用上は数秒待てば回避できるが根本対処ではない（上記エントリのトレードオフ参照）
 - FastAPIサービスは現状ヘルスチェックのみで、コーヒードメインの実処理を持たない（`docs/architecture.md`の方針通りの意図的な状態であり、バグではない）
 - 知識グラフの`dateFrom` / `dateTo`フィルターはAPI・純粋関数側には実装済みだが、フロントエンドのフィルターUIには未反映
-- Homeのフッター（技術バッジ・`Built by Hikaru`表記）がログイン後の全ページに出ており、ポートフォリオとしての説明責任と「静かな道具」というプロダクト方針がせめぎ合っている（要判断）
 - Space Monoは評価・日付・グラフの件数にのみ適用済み。`RecordsPage`の件数表示（`records.countLabel`）など、他の数値表示への適用可否は未判断
-- `feat/graph-force-graph-2d`ブランチは未merge。`feat/graph-dynamic-visuals`（React Flow版、放棄済み）は削除候補
+- `feat/graph-dynamic-visuals`（React Flow版、放棄済み。`feat/graph-force-graph-2d`は2026-08にmain済み）は削除候補
 
 ## 次に実装すべき最小単位
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. `feat/graph-force-graph-2d`をユーザーが実機で最終確認したうえでmainへmergeする（`feat/graph-dynamic-visuals`は削除）
-2. 収束後レイアウトの詰まり具合をさらに調整する（優先度は低い。実用上は問題ないため）
-3. 収束後のレイアウト密度を調整する
-4. Homeフッターの扱いを決める（Landing限定にする／簡素化するなど）
-5. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+1. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+2. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
+3. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
 6. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面への遷移のみ）
 7. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
