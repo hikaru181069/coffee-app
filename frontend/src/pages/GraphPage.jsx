@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ReactFlowProvider } from "@xyflow/react";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
@@ -103,22 +102,20 @@ function GraphPage() {
     }
 
     return (
-      <ReactFlowProvider>
-        <div className="relative h-full w-full">
-          <GraphCanvas
-            graph={graph}
-            selectedNodeId={selectedNode?.id}
-            onSelectNode={setSelectedNode}
-          />
-          <NodeDetailPanel
-            node={selectedNode}
-            detail={detail}
-            isLoading={isDetailLoading}
-            error={detailError}
-            onClose={() => setSelectedNode(null)}
-          />
-        </div>
-      </ReactFlowProvider>
+      <div className="relative h-full w-full">
+        <GraphCanvas
+          graph={graph}
+          selectedNodeId={selectedNode?.id}
+          onSelectNode={setSelectedNode}
+        />
+        <NodeDetailPanel
+          node={selectedNode}
+          detail={detail}
+          isLoading={isDetailLoading}
+          error={detailError}
+          onClose={() => setSelectedNode(null)}
+        />
+      </div>
     );
   };
 

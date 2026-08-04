@@ -15,10 +15,9 @@ import LandingPage from "./pages/LandingPage";
 import RecordsPage from "./pages/RecordsPage";
 import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
-// GraphPageはReact Flow・d3-forceを含み、他の画面より明確に重い
-// （このライブラリだけでbundleが約60KB gzip増える）。
-// このルートを開かないユーザーにその分を読み込ませないよう、
-// 遅延読み込みにする。
+// GraphPageはreact-force-graph-2d（canvas描画・物理演算）を含み、
+// 他の画面より明確に重い。このルートを開かないユーザーにその分を
+// 読み込ませないよう、遅延読み込みにする。
 const GraphPage = lazy(() => import("./pages/GraphPage"));
 
 // ページ遷移アニメーション。
