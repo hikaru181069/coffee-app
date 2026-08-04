@@ -268,6 +268,14 @@ docs/mvp.mdのOut of Scope（「AI推薦」「自然言語による味覚分析�
 - `frontend/src/i18n/locales/ja.json` / `en.json`: 使われなくなった`home.viewConnections` / `home.goToGraph`を削除し、`home.knowledgeGraph.*`を追加
 - ブラウザで実機確認済み: Home画面下部に「Knowledge Graph / Your coffee knowledge is growing. / 54 Nodes 84 Connections / Explore Graph →」（日本語では「知識グラフ / あなたのコーヒーの知識が育っています。/ 54件のノード 84件のつながり / グラフを見る →」）が表示され、クリックで`/graph`へ遷移することを確認
 
+### 2026-08: GraphカードのイラストをGraphを抽象イラストから実データのごく薄い一部表示へ変更
+
+上記の抽象イラストについて、ユーザーから「実データの一部をごく薄く表示したい」という追加要望。選定基準（直近の記録だけだと疎らに見えないか）を相談し、「直近の記録＋その属性ノード」を採用した。産地・フレーバーなどは記録を重ねるたびに同じノードへ収束するため、直近の記録を起点にしても自然と過去からある既存ノードへつながり、「新しいものが既にある大きな網へつながっていく」絵になる（単純な「直近N件だけ」や「よく出るノード中心」より、この方針を採用した理由）。
+
+- 新規`frontend/src/features/graph/utils/previewIllustration.js`（純粋関数）: `graph.nodes`のうち直近5件のrecordノードと、そこから伸びるedgeの先の属性ノードだけを抜き出す。位置は物理演算ではなく、ノードIDの文字列ハッシュによる決定的な疑似乱数で決める（同じノードは毎回同じ位置になり、react-force-graph-2d等の追加依存も不要）。ノードが枠（viewBox）の外まではみ出す余白を意図的に持たせ、「全体のごく一部」に見えるようにした
+- `frontend/src/features/graph/components/GraphPreview.jsx`の`GraphIllustration`を書き換え、実データ（`getNodeVisual(type).canvasColor`で種別ごとに色分け）を`opacity-40`で薄く表示する形にした
+- ブラウザで実機確認済み: 実際の産地・フレーバー等の色が混ざった、密に絡み合ったノード群が薄く表示されることを確認。bundleサイズに変化が無いこと（react-force-graph-2d等の新規依存が増えていないこと）をbuild出力で確認
+
 ---
 
 ## 変更ファイル（現在の構成）
