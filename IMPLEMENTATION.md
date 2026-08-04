@@ -208,6 +208,21 @@ Homeの評価で「産地・品種・精製方法・フレーバーが1つも無
 - `frontend/src/pages/ProfilePage.jsx`: 退会セクションの下に技術バッジ（`TECH_STACK`定数）とクレジット表記を追加。`footer-stack` / `footer-badge` / `footer-credit`のCSSクラスはそのまま再利用し、全ページ帯だった`.site-footer` / `.footer-inner` / `.footer-brand` / `.footer-logo` / `.footer-title`は他に参照が無いことを確認したうえで`App.css`から削除
 - ブラウザで実機確認済み: Home/Records/Graphにフッターが出ないこと、Profile末尾に技術バッジ・クレジットが表示されることを確認
 
+### 2026-08: Insight機能を追加（知識グラフの傾向をルールベースで一文提示）
+
+「知識グラフだけでは、ユーザーが自分で関係性を読み取る必要がある」という指摘から、記録データからルールベースでパターンを検出し、「あなたはEthiopia産かつWashed精製のコーヒーを高く評価する傾向があります。」のような一文をHome画面に提示する機能を追加。`feat/insights`ブランチで実装。
+
+docs/mvp.mdのOut of Scope（「AI推薦」「自然言語による味覚分析」）との整合性をユーザーと確認: notesなどの自由記述は一切読まず、産地・精製方法・フレーバー・評価・記録タイプ・日付という構造化データの集計・閾値判定だけで組み立てるため、AI/NLPとは別物という整理で合意し、docs/product-principles.md「MVP Before Intelligence」に区別を明記した。詳細な仕様は新規`docs/insights.md`に記録（`docs/knowledge-graph.md`と同じ構成）。
+
+- `backend/core/insights/insightBuilder.js`（新規）: DB/HTTP非依存の純粋関数。6種類のInsight（評価の高い産地×精製方法の組み合わせ／最近増えている傾向／自宅とカフェの評価差／高評価が多い精製方法／よく選ぶフレーバー／最も多く飲んでいる産地）を優先度順に検出し、条件を満たすものだけを配列で返す。閾値は`THRESHOLDS`定数に集約（例: 組み合わせは2件以上・平均評価4.0以上）。データが少ないうちに断定的な一文を出さないよう、条件を満たすものが無ければ空配列を返す
+- `backend/services/coffee/insightService.js` / `controllers/insightController.js` / `routes/insightRoutes.js`（新規）: `graphService.js`等と同じ構成。`app.js`へ`GET /api/insights`を登録
+- `backend/tests/insightBuilder.test.js`（純粋関数の閾値・優先順位）、`tests/insightApi.test.js`（HTTPレベル、他ユーザーを含めないことの確認）を新規追加
+- `frontend/src/features/insights/`（新規）: `api/insightApi.js`、`hooks/useInsights.js`、`components/InsightBanner.jsx`。バックエンドは構造化データのみを返し、日英どちらの文言に変換するかはフロントエンド側でi18nextの補間により行う（同じレスポンスを両言語で使い回すため）
+- `frontend/src/pages/HomePage.jsx`: GraphPreviewの上に`InsightBanner`を配置
+- `frontend/src/i18n/locales/ja.json` / `en.json`: `insights.*`に6種類の文言を追加
+- `InsightBanner`は`/graph`へのLinkにした。docs/product-principles.md「Discovery Must Be Actionable」（発見は単なる数値表示で終わらせない）に沿い、一文を提示するだけで終わらせずグラフでの探索へつなげるため（GraphPreview.jsxと同じ見た目・同じ理由）
+- ブラウザで実機確認済み: デモデータ（15件）で実際に`topCombination`（Ethiopia×Washed、平均5、2件）が検出され、Home画面に日英両方で正しく表示されること、クリックで`/graph`へ遷移することを確認
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -300,6 +315,8 @@ GraphPage
 
 Post-MVPの各エントリはfrontend/docsのみの変更のため、都度`cd frontend && npm run lint && npm run build`のみ実行し、エラー無しを確認している（backend/fastapi-serviceに変更が及ぶ場合は、その回のみ該当テストも実行する）。
 
+Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実行し、Test Suites: 14 passed, Tests: 242 passed（Insight関連16件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み。
+
 ---
 
 ## 未解決事項
@@ -311,13 +328,16 @@ Post-MVPの各エントリはfrontend/docsのみの変更のため、都度`cd f
 - 知識グラフの`dateFrom` / `dateTo`フィルターはAPI・純粋関数側には実装済みだが、フロントエンドのフィルターUIには未反映
 - Space Monoは評価・日付・グラフの件数にのみ適用済み。`RecordsPage`の件数表示（`records.countLabel`）など、他の数値表示への適用可否は未判断
 - `feat/graph-dynamic-visuals`（React Flow版、放棄済み。`feat/graph-force-graph-2d`は2026-08にmain済み）は削除候補
+- `feat/insights`ブランチは未merge
+- Insightの優先度選択（`insightBuilder.js`のPRIORITY）は現状固定順。ユーザーの記録傾向によっては同じ種類のInsightばかり出続ける可能性があり、「全件見る」画面や表示の入れ替わりは未実装
 
 ## 次に実装すべき最小単位
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
-2. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
-3. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
+1. `feat/insights`をユーザーが実機確認したうえでmainへmergeする
+2. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+3. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
+4. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
 6. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面への遷移のみ）
 7. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加

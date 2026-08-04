@@ -167,6 +167,17 @@
       "flavor": "Flavor"
     }
   },
+  "insights": {
+    "topCombination": "You tend to rate {{origin}}, {{process}}-processed coffee highly.",
+    "risingTrend": "You've been recording more {{label}} coffee lately.",
+    "homeVsCafeDiff": {
+      "cafe": "You tend to rate coffee from cafés higher than coffee at home.",
+      "home": "You tend to rate coffee at home higher than coffee from cafés."
+    },
+    "topProcessRating": "You tend to rate {{label}}-processed coffee highly (avg {{avgRating}}).",
+    "topFlavor": "You often pick coffee with {{label}} flavor notes.",
+    "topOrigin": "You often choose {{label}} coffee."
+  },
   "validation": {
     "titleRequired": "Please enter a title",
     "maxLength": "Please keep it within {{max}} characters",
