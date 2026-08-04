@@ -11,10 +11,12 @@ import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeReco
 import HomeRecordCard from "../features/coffee-records/components/HomeRecordCard";
 import { RecordListSkeleton } from "../features/coffee-records/components/RecordListStates";
 import { getErrorMessage } from "../utils/errorMessage";
+import InsightBanner from "../features/insights/components/InsightBanner";
 
-// GraphPreviewはReact Flowを含み、GraphPageと同じ理由（App.jsxのコメント参照）で
-// bundleを太らせる。Home自体は遅延読み込みしていないページなので、
-// ここだけlazyにしてReact Flowを初回読み込みから外す。
+// GraphPreviewはreact-force-graph-2d（canvas描画・物理演算）を含み、
+// GraphPageと同じ理由（App.jsxのコメント参照）でbundleを太らせる。
+// Home自体は遅延読み込みしていないページなので、ここだけlazyにして
+// react-force-graph-2dを初回読み込みから外す。
 const GraphPreview = lazy(() => import("../features/graph/components/GraphPreview"));
 
 /**
@@ -47,6 +49,10 @@ const GraphPreview = lazy(() => import("../features/graph/components/GraphPrevie
  *   - 画面下部のGraphへの導線を、テキストだけのバナーから
  *     育っているグラフの縮小プレビュー（GraphPreview）へ差し替えた。
  *     「グラフが育っている」という実感そのものをHomeで見せるため。
+ *
+ * 2026-08、Insight機能（docs/insights.md）を追加した。グラフは見る側が
+ * 自分で関係性を読み取る必要があるため、アプリ側から意味のある一文
+ * （InsightBanner）をGraphPreviewの上に配置し、発見体験を後押しする。
  */
 
 const RECENT_RECORDS_LIMIT = 5;
@@ -142,6 +148,8 @@ function HomePage() {
           </ul>
         )}
       </section>
+
+      <InsightBanner />
 
       <Suspense fallback={null}>
         <GraphPreview />

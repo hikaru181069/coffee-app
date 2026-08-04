@@ -118,6 +118,24 @@ responseは@docs/knowledge-graph.mdを参照。
 nodeIdにはURLエンコードされたstable IDを使用するか、
 typeとentityIdを別queryにする方式を実装時に選択します。
 
+## Insights
+
+### GET `/insights`
+
+自分の記録からルールベースで検出したInsight（傾向）の一覧を、
+優先度順（説得力があると考えられる順）に返す。queryは持たない
+（フィルターではなく「記録全体からの傾向」を示すため）。
+
+responseは@docs/insights.mdを参照。
+
+```json
+{
+  "data": {
+    "insights": []
+  }
+}
+```
+
 ## Status Codes
 
 - 200: 取得・更新成功

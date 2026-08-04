@@ -165,6 +165,17 @@
       "flavor": "フレーバー"
     }
   },
+  "insights": {
+    "topCombination": "あなたは{{origin}}産かつ{{process}}精製のコーヒーを高く評価する傾向があります。",
+    "risingTrend": "最近、{{label}}のコーヒーが増えています。",
+    "homeVsCafeDiff": {
+      "cafe": "自宅よりカフェで飲むコーヒーの方が、評価が高い傾向があります。",
+      "home": "カフェより自宅で飲むコーヒーの方が、評価が高い傾向があります。"
+    },
+    "topProcessRating": "{{label}}精製のコーヒーを高く評価する傾向があります（平均{{avgRating}}）。",
+    "topFlavor": "「{{label}}」のフレーバーをよく選んでいます。",
+    "topOrigin": "{{label}}産のコーヒーをよく選んでいます。"
+  },
   "validation": {
     "titleRequired": "タイトルを入力してください",
     "maxLength": "{{max}}文字以内で入力してください",
