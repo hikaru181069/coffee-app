@@ -1,6 +1,7 @@
 import * as coffeeRecordRepository from "../../repositories/coffeeRecordRepository.js";
 import { serializeCoffeeRecords } from "./coffeeRecordSerializer.js";
 import { buildGraph, findRecordIdsConnectedToNode } from "../../core/graph/graphBuilder.js";
+import { buildEntityDetail } from "../../core/graph/entityDetailBuilder.js";
 import { notFoundError } from "../../utils/AppError.js";
 
 /**
@@ -69,4 +70,43 @@ export const getRelatedRecords = async (userId, nodeId, { recordFilter } = {}) =
       rating: record.rating,
       notesExcerpt: excerptNotes(record.notes),
     }));
+};
+
+/**
+ * 属性ノード1件の詳細（統計・関連属性・関連記録）を返す
+ * （GET /graph/nodes/:nodeId）。
+ *
+ * getRelatedRecordsと違い、フィルターは受け取らない。エンティティ詳細
+ * ページは「そのノードについて知っていること全体」を見せる場所であり、
+ * 画面側の絞り込み状態を引き継ぐ性質のものではないため。
+ *
+ * 知識グラフをただの可視化ではなくナビゲーションにする機能
+ * （docs/entity-detail.md）。産地・農園・品種・精製方法・焙煎度・
+ * フレーバー・カフェのどの種別でも同じ関数で扱える。
+ */
+export const getNodeDetail = async (userId, nodeId) => {
+  const records = await coffeeRecordRepository.findAllForUser(userId);
+  const serialized = serializeCoffeeRecords(records);
+  const graph = buildGraph(serialized);
+
+  const detail = buildEntityDetail(graph, serialized, nodeId);
+  if (!detail) {
+    throw notFoundError("指定されたノードが見つかりません");
+  }
+
+  const { connectedRecords, ...rest } = detail;
+
+  return {
+    ...rest,
+    records: connectedRecords
+      .slice()
+      .sort((a, b) => new Date(b.consumedAt) - new Date(a.consumedAt))
+      .map((record) => ({
+        id: record.id,
+        title: record.title,
+        consumedAt: record.consumedAt,
+        rating: record.rating,
+        notesExcerpt: excerptNotes(record.notes),
+      })),
+  };
 };

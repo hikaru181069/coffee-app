@@ -45,3 +45,12 @@ export const fetchNodeRecords = async (nodeId, params, { signal } = {}) => {
   });
   return payload.data;
 };
+
+/**
+ * 指定したノード（属性）の詳細（統計・関連属性・関連記録）を取得する。
+ * エンティティ詳細ページ用。フィルターは持たない（backend/services/coffee/graphService.js参照）。
+ */
+export const fetchNodeDetail = async (nodeId, { signal } = {}) => {
+  const payload = await apiRequest(`${GRAPH_PATH}/nodes/${encodeURIComponent(nodeId)}`, { signal });
+  return payload.data;
+};

@@ -1,6 +1,6 @@
 import express from "express";
 import { authenticate } from "../middleware/authenticate.js";
-import { getGraph, getNodeRecords } from "../controllers/graphController.js";
+import { getGraph, getNodeRecords, getNodeDetail } from "../controllers/graphController.js";
 
 /**
  * /api/graph のルート定義。
@@ -14,5 +14,6 @@ router.use(authenticate);
 
 router.get("/", getGraph);
 router.get("/nodes/:nodeId/records", getNodeRecords);
+router.get("/nodes/:nodeId", getNodeDetail);
 
 export default router;

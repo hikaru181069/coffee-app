@@ -244,6 +244,21 @@ docs/mvp.mdのOut of Scope（「AI推薦」「自然言語による味覚分析�
 - 新規`docs/search.md`（`docs/knowledge-graph.md`/`docs/insights.md`と同じ構成）、`docs/api.md`に`GET /api/search`を追記、`CLAUDE.md`の参照ファイル一覧に追加
 - ブラウザで実機確認済み: デモデータで「ethiopia」検索→産地カード（4件の記録、関連フレーバー: Floral・Berry・Citrus）と記録名一致4件が表示、「blue bottle」検索→カフェカード（1件の記録）が表示、カードクリックで`/graph?focus=cafe:...`へ遷移しノードが選択された状態でGraph画面が開くこと、日英両方の表示を確認
 
+### 2026-08: エンティティ詳細ページを追加（知識グラフをナビゲーションにする）
+
+「グラフだけでは関係性の読み取りをユーザーに委ねてしまう。産地・品種・フレーバー・精製方法・カフェそれぞれに、関連記録・平均評価・よく出る品種/フレーバー・グラフ上の関連・最後に飲んだ日をまとめて見せる詳細ページが欲しい」という要望から実装。`feat/entity-detail-pages`ブランチで実装。
+
+産地・農園・品種・精製方法・焙煎度・フレーバー・カフェのどの種別でも同じページ・同じAPIで扱う汎用実装にした（種別ごとに個別ページを作らない。`getNodeVisual`でtypeごとの見た目だけを切り替える既存パターンをそのまま踏襲）。「グラフ上の関連」は具体的にはランキング表示（ミニグラフの埋め込みではない）を選択（ユーザーと相談して決定）。
+
+- `backend/core/graph/entityDetailBuilder.js`（新規、DB/HTTP非依存の純粋関数）: 指定ノードの記録数・平均評価・最終記録日（関連記録のrating/consumedAtから算出）・関連属性（属性同士の直接エッジが無いため、記録を介して間接的に、他のすべての種別を同時に登場回数順で集計。同じ種別同士は常に空になるため除外）を返す
+- `backend/services/coffee/graphService.js`に`getNodeDetail`を追加、`controllers/graphController.js`・`routes/graphRoutes.js`に`GET /api/graph/nodes/:nodeId`を追加（既存の`GET /api/graph/nodes/:nodeId/records`とは別の新規エンドポイント。フィルターは持たない）
+- `backend/tests/entityDetailBuilder.test.js`（集計ロジック）、`tests/graphApi.test.js`に新エンドポイントのHTTPレベルテストを追加
+- `frontend/src/features/graph/`: `api/graphApi.js`に`fetchNodeDetail`、新規`hooks/useEntityDetail.js`
+- 新規`frontend/src/pages/EntityDetailPage.jsx`（ルート`/entities/:nodeId`）: 統計カード（記録数・平均評価・最終記録日）、「グラフで見る」ボタン（`/graph?focus=<nodeId>`、既存の`?focus=`の仕組みを再利用）、関連属性のランキング（チップ自体が他のエンティティ詳細ページへのLink。産地→品種→フレーバーと渡り歩ける）、関連記録一覧
+- 既存導線の接続: `NodeDetailPanel.jsx`（Graph画面のサイドパネル）に「詳細を見る」リンクを追加。`EntityResultCard.jsx`（横断検索の結果カード）のリンク先を`/graph?focus=`から`/entities/`へ変更（知識グラフをただの可視化ではなくナビゲーションにする方針のため。前回のInsightsエントリで「`/graph?focus=`へのLinkにした」と記載したが、本エントリで置き換えた）
+- 新規`docs/entity-detail.md`（`docs/knowledge-graph.md`/`docs/search.md`と同じ構成）、`docs/api.md`に`GET /api/graph/nodes/:nodeId`を追記、`CLAUDE.md`の参照ファイル一覧に追加
+- ブラウザで実機確認済み: デモデータで産地「Ethiopia」の詳細ページ（4件の記録、平均評価4.8、最後に飲んだ日、品種/精製方法/焙煎度/フレーバー/カフェのランキング、関連記録4件）を確認。品種「Heirloom」チップをクリックしてそのエンティティ詳細ページへ正しく遷移（異なる統計・関連属性が表示される）、「グラフで見る」ボタンで`/graph?focus=variety:...`へ遷移しノードが選択された状態でサイドパネルに「詳細を見る」リンクが表示されることを確認
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -340,6 +355,8 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 
 横断検索・カフェのグラフノード化（`feat/search-and-cafe`）追加時に`cd backend && npm test`を再実行し、Test Suites: 16 passed, Tests: 260 passed（search関連17件・cafeノード関連1件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み（テスト実行中に一度、システムのメモリ逼迫と思われる原因でMongoDB接続タイムアウトが発生したが、再実行で全件成功することを確認し、コードの問題ではないと判断した）。
 
+エンティティ詳細ページ（`feat/entity-detail-pages`。`feat/search-and-cafe`から分岐したため、これをmainへmergeすると両方の変更が同時に入る）追加時に`cd backend && npm test`を再実行し、Test Suites: 17 passed, Tests: 273 passed（entityDetail関連9件・graphApiの新エンドポイント関連4件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み。
+
 ---
 
 ## 未解決事項
@@ -352,14 +369,15 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 - Space Monoは評価・日付・グラフの件数にのみ適用済み。`RecordsPage`の件数表示（`records.countLabel`）など、他の数値表示への適用可否は未判断
 - `feat/graph-dynamic-visuals`（React Flow版、放棄済み。`feat/graph-force-graph-2d`は2026-08にmain済み）は削除候補
 - Insightの優先度選択（`insightBuilder.js`のPRIORITY）は現状固定順。ユーザーの記録傾向によっては同じ種類のInsightばかり出続ける可能性があり、「全件見る」画面や表示の入れ替わりは未実装
-- `feat/search-and-cafe`ブランチは未merge
 - 検索結果の属性カード一覧（`entities`）は現状recordCount順のみで、多数の属性がヒットしたときの上限や、さらに絞り込む手段は未実装
+- `feat/entity-detail-pages`ブランチ（`feat/search-and-cafe`を含む）は未merge
+- エンティティ詳細ページの関連属性は種別ごと最大5件まで。件数が多い属性（例: フレーバーが10種類以上共起する）を全部見る手段は未実装
 
 ## 次に実装すべき最小単位
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. `feat/search-and-cafe`をユーザーが実機確認したうえでmainへmergeする
+1. `feat/entity-detail-pages`をユーザーが実機確認したうえでmainへmergeする（`feat/search-and-cafe`の変更も含む）
 2. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
 3. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
 4. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する

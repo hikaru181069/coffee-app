@@ -154,6 +154,7 @@
     "emptyDesc": "コーヒーを記録すると、産地やフレーバーのつながりがここに現れます。",
     "selectedNodeAriaLabel": "選択中のノード",
     "viewRecordDetail": "記録の詳細を見る",
+    "viewEntityDetail": "詳細を見る",
     "appearsInCount": "<mono>{{count}}</mono> 件の記録で登場",
     "nodeTypes": {
       "record": "記録",
@@ -188,6 +189,14 @@
     "entitiesHeading": "関連する項目",
     "recordsHeading": "記録名の一致",
     "noResults": "「{{query}}」に一致する結果が見つかりません"
+  },
+  "entityDetail": {
+    "recordCount": "記録数",
+    "avgRating": "平均評価",
+    "lastConsumed": "最後に飲んだ日",
+    "viewInGraph": "グラフで見る",
+    "relatedHeading": "グラフ上の関連",
+    "recordsHeading": "関連する記録"
   },
   "validation": {
     "titleRequired": "タイトルを入力してください",

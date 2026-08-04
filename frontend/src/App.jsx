@@ -15,6 +15,7 @@ import LandingPage from "./pages/LandingPage";
 import RecordsPage from "./pages/RecordsPage";
 import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
+import EntityDetailPage from "./pages/EntityDetailPage";
 // GraphPageはreact-force-graph-2d（canvas描画・物理演算）を含み、
 // 他の画面より明確に重い。このルートを開かないユーザーにその分を
 // 読み込ませないよう、遅延読み込みにする。
@@ -51,6 +52,11 @@ function AnimatedRoutes() {
           <Route path="/records/new" element={<RecordFormPage />} />
           <Route path="/records/:recordId" element={<RecordDetailPage />} />
           <Route path="/records/:recordId/edit" element={<RecordFormPage />} />
+
+          {/* 知識グラフの属性ノード（産地・農園・品種・精製方法・焙煎度・
+              フレーバー・カフェ）1件の詳細ページ。nodeIdは"origin:507f..."
+              のようなstable ID（URLエンコードして渡す） */}
+          <Route path="/entities/:nodeId" element={<EntityDetailPage />} />
 
           <Route
             path="/graph"

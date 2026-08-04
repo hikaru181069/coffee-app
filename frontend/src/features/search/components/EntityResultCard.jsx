@@ -9,9 +9,9 @@ import { getNodeVisual } from "../../graph/utils/nodeVisuals";
  *
  * docs/search.md参照。「エチオピア / 8件の記録 / よく関連するフレーバー：
  * ベリー、フローラル」のように、件数と共起する属性を添えて知識ベース感を
- * 出す。/graphへのLinkにし、?focus=でそのノードを選択した状態で開く
- * （features/insights/components/InsightBanner.jsxと同じ「Discovery Must
- * Be Actionable」の考え方）。
+ * 出す。エンティティ詳細ページ（docs/entity-detail.md）へのLinkにする。
+ * 知識グラフをただの可視化ではなくナビゲーションにする方針
+ * （2026-08、`/graph?focus=`から変更）。
  */
 function EntityResultCard({ entity }) {
   const { t } = useTranslation();
@@ -20,7 +20,7 @@ function EntityResultCard({ entity }) {
 
   return (
     <Link
-      to={`/graph?focus=${encodeURIComponent(entity.id)}`}
+      to={`/entities/${encodeURIComponent(entity.id)}`}
       className="block rounded-xl border border-ctp-surface1 bg-ctp-mantle p-4 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
     >
       <div className="flex items-center gap-2">

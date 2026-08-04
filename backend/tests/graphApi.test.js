@@ -12,6 +12,7 @@ import mongoose from "mongoose";
 import app from "../app.js";
 import Origin from "../models/Origin.js";
 import Flavor from "../models/Flavor.js";
+import Process from "../models/Process.js";
 import {
   connectTestDb,
   closeTestDb,
@@ -268,6 +269,78 @@ describe("GET /api/graph/nodes/:nodeId/records", () => {
   test("トークン無しは401", async () => {
     const nodeId = encodeURIComponent("origin:507f1f77bcf86cd799439011");
     const res = await request(app).get(`${GRAPH_ENDPOINT}/nodes/${nodeId}/records`);
+
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("GET /api/graph/nodes/:nodeId", () => {
+  test("統計・関連属性・関連記録をまとめて返す", async () => {
+    await seedTestMasterData();
+    const origin = await Origin.findOne({ normalizedName: "ethiopia" });
+    const process = await Process.findOne({ normalizedName: "washed" });
+    const flavor = await Flavor.findOne({ normalizedName: "berry" });
+
+    await createRecordFor(alice.user._id, {
+      originId: origin._id,
+      processId: process._id,
+      flavorIds: [flavor._id],
+      rating: 5,
+      consumedAt: new Date("2026-06-01"),
+    });
+    await createRecordFor(alice.user._id, {
+      originId: origin._id,
+      rating: 3,
+      consumedAt: new Date("2026-07-01"),
+    });
+
+    const nodeId = encodeURIComponent(`origin:${origin._id}`);
+    const res = await request(app)
+      .get(`${GRAPH_ENDPOINT}/nodes/${nodeId}`)
+      .set("Authorization", alice.authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      type: "origin",
+      label: "Ethiopia",
+      recordCount: 2,
+      avgRating: 4,
+      lastConsumedAt: "2026-07-01T00:00:00.000Z",
+    });
+    expect(res.body.data.relatedAttributes.flavor).toEqual([
+      { id: `flavor:${flavor._id}`, label: "Berry", count: 1 },
+    ]);
+    expect(res.body.data.records).toHaveLength(2);
+    // 新しい記録から順に並ぶ
+    expect(res.body.data.records[0].consumedAt).toBe("2026-07-01T00:00:00.000Z");
+  });
+
+  test("他ユーザーの記録から作られたノードは404（存在を教えない）", async () => {
+    await seedTestMasterData();
+    const origin = await Origin.findOne({ normalizedName: "ethiopia" });
+    await createRecordFor(bob.user._id, { originId: origin._id });
+
+    const nodeId = encodeURIComponent(`origin:${origin._id}`);
+    const res = await request(app)
+      .get(`${GRAPH_ENDPOINT}/nodes/${nodeId}`)
+      .set("Authorization", alice.authHeader);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("NOT_FOUND");
+  });
+
+  test("存在しないノードIDは404", async () => {
+    const nodeId = encodeURIComponent("origin:507f1f77bcf86cd799439011");
+    const res = await request(app)
+      .get(`${GRAPH_ENDPOINT}/nodes/${nodeId}`)
+      .set("Authorization", alice.authHeader);
+
+    expect(res.status).toBe(404);
+  });
+
+  test("トークン無しは401", async () => {
+    const nodeId = encodeURIComponent("origin:507f1f77bcf86cd799439011");
+    const res = await request(app).get(`${GRAPH_ENDPOINT}/nodes/${nodeId}`);
 
     expect(res.status).toBe(401);
   });

@@ -16,6 +16,7 @@
 - @docs/knowledge-graph.md
 - @docs/insights.md
 - @docs/search.md
+- @docs/entity-detail.md
 - @docs/architecture.md
 - @docs/api.md
 - @docs/implementation-plan.md
