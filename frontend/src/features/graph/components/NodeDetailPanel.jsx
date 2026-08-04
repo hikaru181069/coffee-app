@@ -67,9 +67,11 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
 
         {!isLoading && !error && detail?.kind === "attribute" && (
           <AttributeNodeDetail
+            nodeId={node.id}
             recordCount={node.data.metadata.recordCount}
             relatedRecords={detail.relatedRecords}
             language={i18n.language}
+            t={t}
           />
         )}
       </div>
@@ -102,8 +104,8 @@ function RecordNodeDetail({ record, language, t }) {
   );
 }
 
-/** 属性ノード（産地・農園・品種・精製方法・焙煎度・フレーバー）を選んだときの中身 */
-function AttributeNodeDetail({ recordCount, relatedRecords, language }) {
+/** 属性ノード（産地・農園・品種・精製方法・焙煎度・フレーバー・カフェ）を選んだときの中身 */
+function AttributeNodeDetail({ nodeId, recordCount, relatedRecords, language, t }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-ctp-subtext0">
@@ -113,6 +115,10 @@ function AttributeNodeDetail({ recordCount, relatedRecords, language }) {
           components={{ mono: <span className="font-mono" /> }}
         />
       </p>
+
+      <Link to={`/entities/${encodeURIComponent(nodeId)}`} className={secondaryButtonClass}>
+        {t("graph.viewEntityDetail")}
+      </Link>
 
       <ul className="flex flex-col gap-2">
         {(relatedRecords ?? []).map((record) => (

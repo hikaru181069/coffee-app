@@ -34,3 +34,14 @@ export const getNodeRecords = async (req, res) => {
 
   res.status(200).json({ data: records });
 };
+
+/**
+ * GET /api/graph/nodes/:nodeId
+ *
+ * エンティティ詳細ページ用。フィルターは持たない（graphService.js参照）。
+ */
+export const getNodeDetail = async (req, res) => {
+  const detail = await graphService.getNodeDetail(req.user._id, req.params.nodeId);
+
+  res.status(200).json({ data: detail });
+};

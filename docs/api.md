@@ -118,6 +118,14 @@ responseは@docs/knowledge-graph.mdを参照。
 nodeIdにはURLエンコードされたstable IDを使用するか、
 typeとentityIdを別queryにする方式を実装時に選択します。
 
+### GET `/graph/nodes/:nodeId`
+
+エンティティ詳細ページ用。統計（記録数・平均評価・最終記録日）・
+関連する他の属性（種別ごとのランキング）・関連記録をまとめて返す。
+queryは持たない。
+
+responseは@docs/entity-detail.mdを参照。
+
 ## Insights
 
 ### GET `/insights`

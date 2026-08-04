@@ -155,6 +155,7 @@
     "emptyDesc": "Record some coffee to see connections between origins and flavors appear here.",
     "selectedNodeAriaLabel": "Selected node",
     "viewRecordDetail": "View record detail",
+    "viewEntityDetail": "View details",
     "appearsInCount_one": "Appears in <mono>{{count}}</mono> record",
     "appearsInCount_other": "Appears in <mono>{{count}}</mono> records",
     "nodeTypes": {
@@ -191,6 +192,14 @@
     "entitiesHeading": "Related",
     "recordsHeading": "Matching records",
     "noResults": "No results for \"{{query}}\""
+  },
+  "entityDetail": {
+    "recordCount": "Records",
+    "avgRating": "Average rating",
+    "lastConsumed": "Last had",
+    "viewInGraph": "View in Graph",
+    "relatedHeading": "Related in the graph",
+    "recordsHeading": "Related records"
   },
   "validation": {
     "titleRequired": "Please enter a title",
