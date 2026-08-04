@@ -62,12 +62,21 @@ const RECORD_BASE_RADIUS = 16;
 const RECORD_DEGREE_CAP = 8;
 const RECORD_DEGREE_SCALE = 1.2;
 
-const ATTRIBUTE_BASE_HALF_WIDTH = 30;
-const ATTRIBUTE_HALF_HEIGHT = 14;
+// ラベルを下へ出す前は「テキストを内側に収める」ためワイドな
+// ピル形状が必要だったが、アイコン+件数バッジだけになったので
+// レコードノードに近いコンパクトなチップへ縮小した
+const ATTRIBUTE_BASE_HALF_WIDTH = 15;
+const ATTRIBUTE_HALF_HEIGHT = 15;
 const ATTRIBUTE_DEGREE_CAP = 8;
-const ATTRIBUTE_DEGREE_SCALE = 2;
+const ATTRIBUTE_DEGREE_SCALE = 1.2;
 
 const CLICK_TOLERANCE_PX = 6;
+
+// ラベルはチップの下に出す（Obsidianのグラフを参考に、チップ内へ
+// 詰め込んで過度に省略されるのを避ける）。省略が必要になる場面
+// 自体を減らすため、チップの幅より大きく余裕を持たせる
+const LABEL_MAX_WIDTH = 100;
+const LABEL_GAP = 4;
 
 // frontend/src/App.css の --ctp-* と同じ値（canvasはTailwindクラスを
 // 使えないため、utils/nodeVisuals.js の canvasColor と同様に直接持つ）
@@ -109,6 +118,7 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
 
   const fontSize = Math.max(11 / globalScale, 3);
   const borderWidth = (selected ? 2.5 : 1.5) / globalScale;
+  let shapeBottom;
 
   if (isRecord) {
     const radius = recordRadius(node);
@@ -121,21 +131,21 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
     ctx.strokeStyle = selected ? visual.canvasColor : CTP.surface1;
     ctx.stroke();
 
+    const hasRating = node.metadata?.rating != null;
     const icon = getNodeIconImage(node.type, visual.canvasColor);
-    const iconSize = radius * 0.65;
-    if (icon) ctx.drawImage(icon, node.x - iconSize / 2, node.y - radius * 0.55, iconSize, iconSize);
+    const iconSize = radius * 0.8;
+    const iconCenterY = hasRating ? node.y - radius * 0.3 : node.y;
+    if (icon) ctx.drawImage(icon, node.x - iconSize / 2, iconCenterY - iconSize / 2, iconSize, iconSize);
 
-    ctx.font = `${fontSize}px Inter, sans-serif`;
-    ctx.fillStyle = CTP.text;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(truncateToWidth(ctx, node.label ?? "", radius * 1.8), node.x, node.y + radius * 0.15);
-
-    if (node.metadata?.rating != null) {
+    if (hasRating) {
       ctx.font = `${fontSize * 0.85}px "Space Mono", monospace`;
       ctx.fillStyle = CTP.yellow;
-      ctx.fillText(`★ ${node.metadata.rating}`, node.x, node.y + radius * 0.62);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`★${node.metadata.rating}`, node.x, node.y + radius * 0.4);
     }
+
+    shapeBottom = node.y + radius;
   } else {
     const halfWidth = attributeHalfWidth(node);
 
@@ -148,31 +158,35 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
     ctx.stroke();
 
     const icon = getNodeIconImage(node.type, visual.canvasColor);
-    const iconSize = 14;
-    if (icon) ctx.drawImage(icon, node.x - halfWidth + 6, node.y - iconSize / 2, iconSize, iconSize);
+    const iconSize = Math.min(halfWidth, ATTRIBUTE_HALF_HEIGHT) * 1.15;
+    if (icon) ctx.drawImage(icon, node.x - iconSize / 2, node.y - iconSize / 2, iconSize, iconSize);
 
     const recordCount = node.metadata?.recordCount ?? 0;
-    const countText = recordCount > 1 ? String(recordCount) : "";
-    ctx.font = `${fontSize * 0.8}px "Space Mono", monospace`;
-    const countWidth = countText ? ctx.measureText(countText).width + 6 : 0;
-
-    ctx.font = `${fontSize}px Inter, sans-serif`;
-    ctx.fillStyle = CTP.text;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillText(
-      truncateToWidth(ctx, node.label ?? "", halfWidth * 2 - 24 - countWidth),
-      node.x - halfWidth + 24,
-      node.y,
-    );
-
-    if (countText) {
-      ctx.font = `${fontSize * 0.8}px "Space Mono", monospace`;
+    if (recordCount > 1) {
+      ctx.font = `${fontSize * 0.75}px "Space Mono", monospace`;
       ctx.fillStyle = CTP.subtext0;
       ctx.textAlign = "right";
-      ctx.fillText(countText, node.x + halfWidth - 6, node.y);
+      ctx.textBaseline = "top";
+      ctx.fillText(String(recordCount), node.x + halfWidth - 2, node.y - ATTRIBUTE_HALF_HEIGHT + 1);
     }
+
+    shapeBottom = node.y + ATTRIBUTE_HALF_HEIGHT;
   }
+
+  // ラベルは形（チップ）の内側へ詰め込まず、下へ出す。
+  // 収束後は多くのノードが小さく表示され、内側に収めようとすると
+  // 「Pin...」のように大半が省略されて何のノードか分からなくなる
+  // という指摘を受けた。Obsidianのグラフを参考に、チップ下へ出す
+  // ことで省略の必要がある場面自体を減らす
+  ctx.font = `${fontSize}px Inter, sans-serif`;
+  ctx.fillStyle = CTP.text;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(
+    truncateToWidth(ctx, node.label ?? "", LABEL_MAX_WIDTH),
+    node.x,
+    shapeBottom + LABEL_GAP / globalScale,
+  );
 
   ctx.restore();
 }
