@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { ReactFlowProvider } from "@xyflow/react";
 import { ArrowUpRight, Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -42,9 +41,7 @@ function GraphPreview() {
       </div>
 
       <div className="h-40 w-full overflow-hidden rounded-lg bg-ctp-crust/40 pointer-events-none">
-        <ReactFlowProvider>
-          <GraphCanvas graph={graph} selectedNodeId={null} onSelectNode={() => {}} interactive={false} />
-        </ReactFlowProvider>
+        <GraphCanvas graph={graph} selectedNodeId={null} onSelectNode={() => {}} interactive={false} />
       </div>
     </Link>
   );
