@@ -138,6 +138,26 @@ Homeの評価で「産地・品種・精製方法・フレーバーが1つも無
 - `HomeRecordCard.jsx`: `!hasCoffeeDetails(record)`のとき、`RecordDetailPage.jsx`と同じ`records.detailEmptyHint`（「産地やフレーバーを追加すると、ほかの記録とのつながりが見えるようになります。」）を表示
 - `utils/recordFormat.js`の`hasCoffeeDetails()`のバグを修正。`collectCoffeeDetails(record)`を`t`引数無しで呼んでおり、実際に使うと`t is not a function`で例外になる状態だった（呼び出し箇所が無かったため未発覚）。ラベル文言に依存せず、値の有無だけを直接判定する形へ書き換えた
 
+### 2026-08: 知識グラフをObsidian風にする試み → React Flowを断念しreact-force-graph-2dへ全面置き換え
+
+「Obsidianのような動的で見やすいグラフにしたい」という相談から始まった一連の作業。まず`feat/graph-dynamic-visuals`ブランチでReact Flow + 自前d3-force統合のまま以下を実装した:
+
+- ホバー中のノードの直接のつながりだけを目立たせる機能
+- ノードの次数（つながりの数）に応じたサイズの動的化
+- ドラッグへの物理反応（d3-forceの`alphaTarget`再加熱パターン）
+- 開いた瞬間にノードが中心から広がって収束するアニメーション
+
+しかし実機確認のたびに「しばらく表示されない」「ドラッグ中にちらつく」「動きが伝わらない」という指摘が続いた。原因はドラッグ再加熱中もカメラ（fitView）を動かしていた／座標更新がReact Flow自身のドラッグ描画と競合していたことで、2回修正を試みたが解消しきれず、ユーザーの判断で**ライブラリごと置き換え**ることになった。`feat/graph-dynamic-visuals`は未マージのまま放棄し、`main`から新しく`feat/graph-force-graph-2d`ブランチを切って、canvas描画・物理演算を内蔵した専用ライブラリ`react-force-graph-2d`へ全面的に書き換えた。
+
+- `@xyflow/react`を削除、`react-force-graph-2d`を追加（`d3-force`はカスタム力の追加用に直接依存として再導入）
+- `GraphCanvas.jsx`を全面書き換え。ノード描画は`nodeCanvasObject`で自前実装（円=record、角丸四角=attribute）。新設`utils/canvasIcons.js`でlucide-reactの実際のSVG pathデータからcanvas描画用のアイコン画像を生成・キャッシュ（GraphLegendと同じアイコンセットを維持するため）。`utils/nodeVisuals.js`に`canvasColor`（実際の16進カラー、Tailwindのcolor-*クラスはcanvasで使えないため）を追加
+- `reactFlowAdapter.js` / `forceLayout.js` / `nodeTypes/`（React Flow固有のコード）を削除。`GraphPreview.jsx` / `GraphPage.jsx`から`ReactFlowProvider`を除去
+- 背景の点グリッドを廃止（単色背景。「最悪」と指摘されたため）
+- 開いた瞬間の収束アニメーション・ドラッグへの物理反応・ホバー強調はいずれもライブラリ標準機能で実現でき、自前の`useLiveForceLayout`は不要になった
+- 副産物: `main.jsx`にトップレベルの`AppErrorBoundary`を新設。この移行作業中に依存関係の読み込み不備でGraphPageのレンダーが丸ごと落ち、エラーバウンダリが1つも無かったため画面全体が手がかりの無い真っ黒な状態になった経験から追加した
+- 移行の途中、実際に踏んだ実装ミス2件: ①`d3Force`のカスタム力設定エフェクトが`[nodes, links]`だけに依存しており、初回レンダー（`size`がまだ0で`ForceGraph2D`が未描画）のタイミングでは`fgRef.current`がnullのため何もできず、以降二度と実行されないバグ（`size.width/height`も依存配列に追加して修正）。②`main.jsx`の編集を往復した際に`import { StrictMode }`が重複しVite/oxcのパースエラーで画面が壊れた（見落としに気づくまで時間を要した）
+- **既知の未解決不具合**: `onNodeClick` / `onBackgroundClick`が発火せず、ノードクリックで詳細パネルが開かない。`pointerdown`/`pointerup`イベント自体はtrusted・座標移動ゼロで正しく発火しているにもかかわらずクリックとして認識されない。`onBackgroundClick`の除去、`enableNodeDrag=false`など複数パターンを検証したが再現し続けており、`force-graph`内部（`state.isPointerPressed` / `state.isPointerDragging`まわり）の問題と見ている。ホバー・ドラッグ物理反応・収束アニメーションは正常動作。**ユーザーによる実機確認と、必要なら追加調査が必要**
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -234,18 +254,22 @@ Post-MVPの各エントリはfrontend/docsのみの変更のため、都度`cd f
 
 ## 未解決事項
 
+- **`GraphCanvas`でノードクリックが効かない（最重要）**: `onNodeClick` / `onBackgroundClick`が発火せず、記録詳細画面のGraph部分でノードをクリックしても`NodeDetailPanel`が開かない。上記エントリ参照
+- 収束後のグラフレイアウトが以前（React Flow版）より詰まって見える。`chargeStrength`を強めても改善が小さく、根本原因は未特定（`FORCE_PARAMS`のコメント参照）
 - FastAPIサービスは現状ヘルスチェックのみで、コーヒードメインの実処理を持たない（`docs/architecture.md`の方針通りの意図的な状態であり、バグではない）
 - 知識グラフの`dateFrom` / `dateTo`フィルターはAPI・純粋関数側には実装済みだが、フロントエンドのフィルターUIには未反映
-- `GraphPreview`のサムネイルは全ノード・全エッジをそのまま縮小描画しているため、160px四方では形が読み取りづらい（要検討: ノードを間引く、密度に応じてズームを調整するなど）
 - Homeのフッター（技術バッジ・`Built by Hikaru`表記）がログイン後の全ページに出ており、ポートフォリオとしての説明責任と「静かな道具」というプロダクト方針がせめぎ合っている（要判断）
 - Space Monoは評価・日付・グラフの件数にのみ適用済み。`RecordsPage`の件数表示（`records.countLabel`）など、他の数値表示への適用可否は未判断
+- `feat/graph-force-graph-2d`ブランチは未merge。`feat/graph-dynamic-visuals`（React Flow版、放棄済み）は削除候補
 
 ## 次に実装すべき最小単位
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. `GraphPreview`のサムネイル密度を改善する（間引き・ズーム調整など、フロントエンドのみの変更で完結する）
-2. Homeフッターの扱いを決める（Landing限定にする／簡素化するなど）
-3. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
-4. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面への遷移のみ）
-5. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
+1. **`GraphCanvas`のノードクリック不具合を解決する**。`force-graph`のバージョン固定や別バージョンでの検証、GitHub Issueの確認、最悪の場合は独自のクリック判定（`onNodeHover`で捕まえた対象に対して別途click/touchイベントを紐付けるなど）を検討する
+2. `feat/graph-force-graph-2d`のドラッグ時の挙動・クリック不具合をユーザーが実機で確認したうえでmainへmergeする（`feat/graph-dynamic-visuals`は削除）
+3. 収束後のレイアウト密度を調整する
+4. Homeフッターの扱いを決める（Landing限定にする／簡素化するなど）
+5. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+6. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面への遷移のみ）
+7. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
