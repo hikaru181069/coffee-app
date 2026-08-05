@@ -301,6 +301,15 @@ docs/mvp.mdのOut of Scope（「AI推薦」「自然言語による味覚分析�
 - テスト結果: `cd backend && npm test` Test Suites: 19 passed, Tests: 286 passed。`cd frontend && npm run lint && npm run build`も成功
 - ブラウザで実機確認済み: デモデータでOverview（記録数15・平均評価4.1・産地7種・品種7種・フレーバー13種・63日）、月別推移、評価分布、家/カフェ比較、産地〜カフェの5種類のランキングが表示されることを確認。ランキングの「Ethiopia」をクリックして`/entities/origin:...`へ正しく遷移し、産地詳細ページ（4件の記録・平均評価4.8・関連する品種/精製方法/フレーバー/カフェ・関連記録4件）が表示されることを確認。日本語切り替えで見出し・数値・月ラベル（「26年7月」等）・件数の複数形もすべて翻訳されることを確認
 
+### 2026-08: Homeを2カラム化（`lg`以上）
+
+「今後機能を増やす際に対応しやすいように」という要望から、`lg`（1024px）以上でHome画面を2カラムにした。メイン列（Record Coffee CTA・Recent Records）を「行動」、サイドバー列（Insight・GraphPreview）を「発見・気づき」の置き場として役割を分けた。将来サイドバーへ軽量なウィジェットを足しやすくなる一方、Statsのように独立ページにすべき規模のものはサイドバーへ詰め込まない方針を維持する（ユーザーと相談して決定）。frontendのみの変更のためbranchは切らずmainへ直接コミット。
+
+- `frontend/src/pages/HomePage.jsx`: コンテナを`max-w-3xl`から`max-w-5xl`へ拡張し、`grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px] lg:items-start`でメイン列（CTA・Recent Records）とサイドバー列（Insight・GraphPreview）に分割。`lg`未満は変更前と同じ1カラムの縦積み（順序も同じ）のまま
+- `frontend/src/features/insights/components/InsightBanner.jsx` / `frontend/src/features/graph/components/GraphPreview.jsx`: それぞれのルート要素にあった`mt-6`を削除。以前は縦積みの手動マージンとして必要だったが、親コンテナの`gap-6`と二重になるため
+- ブラウザで実機確認済み: 幅1400pxで2カラム表示（サイドバーにInsight・GraphPreviewが縦に並ぶ）を確認。日本語表示でもInsightの文章・GraphPreviewの見出し/タグラインが320px幅のサイドバー内で折り返して問題なく収まることを確認
+- 未検証: `lg`未満（タブレット・モバイル幅）での実際の折り返しは、ブラウザ自動化ツールのビューポートリサイズがこの環境では効かず（`resize_window`を呼んでも`read_page`のViewportが常に約1223x1010のまま）、目視確認できなかった。Tailwindの標準的な`grid-cols-1 lg:grid-cols-[...]`パターン自体は他画面でも使用実績がある構成のため大きな懸念は無いが、実機・別環境での確認を推奨
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -417,6 +426,7 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 - エンティティ詳細ページの関連属性は種別ごと最大5件まで。件数が多い属性（例: フレーバーが10種類以上共起する）を全部見る手段は未実装
 - Statsページは全期間の記録から計算しており、期間フィルター（直近3か月/今年など）は未実装（`docs/stats.md`の設計通り、Insightと同じく「記録全体のふりかえり」を示すための意図的な仕様だが、記録件数が増えた場合は要検討）
 - `BottomTabBar`のタブがStats追加で5個になった。ブラウザ自動化ツールでモバイル幅のビューポートを再現できず、狭い画面での折り返し・ラベル省略の見た目は未確認（実機での確認を推奨）
+- Homeの2カラム化（`lg`未満での1カラムへの折り返し）も同じ理由（ブラウザ自動化ツールのビューポートリサイズが効かない）で実機確認できていない。上記`BottomTabBar`の件とあわせて、次回は実機かブラウザのdevtoolsで直接確認するのが望ましい
 
 ## 次に実装すべき最小単位
 
