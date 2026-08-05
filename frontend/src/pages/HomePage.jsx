@@ -101,8 +101,8 @@ function HomePage() {
   const isRepeatVisitor = !isLoading && records.length > 0;
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
-      <header className="mb-6">
+    <div className="coffee-page mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6">
+      <header className="mb-8">
         <h1 className="text-xl font-bold text-ctp-text">
           {getGreeting(t)}
           {user?.name ? t("home.nameSuffix", { name: user.name }) : ""}.
@@ -110,9 +110,9 @@ function HomePage() {
         <p className="mt-1 text-sm text-ctp-subtext0">{t("home.subtitle")}</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px] lg:items-start">
         {/* メイン列: 「行動」を促す一次コンテンツ */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
           {/* Record Coffee: 主要CTA。初回（記録が無い）は独立したセクションとして
               大きく見せ、Record Firstを強く表現する。すでに記録があるリピーター
               には、同じ強さで毎回出す必要が無いため小さいボタンへ縮小する */}
@@ -166,7 +166,7 @@ function HomePage() {
         {/* サイドバー列: 「発見・気づき」の置き場。将来ここに軽量な
             ウィジェットを追加する余地にする（Statsのように独立ページに
             すべき規模のものはここへ詰め込まない） */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
           <InsightBanner />
           <GraphPreview />
         </div>
