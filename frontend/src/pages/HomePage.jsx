@@ -57,6 +57,12 @@ import GraphPreview from "../features/graph/components/GraphPreview";
  * 高さでは実データを描いてもノードが小さすぎて読めず、「知識ベース感」を
  * 伝える役割を果たせていなかったため（features/graph/components/
  * GraphPreview.jsxのコメント参照）。
+ *
+ * 2026-08、`lg`以上で2カラム化した。将来機能を追加しやすくするための
+ * 構造変更（ユーザーと相談して決定）。メイン列（CTA・Recent Records）を
+ * 「行動」、サイドバー列（Insight・GraphPreview）を「発見・気づき」の
+ * 置き場として役割を分けた。`lg`未満は変更前と同じ1カラムの縦積み
+ * （CTA→Recent Records→Insight→GraphPreviewの順）のまま。
  */
 
 const RECENT_RECORDS_LIMIT = 5;
@@ -95,7 +101,7 @@ function HomePage() {
   const isRepeatVisitor = !isLoading && records.length > 0;
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+    <div className="coffee-page mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
       <header className="mb-6">
         <h1 className="text-xl font-bold text-ctp-text">
           {getGreeting(t)}
@@ -104,58 +110,67 @@ function HomePage() {
         <p className="mt-1 text-sm text-ctp-subtext0">{t("home.subtitle")}</p>
       </header>
 
-      {/* Record Coffee: 主要CTA。初回（記録が無い）は独立したセクションとして
-          大きく見せ、Record Firstを強く表現する。すでに記録があるリピーター
-          には、同じ強さで毎回出す必要が無いため小さいボタンへ縮小する */}
-      <section className="mb-6">
-        {!isRepeatVisitor && (
-          <h2 className="mb-3 text-sm font-semibold text-ctp-text">
-            {t("home.recordCoffeeHeading")}
-          </h2>
-        )}
-        <Link
-          to="/records/new"
-          className={`flex items-center justify-center gap-2 rounded-xl border border-ctp-overlay0/60 text-ctp-subtext0 transition-colors duration-150 hover:border-ctp-overlay0 hover:text-ctp-text focus:outline-none focus:ring-2 focus:ring-ctp-blue/50 ${
-            isRepeatVisitor ? "py-3" : "flex-col py-10"
-          }`}
-        >
-          <Plus size={isRepeatVisitor ? 18 : 24} aria-hidden="true" />
-          <span className="text-sm">{t("home.recordTodayCta")}</span>
-        </Link>
-      </section>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+        {/* メイン列: 「行動」を促す一次コンテンツ */}
+        <div className="flex flex-col gap-6">
+          {/* Record Coffee: 主要CTA。初回（記録が無い）は独立したセクションとして
+              大きく見せ、Record Firstを強く表現する。すでに記録があるリピーター
+              には、同じ強さで毎回出す必要が無いため小さいボタンへ縮小する */}
+          <section>
+            {!isRepeatVisitor && (
+              <h2 className="mb-3 text-sm font-semibold text-ctp-text">
+                {t("home.recordCoffeeHeading")}
+              </h2>
+            )}
+            <Link
+              to="/records/new"
+              className={`flex items-center justify-center gap-2 rounded-xl border border-ctp-overlay0/60 text-ctp-subtext0 transition-colors duration-150 hover:border-ctp-overlay0 hover:text-ctp-text focus:outline-none focus:ring-2 focus:ring-ctp-blue/50 ${
+                isRepeatVisitor ? "py-3" : "flex-col py-10"
+              }`}
+            >
+              <Plus size={isRepeatVisitor ? 18 : 24} aria-hidden="true" />
+              <span className="text-sm">{t("home.recordTodayCta")}</span>
+            </Link>
+          </section>
 
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ctp-text">{t("home.recentRecords")}</h2>
-          <Link
-            to="/records"
-            className="text-xs text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
-          >
-            {t("common.viewAll")}
-          </Link>
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-ctp-text">{t("home.recentRecords")}</h2>
+              <Link
+                to="/records"
+                className="text-xs text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
+              >
+                {t("common.viewAll")}
+              </Link>
+            </div>
+
+            {isLoading && <RecordListSkeleton count={3} />}
+            {!isLoading && error && (
+              <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>
+            )}
+            {!isLoading && !error && records.length === 0 && (
+              <p className="rounded-xl border border-dashed border-ctp-overlay0/60 px-4 py-6 text-center text-sm text-ctp-subtext0">
+                {t("records.emptyDesc")}
+              </p>
+            )}
+            {!isLoading && !error && records.length > 0 && (
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {records.map((record) => (
+                  <HomeRecordCard key={record.id} record={record} />
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
 
-        {isLoading && <RecordListSkeleton count={3} />}
-        {!isLoading && error && (
-          <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>
-        )}
-        {!isLoading && !error && records.length === 0 && (
-          <p className="rounded-xl border border-dashed border-ctp-overlay0/60 px-4 py-6 text-center text-sm text-ctp-subtext0">
-            {t("records.emptyDesc")}
-          </p>
-        )}
-        {!isLoading && !error && records.length > 0 && (
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {records.map((record) => (
-              <HomeRecordCard key={record.id} record={record} />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <InsightBanner />
-
-      <GraphPreview />
+        {/* サイドバー列: 「発見・気づき」の置き場。将来ここに軽量な
+            ウィジェットを追加する余地にする（Statsのように独立ページに
+            すべき規模のものはここへ詰め込まない） */}
+        <div className="flex flex-col gap-6">
+          <InsightBanner />
+          <GraphPreview />
+        </div>
+      </div>
     </div>
   );
 }

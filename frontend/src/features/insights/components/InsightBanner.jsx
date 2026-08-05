@@ -55,7 +55,7 @@ function InsightBanner() {
   return (
     <Link
       to="/graph"
-      className="mt-6 flex items-start gap-3 rounded-xl border border-ctp-surface1 bg-ctp-mantle p-4 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
+      className="flex items-start gap-3 rounded-xl border border-ctp-surface1 bg-ctp-mantle p-4 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
     >
       <Sparkles size={18} aria-hidden="true" className="mt-0.5 flex-shrink-0 text-ctp-mauve" />
       <p className="text-sm text-ctp-text">{text}</p>
