@@ -165,6 +165,32 @@ responseは@docs/search.mdを参照。
 }
 ```
 
+## Stats
+
+### GET `/stats`
+
+自分の記録全体からの集計（Overview・月別推移・評価分布・家/カフェ比較・
+産地/品種/精製方法/フレーバー/カフェの上位ランキング）を返す。queryは
+持たない（フィルターではなく「記録全体のふりかえり」を示すため）。
+
+responseは@docs/stats.mdを参照。
+
+```json
+{
+  "data": {
+    "overview": {},
+    "topOrigins": [],
+    "topVarieties": [],
+    "topProcesses": [],
+    "topFlavors": [],
+    "topCafes": [],
+    "ratingDistribution": [],
+    "homeVsCafe": {},
+    "monthlyTrend": []
+  }
+}
+```
+
 ## Status Codes
 
 - 200: 取得・更新成功
