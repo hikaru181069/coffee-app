@@ -317,6 +317,160 @@ docs/mvp.mdのOut of Scope（「AI推薦」「自然言語による味覚分析�
 - `frontend/src/pages/HomePage.jsx`: コンテナを`max-w-5xl`（1024px）から`max-w-[1400px]`へ拡張。ヘッダー下・2カラムグリッド・各列内のセクション間のgapを`gap-6`/`mb-6`（24px）から`gap-8`/`mb-8`（32px）へ拡大（セクション内部の見出しとコンテンツの間隔`mb-3`等は変更していない）
 - ブラウザで実機確認済み: gapが広がったことを確認。ただしこの環境のブラウザ自動化ツールは実際のビューポート幅を約1223pxまでしか再現できず（上記エントリの「未検証」と同じ制約）、1400px相当の広い画面での見え方は目視確認できていない。CSSの`max-w-[1400px]`自体はビルド時にエラー無く反映されることを確認済み
 
+### 2026-08: Homeの2カラム化を撤回、元の1カラムへ戻す。Recent Recordsの表示件数を6件へ
+
+ユーザーの判断により、上記2エントリで導入した`lg`以上の2カラムレイアウトを撤回。「静かな道具」という方針（`docs/design.md`）に対し、サイドバー分割はまだ早いと判断したため。合わせてRecent Recordsの表示件数を5件から6件へ変更。
+
+- `frontend/src/pages/HomePage.jsx`: コンテナを`max-w-[1400px]`から元の`max-w-3xl`へ、`grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]`のグリッド分割を撤去し、CTA→Recent Records→Insight→GraphPreviewの1カラム縦積み（`mb-6`によるセクション間マージン）へ戻した。`RECENT_RECORDS_LIMIT`を`5`から`6`へ変更
+- `frontend/src/features/insights/components/InsightBanner.jsx` / `frontend/src/features/graph/components/GraphPreview.jsx`: 1カラム構成に合わせてルート要素の`mt-6`を復元（2カラム化の際、親コンテナの`gap`と二重になるため削除していたもの）
+- `frontend/lint`・`frontend/build`のみ実行し成功を確認（backend/fastapi-serviceの変更は無い）
+
+続けて「max widthは1400以上にしてほしい」という要望を受け、1カラムに戻した直後の`max-w-3xl`（768px）から`max-w-[1400px]`へ再度拡張。1カラムのままのため、CTA・Recent Recordsのグリッド（`sm:grid-cols-3`）・Insight・GraphPreviewは幅1400pxまで単純に伸びる（2カラム化時のようなサイドバー分割はしていない）。`frontend/lint`・`frontend/build`成功を確認。
+
+### 2026-08: Insight（左400px）とGraphPreview（右1000px）を横並び・高さ400pxで配置
+
+ユーザーから「Insightを左400px、Graphを右1000pxに配置」「横に一列、縦も400pxほどの高さに」という指定。上記で撤回した`lg:grid-cols-[1fr_320px]`の可変2カラムとは異なり、両カードとも固定ピクセルサイズでの横並び。
+
+- `frontend/src/pages/HomePage.jsx`: `InsightBanner`・`GraphPreview`をそれぞれ`h-[400px] w-[400px]`・`h-[400px] w-[1000px]`（`max-w-full`併用、`flex-shrink-0`）のラッパーdivで囲み、`flex flex-wrap gap-6`の行に並べた。`flex-wrap`により、行の合計幅（400+1000+gap24=1424px）が入らない狭い画面では自動的に縦積みへ戻る（メディアクエリ不要）
+- 上記の横並び行に収まるよう、コンテナを`max-w-[1400px]`から`max-w-[1480px]`へ拡張（1400ちょうどだと`sm:px-6`のpadding込みで行の必要幅1424pxに足りず常に折り返してしまうため。前回の「1400以上」という要望は満たしたまま）
+- `frontend/src/features/insights/components/InsightBanner.jsx` / `frontend/src/features/graph/components/GraphPreview.jsx`: ルート`Link`に`h-full`を追加してラッパーdivの高さいっぱいに広げた。`InsightBanner`は`items-start`から`items-center`へ変更し、400px高の中でアイコン+文章を縦中央に配置（`items-start`のままだと上端に寄って下に大きな余白ができるため）。それに伴い、アイコンに付いていた`items-start`用の微調整`mt-0.5`は不要になったため削除
+- ローカルのDocker Compose環境（`docker-compose.yml`のfrontend:5174/backend:5002/mongodb:27018、demoユーザーでログイン済み）で実機確認: `getBoundingClientRect()`でInsightが`400×400`、GraphPreviewが`1000×400`、両者の間隔が24px（`gap-6`通り）であることを数値で確認。スクリーンショットでも左右に正しく並んで表示されることを確認
+- `frontend/lint`・`frontend/build`成功を確認（backend/fastapi-serviceの変更は無い）
+
+上記の`flex-wrap`版は、ブラウザ幅1800px（Dockerでの確認時）では横並びだったが、ユーザーの実機（より一般的なノートPC幅、1440px程度を想定）では折り返されて縦積みに見えてしまい、「横並びになってない」という指摘を受けた。原因は、行の必要幅（1424px）に対してコンテナ`max-w-[1480px]`から`sm:px-6`のpaddingとサイドバー分の余白を引いた実際のコンテンツ幅が、一般的な画面幅では足りていなかったこと。
+
+- `frontend/src/pages/HomePage.jsx`: `flex-wrap`・`max-w-full`を外し、`overflow-x-auto`（+`pb-2`でスクロールバー分の余白）へ変更。画面幅に関わらず常に横並びを保ち、収まらない場合はページ全体ではなくこの行だけが横スクロールする
+- 1440×900のビューポートで再確認: 2枚のカードが折り返さず横並びのまま表示され、画面に収まりきらない右側（GraphPreviewの右端）は横スクロールで見えることを確認
+- `frontend/lint`・`frontend/build`成功を確認
+
+続けて「fill containerにしてほしい」という要望。横スクロールが発生する状態は望んでおらず、コンテナ幅いっぱいに広がってほしいという趣旨のため、固定px幅をやめてコンテナ幅を埋める形へ変更。
+
+- `frontend/src/pages/HomePage.jsx`: `w-[400px]`/`w-[1000px]`・`flex-shrink-0`・`overflow-x-auto`をやめ、`flex-[2]`（Insight）/`flex-[5]`（GraphPreview）＋`min-w-0`に変更。元の400:1000という比率（2:5に約分）は保ったまま、2枚合計でコンテナの幅いっぱいに広がる（fill container）。高さは400pxのまま変更なし
+- 1440×900のビューポートで再確認: 横スクロールが発生せず、2枚のカードがコンテナ幅ちょうどに収まって横並び表示されることを確認
+- `frontend/lint`・`frontend/build`成功を確認
+
+### 2026-08: Home画面をレビューし、Insight/GraphPreviewの余白を中身のサイズアップで解消
+
+上記の横並び化・fill container化のあと、ユーザー依頼でHome画面を一度レビュー。デスクトップ幅では2つの問題を発見した。1つ目はモバイル幅（実測316px）で`flex-[2]`/`flex-[5]`がそのまま適用され、Insightカードが約90pxまで潰れて文章が単語ごとに折り返り読めなくなる不具合（未対応、次回対応が必要）。2つ目は400px四方に対して中身（一文だけ・アイコン+短い見出し）が小さく、余白ばかりが目立つ点。ユーザーからは「モバイル修正」と「余白解消」のどちらを先にするか尋ねたところ、後者について「文字列を大きくする（Insight）」「previewを大きくする（GraphPreview）」という具体的な方針の指定があった。
+
+- `frontend/src/features/insights/components/InsightBanner.jsx`: アイコンを18→32px、本文を`text-sm`→`text-xl`（`docs/design.md`のタイプスケール5段階のうち見出し相当のサイズ）、`padding`を`p-4`→`p-8`、`gap`を`gap-3`→`gap-4`に拡大。400px四方の中でアイコン+文章が中央に大きく収まるようにした
+- `frontend/src/features/graph/components/GraphPreview.jsx`: 右側のグラフイラスト（`GraphIllustration`、SVG）を`h-24 w-32`（96×128px）から`h-72 w-96`（288×384px）へ拡大。SVGは`viewBox`基準で描画しているため、表示サイズを変えるだけでノード・エッジが破綻なく拡大される（`utils/previewIllustration.js`は変更不要）。見出し・タグライン・件数などのテキスト側は今回変更していない（ユーザー指定が「previewを大きく」だったため）
+- ブラウザで実機確認済み（幅1600px相当）: Insightカードはアイコン+3〜4行の文章が中央に大きく表示され、GraphPreviewカードはノード・エッジのイラストがカード右側の大部分を占めるようになり、どちらも400pxの高さに対する余白感が大きく改善したことを確認
+- `frontend/lint`・`frontend/build`成功を確認
+
+続けて「graphカードの文字も大きくしてほしい」という要望。上記ではpreview（イラスト）のみ拡大しテキスト側は変更していなかったため、見出し・タグライン・件数・探索リンクも合わせて拡大した。
+
+- `frontend/src/features/graph/components/GraphPreview.jsx`: 見出し`text-base`→`text-2xl`、タグライン`text-sm`→`text-base`、ノード/エッジ件数`text-sm`→`text-xl`（`font-mono`は維持）、探索リンク`text-xs`→`text-sm`＋矢印アイコン14→16px。あわせてカード全体の余白も`p-5`→`p-8`・`gap-6`→`gap-8`へ拡大し、InsightBannerの`p-8`と揃えた
+- ブラウザで実機確認済み（幅1600px相当）: 見出し・件数・タグラインがイラストと釣り合う大きさになり、カード全体の情報量とサイズ感がバランスすることを確認
+- `frontend/lint`・`frontend/build`成功を確認
+
+### 2026-08: Discover機能を追加（CQI参照データ×知識グラフの隣接関係で「まだ試していない産地」を提案）
+
+Record→Connect→DiscoverのうちDiscoverが一番弱い（Insightは一文提示止まり）という指摘から、ユーザーと相談して仕様を固めた上で実装。branch `feat/discover-cqi-recommendations` を切って実装。
+
+設計判断（ユーザーとの合意事項）:
+- CQI（Coffee Quality Institute）の参照データは、Country of Origin × Processing Method × 品質スコアの1軸だけを使う（`docs/product-principles.md`「Personal Knowledge Over Global Completeness」に沿い、アプリ側に対応する概念が無い項目までは広げない）
+- CQIデータは一度読み込んだら終わりの静的ファイル。ライブの外部API呼び出しはしない
+- Insight機能（`core/insights/`・`PRIORITY`配列・`InsightBanner.jsx`）には一切触れない、完全に独立した新機能として実装する（`docs/insights.md`の「Source of Truth: MongoDBのCoffeeRecordとマスターデータを正とする」と矛盾させないため）
+- 知識グラフ生成ロジック（`core/graph/graphBuilder.js`）にも依存しない・変更しない
+- UIはHome画面ではなくEntity Detailページに置く（`docs/product-principles.md`「Discovery Must Be Actionable」、`docs/entity-detail.md`が既に「知識グラフをナビゲーションにする、プロダクトの差別化ポイント」と明記している場所を強化する方向にした）
+
+実装内容:
+- `backend/data/cqiDatabase.json`: 静的な参照データ（新規）。`originName`/`processName`は`backend/seeds/data/origins.js`・`processes.js`の`name`と完全一致させ、正規化レイヤーを別途作らずに済ませた。品質スコアはCQIの傾向を参考にした目安値（この開発環境には外部データセットを取得するネットワークアクセスが無いため、正確な値の再現ではないことをファイル内コメントに明記）
+- `backend/core/discover/discoverBuilder.js`（新規・純粋関数）: 指定産地の記録の中で最多の精製方法を求め（同率首位は断定しない、`insightBuilder.js`と同じ方針）、CQIデータから同じ精製方法・かつ自分がまだ一度も記録していない産地を品質スコア順に最大2件抽出する
+- `backend/services/coffee/discoverService.js`（新規）: CQI JSONをモジュールスコープに一度だけキャッシュ。`core/graph/graphBuilder.js`は使わず、自分のCoffeeRecordから直接ノードの実在確認をする（グラフ生成ロジックへの依存自体を作らないため）
+- `backend/controllers/discoverController.js` / `backend/routes/discoverRoutes.js`（新規）: `GET /api/discover/nodes/:nodeId`。`origin:`以外のプレフィックスは404にせず空配列（対応していない種別なだけで「存在しない」わけではない）、`origin:`で自分の記録に無いIDは404（`docs/entity-detail.md`と同じ404方針）
+- `backend/app.js`: `app.use("/api/discover", discoverRoutes)`を追加（他のルート定義は変更なし）
+- `frontend/src/features/discover/`（新規）: `api/discoverApi.js` / `hooks/useOriginDiscovery.js`（`useInsights.js`と同じloading/error/data構成）/ `components/DiscoverSuggestions.jsx`（提案が0件・読み込み中・エラー時は何も表示しない、`InsightBanner.jsx`と同じ「静かな道具」の方針。各提案に`/records/new`への導線を付ける。提案産地はまだ自分のグラフにノードが無いため、Graph/Entity Detailへの深いリンクは作れない）
+- `frontend/src/pages/EntityDetailPage.jsx`: `detail.type === "origin"`のときだけ`DiscoverSuggestions`を「グラフで見る」ボタンの下に表示。他の変更は無し
+- `frontend/src/i18n/locales/{ja,en}.json`: `discover.*`キーを追加（`insights.*`と同様、文言はフロントエンドがi18nextの補間で生成）
+- `docs/discover.md`（新規）: Purpose・Insightとの違い・CQI参照データの位置づけ・生成ロジック・レスポンス形式・表示場所を記載。`CLAUDE.md`のdocsリストにも追加
+- `docs/api.md`: Discoverセクションを追加
+
+テスト:
+- `backend/tests/discoverBuilder.test.js`（新規）: 閾値未満・同率首位・最大2件・既に試した産地の除外・CQIに一致するデータが無い場合を検証
+- `backend/tests/discoverApi.test.js`（新規）: 未認証401、`origin:`以外は200＋空配列、存在しない産地IDは404、自分の記録だけから提案を作る（他ユーザーの記録は混ざらない）、既に試した産地の除外をDB込みで検証
+- `npm run test`（backend）: 21 suites / 299 tests すべて成功（既存テストは無変更で全通過）
+- `npm run lint` / `npm run build`（frontend）: 成功
+- Docker Compose環境（frontend:5174/backend:5002/mongodb:27018、demoユーザー）で実機確認: Kenya（Washed×2件）のEntity Detailページで「Not yet tried / まだ試していない産地」セクションにCosta Rica・Burundiの提案が表示され、日本語・英語どちらでも文言が正しく補間されることを確認。Washed（process種別）のEntity Detailページでは、対象外のためDiscoverセクションが表示されないことも確認
+
+未解決事項（次のエントリの「未解決事項」にも反映）:
+- 「この産地を記録してみる」のリンクは`/records/new`への単純な遷移で、産地の事前入力はしていない（`RecordForm`に query param 等でのプリフィル機構が無いため、今回のスコープ外にした）
+- 提案は産地の記録が2件以上・精製方法が同率首位でない場合のみ出るため、記録数が少ないうちはほとんどのユーザーで空になる（Insightと同じ閾値設計の トレードオフ）
+
+### 2026-08: DiscoverへのHome導線を追加（「discover pageの導線がありません」への対応）
+
+上記でDiscoverをEntity Detailページのみに実装したところ、「Discover機能への導線がHomeに無く、自力でその産地のEntity Detailページへたどり着かない限り存在に気づけない」という指摘。置き場所をユーザーに確認し、「Homeに小さなテキストリンクを追加」を選択（InsightBanner/GraphPreviewのような目立つカードにはせず、控えめな1行のリンクにする）。同じbranch（`feat/discover-cqi-recommendations`）で継続。
+
+- `backend/core/discover/discoverBuilder.js`: `buildDiscoverTeaser(records, cqiDataset)`を追加（純粋関数）。自分が記録した産地をすべて横断して`buildOriginDiscovery`を呼び、条件を満たす提案の中から品質スコアが最も高い1件を選ぶ。候補が無ければ`teaser: null`
+- `backend/services/coffee/discoverService.js`: `getHomeTeaser(userId)`を追加。CQI JSONのキャッシュは既存の`loadCqiDataset()`を再利用
+- `backend/controllers/discoverController.js` / `backend/routes/discoverRoutes.js`: `GET /api/discover`（nodeIdを取らないルート、`/api/insights`と同じ形）を追加。既存の`GET /api/discover/nodes/:nodeId`は無変更
+- `frontend/src/features/discover/`: `api/discoverApi.js`に`fetchDiscoverTeaser`、`hooks/useDiscoverTeaser.js`（`useInsights.js`と同じ構成）、`components/DiscoverTeaserLink.jsx`（新規）を追加。カードではなく1行のテキストリンク（Compassアイコン+文言）で、クリックすると該当産地のEntity Detailページ（`teaser.nodeId`）へ遷移する。`teaser`が`null`・読み込み中・エラー時は何も表示しない
+- `frontend/src/pages/HomePage.jsx`: Insight/GraphPreviewの行の下に`DiscoverTeaserLink`を追加
+- `frontend/src/i18n/locales/{ja,en}.json`: `discover.teaserLink`キーを追加
+- `docs/discover.md`: 「Home Teaser」セクションを追加。`docs/api.md`にも`GET /discover`を追加
+
+テスト:
+- `backend/tests/discoverBuilder.test.js`: `buildDiscoverTeaser`のテストを追加（候補無し→null、複数産地から品質スコア最高の1件を選ぶ）
+- `backend/tests/discoverApi.test.js`: `GET /api/discover`の未認証401・候補無し→`teaser: null`・自分の記録だけから作る（他ユーザー分離）を追加
+- `npm run test`（backend）: 21 suites / 304 tests すべて成功
+- `npm run lint` / `npm run build`（frontend）: 成功
+- Docker Compose環境（demoユーザー）で実機確認: Home画面下部に「Costa Rica産のコーヒー、まだ試していません」というテキストリンクが表示され、クリックするとGuatemala（基準になった産地）のEntity Detailページへ遷移し、同じCosta Rica提案が表示されることを確認
+
+### 2026-08: デスクトップのナビゲーションを左サイドバーから上部ナビバーへ置き換え
+
+ユーザーから「サイドバーを無くしても良いと思う」という提案。常時208px（`w-52`）を専有する左サイドバーは、ナビ項目がHome/Records/Graph/Statsの4つと少なく、Home画面の幅を1400px超まで広げてきた最近の作業とも逆行しているため、置き場所だけ「上部ナビバー」へ変更することで合意。モバイルのハンバーガー+ドロワー+下部タブバーは今回の指摘の対象外のため変更していない。同じbranch（`feat/discover-cqi-recommendations`）で継続。
+
+- `frontend/src/components/Navbar.jsx`: `md`以上で常時表示していた左サイドバー（`aside`、`md:translate-x-0`）を`md:hidden`にし、モバイル専用のドロワーへ役割を絞った。代わりに`md`以上でのみ表示する新しい上部ナビバー（`hidden md:flex`、高さ`h-14`）を追加し、ロゴ・Home/Records/Graph/Statsのリンク・言語切り替え・Profile/Logout（未ログイン時はLogin/Register）を横並びに配置。NavLinkのアクティブ状態クラス（旧`sidebarLinkClass`）は`navLinkClass`という名前にして、モバイルドロワーとデスクトップ上部ナビバーの両方で共用している
+- `frontend/src/App.jsx`: `main`のクラスから`md:ml-52`（サイドバー分の左余白）を削除し、`md:pt-0`もやめて`pt-14`をデスクトップ・モバイル共通にした（両方とも上部バーの高さが揃ったため）。最終的に`"pt-14 pb-16 md:pb-0"`
+- `frontend/src/App.css`の`.home-banner`（`md`以上でサイドバー幅ぶんを打ち消すための`margin-left: -13rem`を持つルール）は、現在どのJSXからも参照されていない死んだCSSだったため、今回は触れずそのまま残した（未解決事項に記載。混乱を避けるため次回整理候補）
+- `frontend/lint`・`frontend/build`成功を確認
+- ブラウザで実機確認済み: デスクトップ幅（1500px相当）で上部ナビバーが表示され、Home画面がサイドバー分の余白無くフル幅で使えることを確認。ページ遷移時のアクティブ状態のハイライトも正しく切り替わることを確認。モバイル幅（実測606px、`md`未満）ではハンバーガーメニュー・ドロワー・下部タブバーが変更前と同じ見た目・動作のままであることを確認
+
+### 2026-08: HomeのInsight/Discoverの導線を1枚の「Discover」カードへ統合
+
+DiscoverのHome導線（1行のテキストリンク）についてユーザーとUI/UXレビューを行った結果、「Homeの一番下・薄いグレーの下線テキストで気づかれにくい」という弱点を指摘。対応案として「独立のまま位置・強さだけ調整」と「InsightBannerに統合する」の2案を検討し、ユーザーから「統合した方がRecord→Connect→Discoverの方向性が明白になる」という意見が出た。最終的に「裏側のデータ・ロジックは分離したまま、Home画面での見せ方だけ1枚の"Discover"カードへ統合する」という折衷案で合意。同じbranch（`feat/discover-cqi-recommendations`）で継続。
+
+- `frontend/src/features/insights/utils/describeInsight.js`（新規）: `InsightBanner.jsx`にあった`insight.type`→文言のマッピング関数を、純粋関数として切り出した
+- `frontend/src/features/insights/components/InsightBanner.jsx`・`frontend/src/features/discover/components/DiscoverTeaserLink.jsx`を削除（どちらもHomePage.jsx以外から使われていなかったことを確認済み。役目は新設の`DiscoverCard.jsx`が引き継ぐ）
+- `frontend/src/features/discover/components/DiscoverCard.jsx`（新規）: Home画面に表示する統合カード。`useInsights`（Insight用）と`useDiscoverTeaser`（Discover用）を両方呼び出し、それぞれの結果を同じカード内の別々の行として描画する。データの合成はしておらず、Insight行は`/graph`、Discover行は対象産地のEntity Detailページへ、それぞれ別々の`Link`のまま。見出し「Discover」はLandingPageの「Record/Connect/Discover」と同じ言語非依存のブランド語として扱い、翻訳しない（初めて認証後の画面に"Discover"という単語が現れる）。片方だけ・両方・どちらも無し、の3パターンを出し分け、両方無ければカード自体を非表示にする
+- `frontend/src/pages/HomePage.jsx`: `InsightBanner` + 下部の`DiscoverTeaserLink`という2要素を削除し、Insight/GraphPreviewの横並び行の左側（`flex-[2]`列）を`DiscoverCard`に差し替え。GraphPreviewの位置・比率は変更なし
+- `frontend/src/features/discover/components/DiscoverSuggestions.jsx`: コメント内の`InsightBanner.jsx`という古いファイル参照を修正（実体は削除済みのため）
+- `docs/insights.md` / `docs/discover.md`の「表示」節を更新。バックエンド（`core/insights/insightBuilder.js`・`core/discover/discoverBuilder.js`・両APIエンドポイント）は無変更であることを明記
+- `frontend/lint`・`frontend/build`成功を確認
+- ブラウザで実機確認済み（幅1500px相当）: Home画面に「DISCOVER」という見出しの付いた1枚のカードが表示され、その中にInsightの一文（Sparklesアイコン）とDiscoverの提案（Compassアイコン）が別々の行として並ぶことを確認。Insight行をクリックすると`/graph`へ、Discover行をクリックすると該当産地のEntity Detailページへ、それぞれ正しく遷移することを確認
+
+### 2026-08: Discover専用ページ（`/discover`）を追加
+
+Home画面のDiscoverカードの導線について、「Costa Ricaの話なのにクリックするとGuatemalaのページに飛ぶ」という指摘（Costa Ricaはまだ記録が無く自分の知識グラフにノードが無いため、提案の根拠になった産地Guatemalaのページへ遷移する仕様）。ユーザーへ「Discover専用ページを新設してはどうか」と提案し、StatsページがHomeのInsightに対する「全体のふりかえり」であるのと同じ関係をDiscoverにも作る、という方向で合意。常設ナビには追加せず、HomeのDiscoverカードの「すべて見る」リンクからのみ到達する形にした。同じbranch（`feat/discover-cqi-recommendations`）で継続。
+
+- `backend/core/discover/discoverBuilder.js`: `buildAllOriginDiscoveries(records, cqiDataset)`を追加（純粋関数）。自分が記録した産地のうち条件を満たすものすべてを、各産地の最良の提案のスコア降順で返す。内部で`buildOriginDiscovery`を産地ごとに呼ぶだけで、ロジックの重複は無い
+- `backend/services/coffee/discoverService.js`: `getAllOriginDiscoveries(userId)`を追加
+- `backend/controllers/discoverController.js` / `backend/routes/discoverRoutes.js`: `GET /api/discover/all`を追加
+- `frontend/src/features/discover/`: `api/discoverApi.js`に`fetchAllDiscoverSuggestions`、`hooks/useAllDiscoverSuggestions.js`（新規）、`components/SuggestionCard.jsx`（新規、提案1件分のカード。Entity Detailページの`DiscoverSuggestions.jsx`から共通化して切り出した）を追加
+- `frontend/src/pages/DiscoverPage.jsx`（新規）: `/discover`。産地ごとに見出し（Entity Detailページへのリンク）と提案カードを並べる。ローディング・エラー・空状態（`StatsPage.jsx`と同じ構成）を用意。見出し「Discover」はLandingPageと同じ未翻訳のブランド語
+- `frontend/src/App.jsx`: `/discover`ルートを追加（常設ナビの項目としては追加していない）
+- `frontend/src/features/discover/components/DiscoverCard.jsx`: Discover行に「すべて見る」（`/discover`への`Link`、`common.viewAll`を再利用）を追加。Discover行の候補が無いときはこのリンクも表示しない
+- `frontend/src/features/discover/components/DiscoverSuggestions.jsx`: 提案カードの描画を`SuggestionCard.jsx`へ委譲するようリファクタ（見た目の変更は無し）
+- `frontend/src/i18n/locales/{ja,en}.json`: `discover.pageSubtitle` / `discover.emptyDesc`を追加
+- `docs/discover.md`に「Discoverページ」節、`docs/api.md`に`GET /discover/all`を追加
+
+テスト:
+- `backend/tests/discoverBuilder.test.js`: `buildAllOriginDiscoveries`のテストを追加（候補無し→空配列、複数産地を最良スコア順に並べる）
+- `backend/tests/discoverApi.test.js`: `GET /api/discover/all`の未認証401・候補無し→空配列・自分の記録だけから条件を満たす産地すべてを返す（他ユーザー分離）を追加
+- `npm run test`（backend）: 21 suites / 309 tests すべて成功
+- `npm run lint` / `npm run build`（frontend）: 成功
+- Docker Compose環境（demoユーザー）で実機確認: HomeのDiscoverカードの「View all」をクリックすると`/discover`へ遷移し、Guatemala・Kenyaそれぞれの見出しと提案カードが表示されることを確認。産地の見出し（例: Guatemala）をクリックすると、正しくGuatemalaのEntity Detailページへ遷移することを確認
+
+### 2026-08: Discover行のリンク先を`/discover`へ直接変更し、「View all」リンクを削除
+
+「View all」を追加したことで、HomeのDiscoverカードには「Discover行（Entity Detailページへ）」と「View all（Discoverページへ）」という2つのリンクが並んでいた。ユーザーから「View allリンクの必要性を感じない、Discover行自体をクリックしたらDiscoverページに進む導線にしてほしい」という指摘。Discover行のリンク先をEntity Detailページから`/discover`へ差し替え、「View all」リンクは削除して1つのリンクに整理した。同じbranch（`feat/discover-cqi-recommendations`）で継続。
+
+- `frontend/src/features/discover/components/DiscoverCard.jsx`: ヘッダー行にあった「View all」（`common.viewAll`、`/discover`へのLink）を削除し、見出し「Discover」だけの単純な`<span>`に戻した。Discover行（Compassアイコンの行）の`Link to`を`` `/entities/${encodeURIComponent(teaser.nodeId)}` ``から`"/discover"`へ変更
+- `docs/discover.md`の「Home Teaser」「Discoverページ」節を更新し、Discover行が直接`/discover`へのリンクになっていること・別リンクを持たないことを明記
+- `frontend/lint`・`frontend/build`成功を確認
+- ブラウザで実機確認済み: HomeのDiscoverカードから「View all」が消え、Discover行（"You haven't tried Costa Rica coffee yet"）をクリックすると`/discover`へ直接遷移することを確認
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -433,15 +587,20 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 - エンティティ詳細ページの関連属性は種別ごと最大5件まで。件数が多い属性（例: フレーバーが10種類以上共起する）を全部見る手段は未実装
 - Statsページは全期間の記録から計算しており、期間フィルター（直近3か月/今年など）は未実装（`docs/stats.md`の設計通り、Insightと同じく「記録全体のふりかえり」を示すための意図的な仕様だが、記録件数が増えた場合は要検討）
 - `BottomTabBar`のタブがStats追加で5個になった。ブラウザ自動化ツールでモバイル幅のビューポートを再現できず、狭い画面での折り返し・ラベル省略の見た目は未確認（実機での確認を推奨）
-- Homeの2カラム化（`lg`未満での1カラムへの折り返し）も同じ理由（ブラウザ自動化ツールのビューポートリサイズが効かない）で実機確認できていない。上記`BottomTabBar`の件とあわせて、次回は実機かブラウザのdevtoolsで直接確認するのが望ましい
+- **Home画面のInsight/GraphPreview（`flex-[2]`/`flex-[5]`で横並び）が、モバイル幅（実測316px）で崩れる。** Insightカードの幅が約90pxまで潰れ、文章が単語ごとに折り返って読めなくなる不具合を実機確認済みだが、未修正のまま（`lg`未満で縦積みに戻すなどの対応が必要）
+- Discoverの提案（`docs/discover.md`）の「この産地を記録してみる」リンクは`/records/new`への単純な遷移で、産地の事前入力はしていない（`RecordForm`にプリフィル機構が無いため）
+- CQI参照データ（`backend/data/cqiDatabase.json`）は目安値であり、実際のCQIデータベースの正確な値を再現したものではない（開発環境に外部データセットを取得するネットワークアクセスが無いため。ファイル内コメントに明記済み）
+- `frontend/src/App.css`の`.home-banner`（サイドバー幅を打ち消す`margin-left: -13rem`を含む）は、サイドバー廃止後もどのJSXからも参照されていない死んだCSSのまま残っている。削除候補
 
 ## 次に実装すべき最小単位
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. `BottomTabBar`（5タブ化）をモバイル実機またはエミュレータで見た目確認する
-2. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
-3. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
-4. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
-5. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
-6. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
+1. **Home画面のInsight/GraphPreviewをモバイル幅で縦積みに戻す**（上記の未解決事項。実機で崩れを確認済みの既知バグ）
+2. `BottomTabBar`（5タブ化）をモバイル実機またはエミュレータで見た目確認する
+3. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+4. Discoverの「この産地を記録してみる」を、産地を事前入力した状態で`/records/new`へ渡せるようにする
+5. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
+6. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
+7. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
+8. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
