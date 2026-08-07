@@ -7,6 +7,7 @@ import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
 import { formatConsumedAtShort } from "../features/coffee-records/utils/recordFormat";
 import { getErrorMessage } from "../utils/errorMessage";
 import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
+import DiscoverSuggestions from "../features/discover/components/DiscoverSuggestions";
 
 /**
  * エンティティ詳細ページ。
@@ -89,6 +90,8 @@ function EntityDetailPage() {
       >
         {t("entityDetail.viewInGraph")}
       </Link>
+
+      {detail.type === "origin" && <DiscoverSuggestions nodeId={detail.id} />}
 
       {relatedTypes.length > 0 && (
         <section className="mb-6 flex flex-col gap-4">

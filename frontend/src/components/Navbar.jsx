@@ -1,6 +1,11 @@
-// 左サイドバーナビゲーション。
-// デスクトップ (md+): 常に表示される固定サイドバー (w-52 = 208px)
+// ナビゲーション。
+// デスクトップ (md+): 上部の横並びナビバー (h-14)
 // モバイル (<md): ハンバーガーボタンで左からスライドインするオーバーレイ方式
+//
+// 2026-08、デスクトップは左サイドバー(w-52固定)から上部ナビバーへ置き換えた
+// （ユーザーと相談して決定）。ナビ項目がHome/Records/Graph/Statsの4つと
+// 少なく、常時208px分の横幅を専有するサイドバーほどの必然性が無いと判断
+// したため。モバイルのハンバーガー+ドロワー方式はそのまま変更していない。
 
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
@@ -122,10 +127,12 @@ const PRIMARY_ITEMS = [
   { to: "/stats", label: "Stats", Icon: StatsIcon },
 ];
 
-// NavLink の isActive に応じてクラスを切り替えるヘルパー関数
-const sidebarLinkClass = ({ isActive }) =>
+// NavLink の isActive に応じてクラスを切り替えるヘルパー関数。
+// モバイルのドロワーとデスクトップの上部ナビバー、両方の縦/横並びで
+// 見た目を揃えるために共用する
+const navLinkClass = ({ isActive }) =>
   [
-    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-150",
+    "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all duration-150",
     isActive
       ? "bg-ctp-surface0 text-ctp-blue"
       : "text-ctp-subtext1 hover:bg-ctp-surface0/60 hover:text-ctp-text",
@@ -133,12 +140,12 @@ const sidebarLinkClass = ({ isActive }) =>
 
 function Navbar() {
   const { t } = useTranslation();
-  // open: モバイル時のサイドバー開閉状態
+  // open: モバイル時のドロワー開閉状態（デスクトップの上部ナビバーは常に表示なので使わない）
   const [open, setOpen] = useState(false);
   const token = getAuthToken();
   const userName = getAuthUserName();
 
-  // ナビリンクをクリックしたらサイドバーを閉じる（モバイル用）
+  // ナビリンクをクリックしたらドロワーを閉じる（モバイル用）
   const close = () => setOpen(false);
 
   const handleLogout = () => {
@@ -148,85 +155,6 @@ function Navbar() {
     // 強制的にリセットするためにフルリロードが必要
     window.location.href = "/login";
   };
-
-  // サイドバーの中身（デスクトップとモバイルオーバーレイで共用）
-  const sidebarContent = (
-    <div className="flex h-full flex-col overflow-y-auto px-3 py-6">
-      {/* ロゴ */}
-      <NavLink
-        to="/"
-        onClick={close}
-        className="mb-8 flex items-center gap-2.5 px-3 text-ctp-lavender transition-colors duration-150 hover:text-ctp-blue"
-      >
-        <span className="text-xl" aria-hidden="true">☕</span>
-        <span className="text-base font-black tracking-tight">Coffee App</span>
-      </NavLink>
-
-      <nav aria-label={t("nav.mainNavigation")} className="flex flex-col gap-0.5">
-        {PRIMARY_ITEMS.map((item) => {
-          const { to, label, Icon, end } = item;
-          return (
-            <NavLink key={to} to={to} end={end} className={sidebarLinkClass} onClick={close}>
-              <Icon />
-              {label}
-            </NavLink>
-          );
-        })}
-      </nav>
-
-      <div className="mt-4 px-3">
-        <LanguageSwitcher />
-      </div>
-
-      {/* 認証エリア（sticky で常に下端に固定） */}
-      <div className="sticky bottom-16 md:bottom-0 mt-auto flex flex-col gap-1 border-t border-ctp-surface1/50 bg-ctp-mantle pt-5 pb-2">
-        {token ? (
-          <>
-            <NavLink
-              to="/profile"
-              onClick={close}
-              className={({ isActive }) =>
-                [
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-150",
-                  isActive
-                    ? "bg-ctp-surface0 text-ctp-blue"
-                    : "text-ctp-subtext0 hover:bg-ctp-surface0/60 hover:text-ctp-text",
-                ].join(" ")
-              }
-            >
-              <UserIcon />
-              {userName || "Profile"}
-            </NavLink>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:bg-ctp-red/10 hover:text-ctp-red"
-            >
-              <LogoutIcon />
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <NavLink
-              to="/login"
-              onClick={close}
-              className="flex w-full items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-2 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
-            >
-              Login
-            </NavLink>
-            <NavLink
-              to="/register"
-              onClick={close}
-              className="flex w-full items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-2 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
-            >
-              Register
-            </NavLink>
-          </>
-        )}
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -259,20 +187,81 @@ function Navbar() {
         </NavLink>
       </div>
 
-      {/* ── サイドバー本体 ── */}
+      {/* ── モバイル用ドロワー本体 (md未満のみ。デスクトップでは常に非表示) ── */}
       {/* translate-x の仕組み:
-          - モバイル・閉じた状態: -translate-x-full (画面左外に隠れる)
-          - モバイル・開いた状態: translate-x-0 (画面内に表示)
-          - デスクトップ: md:translate-x-0 が常に上書きするので常に表示 */}
+          - 閉じた状態: -translate-x-full (画面左外に隠れる)
+          - 開いた状態: translate-x-0 (画面内に表示) */}
       <aside
         className={[
-          "fixed left-0 top-0 z-50 h-full w-52 border-r border-ctp-surface1/50 bg-ctp-mantle",
+          "fixed left-0 top-0 z-50 h-full w-52 border-r border-ctp-surface1/50 bg-ctp-mantle md:hidden",
           "transition-transform duration-300 ease-in-out",
-          "md:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
       >
-        {sidebarContent}
+        <div className="flex h-full flex-col overflow-y-auto px-3 py-6">
+          {/* ロゴ */}
+          <NavLink
+            to="/"
+            onClick={close}
+            className="mb-8 flex items-center gap-2.5 px-3 text-ctp-lavender transition-colors duration-150 hover:text-ctp-blue"
+          >
+            <span className="text-xl" aria-hidden="true">☕</span>
+            <span className="text-base font-black tracking-tight">Coffee App</span>
+          </NavLink>
+
+          <nav aria-label={t("nav.mainNavigation")} className="flex flex-col gap-0.5">
+            {PRIMARY_ITEMS.map((item) => {
+              const { to, label, Icon, end } = item;
+              return (
+                <NavLink key={to} to={to} end={end} className={navLinkClass} onClick={close}>
+                  <Icon />
+                  {label}
+                </NavLink>
+              );
+            })}
+          </nav>
+
+          <div className="mt-4 px-3">
+            <LanguageSwitcher />
+          </div>
+
+          {/* 認証エリア（sticky で常に下端に固定） */}
+          <div className="sticky bottom-16 mt-auto flex flex-col gap-1 border-t border-ctp-surface1/50 bg-ctp-mantle pt-5 pb-2">
+            {token ? (
+              <>
+                <NavLink to="/profile" onClick={close} className={navLinkClass}>
+                  <UserIcon />
+                  {userName || "Profile"}
+                </NavLink>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:bg-ctp-red/10 hover:text-ctp-red"
+                >
+                  <LogoutIcon />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink
+                  to="/login"
+                  onClick={close}
+                  className="flex w-full items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-2 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
+                >
+                  Login
+                </NavLink>
+                <NavLink
+                  to="/register"
+                  onClick={close}
+                  className="flex w-full items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-2 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
+                >
+                  Register
+                </NavLink>
+              </>
+            )}
+          </div>
+        </div>
       </aside>
 
       {/* ── モバイル用バックドロップ（背景を暗くしてクリックで閉じる） ── */}
@@ -284,6 +273,64 @@ function Navbar() {
         ].join(" ")}
         onClick={close}
       />
+
+      {/* ── デスクトップ用 上部ナビバー (md 以上のみ表示) ── */}
+      <div className="fixed inset-x-0 top-0 z-50 hidden h-14 items-center gap-6 border-b border-ctp-surface1/50 bg-ctp-mantle/85 px-6 backdrop-blur-lg md:flex">
+        <NavLink
+          to="/"
+          className="flex items-center gap-2 text-ctp-lavender transition-colors duration-150 hover:text-ctp-blue"
+        >
+          <span className="text-lg" aria-hidden="true">☕</span>
+          <span className="text-base font-black tracking-tight">Coffee App</span>
+        </NavLink>
+
+        <nav aria-label={t("nav.mainNavigation")} className="flex items-center gap-1">
+          {PRIMARY_ITEMS.map((item) => {
+            const { to, label, Icon, end } = item;
+            return (
+              <NavLink key={to} to={to} end={end} className={navLinkClass}>
+                <Icon />
+                {label}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        <div className="ml-auto flex items-center gap-3">
+          <LanguageSwitcher />
+          {token ? (
+            <>
+              <NavLink to="/profile" className={navLinkClass}>
+                <UserIcon />
+                {userName || "Profile"}
+              </NavLink>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:bg-ctp-red/10 hover:text-ctp-red"
+              >
+                <LogoutIcon />
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink
+                to="/login"
+                className="flex items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-1.5 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
+              >
+                Login
+              </NavLink>
+              <NavLink
+                to="/register"
+                className="flex items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-1.5 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
+              >
+                Register
+              </NavLink>
+            </>
+          )}
+        </div>
+      </div>
     </>
   );
 }
