@@ -1,0 +1,83 @@
+{
+  "_comment": [
+    "Coffee Quality Institute (CQI) の公開レビューデータを参考にした、静的な参照データ。",
+    "docs/discover.md 参照。一度読み込んだら終わりの静的ファイルであり、外部APIへライブで",
+    "問い合わせるものではない（backend/services/coffee/discoverService.js が起動後に一度だけ",
+    "読み込み、メモリにキャッシュする）。",
+    "originName/processNameは、backend/seeds/data/origins.js・processes.js の name と",
+    "完全一致する値のみを使っている（表記揺れの正規化レイヤーを別途作らずに済ませるための、",
+    "MVPでの意図的な単純化）。avgQualityScore は CQI の Total Cup Points 相当の目安値で、",
+    "実際のCQIデータベースの正確な値を再現したものではない（このプロジェクトの開発環境には",
+    "外部データセットを取得するネットワークアクセスが無いため、公開されているCQIデータの",
+    "傾向を参考にした概算値）。sampleSize も同様に目安。",
+    "docs/product-principles.md「Personal Knowledge Over Global Completeness」に従い、",
+    "Country of Origin × Processing Method × 品質スコアの1軸だけを持つ（産地の地域・農園・",
+    "標高など、アプリ側に対応する概念が無い項目は含めない）。"
+  ],
+  "entries": [
+    { "originName": "Ethiopia", "processName": "Natural", "avgQualityScore": 86.4, "sampleSize": 210 },
+    { "originName": "Ethiopia", "processName": "Washed", "avgQualityScore": 85.1, "sampleSize": 260 },
+    { "originName": "Ethiopia", "processName": "Honey", "avgQualityScore": 84.6, "sampleSize": 40 },
+
+    { "originName": "Kenya", "processName": "Washed", "avgQualityScore": 86.0, "sampleSize": 180 },
+    { "originName": "Kenya", "processName": "Natural", "avgQualityScore": 83.8, "sampleSize": 35 },
+
+    { "originName": "Rwanda", "processName": "Washed", "avgQualityScore": 84.3, "sampleSize": 90 },
+    { "originName": "Rwanda", "processName": "Natural", "avgQualityScore": 83.1, "sampleSize": 25 },
+
+    { "originName": "Burundi", "processName": "Washed", "avgQualityScore": 83.9, "sampleSize": 70 },
+
+    { "originName": "Tanzania", "processName": "Washed", "avgQualityScore": 83.2, "sampleSize": 65 },
+    { "originName": "Tanzania", "processName": "Natural", "avgQualityScore": 82.0, "sampleSize": 20 },
+
+    { "originName": "Colombia", "processName": "Washed", "avgQualityScore": 84.7, "sampleSize": 320 },
+    { "originName": "Colombia", "processName": "Honey", "avgQualityScore": 84.0, "sampleSize": 60 },
+    { "originName": "Colombia", "processName": "Natural", "avgQualityScore": 83.5, "sampleSize": 55 },
+    { "originName": "Colombia", "processName": "Anaerobic", "avgQualityScore": 85.5, "sampleSize": 30 },
+
+    { "originName": "Brazil", "processName": "Natural", "avgQualityScore": 83.4, "sampleSize": 300 },
+    { "originName": "Brazil", "processName": "Honey", "avgQualityScore": 82.9, "sampleSize": 80 },
+    { "originName": "Brazil", "processName": "Washed", "avgQualityScore": 82.1, "sampleSize": 120 },
+
+    { "originName": "Peru", "processName": "Washed", "avgQualityScore": 82.6, "sampleSize": 90 },
+    { "originName": "Peru", "processName": "Natural", "avgQualityScore": 81.8, "sampleSize": 20 },
+
+    { "originName": "Bolivia", "processName": "Washed", "avgQualityScore": 83.0, "sampleSize": 30 },
+
+    { "originName": "Ecuador", "processName": "Washed", "avgQualityScore": 82.4, "sampleSize": 15 },
+    { "originName": "Ecuador", "processName": "Natural", "avgQualityScore": 82.9, "sampleSize": 12 },
+
+    { "originName": "Guatemala", "processName": "Washed", "avgQualityScore": 84.5, "sampleSize": 200 },
+    { "originName": "Guatemala", "processName": "Honey", "avgQualityScore": 83.7, "sampleSize": 45 },
+    { "originName": "Guatemala", "processName": "Natural", "avgQualityScore": 82.8, "sampleSize": 30 },
+
+    { "originName": "Costa Rica", "processName": "Honey", "avgQualityScore": 85.2, "sampleSize": 110 },
+    { "originName": "Costa Rica", "processName": "Washed", "avgQualityScore": 84.1, "sampleSize": 150 },
+    { "originName": "Costa Rica", "processName": "Natural", "avgQualityScore": 83.6, "sampleSize": 40 },
+
+    { "originName": "Panama", "processName": "Washed", "avgQualityScore": 86.8, "sampleSize": 70 },
+    { "originName": "Panama", "processName": "Natural", "avgQualityScore": 86.1, "sampleSize": 35 },
+    { "originName": "Panama", "processName": "Honey", "avgQualityScore": 85.4, "sampleSize": 25 },
+    { "originName": "Panama", "processName": "Anaerobic", "avgQualityScore": 87.2, "sampleSize": 18 },
+
+    { "originName": "El Salvador", "processName": "Washed", "avgQualityScore": 83.3, "sampleSize": 60 },
+    { "originName": "El Salvador", "processName": "Honey", "avgQualityScore": 83.9, "sampleSize": 35 },
+
+    { "originName": "Honduras", "processName": "Washed", "avgQualityScore": 83.0, "sampleSize": 100 },
+    { "originName": "Honduras", "processName": "Natural", "avgQualityScore": 82.2, "sampleSize": 25 },
+
+    { "originName": "Nicaragua", "processName": "Washed", "avgQualityScore": 82.7, "sampleSize": 55 },
+    { "originName": "Nicaragua", "processName": "Honey", "avgQualityScore": 83.1, "sampleSize": 20 },
+
+    { "originName": "Mexico", "processName": "Washed", "avgQualityScore": 82.0, "sampleSize": 80 },
+    { "originName": "Mexico", "processName": "Natural", "avgQualityScore": 81.5, "sampleSize": 20 },
+
+    { "originName": "Indonesia", "processName": "Wet Hulled", "avgQualityScore": 84.0, "sampleSize": 90 },
+    { "originName": "Indonesia", "processName": "Natural", "avgQualityScore": 82.5, "sampleSize": 20 },
+
+    { "originName": "Yemen", "processName": "Natural", "avgQualityScore": 85.0, "sampleSize": 15 },
+
+    { "originName": "India", "processName": "Washed", "avgQualityScore": 81.6, "sampleSize": 25 },
+    { "originName": "India", "processName": "Natural", "avgQualityScore": 81.0, "sampleSize": 15 }
+  ]
+}

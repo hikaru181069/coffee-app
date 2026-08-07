@@ -98,14 +98,26 @@ GET /api/insights
 
 ## 表示
 
-Home画面のGraphPreviewの上に、配列の先頭のInsightだけを一文で表示する
-（`features/insights/components/InsightBanner.jsx`）。条件を満たす
+Home画面に、配列の先頭のInsightだけを一文で表示する。条件を満たす
 Insightが1つも無い・読み込み中・エラー時は何も表示しない。Homeの主役は
 記録一覧とCTAであり、この要素が無くても画面として成立する。
 
 `/graph`へのLinkにしている。「発見は単なる数値表示で終わらせない」
 （docs/product-principles.md「Discovery Must Be Actionable」）に従い、
 一文を提示するだけで終わらせず、グラフでの探索へつなげるため。
+
+2026-08、表示コンポーネントをDiscover機能（`docs/discover.md`）と統合した。
+`features/insights/components/InsightBanner.jsx`は廃止し、Insightの
+一文生成ロジック自体は`features/insights/utils/describeInsight.js`へ
+切り出した上で、`features/discover/components/DiscoverCard.jsx`（Home画面の
+「Discover」カード）がInsightの一文とDiscoverの導線を1枚のカードへ
+まとめて表示している。**統合したのは見せ方だけ**であり、Insightの計算
+ロジック（`core/insights/insightBuilder.js`、`services/coffee/
+insightService.js`、`GET /api/insights`）は一切変更していない。この節の
+冒頭にある「Source of Truth: MongoDBのCoffeeRecordとマスターデータを
+正とする」は、引き続きInsightの6種別の計算ロジックについての記述であり、
+Home画面上でDiscover（CQI参照データを使う別モジュール）と隣接して
+表示されることとは矛盾しない。
 
 ## Performance Boundary
 

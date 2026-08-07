@@ -41,20 +41,20 @@ function GraphPreview() {
   return (
     <Link
       to="/graph"
-      className="flex items-center gap-6 rounded-xl border border-ctp-surface1 bg-ctp-mantle p-5 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
+      className="flex h-full items-center gap-8 rounded-xl border border-ctp-surface1 bg-ctp-mantle p-8 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
     >
       <div className="min-w-0 flex-1">
-        <h3 className="text-base font-bold text-ctp-text">{t("home.knowledgeGraph.heading")}</h3>
-        <p className="mt-1 text-sm text-ctp-subtext0">{t("home.knowledgeGraph.tagline")}</p>
+        <h3 className="text-2xl font-bold text-ctp-text">{t("home.knowledgeGraph.heading")}</h3>
+        <p className="mt-2 text-base text-ctp-subtext0">{t("home.knowledgeGraph.tagline")}</p>
 
-        <div className="mt-4 flex items-center gap-4 font-mono text-sm text-ctp-subtext1">
+        <div className="mt-6 flex items-center gap-6 font-mono text-xl text-ctp-subtext1">
           <span>{t("home.knowledgeGraph.nodeCount", { count: graph.summary.nodeCount })}</span>
           <span>{t("home.knowledgeGraph.edgeCount", { count: graph.summary.edgeCount })}</span>
         </div>
 
-        <span className="mt-4 inline-flex items-center gap-1 text-xs text-ctp-subtext0">
+        <span className="mt-6 inline-flex items-center gap-1 text-sm text-ctp-subtext0">
           {t("home.knowledgeGraph.explore")}
-          <ArrowRight size={14} aria-hidden="true" />
+          <ArrowRight size={16} aria-hidden="true" />
         </span>
       </div>
 
@@ -77,7 +77,7 @@ function GraphIllustration({ layout }) {
     <svg
       viewBox={layout.viewBox}
       aria-hidden="true"
-      className="hidden h-24 w-32 flex-shrink-0 overflow-hidden opacity-40 sm:block"
+      className="hidden h-72 w-96 flex-shrink-0 overflow-hidden opacity-40 sm:block"
     >
       {layout.edges.map((edge) => (
         <line
