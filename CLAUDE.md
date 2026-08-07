@@ -18,6 +18,7 @@
 - @docs/search.md
 - @docs/entity-detail.md
 - @docs/stats.md
+- @docs/discover.md
 - @docs/architecture.md
 - @docs/api.md
 - @docs/implementation-plan.md

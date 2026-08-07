@@ -187,6 +187,15 @@
     "topFlavor": "You often pick coffee with {{label}} flavor notes.",
     "topOrigin": "You often choose {{label}} coffee."
   },
+  "discover": {
+    "heading": "Not yet tried",
+    "similarProcessOrigin": "You often choose {{originLabel}} with {{processLabel}} processing ({{count}} records). {{suggestedLabel}} also scores well with {{processLabel}} processing, but you haven't tried it yet.",
+    "recordCta": "Record this origin",
+    "sourceNote": "Based on reference data from the Coffee Quality Institute.",
+    "teaserLink": "You haven't tried {{suggestedLabel}} coffee yet",
+    "pageSubtitle": "Suggestions for origins you haven't tried yet, based on your records.",
+    "emptyDesc": "Keep recording, and suggestions will appear here."
+  },
   "search": {
     "placeholder": "Search origins, varieties, flavors, cafés, processes, or coffee names",
     "ariaLabel": "Cross-cutting search",

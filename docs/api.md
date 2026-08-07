@@ -144,6 +144,58 @@ responseは@docs/insights.mdを参照。
 }
 ```
 
+## Discover
+
+### GET `/discover`
+
+Home画面用の導線。自分が記録した産地を横断し、条件を満たす提案の中から
+品質スコアが最も高い1件を返す（無ければ`teaser: null`）。queryは持たない。
+
+responseは@docs/discover.mdの「Home Teaser」を参照。
+
+```json
+{
+  "data": {
+    "teaser": null
+  }
+}
+```
+
+### GET `/discover/all`
+
+`/discover`専用ページ（`/discover`、常設ナビには無い）用。自分が記録した
+産地のうち、条件を満たすものすべてを、各産地の最良の提案のスコア順に
+返す。queryは持たない。
+
+responseは@docs/discover.mdの「Discoverページ」を参照。
+
+```json
+{
+  "data": {
+    "origins": []
+  }
+}
+```
+
+### GET `/discover/nodes/:nodeId`
+
+指定した産地ノードについて、まだ試していない産地の提案を返す。
+`docs/discover.md`参照。Insightとは完全に独立した機能・エンドポイント。
+
+nodeIdは`origin:507f...`のようなstable ID。`origin:`以外のプレフィックス
+（対応していない種別）は404にせず空配列を返す。`origin:`のIDで自分の
+記録に無い産地IDを渡した場合は404。
+
+responseは@docs/discover.mdを参照。
+
+```json
+{
+  "data": {
+    "suggestions": []
+  }
+}
+```
+
 ## Search
 
 ### GET `/search`

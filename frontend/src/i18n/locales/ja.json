@@ -183,6 +183,15 @@
     "topFlavor": "「{{label}}」のフレーバーをよく選んでいます。",
     "topOrigin": "{{label}}産のコーヒーをよく選んでいます。"
   },
+  "discover": {
+    "heading": "まだ試していない産地",
+    "similarProcessOrigin": "{{originLabel}}を{{processLabel}}精製でよく選んでいますが（{{count}}件）、同じ{{processLabel}}精製で評価の高い{{suggestedLabel}}はまだ記録がありません。",
+    "recordCta": "この産地を記録してみる",
+    "sourceNote": "Coffee Quality Instituteの参考データをもとにした目安です。",
+    "teaserLink": "{{suggestedLabel}}産のコーヒー、まだ試していません",
+    "pageSubtitle": "自分の記録から、まだ試していない産地を提案します。",
+    "emptyDesc": "記録を増やすと、ここに提案が表示されます。"
+  },
   "search": {
     "placeholder": "産地・品種・フレーバー・カフェ・精製方法・コーヒー名で検索",
     "ariaLabel": "横断検索",
