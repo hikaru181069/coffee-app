@@ -97,8 +97,8 @@ function RecordsPage() {
   };
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-      <header className="mb-5 flex items-start justify-between gap-3">
+    <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-ctp-text">Records</h1>
           <p className="mt-1 text-sm text-ctp-subtext0">
@@ -109,14 +109,27 @@ function RecordsPage() {
         </div>
 
         {/* 主要CTAは1画面に1つ（docs/design.md） */}
-        <Link to="/records/new" className={primaryButtonClass}>
+        <Link to="/records/new" className={`${primaryButtonClass} px-3 sm:px-4`}>
           <Plus size={16} aria-hidden="true" />
           {t("records.newRecordCta")}
         </Link>
       </header>
 
-      <div className="mb-5">
+      {/* Search + Filterを1つのbarにまとめ、「検索フォーム」の羅列ではなく
+          「Recordsをブラウズする道具」に見せる。検索中はfilter行を隠し、
+          検索欄だけを残す（絞り込みと横断検索は同時に使わない既存の設計）。 */}
+      <div className="mb-6 flex flex-col gap-3 rounded-xl border border-ctp-surface1 bg-ctp-mantle/60 p-3 sm:p-4">
         <SearchBox value={searchQuery} onChange={setSearchQuery} />
+
+        {!isSearching && (
+          <RecordFilters
+            filters={filters}
+            onChange={setFilters}
+            onClear={clearFilters}
+            masterData={masterData}
+            hasActiveFilters={hasActiveFilters}
+          />
+        )}
       </div>
 
       {isSearching ? (
@@ -128,19 +141,7 @@ function RecordsPage() {
           error={search.error}
         />
       ) : (
-        <>
-          <div className="mb-5">
-            <RecordFilters
-              filters={filters}
-              onChange={setFilters}
-              onClear={clearFilters}
-              masterData={masterData}
-              hasActiveFilters={hasActiveFilters}
-            />
-          </div>
-
-          {renderList()}
-        </>
+        renderList()
       )}
 
       {/* ページ送り。1ページに収まるときは出さない。検索中はページ送り自体を持たない */}
