@@ -182,7 +182,6 @@ function Navbar() {
           onClick={close}
           className="flex items-center gap-2 text-ctp-lavender transition-colors hover:text-ctp-blue"
         >
-          <span className="text-lg" aria-hidden="true">☕</span>
           <span className="text-base font-black tracking-tight">Coffee App</span>
         </NavLink>
       </div>
@@ -205,7 +204,6 @@ function Navbar() {
             onClick={close}
             className="mb-8 flex items-center gap-2.5 px-3 text-ctp-lavender transition-colors duration-150 hover:text-ctp-blue"
           >
-            <span className="text-xl" aria-hidden="true">☕</span>
             <span className="text-base font-black tracking-tight">Coffee App</span>
           </NavLink>
 
@@ -280,7 +278,6 @@ function Navbar() {
           to="/"
           className="flex items-center gap-2 text-ctp-lavender transition-colors duration-150 hover:text-ctp-blue"
         >
-          <span className="text-lg" aria-hidden="true">☕</span>
           <span className="text-base font-black tracking-tight">Coffee App</span>
         </NavLink>
 

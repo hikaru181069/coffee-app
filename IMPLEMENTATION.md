@@ -471,6 +471,23 @@ Home画面のDiscoverカードの導線について、「Costa Ricaの話なの�
 - `frontend/lint`・`frontend/build`成功を確認
 - ブラウザで実機確認済み: HomeのDiscoverカードから「View all」が消え、Discover行（"You haven't tried Costa Rica coffee yet"）をクリックすると`/discover`へ直接遷移することを確認
 
+上記までを`feat/discover-cqi-recommendations`として1コミットにまとめ、`main`へ`--no-ff`でマージ済み（コンフリクト無し）。マージ後に`cd backend && npm test`を再実行し、Test Suites: 21 passed, Tests: 309 passed を確認済み。
+
+### 2026-08: 上部ナビバーのロゴからコーヒーアイコンを削除
+
+ユーザーから「上部navbarのcoffee-appの横にあるコーヒーアイコンを消してほしい」という依頼。`mainへ直接コミット`（1ファイル・アイコン3箇所の削除のみのため、専用branchは作成しなかった）。
+
+- `frontend/src/components/Navbar.jsx`: モバイル用トップバー・モバイル用ドロワー・デスクトップ用上部ナビバーの3箇所すべてから、ロゴの`☕`（`<span aria-hidden="true">☕</span>`）を削除。「Coffee App」の文字だけのロゴになった。LandingPage.jsx（未ログイン時のランディングページ）の`☕`は対象外のため変更していない
+- `frontend/lint`・`frontend/build`成功を確認
+- ブラウザで実機確認済み（デスクトップ幅・demoユーザーでログイン後）: 上部ナビバーのロゴが「Coffee App」の文字のみになったことを確認
+
+続けて「LandingPageのロゴのコーヒーアイコンも消してほしい」という依頼。LandingPage.jsxのロゴはアイコンのみ（Navbar.jsxと違い「Coffee App」の文字を伴っていなかった）だったため、単純に削除すると左上のブランド表示が空白になってしまう。Navbar.jsxと同じ「文字だけのロゴ」に揃える形にした。
+
+- `frontend/src/pages/LandingPage.jsx`: `<span className="landing-nav-logo" ...>☕</span>`を`<span className="text-base font-black tracking-tight text-ctp-lavender">Coffee App</span>`へ差し替え。Navbar.jsxのデスクトップ用ロゴと同じクラスの組み合わせにして見た目を揃えた
+- `frontend/src/App.css`: 上記の変更でどこからも参照されなくなった`.landing-nav-logo`（アイコン用の28px×28pxサイズ指定）を削除
+- `frontend/lint`・`frontend/build`成功を確認
+- ブラウザで実機確認済み（ログアウトして`/landing`を表示）: 左上のロゴが「Coffee App」の文字のみになり、認証後のNavbarと同じ見た目に揃ったことを確認
+
 ---
 
 ## 変更ファイル（現在の構成）
