@@ -488,6 +488,33 @@ Home画面のDiscoverカードの導線について、「Costa Ricaの話なの�
 - `frontend/lint`・`frontend/build`成功を確認
 - ブラウザで実機確認済み（ログアウトして`/landing`を表示）: 左上のロゴが「Coffee App」の文字のみになり、認証後のNavbarと同じ見た目に揃ったことを確認
 
+### 2026-08: Recordsページのブラッシュアップ（「記録を管理する画面」→「過去のコーヒー体験を探し、再発見する画面」）
+
+Homeのデザインを整えてきた流れで、次はRecordsページ。ユーザーから「機能・検索・フィルター・データ取得ロジックは維持したまま、Record→Connect→Discoverのうち過去のRecordを振り返る入口としてUI/UXをブラッシュアップしてほしい」という具体的な指定（コンテンツ幅・ヘッダー・filter barの見せ方・カードの情報階層・タグ・hover・レスポンシブ）を受けて実装。バックエンド・API・DB schema・依存関係はすべて無変更。mainへ直接コミット可能な範囲（frontendのみ、他ページへの影響なし）と判断し、専用branchは作成しなかった。
+
+実装前に`RecordCard`の参照元を確認し、`RecordsPage.jsx`と検索結果表示`SearchResults.jsx`の2箇所のみで使われていること（`HomePage.jsx`は別コンポーネントの`HomeRecordCard`を使用）を確認した上で着手した。Home/Graph/Statsには影響しない。
+
+- `frontend/src/pages/RecordsPage.jsx`: コンテンツ幅を`max-w-3xl`（768px）から`max-w-[900px]`へ拡張。`SearchBox`と`RecordFilters`を1つの枠（border+背景）にまとめ、「検索フォームの羅列」ではなく「Recordsをブラウズする単一のfilter bar」に見えるようにした。検索中（`isSearching`）はこのbar内のfilter行を隠し、検索欄だけを残す（絞り込みと横断検索は元々同時に使わない設計のため、bar内での見た目の一貫性のみを変更）
+- `frontend/src/features/coffee-records/components/RecordFilters.jsx`: 縦積み2ブロック（type toggleの行→origin/flavor/ratingのgrid-cols-3の行）だったレイアウトを、`flex flex-wrap justify-between`による横並び1行（左: All/Home/Cafeのtoggle、右: Origin/Flavor/Ratingのselect＋Clear filters）に再構成。狭い画面では左右2グループがそれぞれ独立して折り返す。各selectの上にあった常時表示ラベルは`sr-only`化し、コンパクトな専用クラス（`compactSelectClass`）を追加（`RecordForm.jsx`が使う`formStyles.js`の`controlClass`とは分離し、フォーム側の見た目には影響させていない）
+- `frontend/src/features/coffee-records/components/RecordCard.jsx`: これまで表示していなかった`record.process`（精製方法。APIレスポンスには既に含まれていたが未表示だった）をタグとして追加。カードのpaddingを`p-4`→`p-5`（`sm:p-6`）、タグ行の余白を`mt-3`→`mt-4`に拡大。カード全体のhoverに`-translate-y-px`＋背景の微変化を追加（`transition-all duration-200`）。タグ（origin/process/flavor）は共通の`tagClass`にまとめ、border/背景/1px浮き上がりの小さなhoverを付けた（クリックでのフィルター適用は今回実装していない。理由は後述）。産地には既存のMapPin、精製方法には知識グラフと同じDropletsアイコン（`docs/design.md`のGraph Visual Semantics、`features/graph/utils/nodeVisuals.js`と同じ対応）を付け、フレーバーは従来通りアイコン無しの単純なpillのまま（色を増やしすぎない、情報を増やしすぎない指定に沿った）
+- `frontend/src/features/coffee-records/components/RecordListStates.jsx`: ローディングスケルトンのpadding・余白をカードの新しいサイズに合わせて調整（表示位置が飛ばないように）
+
+見送った項目: タグクリックでの該当フィルター適用（ユーザー指定の項目5で「ロジック変更が大きくなる場合は今回は実装しない」と明記されていた）。`RecordFilters`にはprocess用のフィルターが無く、origin/flavorタグだけクリック可能でprocessタグだけ効かない、という一貫性の無いUIになるため見送った。hoverの視覚フィードバックのみ実装し、実装候補として下記「次に実装すべき最小単位」に記載した。
+
+- `frontend/lint`・`frontend/build`成功を確認
+- Docker Compose環境（demoユーザー、幅1600px）で実機確認: filter barが1つのまとまりに見えること、origin絞り込みで正しく1件に絞られ「Clear filters」が同じbar内に表示されること、横断検索（「ethiopia」）でfilter行が隠れ検索欄だけが残ること、検索結果のカードにもprocessタグが表示されることを確認。幅390px（モバイル相当）でヘッダーの「New Record」が窮屈にならないこと、filter barのtoggle行→select行が自然に折り返ること、カード内のタグが折り返ることを確認。Home画面（`HomeRecordCard`使用、別コンポーネント）に見た目の変化が無いことも確認済み
+
+### 2026-08: Recordカードのタグをエンティティ詳細ページへのLinkにする
+
+上記のRecordsブラッシュアップで「タグクリックでのフィルター適用は一貫性が崩れるため見送った」としていたが、ユーザーから「タグをクリックしたら関連ページ（例: Washedならその一覧）に進む方が良いのでは」という提案を受けた。相談の結果、`/entities/:nodeId`（Entity Detailページ、`docs/entity-detail.md`）が既にこの用途（そのタグに紐づく記録数・平均評価・関連する他の属性・関連記録をまとめて見せる）のために存在していると気づき、フィルター適用ではなくこちらへのリンクとして実装することにした。origin/process/flavorのどのタグも同じ`/entities/${type}:${id}`という形でリンクできるため、前回の「processだけ効かない」という一貫性の問題も解消される。バックエンド・API・データ取得ロジックは変更不要（`record.origin.id`等は既にAPIレスポンスに含まれている）。
+
+実装前にユーザーと一緒に技術的な論点を確認した: カード全体が1つの`<Link>`（記録詳細へ）である中に、タグを別の`<Link>`（エンティティ詳細へ）として追加すると、`<a>`の中に`<a>`という不正なDOMになる。HTMLパーサーを介する静的HTMLと違い、Reactは`document.createElement`でDOMを直接組むため、ブラウザの構文修復（parserが自動的に外側の`<a>`を閉じる挙動）が働かず、不正な入れ子がそのまま残る。実際に発生する不具合として、クリックイベントが内側→外側へbubbleし、外側Linkの`navigate()`が後から実行されて上書きしてしまう（タグを押したつもりが記録詳細へ飛ぶ）ことを説明し、合意の上で対処方針（stretched linkパターン）を決めてから実装した。
+
+- `frontend/src/features/coffee-records/components/RecordCard.jsx`: カード全体用のLinkを`absolute inset-0`の透明なリンク（stretched link、`aria-label`に記録タイトルを設定）にし、タグは通常のフロー内Linkとしてその上に置く構成へ変更。`entityPath(type, id)`ヘルパーを追加し、origin/process/flavorそれぞれのタグから`/entities/${type}:${id}`（`docs/knowledge-graph.md`のstable ID形式と同じ）へ遷移するようにした
+- 実装中に自分で踏んだ不具合: タグの行（`<div>`）に`relative`を付けて stretched link より前面に出す際、同じ理由でタイトル側の行にも`relative`を付けていた。CSSのスタッキング順では非positioned要素がpositioned要素より先に描画され、positioned要素（z-index:auto）はDOM順で後にあるものが上に乗る。両方に`relative`を付けたことで、タイトル側の行もstretched linkの上に乗ってしまい、タイトルなどカードの主要部分をクリックしても反応しなくなる不具合を作り込んだ。ブラウザで実際にクリックして検証し発見（`document.elementFromPoint()`でクリック位置の最前面要素を確認し、原因を特定）。タイトル側の行から`relative`を外す（static のままにし、stretched linkの下に留める）ことで解消
+- `frontend/lint`・`frontend/build`成功を確認
+- Docker Compose環境（demoユーザー）で実機確認: `document.elementFromPoint()`でカード余白・タイトル部分では stretched link（`/records/:id`）が、タグの上ではタグ自身のLink（`/entities/:nodeId`）が最前面にあることを確認した上で、実際のクリックでも同じ結果（タグ以外はRecord Detailへ、タグはEntity Detailへ）になることを確認。「Washed」タグ→Process「Washed」のEntity Detail、「Honey」タグ→Flavor「Honey」のEntity Detailへ、それぞれ正しい統計・関連記録が表示されることを確認
+
 ---
 
 ## 変更ファイル（現在の構成）
