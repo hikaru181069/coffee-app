@@ -21,11 +21,14 @@ export function RecordListSkeleton({ count = 4 }) {
       {Array.from({ length: count }, (_, index) => (
         <li
           key={index}
-          className="rounded-xl border border-ctp-surface1 bg-ctp-mantle p-4"
+          className="rounded-xl border border-ctp-surface1 bg-ctp-mantle p-5 sm:p-6"
         >
           <div className="skeleton-block h-4 w-1/2 rounded" />
           <div className="skeleton-block mt-2 h-3 w-1/3 rounded" />
-          <div className="skeleton-block mt-3 h-5 w-2/5 rounded-full" />
+          <div className="mt-4 flex gap-1.5">
+            <div className="skeleton-block h-5 w-1/5 rounded-full" />
+            <div className="skeleton-block h-5 w-1/4 rounded-full" />
+          </div>
         </li>
       ))}
     </ul>
