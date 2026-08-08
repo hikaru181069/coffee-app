@@ -836,12 +836,6 @@ input {
   border-bottom: 1px solid var(--ctp-surface0);
 }
 
-.landing-nav-logo {
-  width: 28px;
-  height: 28px;
-  opacity: 0.9;
-}
-
 .landing-nav-actions {
   display: flex;
   align-items: center;
