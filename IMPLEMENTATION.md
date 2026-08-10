@@ -515,6 +515,53 @@ Homeのデザインを整えてきた流れで、次はRecordsページ。ユー
 - `frontend/lint`・`frontend/build`成功を確認
 - Docker Compose環境（demoユーザー）で実機確認: `document.elementFromPoint()`でカード余白・タイトル部分では stretched link（`/records/:id`）が、タグの上ではタグ自身のLink（`/entities/:nodeId`）が最前面にあることを確認した上で、実際のクリックでも同じ結果（タグ以外はRecord Detailへ、タグはEntity Detailへ）になることを確認。「Washed」タグ→Process「Washed」のEntity Detail、「Honey」タグ→Flavor「Honey」のEntity Detailへ、それぞれ正しい統計・関連記録が表示されることを確認
 
+### 2026-08: Record詳細ページのUI改善（「記録の閲覧画面」から「知識グラフへの入口」へ）
+
+Recordsページのブラッシュアップに続き、Record詳細ページ（`RecordDetailPage.jsx`）を再設計。ユーザーから9項目（Breadcrumb・Header・Property Grid・Tasting Note・Connections・View in Graphの移動・Actions・レイアウト・Micro Interaction）の具体的な指定を受けて実装した。API・DBスキーマは無変更。
+
+実装前に1点、ユーザーへ確認した: 新設のProperty Grid・Connectionsセクションの指定にOrigin/Process/Roast/Flavorの4項目のみが明記されており、現状表示しているFarm（農園）・Variety（品種）・Roaster（焙煎業者）を削除するのか判断がつかなかったため。ユーザーの回答は「Property Gridには残す（Connectionsは指定通り4種別のみでよい）」で、この方針で実装した。
+
+- `frontend/src/features/graph/utils/entityLink.js`（新規）: `entityNodeId(type, id)` / `entityDetailPath(type, id)`。前回`RecordCard.jsx`にローカルで定義していたエンティティ詳細パス生成ロジックを共通化し、今回`RecordDetailPage.jsx`のConnectionsチップからも使うようにした（同じロジックが2箇所に重複するのを避けるため）
+- `frontend/src/features/coffee-records/components/RecordCard.jsx`: 上記の共通化に伴うimportの差し替えのみ（見た目・挙動は無変更）
+- `frontend/src/pages/RecordDetailPage.jsx`: 全面的に再構成
+  - Breadcrumb: 「← 一覧へ戻る」を`Records > 記録タイトル`のBreadcrumbへ（`Records`は`/records`へのLink、ナビの表記に合わせ翻訳しない）
+  - Header: 構成はほぼ既存のまま（タイトル・日時は左、評価は右、`flex-wrap`でモバイル対応）
+  - Coffee Information: 「コーヒーの詳細」カード（`cardClass`の枠・背景）を廃止し、通常のセクションへ。Property GridにOrigin/Farm/Variety/Process/Roast/Roaster（値がある項目のみ、`collectCoffeeDetails`を再利用）とFlavor（タグ形式）を表示
+  - Tasting Note: メモをセクション化。`divide-y divide-ctp-surface1`でCoffee Information・Tasting Note・Connectionsの間に自動でDividerが入るようにした（`first:pt-0`で先頭セクションの余分な上paddingを消す。条件次第でどのセクションが先頭に来るかが変わるため、CSSの`:first-child`で動的に対応させた）
+  - Connections（新規）: 知識グラフのノードに対応する4種別（Origin/Process/Roast/Flavor）だけをノード風のチップで表示。Graph画面・エンティティ詳細ページと同じアイコン・配色（`features/graph/utils/nodeVisuals.js`の`getNodeVisual`）を再利用し、この記録が知識グラフのどのノードにつながっているかを一目で伝える。各チップは`entityDetailPath`で`/entities/:nodeId`へのLink
+  - View in Graph: ボタンからテキストリンクへ変更し、Connectionsセクションの見出し行右側へ移動。遷移先（`/graph?focus=record:${record.id}`）は無変更
+  - Actions: Edit（primaryButtonClass、Editが実質唯一の主要導線になったためsecondaryから格上げ）+ Moreメニュー（「・・・」ボタン）の2つへ。Deleteは自前実装のMoreメニュー内へ移動（outside click / Escapeで閉じる。外部のdropdown/popoverライブラリは追加せず、`ConfirmDialog.jsx`と同じ「必要な分だけ自前で作る」方針を踏襲）。削除自体の確認ダイアログ（`ConfirmDialog`）は変更なし
+  - Micro Interaction: Breadcrumbのリンク・Connectionsチップ・View in Graphリンク・Editボタンにそれぞれ控えめなhover（色変化、チップは1px浮き上がり+背景変化）を追加
+- `frontend/src/i18n/locales/{ja,en}.json`: 新規キー3つ（`records.connectionsHeading`＝「つながり」/「Connections」、`records.breadcrumbAriaLabel`、`records.moreActionsLabel`）を追加。それ以外はすべて既存キーを再利用した（例: Tasting Noteの見出しは新しい訳を作らず既存の`records.notesHeading`＝「メモ」のまま。フィールド名はAPI/ドメインモデルの`notes`と統一するため、CLAUDE.mdの「UIとAPIで用語を統一する」に沿った判断）
+- `frontend/lint`・`frontend/build`成功を確認
+- Docker Compose環境（demoユーザー）で実機確認:
+  - Breadcrumb・Header・Property Grid（Origin/Process/Roast/Flavorのみの記録、Farm/Variety付きの記録の両方）・Divider・Connectionsチップ（アイコン・配色がGraph/エンティティ詳細と一致）・「Graphで見る」テキストリンクの表示を確認
+  - Moreメニューを開いてDelete項目が表示され、クリックすると既存のConfirmDialog（削除確認）が開くことを確認（実際の削除は行わず、キャンセルで検証）
+  - Connectionsの「Washed」チップをクリックし、Process「Washed」のエンティティ詳細ページへ正しく遷移することを確認
+  - Farm「Finca El Injerto」・Variety「Bourbon」を持つ記録（Guatemala Antigua）で、Property Gridには表示されるがConnectionsには含まれない（指定通りOrigin/Process/Roast/Flavorの4種別のみ）ことを確認
+  - チップ・Breadcrumbリンクのhover（背景変化・浮き上がり）を確認
+- 未検証: モバイル幅での実際の折り返しは、このブラウザ自動化ツールが実ビューポート幅を変更できない制約（`resize_window`を呼んでも実際のレンダリング幅が変わらない。Recordsページの過去エントリで記録済みの既知の制約と同じ）のため、目視確認できていない。ヘッダー・Breadcrumb・Actionsはいずれも`flex-wrap`、Property Gridは`grid-cols-1 sm:grid-cols-2`を使っており、他画面で実績のあるレスポンシブパターンと同一のため大きな懸念は無いが、実機での確認を推奨
+
+**続けて**、ユーザーから「Connections部分をインライングラフでわかりやすくしたい」という相談。フラットなチップ一覧ではなく、記録を中心に直接つながるノードを図として見せたい、という意見交換の中でユーザーからASCIIスケッチ（Origin=上・Process=左・RoastLevel=右・Flavorは下で枝分かれ、という配置）の提示を受け、それを一般化して実装した。
+
+技術方針の相談で、Graph画面のcanvasライブラリ（react-force-graph-2d）は使わないことを提案し合意を得た。理由: (1) そちらは過去に何度もズーム・ドラッグ・クリックの不具合を踏んで安定させた経緯があり、小さい埋め込み領域で同種の問題（コンテナサイズ計測・当たり判定）を再び踏むリスクがある、(2) Connectionsのデータは「記録1件+直接の接続先（最大でも十数ノード）」という常に決まった小さな構造で、そもそも力学シミュレーションが要る問題ではない、(3) react-force-graph-2dは現在Graph画面（lazy-loadされる別ルート）でしか使っておらず、よく訪れるRecord詳細ページに再び持ち込むと依存が重くなる（Home画面のグラフプレビューも同じ理由で実データ+静的SVGへ置き換えた経緯がある）。
+
+- `frontend/src/features/graph/utils/recordConnectionsLayout.js`（新規、DOM非依存の純粋関数）: `buildRecordConnectionsLayout({ origin, process, roastLevel, flavors })`。中心(50,50)に記録ノードを置き、Origin=上(50,14)／Process=左(14,50)／RoastLevel=右(86,50)の固定スロット、Flavorは下側(y=76の幹→y=90の葉)へ均等に扇状展開する座標を0〜100のパーセンテージ空間で返す。値が無い項目はそのスロット自体を省く（既存のConnections chip実装と同じ「断定しない」方針）。Flavorは最大5件までを図に描き、それを超えた分は`flavorOverflowCount`として返す（RecordCardの一覧カードで既に使っている「+N」パターンと統一）
+- `frontend/src/features/graph/components/RecordConnectionsDiagram.jsx`（新規）: 上記レイアウトを描画。接続線はSVG（`aria-hidden`、装飾）、各ノードは実際の`Link`要素（`entityDetailPath`で`/entities/:nodeId`へ）を同じ0〜100%の座標系に`position: absolute; left/top: %`で重ねて配置。ノードのアイコン・配色はGraph画面・エンティティ詳細ページと同じ`getNodeVisual`を再利用。中心の記録ノードのみ非リンク（記録タイトルを短く表示）。ノードのhoverは`group`/`group-hover`で、位置決め用のtransform（`-translate-x-1/2 -translate-y-1/2`）と浮き上がり用のtransformを別要素に分離し、Tailwindのtransformユーティリティ同士が競合しないようにした
+- `frontend/src/pages/RecordDetailPage.jsx`: Connectionsセクション内の`ConnectionChip`のflatな一覧を`RecordConnectionsDiagram`に差し替え。見出し・「Graphで見る」リンクの位置は変更なし
+- `frontend/src/i18n/locales/{ja,en}.json`: `records.connectionsFlavorOverflow`（「ほかに{{count}}件のフレーバー」/「+{{count}} more flavors」）を追加
+- `frontend/lint`・`frontend/build`成功を確認
+- Docker Compose環境（demoユーザー）で実機確認: Rwanda Huye Mountain（Origin/Process/RoastLevel/Flavor×2）でユーザーのスケッチ通りの配置になることを確認。Ethiopia Yirgacheffe（Flavor×3）でも枝分かれが均等に広がることを確認。「Ethiopia」ノードをクリックしOriginのエンティティ詳細ページへ正しく遷移することを確認。ノードhoverで背景・枠線の変化を確認。コーヒー要素が何も無い記録（「とりあえず買った豆」）でConnectionsセクション自体が表示されないこと（既存の空状態ロジックと同じ）を確認。Flavor 8件（デモデータ最大の3件を超えるケース）での「+3」オーバーフロー表示は、Node REPLで`buildRecordConnectionsLayout`を直接呼び出し、5件が均等配置され`flavorOverflowCount: 3`になることを計算ロジックとして確認（デモデータに8件を持つ記録が無いため、UI上の見た目は未確認）
+
+**続けて**、ユーザーから3点の微調整依頼: (1) 中央Recordノードのラベルが省略されすぎる、(2) ノード間隔をもう少し中央へまとめたい、(3) 各ノードのhoverで種別（Origin/Process/Roast/Flavor等）をTooltip表示したい（例: 「Ethiopia → Origin」）。「現在のレイアウト・色・アイコン・edge表現は維持する」「Graph本体には影響を与えない」という制約付きだったため、`recordConnectionsLayout.js`・`RecordConnectionsDiagram.jsx`の2ファイルのみの変更に収めた（Graph画面本体・`nodeVisuals.js`・`GraphCanvas.jsx`等は無変更）。
+
+- `frontend/src/features/graph/utils/recordConnectionsLayout.js`: 中心からの距離を約17%縮小（単一スロットのoffsetを36→30、Flavorの幹・葉・広がりも同じ比率で縮小）。レイアウトの形（Origin=上・Process=左・RoastLevel=右・Flavor=下で扇状）自体は変更していない
+- `frontend/src/features/graph/components/RecordConnectionsDiagram.jsx`:
+  - 中心ノードのラベルを`truncate`（1行省略）から`line-clamp-2`（2行まで表示してから省略）へ、幅も`max-w-[7rem]`→`max-w-[10rem]`に拡大。他ノードのラベル幅（`max-w-[4.5rem]`）は変更していない（中心だけ広げる、という指定通り）
+  - 各ノード（Origin/Process/RoastLevel/Flavor）にhover/focus時に出る自前のTooltipを追加。「{ラベル} → {種別}」の形式（例: 「Ethiopia → Origin」）。種別のラベル文言は新しい訳を作らず、Graph画面の凡例等と同じ`graph.nodeTypes.*`翻訳キー（`getNodeVisual(type).labelKey`経由）を再利用した。ネイティブの`title`属性は使わず（表示までの遅延があり、スタイルも合わせられないため）、`group`/`group-hover`・`group-focus-visible`によるopacity切り替えで自前実装した
+- `frontend/lint`・`frontend/build`成功を確認
+- Docker Compose環境（demoユーザー）で実機確認: Rwanda Huye Mountainでノード間隔が縮まり中央にまとまって見えることを確認。「Rwanda」ノードにhoverすると「Rwanda → 産地」、英語表示に切り替えて「Medium Light」ノードにhoverすると「Medium Light → Roast Level」というTooltipが表示されることを確認（ユーザー提示の例は「Roast」だったが、Graph画面の凡例と表記を統一するため既存の「Roast Level」をそのまま使った）。中央ラベルの2行表示は、ブラウザのJavaScript実行で一時的に長いタイトルへ差し替えて確認（デモデータに十分長いタイトルの記録が無いため）。他の記録（Blue Bottle - Ethiopia Worka等）で通常時のレイアウト・省略が崩れていないことも確認
+
 ---
 
 ## 変更ファイル（現在の構成）
