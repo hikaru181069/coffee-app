@@ -105,7 +105,11 @@
     "detailEmptyHint": "産地やフレーバーを追加すると、ほかの記録とのつながりが見えるようになります。",
     "outOf5Sr": "段階中5",
     "confirmDeleteTitle": "この記録を削除しますか？",
-    "confirmDeleteDescription": "「{{title}}」を削除します。この操作は取り消せません。"
+    "confirmDeleteDescription": "「{{title}}」を削除します。この操作は取り消せません。",
+    "connectionsHeading": "つながり",
+    "breadcrumbAriaLabel": "パンくずリスト",
+    "moreActionsLabel": "その他の操作",
+    "connectionsFlavorOverflow": "ほかに{{count}}件のフレーバー"
   },
   "recordForm": {
     "title": "タイトル",
