@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Coffee, Pencil, Share2, Star, Store, Trash2 } from "lucide-react";
+import { ChevronRight, Coffee, MoreHorizontal, Pencil, Share2, Star, Store, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
@@ -8,16 +8,13 @@ import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecor
 import { deleteCoffeeRecord } from "../features/coffee-records/api/coffeeRecordApi";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
-import {
-  cardClass,
-  dangerButtonClass,
-  secondaryButtonClass,
-} from "../features/coffee-records/components/formStyles";
+import { primaryButtonClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import {
   collectCoffeeDetails,
   formatConsumedAt,
   recordTypeLabel,
 } from "../features/coffee-records/utils/recordFormat";
+import RecordConnectionsDiagram from "../features/graph/components/RecordConnectionsDiagram";
 import { useToast } from "../contexts/ToastContext";
 import { getErrorMessage } from "../utils/errorMessage";
 
@@ -27,14 +24,19 @@ import { getErrorMessage } from "../utils/errorMessage";
  * docs/design.md の「Record Detail」に対応する:
  *   基本情報 / Coffee Details / Notes / Edit / Delete
  *
- * 「Graphで見る」は Phase 5（知識グラフUI）でグラフ画面ができたため追加した。
- * ?focus=record:xxx でグラフ側にその記録ノードを自動選択させる。
+ * 2026-08、カードを積み重ねる構成から、Breadcrumb→Header→（Property Grid
+ * →Tasting Note→Connections、Dividerで区切る）→Actionsという1本の
+ * 縦の流れへ再設計した。Connectionsセクションは、この記録を中心に、
+ * 直接つながる知識グラフのノード（origin/process/roastLevel/flavor）を
+ * 1-hopのハブ&スポーク図で見せる（`features/graph/components/
+ * RecordConnectionsDiagram.jsx`）。「Graphで見る」はボタンから
+ * テキストリンクへ変え、Connectionsセクションへ移した
+ * （遷移先・?focus=の仕組みは変更していない）。
  *
  * docs/design.md にある「関連ノード」（詳細画面に直接、関連する記録の
- * 一覧を埋め込む案）は今回実装していない。Graph画面へ遷移すれば同じ
- * 情報（属性ノードを選ぶと関連記録一覧が出る）を見られるため、
- * 重複した一覧をここにも持たせる優先度は低いと判断した。
- * 必要であれば改めて追加する。
+ * 一覧を埋め込む案）は今回も実装していない。Graph画面・エンティティ詳細
+ * ページへ遷移すれば同じ情報を見られるため、重複した一覧をここにも
+ * 持たせる優先度は低いと判断した。
  */
 function RecordDetailPage() {
   const { t, i18n } = useTranslation();
@@ -66,7 +68,7 @@ function RecordDetailPage() {
   if (isLoading) {
     return (
       <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-        <div className="skeleton-block h-6 w-24 rounded" />
+        <div className="skeleton-block h-4 w-32 rounded" />
         <div className="skeleton-block mt-4 h-8 w-2/3 rounded" />
         <div className="skeleton-block mt-6 h-40 w-full rounded-xl" />
       </div>
@@ -97,17 +99,26 @@ function RecordDetailPage() {
 
   const details = collectCoffeeDetails(record, t, i18n.language);
   const flavors = record.flavors ?? [];
+  const hasCoffeeInfo = details.length > 0 || flavors.length > 0;
+  // Connectionsは知識グラフのノードに対応する4種別のみ（Property Gridとは違い
+  // farmName/variety/roasterNameはグラフのノードではないため含めない）
+  const hasConnections = Boolean(record.origin || record.process || record.roastLevel || flavors.length > 0);
 
   return (
     <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-      <Link
-        to="/records"
-        className="text-sm text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
-      >
-        ← {t("common.backToList")}
-      </Link>
+      {/* ── Breadcrumb ───────────────────────────── */}
+      <nav aria-label={t("records.breadcrumbAriaLabel")} className="flex items-center gap-1.5 text-sm">
+        <Link
+          to="/records"
+          className="text-ctp-subtext0 transition-colors duration-150 hover:text-ctp-text"
+        >
+          Records
+        </Link>
+        <ChevronRight size={14} aria-hidden="true" className="flex-shrink-0 text-ctp-overlay0" />
+        <span className="truncate text-ctp-subtext1">{record.title}</span>
+      </nav>
 
-      {/* ── 基本情報 ─────────────────────────────── */}
+      {/* ── Header ───────────────────────────────── */}
       <header className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-ctp-text">{record.title}</h1>
@@ -151,79 +162,83 @@ function RecordDetailPage() {
         )}
       </header>
 
-      {/* ── Coffee Details ───────────────────────── */}
-      {(details.length > 0 || flavors.length > 0) && (
-        <section className={`${cardClass} mt-5`}>
-          <h2 className="text-sm font-semibold text-ctp-text">{t("records.detailsHeading")}</h2>
-
-          {details.length > 0 && (
-            <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-              {details.map((detail) => (
-                <div key={detail.key}>
-                  <dt className="text-xs text-ctp-subtext0">{detail.label}</dt>
-                  <dd className="mt-0.5 text-sm text-ctp-text">{detail.value}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-
-          {flavors.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-xs text-ctp-subtext0">{t("records.flavorsHeading")}</h3>
-              <ul className="mt-1.5 flex flex-wrap gap-1.5">
-                {flavors.map((flavor) => (
-                  <li
-                    key={flavor.id}
-                    className="rounded-full bg-ctp-surface0 px-2.5 py-1 text-xs text-ctp-subtext1"
-                  >
-                    {flavor.name}
-                  </li>
+      {hasCoffeeInfo || record.notes || hasConnections ? (
+        <div className="mt-6 divide-y divide-ctp-surface1">
+          {/* ── Coffee Information（Property Grid） ─── */}
+          {hasCoffeeInfo && (
+            <section className="py-6 first:pt-0">
+              <h2 className="text-sm font-semibold text-ctp-text">{t("records.detailsHeading")}</h2>
+              <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                {details.map((detail) => (
+                  <div key={detail.key}>
+                    <dt className="text-xs text-ctp-subtext0">{detail.label}</dt>
+                    <dd className="mt-0.5 text-sm text-ctp-text">{detail.value}</dd>
+                  </div>
                 ))}
-              </ul>
-            </div>
+                {flavors.length > 0 && (
+                  <div>
+                    <dt className="text-xs text-ctp-subtext0">{t("records.flavorsHeading")}</dt>
+                    <dd className="mt-1.5 flex flex-wrap gap-1.5">
+                      {flavors.map((flavor) => (
+                        <span
+                          key={flavor.id}
+                          className="rounded-full bg-ctp-surface0 px-2.5 py-1 text-xs text-ctp-subtext1"
+                        >
+                          {flavor.name}
+                        </span>
+                      ))}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </section>
           )}
-        </section>
-      )}
 
-      {/* ── Notes ────────────────────────────────── */}
-      {record.notes && (
-        <section className={`${cardClass} mt-4`}>
-          <h2 className="text-sm font-semibold text-ctp-text">{t("records.notesHeading")}</h2>
-          {/* whitespace-pre-wrap: 入力時の改行を表示にも反映する */}
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ctp-subtext1">
-            {record.notes}
-          </p>
-        </section>
-      )}
+          {/* ── Tasting Note ─────────────────────────── */}
+          {record.notes && (
+            <section className="py-6 first:pt-0">
+              <h2 className="text-sm font-semibold text-ctp-text">{t("records.notesHeading")}</h2>
+              {/* whitespace-pre-wrap: 入力時の改行を表示にも反映する */}
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ctp-subtext1">
+                {record.notes}
+              </p>
+            </section>
+          )}
 
-      {/* 詳細が何も無いときは、次に何ができるかを示す */}
-      {details.length === 0 && flavors.length === 0 && !record.notes && (
-        <p className="mt-5 rounded-xl border border-dashed border-ctp-overlay0/60 px-4 py-6 text-center text-sm text-ctp-subtext0">
+          {/* ── Connections ───────────────────────────── */}
+          {hasConnections && (
+            <section className="py-6 first:pt-0">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-ctp-text">{t("records.connectionsHeading")}</h2>
+                <Link
+                  to={`/graph?focus=record:${record.id}`}
+                  className="inline-flex items-center gap-1 text-xs text-ctp-subtext0 transition-colors duration-150 hover:text-ctp-text"
+                >
+                  <Share2 size={12} aria-hidden="true" />
+                  <span className="underline underline-offset-2">{t("common.viewOnGraph")}</span>
+                </Link>
+              </div>
+
+              <div className="mt-4">
+                <RecordConnectionsDiagram record={record} />
+              </div>
+            </section>
+          )}
+        </div>
+      ) : (
+        // 詳細が何も無いときは、次に何ができるかを示す
+        <p className="mt-6 rounded-xl border border-dashed border-ctp-overlay0/60 px-4 py-6 text-center text-sm text-ctp-subtext0">
           {t("records.detailEmptyHint")}
         </p>
       )}
 
-      {/* ── 操作 ─────────────────────────────────── */}
-      <div className="mt-6 flex flex-wrap gap-2">
-        <Link to={`/records/${record.id}/edit`} className={secondaryButtonClass}>
+      {/* ── Actions ──────────────────────────────── */}
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <Link to={`/records/${record.id}/edit`} className={primaryButtonClass}>
           <Pencil size={15} aria-hidden="true" />
           {t("common.edit")}
         </Link>
-        {/* Phase 5で知識グラフ画面ができたので実装する。
-            ?focus=record:xxx でグラフ側にそのノードを自動選択させる
-            （features/graph/hooks GraphPage の handleGraphReady を参照） */}
-        <Link to={`/graph?focus=record:${record.id}`} className={secondaryButtonClass}>
-          <Share2 size={15} aria-hidden="true" />
-          {t("common.viewOnGraph")}
-        </Link>
-        <button
-          type="button"
-          onClick={() => setIsConfirmOpen(true)}
-          className={dangerButtonClass}
-        >
-          <Trash2 size={15} aria-hidden="true" />
-          {t("common.delete")}
-        </button>
+        <MoreMenu onDelete={() => setIsConfirmOpen(true)} />
       </div>
 
       <ConfirmDialog
@@ -234,6 +249,72 @@ function RecordDetailPage() {
         onConfirm={handleDelete}
         onCancel={() => setIsConfirmOpen(false)}
       />
+    </div>
+  );
+}
+
+/**
+ * 「・・・」メニュー。今はDeleteのみを持つ。
+ *
+ * 外部ライブラリのdropdown/popoverは使わず、ConfirmDialog.jsxと同じ
+ * 「必要な分だけ自前で作る」方針に沿って実装した
+ * （開いている間だけ outside click / Escape を監視する）。
+ */
+function MoreMenu({ onDelete }) {
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) setIsOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        aria-label={t("records.moreActionsLabel")}
+        className={`${secondaryButtonClass} px-2.5`}
+      >
+        <MoreHorizontal size={16} aria-hidden="true" />
+      </button>
+
+      {isOpen && (
+        <div
+          role="menu"
+          className="absolute right-0 z-10 mt-2 w-40 rounded-lg border border-ctp-surface1 bg-ctp-mantle p-1 shadow-xl"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setIsOpen(false);
+              onDelete();
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-ctp-red transition-colors duration-150 hover:bg-ctp-red/10"
+          >
+            <Trash2 size={14} aria-hidden="true" />
+            {t("common.delete")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
