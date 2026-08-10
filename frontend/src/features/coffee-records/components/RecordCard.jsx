@@ -3,14 +3,7 @@ import { Coffee, Droplets, MapPin, Star, Store } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { formatConsumedAtShort, recordTypeLabel } from "../utils/recordFormat";
-
-/**
- * origin/process/flavorはKnowledge Graphのノードに対応する概念なので、
- * タグ自体をそのエンティティ詳細ページ（docs/entity-detail.md）への
- * Linkにする。stable ID形式は docs/knowledge-graph.md と同じ組み方。
- */
-const entityNodeId = (type, id) => `${type}:${id}`;
-const entityPath = (type, id) => `/entities/${encodeURIComponent(entityNodeId(type, id))}`;
+import { entityDetailPath } from "../../graph/utils/entityLink";
 
 /** タグ1個分の共通見た目。エンティティ詳細ページへのLinkとして使う */
 const tagClass =
@@ -92,20 +85,20 @@ function RecordCard({ record }) {
       {(record.origin || record.process || flavors.length > 0) && (
         <div className="relative mt-4 flex flex-wrap items-center gap-1.5">
           {record.origin && (
-            <Link to={entityPath("origin", record.origin.id)} className={tagClass}>
+            <Link to={entityDetailPath("origin", record.origin.id)} className={tagClass}>
               <MapPin size={11} aria-hidden="true" />
               {record.origin.name}
             </Link>
           )}
           {record.process && (
-            <Link to={entityPath("process", record.process.id)} className={tagClass}>
+            <Link to={entityDetailPath("process", record.process.id)} className={tagClass}>
               <Droplets size={11} aria-hidden="true" />
               {record.process.name}
             </Link>
           )}
           {/* フレーバーは多いと横に溢れるので3件までにする */}
           {flavors.slice(0, 3).map((flavor) => (
-            <Link key={flavor.id} to={entityPath("flavor", flavor.id)} className={tagClass}>
+            <Link key={flavor.id} to={entityDetailPath("flavor", flavor.id)} className={tagClass}>
               {flavor.name}
             </Link>
           ))}

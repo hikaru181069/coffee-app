@@ -108,7 +108,11 @@
     "detailEmptyHint": "Add an origin or flavor to start seeing connections with your other records.",
     "outOf5Sr": "out of 5",
     "confirmDeleteTitle": "Delete this record?",
-    "confirmDeleteDescription": "\"{{title}}\" will be deleted. This action cannot be undone."
+    "confirmDeleteDescription": "\"{{title}}\" will be deleted. This action cannot be undone.",
+    "connectionsHeading": "Connections",
+    "breadcrumbAriaLabel": "Breadcrumb",
+    "moreActionsLabel": "More actions",
+    "connectionsFlavorOverflow": "+{{count}} more flavors"
   },
   "recordForm": {
     "title": "Title",
