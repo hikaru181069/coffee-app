@@ -29,7 +29,7 @@
 
 主な対象は、スペシャルティコーヒーに興味を持ち始めた人、自宅とカフェの両方でコーヒーを飲む人、詳しい専門知識はないが自分の好みを知りたい人です。豆を購入するECサイトや、専門家向けの厳密なカッピング管理システムではありません。
 
-詳しくは [`docs/vision.md`](docs/vision.md) を参照してください。
+詳しくは [`docs/product.md`](docs/product.md) を参照してください。
 
 ## Demo
 
@@ -50,7 +50,7 @@ Password: coffeedemo123
 2. **Connect** — ユーザーがグラフ構造を直接編集するのではなく、記録に選択された要素からアプリが自動でノードとエッジを生成する
 3. **Discover** — ノード・関連記録・フィルターを辿り、「自分はこの産地やフレーバーをよく選んでいる」と気づける
 
-すべての機能は、この循環のどこを改善するかを説明できる必要があります（[`docs/product-principles.md`](docs/product-principles.md)）。
+すべての機能は、この循環のどこを改善するかを説明できる必要があります（[`docs/product.md`](docs/product.md)）。
 
 ## Features
 
@@ -259,7 +259,7 @@ cd fastapi-service && ../.venv/bin/pytest    # pytest
 
 ## Future Work
 
-- AI推薦・自然言語による味覚分析（`docs/vision.md` のOut of Scope）
+- AI推薦・自然言語による味覚分析（`docs/mvp.md` のOut of Scope）
 - 記録詳細画面への「関連ノード」の直接埋め込み（現在はGraph画面への遷移のみ）
 - 知識グラフの期間フィルター（`dateFrom`/`dateTo`）のUI化。APIには実装済み
 - FastAPIサービスの活用（将来の味覚分析・類似度計算）
@@ -271,13 +271,13 @@ cd fastapi-service && ../.venv/bin/pytest    # pytest
 
 | ファイル | 内容 |
 | --- | --- |
-| [`docs/vision.md`](docs/vision.md) | プロダクトの目的・対象ユーザー |
-| [`docs/product-principles.md`](docs/product-principles.md) | 設計判断の原則 |
+| [`docs/product.md`](docs/product.md) | プロダクトの目的・対象ユーザー・設計判断の原則 |
 | [`docs/mvp.md`](docs/mvp.md) | MVPのスコープと完了条件 |
 | [`docs/design.md`](docs/design.md) | 画面構成・UIルール |
 | [`docs/domain-model.md`](docs/domain-model.md) | CoffeeRecord とマスターデータ |
 | [`docs/database.md`](docs/database.md) | MongoDB スキーマ設計 |
 | [`docs/knowledge-graph.md`](docs/knowledge-graph.md) | 知識グラフの生成方針 |
+| [`docs/features.md`](docs/features.md) | Insights・Search・Entity Detail・Stats・Discoverの仕様 |
 | [`docs/architecture.md`](docs/architecture.md) | サービス責務・モジュール形式・エラー形式 |
 | [`docs/api.md`](docs/api.md) | APIエンドポイント設計 |
 | [`docs/implementation-plan.md`](docs/implementation-plan.md) | Phase 0〜6 の進め方 |
