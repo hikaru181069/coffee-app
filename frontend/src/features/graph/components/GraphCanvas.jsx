@@ -53,17 +53,25 @@ import { getNodeIconImage } from "../utils/canvasIcons";
  *      安定した操作性を優先する（下記のuseEffect参照）。
  *
  * 3. 収束中に一瞬だけノードが巨大化して見える
- *    onEngineTickはノードがまだ広がりきっていない収束の途中経過でも
- *    毎tick呼ばれる。以前はここで`zoomToFit(0, 40)`（アニメーション時間0
- *    ＝即座に適用）を呼んでいた。force-graph本体のzoomToFit実装は、
- *    呼ばれた瞬間のノードのbounding boxだけを見てズーム倍率を計算し、
- *    即座に反映する。chargeStrengthが強い（-800）ため、開始直後は
- *    ノード同士がまだ中心付近に固まっており、そのtickをちょうど
- *    描画してしまうと、小さいbounding boxに合わせて一瞬だけ大きく
- *    ズームインし、それが「ノードが巨大化する」フラッシュとして見える。
- *    → onEngineTick側のzoomToFitにも短いアニメーション時間を持たせ
- *      （下記のonEngineTick参照）、瞬間移動ではなくなめらかな追従に
- *      した。「開いた瞬間にカメラが追従する」という狙い自体は変えない。
+ *    収束の途中経過でズーム倍率を再計算するたびに、chargeStrengthが強い
+ *    （-800）ため開始直後はノード同士がまだ中心付近に固まっており、
+ *    小さいbounding boxに合わせて一瞬だけ大きくズームインし、それが
+ *    「ノードが巨大化する」フラッシュとして見える。
+ *    → カメラを合わせる処理（下記fitCamera）に短いアニメーション時間を
+ *      持たせ、瞬間移動ではなくなめらかな追従にした。
+ *
+ * 4. onEngineTick / onEngineStopが一度も発火しない
+ *    当初はカメラ追従をこの2つのコールバック（毎tick呼ばれる想定）で
+ *    駆動していたが、実際にはbounding box（getGraphBbox）を見るとノードは
+ *    確かに力学シミュレーションで広がっているにもかかわらず、
+ *    onEngineTick/onEngineStopのどちらも一度も呼ばれないことをカウンタを
+ *    仕込んで確認した。react-force-graph-2d（react-kapsule経由）と
+ *    force-graph本体のプロパティ連携（linkKapsule／linkProp）を読んでも
+ *    明確な原因までは特定できなかった。
+ *    → ライブラリのtickコールバックに依存せず、グラフデータが変わる
+ *      （＝新しく開いた）たびに自前のrequestAnimationFrameループを
+ *      一定時間（FOLLOW_DURATION_MS）走らせ、その間毎フレームfitCameraを
+ *      呼んでカメラを追従させる方式に置き換えた（下記のuseEffect参照）。
  */
 const FORCE_PARAMS = {
   linkDistance: 90,
@@ -83,6 +91,11 @@ const ATTRIBUTE_HALF_HEIGHT = 15;
 const ATTRIBUTE_DEGREE_CAP = 8;
 const ATTRIBUTE_DEGREE_SCALE = 1.2;
 
+// 選択中（?focus=やクリック）のノードは、枠線の色・太さだけでなく
+// 形そのものも拡大する。密集したグラフの中でも「今フォーカスしている
+// ノードはどれか」が一目で分かるようにするため
+const SELECTED_SCALE = 1.35;
+
 const CLICK_TOLERANCE_PX = 6;
 
 // ラベルはチップの下に出す（Obsidianのグラフを参考に、チップ内へ
@@ -101,9 +114,15 @@ const CTP = {
   yellow: "#f9e2af",
 };
 
-const recordRadius = (node) => RECORD_BASE_RADIUS + Math.min(node.degree, RECORD_DEGREE_CAP) * RECORD_DEGREE_SCALE;
-const attributeHalfWidth = (node) =>
-  ATTRIBUTE_BASE_HALF_WIDTH + Math.min(node.degree, ATTRIBUTE_DEGREE_CAP) * ATTRIBUTE_DEGREE_SCALE;
+const recordRadius = (node, isSelected = false) => {
+  const base = RECORD_BASE_RADIUS + Math.min(node.degree, RECORD_DEGREE_CAP) * RECORD_DEGREE_SCALE;
+  return isSelected ? base * SELECTED_SCALE : base;
+};
+const attributeHalfWidth = (node, isSelected = false) => {
+  const base = ATTRIBUTE_BASE_HALF_WIDTH + Math.min(node.degree, ATTRIBUTE_DEGREE_CAP) * ATTRIBUTE_DEGREE_SCALE;
+  return isSelected ? base * SELECTED_SCALE : base;
+};
+const attributeHalfHeight = (isSelected = false) => (isSelected ? ATTRIBUTE_HALF_HEIGHT * SELECTED_SCALE : ATTRIBUTE_HALF_HEIGHT);
 
 /** linkのsource/targetは、シミュレーション開始後は文字列IDからノード本体への参照へ差し替わる */
 const linkEndpointId = (endpoint) => (typeof endpoint === "object" ? endpoint.id : endpoint);
@@ -134,7 +153,7 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
   let shapeBottom;
 
   if (isRecord) {
-    const radius = recordRadius(node);
+    const radius = recordRadius(node, selected);
 
     ctx.beginPath();
     ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
@@ -160,10 +179,11 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
 
     shapeBottom = node.y + radius;
   } else {
-    const halfWidth = attributeHalfWidth(node);
+    const halfWidth = attributeHalfWidth(node, selected);
+    const halfHeight = attributeHalfHeight(selected);
 
     ctx.beginPath();
-    ctx.roundRect(node.x - halfWidth, node.y - ATTRIBUTE_HALF_HEIGHT, halfWidth * 2, ATTRIBUTE_HALF_HEIGHT * 2, 6);
+    ctx.roundRect(node.x - halfWidth, node.y - halfHeight, halfWidth * 2, halfHeight * 2, 6);
     ctx.fillStyle = CTP.mantle;
     ctx.fill();
     ctx.lineWidth = borderWidth;
@@ -171,7 +191,7 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
     ctx.stroke();
 
     const icon = getNodeIconImage(node.type, visual.canvasColor);
-    const iconSize = Math.min(halfWidth, ATTRIBUTE_HALF_HEIGHT) * 1.15;
+    const iconSize = Math.min(halfWidth, halfHeight) * 1.15;
     if (icon) ctx.drawImage(icon, node.x - iconSize / 2, node.y - iconSize / 2, iconSize, iconSize);
 
     const recordCount = node.metadata?.recordCount ?? 0;
@@ -180,10 +200,10 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
       ctx.fillStyle = CTP.subtext0;
       ctx.textAlign = "right";
       ctx.textBaseline = "top";
-      ctx.fillText(String(recordCount), node.x + halfWidth - 2, node.y - ATTRIBUTE_HALF_HEIGHT + 1);
+      ctx.fillText(String(recordCount), node.x + halfWidth - 2, node.y - halfHeight + 1);
     }
 
-    shapeBottom = node.y + ATTRIBUTE_HALF_HEIGHT;
+    shapeBottom = node.y + halfHeight;
   }
 
   // ラベルは形（チップ）の内側へ詰め込まず、下へ出す。
@@ -204,18 +224,24 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
   ctx.restore();
 }
 
-/** onNodeClick等の当たり判定用。drawNodeと同じ形をベタ塗りするだけ */
-function paintNodePointerArea(node, color, ctx) {
+/**
+ * onNodeClick等の当たり判定用。drawNodeと同じ形をベタ塗りするだけ。
+ * 選択中ノードは表示上も拡大しているので、当たり判定もそれに合わせる
+ * （見た目だけ大きくして、クリック領域が元のサイズのままだと
+ * 「拡大された部分をクリックしても反応しない」ズレが生まれるため）
+ */
+function paintNodePointerArea(node, color, ctx, isSelected) {
   ctx.fillStyle = color;
   if (node.type === "record") {
-    const radius = recordRadius(node);
+    const radius = recordRadius(node, isSelected);
     ctx.beginPath();
     ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
     ctx.fill();
   } else {
-    const halfWidth = attributeHalfWidth(node);
+    const halfWidth = attributeHalfWidth(node, isSelected);
+    const halfHeight = attributeHalfHeight(isSelected);
     ctx.beginPath();
-    ctx.roundRect(node.x - halfWidth, node.y - ATTRIBUTE_HALF_HEIGHT, halfWidth * 2, ATTRIBUTE_HALF_HEIGHT * 2, 6);
+    ctx.roundRect(node.x - halfWidth, node.y - halfHeight, halfWidth * 2, halfHeight * 2, 6);
     ctx.fill();
   }
 }
@@ -224,17 +250,22 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
   const containerRef = useRef(null);
   const fgRef = useRef(null);
   const isDraggingRef = useRef(false);
-  const hasSettledRef = useRef(false);
-  // 収束前（開いた瞬間の追従アニメーション中）にユーザーがズーム・パン・
-  // ドラッグのいずれかに触れたら、以後は二度とカメラを自動フィットしない。
-  // onEngineTickは収束前は毎フレームzoomToFitを呼んでおり、これが
-  // 動き続けている間にユーザーがズーム・パンを試みても、次のtickで
-  // カメラが戻され「何も反応しない」ように見えてしまう不具合を踏んだ
-  // （旧実装ではアニメーション時間0＝即座に戻していたため特に顕著だった。
-  // ファイル冒頭の既知の不具合3も参照）。
+  // 開いた瞬間の追従アニメーション中（下記のrequestAnimationFrameループ）に
+  // ユーザーがズーム・パン・ドラッグのいずれかに触れたら、以後は二度と
+  // カメラを自動フィットしない。ループが動き続けている間にユーザーが
+  // ズーム・パンを試みても、次のフレームでカメラが戻され「何も反応しない」
+  // ように見えてしまう不具合を踏んだ。
   // ノードドラッグはisDraggingRefで個別に保護されていたが、背景パンは
   // 保護が無かった（d3-zoom側のドラッグ処理でありisDraggingRefの対象外）
   const userInteractedRef = useRef(false);
+  // 自前のrequestAnimationFrameループ（下記fitCamera呼び出し箇所参照）が
+  // 毎フレーム最新のselectedNodeIdを参照できるようにするためのref。
+  // ループを開始するuseEffectの依存配列には入れていない（selectedNodeId
+  // だけが変わった＝ノードクリックのたびに追従ループを再始動させたくない）
+  const selectedNodeIdRef = useRef(selectedNodeId);
+  useEffect(() => {
+    selectedNodeIdRef.current = selectedNodeId;
+  }, [selectedNodeId]);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [hoveredNodeId, setHoveredNodeId] = useState(null);
 
@@ -317,13 +348,6 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     return map;
   }, [links]);
 
-  // グラフのデータそのものが変わったら（フィルター変更など）、
-  // 次の収束を「開いた瞬間」として扱い、カメラを追従させ直す
-  useEffect(() => {
-    hasSettledRef.current = false;
-    userInteractedRef.current = false;
-  }, [nodes, links]);
-
   useEffect(() => {
     // 初回レンダーはsizeがまだ0のためForceGraph2D自体が描画されておらず
     // fgRef.currentがnull。sizeも依存配列に入れて、canvasが実際に
@@ -335,6 +359,67 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     fgRef.current.d3Force("charge")?.strength(FORCE_PARAMS.chargeStrength);
     fgRef.current.d3Force("collide", forceCollide(FORCE_PARAMS.collideRadius));
   }, [nodes, links, size.width, size.height]);
+
+  /**
+   * 収束時にカメラをどこへ合わせるか。
+   *
+   * ?focus=（RecordDetailPageの「Graphで見る」等）でノードが指定されて
+   * いる場合、グラフ全体ではなく「そのノード＋直接つながるノードだけ」
+   * にフィットさせる。全体にフィットすると、記録数が多いグラフでは
+   * フォーカス対象が豆粒のように小さくなり、周辺が見えないという
+   * 指摘を受けた（選択中ノードの拡大表示だけでは、カメラ自体が
+   * 引きすぎていると効果が薄い）。
+   *
+   * force-graph本体のzoomToFit(duration, padding, nodeFilter)は、
+   * 第3引数のnodeFilterをそのままgetGraphBbox（bounding box計算）へ
+   * 渡す設計になっている（node_modules/force-graph/dist/force-graph.mjs
+   * で確認）。これを使い、対象を絞り込んだ上でズーム倍率を計算させる。
+   */
+  const fitCamera = (duration, padding, focusId) => {
+    if (!focusId) {
+      fgRef.current?.zoomToFit(duration, padding);
+      return;
+    }
+    const neighborIds = adjacency.get(focusId);
+    fgRef.current?.zoomToFit(
+      duration,
+      padding,
+      (node) => node.id === focusId || (neighborIds?.has(node.id) ?? false),
+    );
+  };
+
+  // グラフのデータそのものが変わったら（フィルター変更や新しく開いた直後など）、
+  // 一定時間だけ自前でrequestAnimationFrameを回してfitCameraを毎フレーム
+  // 呼び続け、カメラを追従させる（ファイル冒頭の既知の不具合4参照。
+  // onEngineTick/onEngineStopが発火しないため代替した）。
+  // FOLLOW_DURATION_MSはd3AlphaDecayの既定値（0.0228）から、alphaが
+  // 実用上ほぼ0になるまでのおおよそのフレーム数を目安に、余裕を持たせて決めた。
+  useEffect(() => {
+    userInteractedRef.current = false;
+
+    const FOLLOW_DURATION_MS = 2000;
+    const startTime = performance.now();
+    let rafId = null;
+
+    const step = (now) => {
+      if (userInteractedRef.current) return;
+      if (!isDraggingRef.current) {
+        fitCamera(80, 40, selectedNodeIdRef.current);
+      }
+      if (now - startTime < FOLLOW_DURATION_MS) {
+        rafId = requestAnimationFrame(step);
+      } else if (!isDraggingRef.current) {
+        // フォーカスありのときは、少し狭めに絞った分だけ余白を広めにして
+        // （padding 80）、対象ノードだけがぎりぎり収まって窮屈にならないようにする
+        fitCamera(400, selectedNodeIdRef.current ? 80 : 40, selectedNodeIdRef.current);
+      }
+    };
+    rafId = requestAnimationFrame(step);
+    return () => {
+      if (rafId != null) cancelAnimationFrame(rafId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, links]);
 
   const visualContext = { selectedNodeId, hoveredNodeId, adjacency, interactive };
   // { nodes, links } をJSX内で直接書くと、hoverなど無関係な再描画のたびに
@@ -359,13 +444,14 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     return (
       nodes.find((node) => {
         if (node.x == null || node.y == null) return false;
+        const isSelected = node.id === selectedNodeId;
         if (node.type === "record") {
           const dx = node.x - x;
           const dy = node.y - y;
-          return Math.sqrt(dx * dx + dy * dy) <= recordRadius(node);
+          return Math.sqrt(dx * dx + dy * dy) <= recordRadius(node, isSelected);
         }
-        const halfWidth = attributeHalfWidth(node);
-        return Math.abs(node.x - x) <= halfWidth && Math.abs(node.y - y) <= ATTRIBUTE_HALF_HEIGHT;
+        const halfWidth = attributeHalfWidth(node, isSelected);
+        return Math.abs(node.x - x) <= halfWidth && Math.abs(node.y - y) <= attributeHalfHeight(isSelected);
       }) ?? null
     );
   };
@@ -400,7 +486,7 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
           height={size.height}
           backgroundColor="#08090a"
           nodeCanvasObject={(node, ctx, globalScale) => drawNode(node, ctx, globalScale, visualContext)}
-          nodePointerAreaPaint={paintNodePointerArea}
+          nodePointerAreaPaint={(node, color, ctx) => paintNodePointerArea(node, color, ctx, node.id === selectedNodeId)}
           linkColor={(link) => {
             const touchesHovered =
               hoveredNodeId &&
@@ -418,23 +504,6 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
           }}
           onNodeDragEnd={() => {
             isDraggingRef.current = false;
-          }}
-          onEngineTick={() => {
-            // 開いた瞬間の収束アニメーション中だけカメラを追従させる。
-            // ドラッグで再加熱した後や、ユーザーが一度でもズーム・パンに
-            // 触れた後は追従しない（ファイル冒頭のuserInteractedRefコメント参照）。
-            // アニメーション時間は80ms（ファイル冒頭の既知の不具合3参照）。
-            // 0（瞬間移動）だと、tickごとの一瞬だけ小さいbounding boxに
-            // 合わせて画面がカクッと巨大ズームインして見えることがあった。
-            // 短いアニメーションにすることで、tickをまたいだ目標値の変化を
-            // なめらかに追従するようになり、そのフラッシュを避けられる。
-            if (!hasSettledRef.current && !isDraggingRef.current && !userInteractedRef.current) {
-              fgRef.current?.zoomToFit(80, 40);
-            }
-          }}
-          onEngineStop={() => {
-            hasSettledRef.current = true;
-            if (!isDraggingRef.current && !userInteractedRef.current) fgRef.current?.zoomToFit(400, 40);
           }}
           enableNodeDrag={interactive}
           enableZoomInteraction={interactive}
