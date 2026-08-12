@@ -7,18 +7,13 @@
 
 プロダクトの目的・仕様・技術方針は、以下のドキュメントを参照してください。
 
-- @docs/vision.md
-- @docs/product-principles.md
+- @docs/product.md
 - @docs/mvp.md
 - @docs/design.md
 - @docs/domain-model.md
 - @docs/database.md
 - @docs/knowledge-graph.md
-- @docs/insights.md
-- @docs/search.md
-- @docs/entity-detail.md
-- @docs/stats.md
-- @docs/discover.md
+- @docs/features.md
 - @docs/architecture.md
 - @docs/api.md
 - @docs/implementation-plan.md
