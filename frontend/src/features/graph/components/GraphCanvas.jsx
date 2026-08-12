@@ -51,6 +51,19 @@ import { getNodeIconImage } from "../utils/canvasIcons";
  *    → sizeは「初回の非ゼロ計測値で固定し、以後ResizeObserverが発火しても
  *      更新しない」方式にする。ウィンドウの動的リサイズには追従しなくなるが、
  *      安定した操作性を優先する（下記のuseEffect参照）。
+ *
+ * 3. 収束中に一瞬だけノードが巨大化して見える
+ *    onEngineTickはノードがまだ広がりきっていない収束の途中経過でも
+ *    毎tick呼ばれる。以前はここで`zoomToFit(0, 40)`（アニメーション時間0
+ *    ＝即座に適用）を呼んでいた。force-graph本体のzoomToFit実装は、
+ *    呼ばれた瞬間のノードのbounding boxだけを見てズーム倍率を計算し、
+ *    即座に反映する。chargeStrengthが強い（-800）ため、開始直後は
+ *    ノード同士がまだ中心付近に固まっており、そのtickをちょうど
+ *    描画してしまうと、小さいbounding boxに合わせて一瞬だけ大きく
+ *    ズームインし、それが「ノードが巨大化する」フラッシュとして見える。
+ *    → onEngineTick側のzoomToFitにも短いアニメーション時間を持たせ
+ *      （下記のonEngineTick参照）、瞬間移動ではなくなめらかな追従に
+ *      した。「開いた瞬間にカメラが追従する」という狙い自体は変えない。
  */
 const FORCE_PARAMS = {
   linkDistance: 90,
@@ -214,10 +227,11 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
   const hasSettledRef = useRef(false);
   // 収束前（開いた瞬間の追従アニメーション中）にユーザーがズーム・パン・
   // ドラッグのいずれかに触れたら、以後は二度とカメラを自動フィットしない。
-  // onEngineTickは収束前は毎フレームzoomToFit(0, 40)を呼んでおり、
-  // これは即座に（アニメーション無しで）カメラを戻すため、収束前に
-  // ユーザーがズーム・パンを試みても1フレーム以内に元へ戻され、
-  // 「何も反応しない」ように見えてしまう不具合を踏んだ。
+  // onEngineTickは収束前は毎フレームzoomToFitを呼んでおり、これが
+  // 動き続けている間にユーザーがズーム・パンを試みても、次のtickで
+  // カメラが戻され「何も反応しない」ように見えてしまう不具合を踏んだ
+  // （旧実装ではアニメーション時間0＝即座に戻していたため特に顕著だった。
+  // ファイル冒頭の既知の不具合3も参照）。
   // ノードドラッグはisDraggingRefで個別に保護されていたが、背景パンは
   // 保護が無かった（d3-zoom側のドラッグ処理でありisDraggingRefの対象外）
   const userInteractedRef = useRef(false);
@@ -408,9 +422,14 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
           onEngineTick={() => {
             // 開いた瞬間の収束アニメーション中だけカメラを追従させる。
             // ドラッグで再加熱した後や、ユーザーが一度でもズーム・パンに
-            // 触れた後は追従しない（ファイル冒頭のuserInteractedRefコメント参照）
+            // 触れた後は追従しない（ファイル冒頭のuserInteractedRefコメント参照）。
+            // アニメーション時間は80ms（ファイル冒頭の既知の不具合3参照）。
+            // 0（瞬間移動）だと、tickごとの一瞬だけ小さいbounding boxに
+            // 合わせて画面がカクッと巨大ズームインして見えることがあった。
+            // 短いアニメーションにすることで、tickをまたいだ目標値の変化を
+            // なめらかに追従するようになり、そのフラッシュを避けられる。
             if (!hasSettledRef.current && !isDraggingRef.current && !userInteractedRef.current) {
-              fgRef.current?.zoomToFit(0, 40);
+              fgRef.current?.zoomToFit(80, 40);
             }
           }}
           onEngineStop={() => {
