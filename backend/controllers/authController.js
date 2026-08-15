@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import { validateRegister, validateLogin } from "../validators/authValidator.js";
 
 const createToken = (userId) => {
   return jwt.sign(
@@ -25,6 +26,11 @@ const createAuthResponse = (user) => {
 
 const registerUser = async (req, res) => {
   try {
+    const { valid, details } = validateRegister(req.body);
+    if (!valid) {
+      return res.status(400).json({ message: details[0].message, details });
+    }
+
     const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
@@ -32,12 +38,11 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // ハッシュ化はUser.js（pre-saveフック）が行う
     const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password,
     });
 
     res.status(201).json(createAuthResponse(user));
@@ -49,6 +54,11 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
+    const { valid, details } = validateLogin(req.body);
+    if (!valid) {
+      return res.status(400).json({ message: details[0].message, details });
+    }
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });

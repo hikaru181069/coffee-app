@@ -10,6 +10,7 @@ import "dotenv/config";
 
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 
 import coffeeRecordRoutes from "./routes/coffeeRecordRoutes.js";
 import masterDataRoutes from "./routes/masterDataRoutes.js";
@@ -23,6 +24,10 @@ import userRoutes from "./routes/userRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
+
+// X-Content-Type-Options・X-Frame-Options等、基本的なセキュリティヘッダーを
+// 妥当な既定値でまとめて付与する（Express公式が推奨する定番ミドルウェア）
+app.use(helmet());
 
 // corsで許可するフロントエンドurlを決める。
 // .filter(Boolean)は、からの値を取り除く。
