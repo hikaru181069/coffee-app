@@ -659,6 +659,20 @@ Tier 0に続き、認証まわりのセキュリティ基本装備を実装し�
 - `App.css`のもう1箇所の未参照MLB系CSS・`PageHeader.jsx`は引き続き未削除（Tier 0から持ち越し）
 - Tier 2以降は未着手
 
+### 2026-08: 「本番品質にするための改善」Tier 2（既知のレスポンシブ崩れ・表示一貫性の解消）
+
+Tier 1に続き、モバイル幅での既知の崩れと、Statsページ再設計時に取り残していた表示の一貫性を解消した。3項目とも実装前にユーザーへ内容を解説し、合意を得てから着手した。
+
+- `frontend/src/pages/HomePage.jsx`: DiscoverCard（左）とGraphPreview（右）を横並びにする`<div className="mt-6 flex gap-6">`に`lg`未満のブレークポイントが無く、モバイル幅（実測316px）でDiscoverCardが約90pxまで潰れ文章が1文字ずつ折り返る、実機確認済みの既知バグだった。`flex flex-col lg:flex-row`へ変更し、`lg`未満は縦積みにした。DiscoverCardの高さ固定（`h-[400px]`）も`lg:h-[400px]`へ変更し、縦積み時は`h-full`で自身のコンテンツに合わせて自然な高さになるようにした（GraphPreviewは元々`h-full`で内容量が変わらないため、高さは据え置き）
+- Statsページの`CollectionStats`グリッド（`grid-cols-2 sm:grid-cols-3`）と`BottomTabBar`（5タブ、`.bottom-tab { flex: 1 }`）は、ブラウザのウィンドウサイズを380×800へ実際に変更した上でDocker Compose環境を目視確認したところ、どちらも崩れなく表示されることを確認した（未解決事項からクローズ）
+- `frontend/src/pages/DiscoverPage.jsx`: loading（枠なしの2行スケルトン）とerror（赤文字1行のみ）を、Statsページ再設計で確立したパターンへ統一した。新規`features/discover/components/DiscoverSkeleton.jsx`（実際の構成＝産地見出し＋提案カードのグループ2つ、と同じ形の骨格）を作成し、エラー状態は`RecordsErrorState`をそのまま再利用。`features/discover/hooks/useAllDiscoverSuggestions.js`に`reload`を追加してretryボタンに繋いだ（`useStats.js`に追加したときと同じ`reloadKey`パターン）。空状態は元々dashed border付きの見た目になっており対象外
+- `frontend/lint`・`frontend/build`成功を確認
+- Docker Compose環境で実機確認: ウィンドウ幅380pxで、Home画面のDiscoverCard/GraphPreviewが縦積みになり文章が正常に折り返ること、BottomTabBarの5タブ・StatsのCollectionグリッドが崩れないこと、Discoverページの通常表示に問題が無いことを確認。DiscoverPage.jsxのloading/error状態は、Statsページで確認済みの同一パターンの再利用のためコードレビューでの確認に留めた
+
+未解決事項（次のエントリの「未解決事項」にも反映）:
+
+- Tier 3以降（スクリーンショット・アーキテクチャ図の追加、アクセシビリティ、フロントエンドのテスト基盤等）は未着手
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -765,6 +779,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 
 「本番品質」改善Tier 1（セキュリティの基本装備）時に`cd backend && npm test`を再実行し、Test Suites: 23 passed, Tests: 330 passed（authController/userController関連19件を含む）を確認済み。Docker Compose環境の実機（curl）でもhelmetヘッダー・rate limit・パスワードハッシュ化・バリデーションの動作を確認済み。
 
+「本番品質」改善Tier 2（既知のレスポンシブ崩れ・表示一貫性の解消）時は、フロントエンドのみの変更のため`cd backend && npm test`は未実施。`cd frontend && npm run lint && npm run build`の成功と、Docker Compose環境でウィンドウ幅380pxに実際にリサイズした上での目視確認を実施済み。
+
 ---
 
 ## 未解決事項
@@ -781,16 +797,12 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - 検索結果の属性カード一覧（`entities`）は現状recordCount順のみで、多数の属性がヒットしたときの上限や、さらに絞り込む手段は未実装
 - エンティティ詳細ページの関連属性は種別ごと最大5件まで。件数が多い属性（例: フレーバーが10種類以上共起する）を全部見る手段は未実装
 - Statsページは全期間の記録から計算しており、期間フィルター（直近3か月/今年など）は未実装（`docs/stats.md`の設計通り、Insightと同じく「記録全体のふりかえり」を示すための意図的な仕様だが、記録件数が増えた場合は要検討）
-- `BottomTabBar`のタブがStats追加で5個になった。ブラウザ自動化ツールでモバイル幅のビューポートを再現できず、狭い画面での折り返し・ラベル省略の見た目は未確認（実機での確認を推奨）
-- **Home画面のInsight/GraphPreview（`flex-[2]`/`flex-[5]`で横並び）が、モバイル幅（実測316px）で崩れる。** Insightカードの幅が約90pxまで潰れ、文章が単語ごとに折り返って読めなくなる不具合を実機確認済みだが、未修正のまま（`lg`未満で縦積みに戻すなどの対応が必要）
 - Discoverの提案（`docs/discover.md`）の「この産地を記録してみる」リンクは`/records/new`への単純な遷移で、産地の事前入力はしていない（`RecordForm`にプリフィル機構が無いため）
 - CQI参照データ（`backend/data/cqiDatabase.json`）は目安値であり、実際のCQIデータベースの正確な値を再現したものではない（開発環境に外部データセットを取得するネットワークアクセスが無いため。ファイル内コメントに明記済み）
 - `frontend/src/App.css`に、MLB時代のホーム画面（Team/Favorites/Recommendationsセクション、`player-list-carousel`等）向けの未参照CSSが別のブロックとしてもう1箇所残っている（2026-08に`.home-banner`等460行分は削除済みだが、`.home-player-section`等の同名クラスの別定義がまだ残存。`docs/mlb-legacy-inventory.md`参照）。JSXから一切参照されていないことは確認済みで、削除候補
 - `frontend/src/components/PageHeader.jsx`は、当初Records/RecordDetail等で再利用する想定だったが、現在どのページからもimportされていない死んだコンポーネントとして残っている（`docs/mlb-legacy-inventory.md`参照）。削除候補
 - `docs/features.md`のStats節（表示する情報・Response Shape）が、Statsページの3段構成＋Collectionセクション追加（`collection`オブジェクトの新設、`overview`からの型数フィールド移動）に未追随。内容の加筆はユーザー本人が書く方針のため、まだ更新していない
-- `frontend/src/pages/DiscoverPage.jsx`が、Statsページ再設計前と同じ簡易版のloading/empty/error表示（1行スケルトン・枠なしエラー等）のまま。Statsページで確立した`RecordListStates.jsx`パターンへの追随が済んでいない
 - `HomeVsCafeCard.jsx`と対応するi18nキー（`stats.homeVsCafeHeading`）・APIの`homeVsCafe`フィールドは、Statsページの3段構成からは表示を外したが、削除せず残している（将来の再導入候補）。当面はコード上に存在するが画面には出ない状態が続く
-- Statsページの「Collection」セクション（農園数など）が、モバイル幅の`grid-cols-2`折り返しで崩れないかは、ブラウザ自動化ツールの制約で未検証（上記のBottomTabBar・Insight/GraphPreviewと同じ既知の制約）
 - `/api/auth/*`（register/loginそのもののエラー）と`/api/users/*`（`authenticate`ミドルウェアの401等）でエラー応答の形式が異なる（前者は`{message}`、後者は`{error: {code, message, details}}`）。frontendの`errorMessage.js`が前者の英語メッセージ文字列をそのまま照合する仕組みに依存しているため、今回は統一を見送った（上記Tier 1エントリ参照）
 - `npm audit`で`body-parser`・`brace-expansion`・`js-yaml`・`mongoose`・`qs`に脆弱性が出ている（1 low, 2 moderate, 2 high）。今回追加した依存（helmet/express-rate-limit）とは無関係な既存の間接依存で、`npm audit fix`で解決できるかは未検証
 - `userController.js`の`findOneAndUpdate`が使う`new`オプションはMongooseの非推奨警告が出ている（`returnDocument: "after"`への置き換えが必要。動作には影響なし）
@@ -799,16 +811,13 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. **Home画面のInsight/GraphPreviewをモバイル幅で縦積みに戻す**（上記の未解決事項。実機で崩れを確認済みの既知バグ）
-2. `docs/features.md`のStats節を、今回のStatsページ再設計（3段構成・Collectionセクション）に合わせて更新する（内容はユーザー本人が加筆）
-3. `DiscoverPage.jsx`のloading/empty/error表示を、Statsページで確立した`RecordListStates.jsx`パターンへ揃える
-4. `BottomTabBar`（5タブ化）をモバイル実機またはエミュレータで見た目確認する（Statsページの新しいCollectionグリッドも含む）
-5. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
-6. Discoverの「この産地を記録してみる」を、産地を事前入力した状態で`/records/new`へ渡せるようにする
-7. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
-8. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
-9. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
-10. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
-11. `npm audit`の脆弱性（body-parser/brace-expansion/js-yaml/mongoose/qs）を`npm audit fix`で解決できるか調査する
-12. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
-13. 「本番品質にするための改善」ロードマップのTier 2以降（既知のレスポンシブ崩れの解消、スクリーンショット追加、アクセシビリティ、フロントエンドのテスト基盤）に着手する（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`参照）
+1. `docs/features.md`のStats節を、今回のStatsページ再設計（3段構成・Collectionセクション）に合わせて更新する（内容はユーザー本人が加筆）
+2. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+3. Discoverの「この産地を記録してみる」を、産地を事前入力した状態で`/records/new`へ渡せるようにする
+4. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
+5. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
+6. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
+7. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
+8. `npm audit`の脆弱性（body-parser/brace-expansion/js-yaml/mongoose/qs）を`npm audit fix`で解決できるか調査する
+9. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
+10. 「本番品質にするための改善」ロードマップのTier 3以降（スクリーンショット・アーキテクチャ図の追加、アクセシビリティ、フロントエンドのテスト基盤）に着手する（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`参照）

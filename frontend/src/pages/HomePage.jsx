@@ -177,12 +177,15 @@ function HomePage() {
           コンテナ幅に収まらず横スクロールが発生していたため、コンテナの
           幅いっぱいに広がるよう、元の400:1000の比率（2:5）でflex-growさせる。
           高さは両カードとも400pxで揃える。DiscoverCardはInsightの一文と
-          Discoverの導線を1枚のカードにまとめたもの（ユーザーと相談して決定） */}
-      <div className="mt-6 flex gap-6">
-        <div className="h-[400px] min-w-0 flex-[2]">
+          Discoverの導線を1枚のカードにまとめたもの（ユーザーと相談して決定）。
+          `lg`未満は横並びのままだとDiscoverCardが極端に狭くなり文章が
+          1文字ずつ折り返る不具合が実機で確認されたため、`lg`未満は
+          縦積み（高さ固定を外し、それぞれ内容に応じた高さにする） */}
+      <div className="mt-6 flex flex-col gap-6 lg:flex-row">
+        <div className="min-w-0 lg:h-[400px] lg:flex-[2]">
           <DiscoverCard />
         </div>
-        <div className="h-[400px] min-w-0 flex-[5]">
+        <div className="h-[400px] min-w-0 lg:flex-[5]">
           <GraphPreview />
         </div>
       </div>
