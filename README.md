@@ -8,18 +8,19 @@
 ## 目次
 
 1. [Overview](#overview)
-2. [Demo](#demo)
-3. [Core Experience](#core-experience)
-4. [Features](#features)
-5. [Architecture](#architecture)
-6. [Tech Stack](#tech-stack)
-7. [Data Model](#data-model)
-8. [Knowledge Graph](#knowledge-graph)
-9. [Setup](#setup)
-10. [Environment Variables](#environment-variables)
-11. [Testing](#testing)
-12. [Design Decisions](#design-decisions)
-13. [Future Work](#future-work)
+2. [Screenshots](#screenshots)
+3. [Demo](#demo)
+4. [Core Experience](#core-experience)
+5. [Features](#features)
+6. [Architecture](#architecture)
+7. [Tech Stack](#tech-stack)
+8. [Data Model](#data-model)
+9. [Knowledge Graph](#knowledge-graph)
+10. [Setup](#setup)
+11. [Environment Variables](#environment-variables)
+12. [Testing](#testing)
+13. [Design Decisions](#design-decisions)
+14. [Future Work](#future-work)
 
 ---
 
@@ -30,6 +31,20 @@
 主な対象は、スペシャルティコーヒーに興味を持ち始めた人、自宅とカフェの両方でコーヒーを飲む人、詳しい専門知識はないが自分の好みを知りたい人です。豆を購入するECサイトや、専門家向けの厳密なカッピング管理システムではありません。
 
 詳しくは [`docs/product.md`](docs/product.md) を参照してください。
+
+## Screenshots
+
+| Home | Records |
+| --- | --- |
+| ![Home画面。最近の記録とDiscover・知識グラフへの導線](docs/screenshots/home.jpg) | ![Records画面。検索・フィルター付きの記録一覧](docs/screenshots/records.jpg) |
+
+| Record Detail | Graph |
+| --- | --- |
+| ![記録詳細画面。産地・精製方法・フレーバーとのつながりを1-hopの図で表示](docs/screenshots/record-detail.jpg) | ![Graph画面。知識グラフ全体とノード選択時のサイドパネル](docs/screenshots/graph.jpg) |
+
+**Stats**
+
+![Stats画面。記録のペース・Collection・味の傾向の3セクション構成](docs/screenshots/stats.jpg)
 
 ## Demo
 
@@ -54,26 +69,36 @@ Password: coffeedemo123
 
 ## Features
 
+**MVPの中心機能**
+
 - **認証** — 新規登録・ログイン・ログアウト・JWTによる認証状態の維持
 - **Coffee Records** — 記録の一覧・作成・詳細・編集・削除。home/cafeの2種別、フィルター（記録タイプ・評価）とページネーション
 - **Knowledge Graph** — 自分の記録から導出される知識グラフ。ノードのズーム/パン、種別フィルター、ノード選択による詳細・関連記録の表示、記録詳細画面との相互遷移
 - **Master Data** — 産地・品種・精製方法・焙煎度・フレーバーの参照データ。表記揺れを防ぎ、同じ概念を1つのノードへ統合する
 - **Home / Profile** — 最近の記録とグラフへの導線を持つホーム画面、名前変更・パスワード変更・退会を行える最小限のプロフィール画面
 
+**MVP完成後に追加した機能**（[`docs/features.md`](docs/features.md)）
+
+- **Insights** — 記録データの傾向をルールベースで検出し、「エチオピア産かつナチュラル精製を高く評価する傾向があります」のような一文で提示する。自由記述の`notes`は読まず、構造化データの集計のみで組み立てる（AI・自然言語処理ではない）
+- **Search** — 記録・産地・農園・品種・精製方法・フレーバー・カフェを横断して検索し、よく共起する別の属性もあわせて表示する
+- **Entity Detail** — 産地やフレーバーなど、知識グラフのノード1件について統計・関連する他の属性・関連記録をまとめて見せる専用ページ。関連属性のチップ自体もリンクになっており、産地→品種→フレーバーとページ間を渡り歩ける
+- **Stats** — これまでの記録を「記録のペース」「Collection（試した種類数）」「味の傾向」の3セクションで振り返るページ
+- **Discover** — CQI（Coffee Quality Institute）の参考データと知識グラフの隣接関係を使い、「よく選んでいる精製方法で、まだ試していない産地」を提案する
+
 Out of Scope（MVPでは扱わない）: AI推薦、自然言語による味覚分析、SNS・フォロー、カフェ口コミ、EC連携、画像認識。詳細は [`docs/mvp.md`](docs/mvp.md) を参照してください。
 
 ## Architecture
 
-```text
-React / Vite
-    |
-    | HTTPS / JSON
-    v
-Express API        ← 外部公開APIの唯一の入口。認証・CRUD・入力検証
-    |
-    +---- MongoDB
-    |
-    +---- FastAPI   ← DBに依存しない計算のみ（MVPでは未使用）
+```mermaid
+flowchart LR
+    Frontend["React / Vite<br/>（画面表示・フォーム・知識グラフ描画）"]
+    Express["Express API<br/>（認証・CRUD・入力検証）"]
+    Mongo[("MongoDB")]
+    FastAPI["FastAPI<br/>（DB非依存の計算。MVPでは未使用）"]
+
+    Frontend -->|HTTPS / JSON| Express
+    Express --> Mongo
+    Express -.-> FastAPI
 ```
 
 - **React** — UI・ルーティング・フォーム・API状態・知識グラフの描画
@@ -92,11 +117,12 @@ coffee-app/
 ├── frontend/src/
 │   ├── features/
 │   │   ├── coffee-records/    記録機能のAPI・hooks・components
-│   │   └── graph/             知識グラフのAPI・adapters・hooks・components
+│   │   ├── graph/             知識グラフのAPI・hooks・components（react-force-graph-2d）
+│   │   ├── insights/ discover/ search/ stats/   個別機能ごとに同じ構成
 │   ├── pages/                 ルート単位の画面
 │   └── components/            複数機能で共有するUI
 ├── backend/
-│   ├── core/graph/            知識グラフ生成の純粋関数（DB/HTTP非依存）
+│   ├── core/graph/ insights/ discover/ search/ stats/   機能ごとの純粋関数（DB/HTTP非依存）
 │   ├── routes/ controllers/ services/ repositories/ models/ validators/
 │   └── seeds/                 マスターデータ・デモデータの投入
 ├── fastapi-service/           FastAPI（ヘルスチェックのみの最小構成）
@@ -108,7 +134,7 @@ coffee-app/
 | レイヤー | 技術 |
 | --- | --- |
 | Frontend | React 19 / Vite / React Router / Tailwind CSS |
-| 知識グラフ描画 | React Flow (`@xyflow/react`) / d3-force |
+| 知識グラフ描画 | react-force-graph-2d（canvas描画 + d3-force） |
 | Backend | Node.js / Express 5（ES Modules） |
 | Database | MongoDB / Mongoose |
 | 計算サービス | Python / FastAPI |
@@ -157,7 +183,7 @@ frontend・backend とも ES Modules を使用します。採用理由と落と�
 
 1. 認証済みuserIdでCoffeeRecordを取得し、マスターデータをpopulateする
 2. `backend/core/graph/graphBuilder.js`（DB/HTTPに依存しない純粋関数）が、`record:{id}` のような種別プレフィックス付きのstable IDでノードを重複排除し、edgeを生成する
-3. フロントエンドの `features/graph/adapters/` が、React Flowが要求する形式へ変換する。座標計算は d3-force を使い、データが変わったときに一度だけ収束させる（インタラクティブな物理シミュレーションにはしない）
+3. フロントエンドの `features/graph/components/GraphCanvas.jsx` が、そのJSONをそのまま `react-force-graph-2d` へ渡す。座標計算・レイアウトは内蔵の d3-force（chargeStrength / linkDistance / collideRadius を調整）が担い、ノードのドラッグ操作にも反応してその場で再計算する（一度きりの静的レイアウトではなく、常時稼働する物理シミュレーション）。ノードの見た目（アイコン・色・当たり判定）はcanvasへ自前で描画している（`utils/nodeVisuals.js` / `utils/canvasIcons.js`）
 
 ノード種別（record / origin / farm / variety / process / roastLevel / flavor）は色だけでなくアイコン・形状でも区別しています。詳細は [`docs/knowledge-graph.md`](docs/knowledge-graph.md)・[`docs/design.md`](docs/design.md) を参照してください。
 
@@ -247,15 +273,18 @@ cd fastapi-service && ../.venv/bin/pytest    # pytest
 
 ## Design Decisions
 
-**mlb-appから再利用したもの** — このリポジトリは、同じ構成（React + Vite / Express + JWT認証 / MongoDB / FastAPI / Docker Compose）で先に作った [mlb-app](https://github.com/hikaru181069/mlb-app) を土台にしています。認証（register/login/JWT発行）、`app.js`/`server.js` の分離、共通UI（ErrorCard・SkeletonCard・PageHeader・ProtectedRoute・Navbarのレスポンシブ構造）、Docker/CI構成をそのまま流用しました。
+**mlb-appから再利用したもの** — このリポジトリは、同じ構成（React + Vite / Express + JWT認証 / MongoDB / FastAPI / Docker Compose）で先に作った [mlb-app](https://github.com/hikaru181069/mlb-app) を土台にしています。認証（register/login/JWT発行）、`app.js`/`server.js` の分離、共通UI（ErrorCard・SkeletonCard・ProtectedRoute・Navbarのレスポンシブ構造）、Docker/CI構成をそのまま流用しました。
 
 **新しく設計し直したもの** — CoffeeRecordとマスターデータのモデル・API・知識グラフはすべて新規設計です。特に以下は当初の想定から実装中に判断を変えた点です。
 
 - **知識グラフをDBへ二重保存しない** — `graphNodes`/`graphEdges` コレクションを持たず、CoffeeRecordから都度導出する設計にしました。MVPのデータ量では生成コストが問題にならず、記録更新のたびにグラフを同期する複雑さを避けられるためです（[`docs/database.md`](docs/database.md)）。
 - **知識グラフの変換はExpress内の純粋関数** — FastAPIへ処理を分離する具体的な利点（既存のfastApiServiceパターンでの計算委譲）がMVPでは無く、サービス間通信を増やさない判断をしました。
-- **グラフ描画ライブラリの選定** — React Flow / react-force-graph / Cytoscape.js を比較し、React Flowを採用しました。決め手は「ノード＝Reactコンポーネント」という設計で、ノード種別を色だけでなく形状・アイコンでも区別する要件をJSXで自然に実装できる点です。
+- **グラフ描画ライブラリの選定と乗り換え** — 最初は「ノード＝Reactコンポーネント」という設計に惹かれてReact Flowを採用しましたが、自前のd3-force統合と組み合わせるとドラッグ中にカメラ制御とノード描画が競合してちらつく不具合が直らず、2度の修正でも解消しませんでした。canvas描画・物理演算をライブラリ内部に閉じ込められる `react-force-graph-2d` へ置き換え、ドラッグ中の座標更新はライブラリに任せる設計へ変更しました。
 
-**苦労した点** — 知識グラフのノード自動選択（記録詳細画面の「Graphで見る」）を実装した際、既存のページ遷移アニメーション（`location.key` を使い、どんなナビゲーションでもページ全体を再マウントする仕組み）と、URLを書き換える処理が衝突し、選択した直後に状態が消えるバグに遭遇しました。原因は「URLの書き換えがReact Routerの新しいナビゲーションとして扱われ、ページごと再マウントされていた」ことで、`window.history.replaceState` を直接使うことでReact Routerのナビゲーションを介さずにURLだけを更新する形に直して解決しました。
+**苦労した点**
+
+- **知識グラフのノード自動選択** — 記録詳細画面の「Graphで見る」を実装した際、既存のページ遷移アニメーション（`location.key` を使い、どんなナビゲーションでもページ全体を再マウントする仕組み）と、URLを書き換える処理が衝突し、選択した直後に状態が消えるバグに遭遇しました。原因は「URLの書き換えがReact Routerの新しいナビゲーションとして扱われ、ページごと再マウントされていた」ことで、`window.history.replaceState` を直接使うことでReact Routerのナビゲーションを介さずにURLだけを更新する形に直して解決しました。
+- **`react-force-graph-2d` の未文書化の挙動** — 乗り換え後も、`onNodeClick`/`onBackgroundClick` がほぼ発火しない、`width`/`height` を明示的に渡すとズーム・ドラッグが効かなくなる、カメラ追従用の `onEngineTick`/`onEngineStop` が実際には力学シミュレーションが動いているにもかかわらず一度も呼ばれない、といった複数の不具合に遭遇しました。いずれもライブラリ本体（`force-graph`）のソースを直接読んで原因を特定し、クリック判定を自前のpointerdown/pointerup比較で置き換える、canvasサイズを初回計測値で固定する、カメラ追従を自前の`requestAnimationFrame`ループへ置き換える、という形でそれぞれ回避しました（詳細は `frontend/src/features/graph/components/GraphCanvas.jsx` 冒頭のコメント参照）。
 
 ## Future Work
 

@@ -681,6 +681,25 @@ Statsページ・Record詳細ページで行ったmax-width調整（`max-w-3xl`�
 - `frontend/lint`・`frontend/build`成功を確認
 - Docker Compose環境で実機確認: EntityDetailPage（産地ページ）・DiscoverPageともに、stat cardグリッドやカードが間延びせず、左右の余白が改善されていることを確認
 
+### 2026-08: 「本番品質にするための改善」Tier 3（README技術面の修正・スクリーンショット・アーキテクチャ図の追加）
+
+Tier 3（ポートフォリオとしての見せ方）に着手する前にREADME.mdを読み直したところ、Architecture/Tech Stack/Knowledge Graphの各セクションが「知識グラフ描画にReact Flow (`@xyflow/react`)を使用」と記載したままであることに気づいた。実際には`feat/graph-dynamic-visuals`（React Flow版、Tier 0で削除済み）から`react-force-graph-2d`へ置き換え済みで、記述がコードと矛盾していた。スクリーンショットを追加する前に、この技術的な正確さを直すべきと判断し、ユーザーに確認の上で先に対応した。
+
+- README.mdの技術記述を実装に合わせて修正:
+  - Tech Stack表: 「React Flow (`@xyflow/react`) / d3-force」→「react-force-graph-2d（canvas描画 + d3-force）」
+  - Knowledge Graphセクション: 存在しない`features/graph/adapters/`への言及を削除し、`GraphCanvas.jsx`が実際に行っている描画フロー（react-force-graph-2dへJSONをそのまま渡し、ドラッグにも反応する常時稼働の物理シミュレーション）に書き換え
+  - Design Decisions: 「React Flowを採用した」という記述を、実際の経緯（最初はReact Flowを採用→ドラッグ時のちらつきが2度の修正でも解消せず→react-force-graph-2dへ乗り換え）に修正。乗り換え後に遭遇した未文書化の挙動（クリック判定・リサイズ・カメラ追従、いずれも本セッションでライブラリ本体のソースを読んで対処済み）を「苦労した点」に追加
+  - ディレクトリ構成: 存在しない`adapters/`を削除し、実際に存在するfeature（insights/discover/search/stats）を追加
+  - Featuresセクション: MVP後に追加したInsights・Search・Entity Detail・Stats・Discoverが一切記載されていなかったため追加（`docs/features.md`の内容に基づく）
+  - 再利用コンポーネントの一覧から`PageHeader`を削除（実際は未使用の死んだコンポーネント）
+- ArchitectureのASCIIテキスト図をMermaidのflowchartへ置き換えた（GitHub上で図として自動描画される。ユーザーと相談し、画像ファイルではなくMermaidを選択）
+- 主要5画面（Home / Records / Record Detail / Graph / Stats）のスクリーンショットを実際にDocker Compose環境（デモユーザー）で撮影し、`docs/screenshots/`へ保存。READMEに新設した「Screenshots」セクション（目次にも追加）へ表形式で埋め込んだ。Graph画面はノードを選択しサイドパネルが開いた状態、Record Detail画面はConnections図が見える状態で撮影し、単なる一覧以上の情報が伝わるようにした
+
+未解決事項（次のエントリの「未解決事項」にも反映）:
+
+- Tier 3の残り項目（`docs/features.md`のStats節更新。内容はユーザー本人が書く方針のため未着手）
+- Tier 4（アクセシビリティ）・Tier 5（フロントエンドのテスト基盤）は未着手
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -788,6 +807,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 「本番品質」改善Tier 1（セキュリティの基本装備）時に`cd backend && npm test`を再実行し、Test Suites: 23 passed, Tests: 330 passed（authController/userController関連19件を含む）を確認済み。Docker Compose環境の実機（curl）でもhelmetヘッダー・rate limit・パスワードハッシュ化・バリデーションの動作を確認済み。
 
 「本番品質」改善Tier 2（既知のレスポンシブ崩れ・表示一貫性の解消）時は、フロントエンドのみの変更のため`cd backend && npm test`は未実施。`cd frontend && npm run lint && npm run build`の成功と、Docker Compose環境でウィンドウ幅380pxに実際にリサイズした上での目視確認を実施済み。
+
+「本番品質」改善Tier 3（README技術面の修正・スクリーンショット・アーキテクチャ図）時は、コード変更を伴わないため（README.md・画像ファイルのみ）`cd backend && npm test`は対象外。`cd frontend && npm run lint && npm run build`の成功のみ確認済み（Markdown/画像の変更でも既存コードに影響が無いことの確認として実施）。
 
 ---
 
