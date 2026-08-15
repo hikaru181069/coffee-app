@@ -31,7 +31,7 @@ function DiscoverPage() {
 
   if (isLoading) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
         <DiscoverSkeleton />
       </div>
     );
@@ -39,14 +39,14 @@ function DiscoverPage() {
 
   if (error) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
         <RecordsErrorState error={error} onRetry={reload} />
       </div>
     );
   }
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+    <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
       <header className="mb-6">
         <h1 className="text-xl font-bold text-ctp-text">Discover</h1>
         <p className="mt-1 text-sm text-ctp-subtext0">{t("discover.pageSubtitle")}</p>
