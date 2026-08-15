@@ -58,6 +58,20 @@ const groupByCafe = (records) => {
   return groups;
 };
 
+/**
+ * farmNameもcafeNameと同じくマスター化していない自由記述（docs/domain-model.md
+ * 「Farm / Cafe」参照）。Collectionの「農園の種類数」はランキング表示を持たない
+ * ため、cafeのようなラベル付きMapではなく正規化済み名前のSetだけで十分。
+ */
+const groupByFarm = (records) => {
+  const set = new Set();
+  for (const record of records) {
+    if (!record.farmName) continue;
+    set.add(normalizeName(record.farmName));
+  }
+  return set;
+};
+
 const topN = (groups, limit) =>
   [...groups.entries()]
     .map(([id, { label, count }]) => ({ id, label, count }))
@@ -115,15 +129,23 @@ export const buildStats = (records) => {
   const processGroups = groupBySingleRef(records, (record) => record.process, processNodeId);
   const flavorGroups = groupByMultiRef(records, (record) => record.flavors, flavorNodeId);
   const cafeGroups = groupByCafe(records);
+  const farmNames = groupByFarm(records);
 
   return {
     overview: {
       recordCount: records.length,
-      originCount: originGroups.size,
-      varietyCount: varietyGroups.size,
-      flavorCount: flavorGroups.size,
       avgRating: roundTo1(average(ratingsOf(records))),
       firstRecordedAt: findFirstRecordedAt(records),
+    },
+    // 「試した種類数」は記録の頻度（overview）とは別の問いなので分けている
+    // （frontend/src/pages/StatsPage.jsxの「Collection」セクション参照）
+    collection: {
+      originCount: originGroups.size,
+      varietyCount: varietyGroups.size,
+      processCount: processGroups.size,
+      farmCount: farmNames.size,
+      cafeCount: cafeGroups.size,
+      flavorCount: flavorGroups.size,
     },
     topOrigins: topN(originGroups, TOP_N),
     topVarieties: topN(varietyGroups, TOP_N),

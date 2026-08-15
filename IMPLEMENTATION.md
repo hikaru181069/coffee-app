@@ -592,6 +592,33 @@ Record詳細ページの「Graphで見る」やRecords一覧・検索結果か�
 - `frontend/lint`・`frontend/build`成功を確認
 - Docker Compose環境で実機確認: `/graph?focus=record:...`で開くと、フォーカス対象ノード（拡大表示済み）とその隣接ノードだけが画面に収まるようズームされることを確認。`focus`無しの`/graph`は従来通りグラフ全体にフィットすることを確認。グラフ画面上でノードをクリックして選択する操作は、この自動フィットの対象外のままカメラを動かさないことも確認（既存の挙動を変えていない）
 
+### 2026-08: Statsページを3段構成へ再設計し、Collection（試した種類数）セクションを追加
+
+Statsページのテーマとして「記録したコーヒーから、自分の飲み方や味覚傾向を振り返る」という依頼。従来はOverview（6枚のカード）・月次推移・評価分布・家とカフェの比較・5種のランキングがフラットに並んでいるだけで、ローディング・空・エラー状態もRecords/RecordDetailページの再設計で確立したパターン（`RecordListStates.jsx`のdashed border空状態・retryボタン付きエラー等）に追随できていなかった。
+
+ユーザーとの相談の結果、以下の方針で実装した:
+
+- ページ構成を「記録のペース → Collection → 味の傾向」の3段構成にする（RecordDetailPageの`divide-y`によるセクション区切りと同じ思想）。「記録のペース」は既存のOverview（記録数・平均評価・記録を始めてからの日数）＋月次推移、「味の傾向」は評価分布＋5種のランキング
+- 新設の「Collection」は、産地・品種・精製方法・農園・カフェ・フレーバーそれぞれの「試した種類数」を見せるセクション（ユーザー提案）。農園名(`farmName`)はマスター化していない自由記述項目（`docs/domain-model.md`「Farm / Cafe」参照）のため、表記ゆれ対策として既存の`backend/utils/normalizeName.js`（`graphBuilder.js`がfarmNodeIdで、`statsBuilder.js`がcafeNodeIdで既に使っている、全角スペース・大小文字・前後の空白のみを吸収する軽い正規化。ハイフン等のあいまい一致は意図的にしない方針）を再利用した
+- 現行の「家とカフェの比較」（`HomeVsCafeCard.jsx`）は今回は表示から外した。コンポーネント・i18nキー・バックエンドの`homeVsCafe`フィールドは削除せず残し、将来の再導入候補とした
+- デスクトップで実機確認した際、他ページ共通の`max-w-3xl`（768px）だと左右の余白が広すぎるとの指摘。`RecordsPage.jsx`が`max-w-[900px]`、`HomePage.jsx`が`max-w-[1480px]`という具合に、ページごとの中身の密度に応じて個別の`max-w-[Npx]`を使う既存の慣習に倣い、Statsは`max-w-[1100px]`にした（3列のstat cardグリッド・2列のランキンググリッドが間延びしすぎない範囲で、Recordsよりは横に余裕を持たせた）。同じ相談の流れで、Record詳細ページ（`RecordDetailPage.jsx`）も`max-w-3xl`→`max-w-[900px]`に広げた（Notesの自由記述文が読みにくくなるほど広げたくなかったため、一覧の`RecordsPage.jsx`と同じ幅に揃えるに留めた。フォーム画面`RecordFormPage.jsx`は今回対象外）
+
+実装内容:
+
+- `backend/core/stats/statsBuilder.js`: `overview`から`originCount`/`varietyCount`/`flavorCount`を削除し、`recordCount`/`avgRating`/`firstRecordedAt`のみに縮小。新設の`collection`オブジェクト（`originCount`/`varietyCount`/`processCount`/`farmCount`/`cafeCount`/`flavorCount`）を追加。`processCount`・`cafeCount`は既存の`processGroups`/`cafeGroups`（従来`topN`にしか使っていなかった）の`.size`を使うだけで済んだ。`farmCount`のみ新規に`groupByFarm`ヘルパー（`normalizeName`で正規化した`Set`）を追加
+- `backend/tests/statsBuilder.test.js`: `overview`/`collection`のアサーションを新形状に更新し、`farmName`の表記ゆれ（全角スペース・大文字小文字・前後の空白）が1件に統合されることを検証するテストケースを追加
+- フロントエンド（`frontend/src/features/stats/components/`）: `StatCard.jsx`を新規切り出し（`OverviewStats.jsx`と`CollectionStats.jsx`で共有）。`OverviewStats.jsx`は3枚のカードのみに縮小。`CollectionStats.jsx`を新規作成（6枚のカード）。`MonthlyTrendChart.jsx`/`RatingDistributionChart.jsx`の見出しを`h2`→`h3`に格下げし、`MonthlyTrendChart.jsx`は見出しをカード枠の内側へ移動（従来`RatingDistributionChart.jsx`と構造が食い違っていた）。`TopRankingList.jsx`は変更なし（既に同じ見出しレベル）
+- `StatsSkeleton.jsx`・`StatsEmptyState.jsx`を新規作成し、`RecordListStates.jsx`（`RecordListSkeleton`・`RecordsEmptyState`）と同じ見た目パターンに揃えた。エラー状態は新規コンポーネントを作らず`RecordsErrorState`をそのまま再利用。`useStats.js`に`reload`（retryボタン用）を追加
+- `frontend/src/pages/StatsPage.jsx`: state分岐を`StatsSkeleton`/`RecordsErrorState`/`StatsEmptyState`へ差し替え、3つの`<section>`（`divide-y divide-ctp-surface1`区切り）へ再編
+- i18n（ja/en）: `stats.paceHeading`/`stats.collectionHeading`/`stats.tasteHeading`/`stats.emptyTitle`を追加。`stats.collectionHeading`は`DiscoverPage.jsx`の"Discover"と同じ言語非依存のブランド語として扱い、ja/en共通で"Collection"のまま（翻訳しない）。`stats.overview.originCount`等を`stats.collection.*`へ移動し、`processCount`/`farmCount`/`cafeCount`を新規追加
+- `cd backend && npm test`: 21 suites / 311 tests すべて成功（`statsBuilder.test.js`の更新分含む）。`cd frontend && npm run lint && npm run build`成功
+- Docker Compose環境で実機確認: 3セクション構成・区切り線・Collectionの6項目の数値が正しく表示されることを確認。ja/en切り替えで新規見出し・"Collection"表記が崩れないことを確認。ネットワークエラー時に`RecordsErrorState`とretryボタンが表示されることを確認。モバイル幅の折り返しは、ブラウザ自動化ツールの制約でウィンドウリサイズが画面に反映されず未検証（既存の未解決事項と同様、実機での確認を推奨）
+
+今回のスコープには含めなかった点:
+
+- `docs/features.md`のStats節（表示する情報・Response Shape）は今回の変更に合わせた更新が必要。以前のdocs書き直しプロジェクトでの合意（内容はユーザー本人が書き、書式のみこちらで整える）を踏襲し、内容の加筆はユーザーに委ねる
+- `frontend/src/pages/DiscoverPage.jsx`は、StatsPageと同じ簡易版のloading/empty/error表示のままで、今回揃えていない（次に実装すべき最小単位に記載）
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -692,6 +719,8 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 
 統計ページ（`feat/stats-page`）追加時に`cd backend && npm test`を再実行し、Test Suites: 19 passed, Tests: 286 passed（stats関連13件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み。
 
+Statsページの3段構成＋Collectionセクション追加時に`cd backend && npm test`を再実行し、Test Suites: 21 passed, Tests: 311 passed（statsBuilder関連14件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み。
+
 ---
 
 ## 未解決事項
@@ -714,16 +743,22 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 - Discoverの提案（`docs/discover.md`）の「この産地を記録してみる」リンクは`/records/new`への単純な遷移で、産地の事前入力はしていない（`RecordForm`にプリフィル機構が無いため）
 - CQI参照データ（`backend/data/cqiDatabase.json`）は目安値であり、実際のCQIデータベースの正確な値を再現したものではない（開発環境に外部データセットを取得するネットワークアクセスが無いため。ファイル内コメントに明記済み）
 - `frontend/src/App.css`の`.home-banner`（サイドバー幅を打ち消す`margin-left: -13rem`を含む）は、サイドバー廃止後もどのJSXからも参照されていない死んだCSSのまま残っている。削除候補
+- `docs/features.md`のStats節（表示する情報・Response Shape）が、Statsページの3段構成＋Collectionセクション追加（`collection`オブジェクトの新設、`overview`からの型数フィールド移動）に未追随。内容の加筆はユーザー本人が書く方針のため、まだ更新していない
+- `frontend/src/pages/DiscoverPage.jsx`が、Statsページ再設計前と同じ簡易版のloading/empty/error表示（1行スケルトン・枠なしエラー等）のまま。Statsページで確立した`RecordListStates.jsx`パターンへの追随が済んでいない
+- `HomeVsCafeCard.jsx`と対応するi18nキー（`stats.homeVsCafeHeading`）・APIの`homeVsCafe`フィールドは、Statsページの3段構成からは表示を外したが、削除せず残している（将来の再導入候補）。当面はコード上に存在するが画面には出ない状態が続く
+- Statsページの「Collection」セクション（農園数など）が、モバイル幅の`grid-cols-2`折り返しで崩れないかは、ブラウザ自動化ツールの制約で未検証（上記のBottomTabBar・Insight/GraphPreviewと同じ既知の制約）
 
 ## 次に実装すべき最小単位
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
 1. **Home画面のInsight/GraphPreviewをモバイル幅で縦積みに戻す**（上記の未解決事項。実機で崩れを確認済みの既知バグ）
-2. `BottomTabBar`（5タブ化）をモバイル実機またはエミュレータで見た目確認する
-3. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
-4. Discoverの「この産地を記録してみる」を、産地を事前入力した状態で`/records/new`へ渡せるようにする
-5. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
-6. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
-7. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
-8. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
+2. `docs/features.md`のStats節を、今回のStatsページ再設計（3段構成・Collectionセクション）に合わせて更新する（内容はユーザー本人が加筆）
+3. `DiscoverPage.jsx`のloading/empty/error表示を、Statsページで確立した`RecordListStates.jsx`パターンへ揃える
+4. `BottomTabBar`（5タブ化）をモバイル実機またはエミュレータで見た目確認する（Statsページの新しいCollectionグリッドも含む）
+5. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+6. Discoverの「この産地を記録してみる」を、産地を事前入力した状態で`/records/new`へ渡せるようにする
+7. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
+8. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
+9. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
+10. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加

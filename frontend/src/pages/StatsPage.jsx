@@ -2,11 +2,13 @@ import { useTranslation } from "react-i18next";
 
 import { useStats } from "../features/stats/hooks/useStats";
 import OverviewStats from "../features/stats/components/OverviewStats";
+import CollectionStats from "../features/stats/components/CollectionStats";
 import MonthlyTrendChart from "../features/stats/components/MonthlyTrendChart";
 import RatingDistributionChart from "../features/stats/components/RatingDistributionChart";
-import HomeVsCafeCard from "../features/stats/components/HomeVsCafeCard";
 import TopRankingList from "../features/stats/components/TopRankingList";
-import { getErrorMessage } from "../utils/errorMessage";
+import StatsSkeleton from "../features/stats/components/StatsSkeleton";
+import StatsEmptyState from "../features/stats/components/StatsEmptyState";
+import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 
 const RANKING_TYPES = ["origin", "variety", "process", "flavor", "cafe"];
 const RANKING_KEYS = {
@@ -24,32 +26,37 @@ const daysSince = (isoDate) => {
 };
 
 /**
- * これまでの記録をふりかえる統計ページ（docs/stats.md参照）。
+ * これまでの記録をふりかえる統計ページ（docs/features.md「Stats」参照）。
  *
  * Insight機能（「エチオピア産かつナチュラル精製を高く評価する傾向」の
  * ような一文）が"意味づけ"担当なのに対し、Statsは生の集計値・ランキングを
  * 見せる担当。両者は補完関係にあり、どちらもrecords（core/insights,
  * core/stats）から同じ集計パターンで導出している。
+ *
+ * 「記録したコーヒーから、自分の飲み方や味覚傾向を振り返る」というテーマを
+ * 反映し、情報をフラットに並べるのではなく3つの問いに分けている
+ * （RecordDetailPageのdivide-yによるセクション区切りと同じ思想）:
+ *   1. 記録のペース: どれだけ・どんな頻度で記録しているか
+ *   2. Collection: 何種類の産地・品種・精製方法・農園・カフェ・
+ *      フレーバーを試したか
+ *   3. 味の傾向: 評価はどう分布し、何を繰り返し選んでいるか
  */
 function StatsPage() {
   const { t, i18n } = useTranslation();
-  const { stats, isLoading, error } = useStats();
+  const { stats, isLoading, error, reload } = useStats();
 
   if (isLoading) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-        <div className="flex flex-col gap-2" aria-busy="true">
-          <div className="skeleton-block h-6 w-1/3 rounded" />
-          <div className="skeleton-block h-24 w-full rounded" />
-        </div>
+      <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
+        <StatsSkeleton />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-        <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>
+      <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
+        <RecordsErrorState error={error} onRetry={reload} />
       </div>
     );
   }
@@ -58,34 +65,48 @@ function StatsPage() {
 
   if (stats.overview.recordCount === 0) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-        <h1 className="mb-2 text-xl font-bold text-ctp-text">{t("stats.heading")}</h1>
-        <p className="text-sm text-ctp-subtext0">{t("stats.emptyDesc")}</p>
+      <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
+        <header className="mb-6">
+          <h1 className="text-xl font-bold text-ctp-text">{t("stats.heading")}</h1>
+        </header>
+        <StatsEmptyState />
       </div>
     );
   }
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+    <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
       <header className="mb-6">
         <h1 className="text-xl font-bold text-ctp-text">{t("stats.heading")}</h1>
         <p className="mt-1 text-sm text-ctp-subtext0">{t("stats.subtitle")}</p>
       </header>
 
-      <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} t={t} />
+      <div className="flex flex-col divide-y divide-ctp-surface1">
+        <section className="pb-6">
+          <h2 className="mb-4 text-sm font-semibold text-ctp-text">{t("stats.paceHeading")}</h2>
+          <div className="flex flex-col gap-4">
+            <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} t={t} />
+            <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} t={t} />
+          </div>
+        </section>
 
-      <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} t={t} />
+        <section className="py-6">
+          <h2 className="mb-4 text-sm font-semibold text-ctp-text">{t("stats.collectionHeading")}</h2>
+          <CollectionStats collection={stats.collection} t={t} />
+        </section>
 
-      <section className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <RatingDistributionChart distribution={stats.ratingDistribution} t={t} />
-        <HomeVsCafeCard homeVsCafe={stats.homeVsCafe} t={t} />
-      </section>
-
-      <section className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {RANKING_TYPES.map((type) => (
-          <TopRankingList key={type} type={type} items={stats[RANKING_KEYS[type]]} t={t} />
-        ))}
-      </section>
+        <section className="pt-6">
+          <h2 className="mb-4 text-sm font-semibold text-ctp-text">{t("stats.tasteHeading")}</h2>
+          <div className="flex flex-col gap-6">
+            <RatingDistributionChart distribution={stats.ratingDistribution} t={t} />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {RANKING_TYPES.map((type) => (
+                <TopRankingList key={type} type={type} items={stats[RANKING_KEYS[type]]} t={t} />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchStats } from "../api/statsApi";
 
 /**
  * 統計を取得する。
  *
  * features/insights/hooks/useInsights.js と同じloading/error/dataの3状態
- * 構成。フィルターを持たないため、マウント時に1回だけ取得する。
+ * 構成。フィルターを持たないため、マウント時と`reload()`呼び出し時のみ取得する。
  */
 export const useStats = () => {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -32,7 +33,9 @@ export const useStats = () => {
     load();
 
     return () => controller.abort();
-  }, []);
+  }, [reloadKey]);
 
-  return { stats, isLoading, error };
+  const reload = useCallback(() => setReloadKey((key) => key + 1), []);
+
+  return { stats, isLoading, error, reload };
 };

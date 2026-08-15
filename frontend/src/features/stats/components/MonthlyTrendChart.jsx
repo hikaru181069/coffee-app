@@ -9,9 +9,9 @@ function MonthlyTrendChart({ monthlyTrend, language, t }) {
   const maxCount = Math.max(...monthlyTrend.map((entry) => entry.count));
 
   return (
-    <section className="mb-6">
-      <h2 className="mb-3 text-sm font-semibold text-ctp-text">{t("stats.monthlyTrendHeading")}</h2>
-      <div className="flex items-end gap-3 overflow-x-auto rounded-xl border border-ctp-surface1 bg-ctp-mantle p-4">
+    <section className="rounded-xl border border-ctp-surface1 bg-ctp-mantle p-4">
+      <h3 className="mb-3 text-xs font-semibold text-ctp-subtext0">{t("stats.monthlyTrendHeading")}</h3>
+      <div className="flex items-end gap-3 overflow-x-auto">
         {monthlyTrend.map((entry) => (
           <div key={entry.month} className="flex flex-shrink-0 flex-col items-center gap-1.5">
             <span className="font-mono text-xs text-ctp-subtext1">{entry.count}</span>

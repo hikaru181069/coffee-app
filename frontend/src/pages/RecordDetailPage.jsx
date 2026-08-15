@@ -67,7 +67,7 @@ function RecordDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
         <div className="skeleton-block h-4 w-32 rounded" />
         <div className="skeleton-block mt-4 h-8 w-2/3 rounded" />
         <div className="skeleton-block mt-6 h-40 w-full rounded-xl" />
@@ -77,7 +77,7 @@ function RecordDetailPage() {
 
   if (error) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
         {error.isNotFound ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
             <p className="text-sm font-medium text-ctp-text">{t("records.notFoundTitle")}</p>
@@ -105,7 +105,7 @@ function RecordDetailPage() {
   const hasConnections = Boolean(record.origin || record.process || record.roastLevel || flavors.length > 0);
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+    <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
       {/* ── Breadcrumb ───────────────────────────── */}
       <nav aria-label={t("records.breadcrumbAriaLabel")} className="flex items-center gap-1.5 text-sm">
         <Link
