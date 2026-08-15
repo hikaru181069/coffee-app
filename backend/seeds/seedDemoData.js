@@ -1,5 +1,3 @@
-import bcrypt from "bcryptjs";
-
 import User from "../models/User.js";
 import CoffeeRecord from "../models/CoffeeRecord.js";
 import Origin from "../models/Origin.js";
@@ -29,11 +27,11 @@ const findOrCreateDemoUser = async () => {
   const existing = await User.findOne({ email: DEMO_USER_EMAIL });
   if (existing) return { user: existing, created: false };
 
-  const hashedPassword = await bcrypt.hash(DEMO_USER_PASSWORD, 10);
+  // ハッシュ化はUser.js（pre-saveフック）が行う
   const user = await User.create({
     name: DEMO_USER_NAME,
     email: DEMO_USER_EMAIL,
-    password: hashedPassword,
+    password: DEMO_USER_PASSWORD,
   });
 
   return { user, created: true };

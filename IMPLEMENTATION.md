@@ -619,6 +619,46 @@ Statsページのテーマとして「記録したコーヒーから、自分の
 - `docs/features.md`のStats節（表示する情報・Response Shape）は今回の変更に合わせた更新が必要。以前のdocs書き直しプロジェクトでの合意（内容はユーザー本人が書き、書式のみこちらで整える）を踏襲し、内容の加筆はユーザーに委ねる
 - `frontend/src/pages/DiscoverPage.jsx`は、StatsPageと同じ簡易版のloading/empty/error表示のままで、今回揃えていない（次に実装すべき最小単位に記載）
 
+### 2026-08: 「本番品質にするための改善」Tier 0（不要ファイル・死んだコードの削除）
+
+「このアプリを本番品質にするための改善計画を立ててください」という依頼を受け、コード衛生状態・テスト/CI/セキュリティ・デプロイ/ドキュメント/アクセシビリティの3方向を並行調査し、6段階のTierに分けた改善ロードマップを作成（プランファイルとして保存）。ユーザーの指示でTier 0（低リスク・高インパクトな削除）から着手した。
+
+- 調査（`docs/mlb-legacy-inventory.md`の「削除候補」棚卸し）: backend/frontend/fastapi-serviceそれぞれ、削除候補として記載されていたファイルが実際にまだ存在するか1件ずつ確認したところ、**全項目すでに削除済み**であることが判明。ドキュメントだけが古いまま矛盾していた
+- `frontend/public/`直下の未参照画像を調査したところ、`yozo.png`・`logo-pop.JPG`の2枚がgit管理下に残っていた（`public/images/`配下の写真群は`.gitignore`で最初から除外されておりポートフォリオには含まれないため対象外と判断）。コードから一切参照されていないことを確認の上、`git rm`で削除
+- `frontend/src/App.css`の`.home-banner`（サイドバー幅を打ち消す`margin-left: -13rem`等）を調査したところ、直接の対象クラスだけでなく、同じ「Home画面のMLBダッシュボード」セクション一式（`.home-quick-strip`・`.team-dashboard`・`.team-next-*`等）がJSXから一切参照されないまま合計464行残っていることが判明。全てのクラス名をgrepで未参照確認した上でまとめて削除（想定していた「`.home-banner`約30箇所」より大きい範囲になったため、削除後にユーザーへ経緯を報告した）。lint/build成功、CSSバンドルサイズが174.58KB→168.16KBに縮小したことでも裏付けを確認
+  - 削除後、**別の場所（1882行目付近）にも同名クラス（`.home-player-section`等）の異なる定義が残っている**ことが判明。こちらは規模がさらに大きく今回は対応せず、未解決事項・次に実装すべき最小単位に申し送った
+- `feat/graph-dynamic-visuals`ブランチ（React Flow版の旧グラフ実装、mainに未マージ・ローカルのみ・8コミット）を、破壊的操作であることをユーザーに確認した上で`git branch -D`で削除
+- `docs/mlb-legacy-inventory.md`を、「削除候補」列挙のドキュメントから「削除済みの記録」へ書き換えた。あわせて、今回新たに見つかった`PageHeader.jsx`（どのページからも使われていない死んだコンポーネント）と、App.cssの残存分についても記載を追加
+- `frontend/lint`・`frontend/build`成功を確認
+- Docker Compose環境での実機確認は未実施（CSS削除・ブランチ削除・画像削除のみで、UIの見た目に影響する変更が無いため、lintとbuildの成功で十分と判断した）
+
+未解決事項（次のエントリの「未解決事項」にも反映）:
+
+- `App.css`のもう1箇所の未参照MLB系CSS（`.home-player-section`等）は未削除
+- `PageHeader.jsx`は未削除
+- Tier 2以降（既知のレスポンシブ崩れの解消、スクリーンショット追加、アクセシビリティ、フロントエンドのテスト基盤）は未着手。プランファイル（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`）に詳細あり
+
+### 2026-08: 「本番品質にするための改善」Tier 1（セキュリティの基本装備）
+
+Tier 0に続き、認証まわりのセキュリティ基本装備を実装した。5項目とも実装前にユーザーへ内容を解説し、合意を得てから着手した。
+
+- `backend/app.js`: `helmet`を導入（`app.use(helmet())`を最上流に追加）。`X-Content-Type-Options`・`X-Frame-Options`等の基本的なセキュリティヘッダーが付与されることを、実際に起動したサーバーへ`curl -sD -`して確認した
+- `backend/routes/authRoutes.js`: `express-rate-limit`を導入し、`/register`・`/login`を共有のlimiter（15分あたり10回/IP）で保護した。Jestの実行時は自動的に`NODE_ENV=test`になることを利用し、`skip: () => process.env.NODE_ENV === "test"`でテスト実行時のみ無効化（supertestが同一IPから大量にリクエストするため）。実際にログインへ12回連続でリクエストを送り、途中から`429`が返ることを確認した
+- パスワードハッシュ化を`backend/models/User.js`へ集約。`userSchema.pre("save", ...)`フックを追加し、`isModified("password")`のときだけ`bcrypt.hash`する設計にした。調査の結果、`bcrypt.hash`の呼び出しは`authController.js`（新規登録）・`userController.js`（パスワード変更）に加え、`seeds/seedDemoData.js`（デモユーザー作成）にも独立して存在しており、想定していた「将来のリスク」ではなく**既に3箇所に分散していた**ことが分かった。3箇所とも呼び出しを削除し、プレーンなパスワードをモデルへ渡すだけにした
+  - 実装中、Mongooseのasync pre-hookに`next`引数を渡すと`next is not a function`で全テストがコケる不具合を作り込んだ（async関数のpre-hookはPromiseの解決をもって完了とみなす仕様で、`next`は渡されない）。`next()`の呼び出しを削除して修正
+- `backend/validators/authValidator.js`を新規作成し、`validateRegister`/`validateLogin`を`coffeeRecordValidator.js`と同じ`{valid, details}`パターンで実装。ただし応答形式はAppError/`validationError()`（`{error: {code, message, details}}`）へは寄せず、`authController.js`が元々使っていた`{message}`形式のまま`{message: details[0].message, details}`を返すようにした。理由: `frontend/src/utils/errorMessage.js`が"Invalid email or password"等の特定の英語文字列をそのまま照合する`LEGACY_MESSAGE_KEYS`という仕組みに依存しており、応答形式を変えるとフロントエンドの表示が壊れる（既存APIの互換性を理由なく壊さない、というCLAUDE.mdのルールに従った）。この非対称性（`/api/users/*`の401はAppError形式、認証エラー自体は旧形式）は解消せず、未解決事項に記載した
+- `backend/tests/authController.test.js`・`backend/tests/userController.test.js`を新規作成。register/loginの正常系・異常系（重複メール・不正なメール形式・短すぎるパスワード等）、プロフィール更新・パスワード変更（新パスワードでログインでき、かつ二重ハッシュ化されていないことを実際のログインで確認）・退会（自分の記録も削除されること、削除後は同じトークンが使えなくなること）をカバー
+- `cd backend && npm test`: 23 suites / 330 tests すべて成功（新規19件を含む）
+- Docker Compose環境で実機確認: 新しい依存（`helmet`・`express-rate-limit`）がコンテナ内にインストールされておらず`ERR_MODULE_NOT_FOUND`で一時的にクラッシュしたため、`docker compose exec backend npm install helmet express-rate-limit`で追いインストールして復旧。その後、helmetヘッダーの付与・rate limitの429・デモユーザー（既存のハッシュ済みパスワード）が変更後も問題なくログインできること・新規登録時のバリデーションエラー・登録直後のアカウント削除、をすべて実機のcurlで確認した
+
+未解決事項（次のエントリの「未解決事項」にも反映）:
+
+- `/api/auth/*`（認証エラー自体）と`/api/users/*`（`authenticate`ミドルウェアの401等）でエラー応答の形式が異なったまま（前者は`{message}`、後者は`{error: {code, message, details}}`）。全面的に統一するにはfrontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要なため、今回は見送った
+- `npm audit`で`body-parser`・`brace-expansion`・`js-yaml`・`mongoose`・`qs`の脆弱性（1 low, 2 moderate, 2 high）が出ているが、いずれも今回追加した依存とは無関係な既存の間接依存。`npm audit fix`で直せるかは未検証
+- `userController.js`の`updateProfile`が使っている`findOneAndUpdate`の`new`オプションはMongooseの非推奨警告が出ている（`returnDocument: "after"`への置き換えが必要。動作には影響なし）
+- `App.css`のもう1箇所の未参照MLB系CSS・`PageHeader.jsx`は引き続き未削除（Tier 0から持ち越し）
+- Tier 2以降は未着手
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -721,6 +761,10 @@ Insight機能（`feat/insights`）追加時に`cd backend && npm test`を再実�
 
 Statsページの3段構成＋Collectionセクション追加時に`cd backend && npm test`を再実行し、Test Suites: 21 passed, Tests: 311 passed（statsBuilder関連14件を含む）を確認済み。`cd frontend && npm run lint && npm run build`もあわせて成功を確認済み。
 
+「本番品質」改善Tier 0（不要ファイル削除）時は、バックエンドのコード変更が無いため`cd backend && npm test`は未実施。`cd frontend && npm run lint && npm run build`の成功のみ確認済み。
+
+「本番品質」改善Tier 1（セキュリティの基本装備）時に`cd backend && npm test`を再実行し、Test Suites: 23 passed, Tests: 330 passed（authController/userController関連19件を含む）を確認済み。Docker Compose環境の実機（curl）でもhelmetヘッダー・rate limit・パスワードハッシュ化・バリデーションの動作を確認済み。
+
 ---
 
 ## 未解決事項
@@ -733,7 +777,6 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - FastAPIサービスは現状ヘルスチェックのみで、コーヒードメインの実処理を持たない（`docs/architecture.md`の方針通りの意図的な状態であり、バグではない）
 - 知識グラフの`dateFrom` / `dateTo`フィルターはAPI・純粋関数側には実装済みだが、フロントエンドのフィルターUIには未反映
 - Space Monoは評価・日付・グラフの件数にのみ適用済み。`RecordsPage`の件数表示（`records.countLabel`）など、他の数値表示への適用可否は未判断
-- `feat/graph-dynamic-visuals`（React Flow版、放棄済み。`feat/graph-force-graph-2d`は2026-08にmain済み）は削除候補
 - Insightの優先度選択（`insightBuilder.js`のPRIORITY）は現状固定順。ユーザーの記録傾向によっては同じ種類のInsightばかり出続ける可能性があり、「全件見る」画面や表示の入れ替わりは未実装
 - 検索結果の属性カード一覧（`entities`）は現状recordCount順のみで、多数の属性がヒットしたときの上限や、さらに絞り込む手段は未実装
 - エンティティ詳細ページの関連属性は種別ごと最大5件まで。件数が多い属性（例: フレーバーが10種類以上共起する）を全部見る手段は未実装
@@ -742,11 +785,15 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - **Home画面のInsight/GraphPreview（`flex-[2]`/`flex-[5]`で横並び）が、モバイル幅（実測316px）で崩れる。** Insightカードの幅が約90pxまで潰れ、文章が単語ごとに折り返って読めなくなる不具合を実機確認済みだが、未修正のまま（`lg`未満で縦積みに戻すなどの対応が必要）
 - Discoverの提案（`docs/discover.md`）の「この産地を記録してみる」リンクは`/records/new`への単純な遷移で、産地の事前入力はしていない（`RecordForm`にプリフィル機構が無いため）
 - CQI参照データ（`backend/data/cqiDatabase.json`）は目安値であり、実際のCQIデータベースの正確な値を再現したものではない（開発環境に外部データセットを取得するネットワークアクセスが無いため。ファイル内コメントに明記済み）
-- `frontend/src/App.css`の`.home-banner`（サイドバー幅を打ち消す`margin-left: -13rem`を含む）は、サイドバー廃止後もどのJSXからも参照されていない死んだCSSのまま残っている。削除候補
+- `frontend/src/App.css`に、MLB時代のホーム画面（Team/Favorites/Recommendationsセクション、`player-list-carousel`等）向けの未参照CSSが別のブロックとしてもう1箇所残っている（2026-08に`.home-banner`等460行分は削除済みだが、`.home-player-section`等の同名クラスの別定義がまだ残存。`docs/mlb-legacy-inventory.md`参照）。JSXから一切参照されていないことは確認済みで、削除候補
+- `frontend/src/components/PageHeader.jsx`は、当初Records/RecordDetail等で再利用する想定だったが、現在どのページからもimportされていない死んだコンポーネントとして残っている（`docs/mlb-legacy-inventory.md`参照）。削除候補
 - `docs/features.md`のStats節（表示する情報・Response Shape）が、Statsページの3段構成＋Collectionセクション追加（`collection`オブジェクトの新設、`overview`からの型数フィールド移動）に未追随。内容の加筆はユーザー本人が書く方針のため、まだ更新していない
 - `frontend/src/pages/DiscoverPage.jsx`が、Statsページ再設計前と同じ簡易版のloading/empty/error表示（1行スケルトン・枠なしエラー等）のまま。Statsページで確立した`RecordListStates.jsx`パターンへの追随が済んでいない
 - `HomeVsCafeCard.jsx`と対応するi18nキー（`stats.homeVsCafeHeading`）・APIの`homeVsCafe`フィールドは、Statsページの3段構成からは表示を外したが、削除せず残している（将来の再導入候補）。当面はコード上に存在するが画面には出ない状態が続く
 - Statsページの「Collection」セクション（農園数など）が、モバイル幅の`grid-cols-2`折り返しで崩れないかは、ブラウザ自動化ツールの制約で未検証（上記のBottomTabBar・Insight/GraphPreviewと同じ既知の制約）
+- `/api/auth/*`（register/loginそのもののエラー）と`/api/users/*`（`authenticate`ミドルウェアの401等）でエラー応答の形式が異なる（前者は`{message}`、後者は`{error: {code, message, details}}`）。frontendの`errorMessage.js`が前者の英語メッセージ文字列をそのまま照合する仕組みに依存しているため、今回は統一を見送った（上記Tier 1エントリ参照）
+- `npm audit`で`body-parser`・`brace-expansion`・`js-yaml`・`mongoose`・`qs`に脆弱性が出ている（1 low, 2 moderate, 2 high）。今回追加した依存（helmet/express-rate-limit）とは無関係な既存の間接依存で、`npm audit fix`で解決できるかは未検証
+- `userController.js`の`findOneAndUpdate`が使う`new`オプションはMongooseの非推奨警告が出ている（`returnDocument: "after"`への置き換えが必要。動作には影響なし）
 
 ## 次に実装すべき最小単位
 
@@ -759,6 +806,9 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 5. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
 6. Discoverの「この産地を記録してみる」を、産地を事前入力した状態で`/records/new`へ渡せるようにする
 7. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
-8. `feat/graph-dynamic-visuals`（React Flow版、放棄済み）ブランチを削除する
+8. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
 9. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
 10. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
+11. `npm audit`の脆弱性（body-parser/brace-expansion/js-yaml/mongoose/qs）を`npm audit fix`で解決できるか調査する
+12. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
+13. 「本番品質にするための改善」ロードマップのTier 2以降（既知のレスポンシブ崩れの解消、スクリーンショット追加、アクセシビリティ、フロントエンドのテスト基盤）に着手する（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`参照）

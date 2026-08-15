@@ -54,7 +54,8 @@ const changePassword = async (req, res) => {
       return res.status(401).json({ message: "Current password is incorrect" });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    // ハッシュ化はUser.js（pre-saveフック）が行う
+    user.password = newPassword;
     await user.save();
 
     res.json({ message: "Password updated successfully" });
