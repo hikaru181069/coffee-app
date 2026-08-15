@@ -1,17 +1,15 @@
 # MLB Legacy Inventory
 
-coffee-app は mlb-app を土台として再利用している。
-このファイルは、**コーヒードメインでは使わないが、まだ削除していない**
-mlb-app 由来のコードを一覧にしたもの。
+coffee-app は mlb-app を土台として再利用した。
+このファイルは元々、**コーヒードメインでは使わないが、まだ削除していない**
+mlb-app 由来のコードを一覧にしたもの（bootstrap時点の棚卸し）だった。
 
-`prompts/00-repository-bootstrap.md` の
-「MLB固有機能は、依存関係を確認せず一括削除しない / 不要機能は一覧化し、
-削除は別コミットまたは別作業に分ける」に従い、bootstrap では削除しない。
+2026-08、「本番品質にするための改善」の一環で棚卸しをやり直したところ、
+以下に記載していた**削除候補はbackend / frontend / fastapi-serviceすべて
+既に削除済み**であることを確認した（`ls`・`grep`で実ファイルの有無を
+1件ずつ確認）。このファイルは今後、過去の記録として残す。
 
-棚卸しの実施タイミング: `prompts/06-portfolio-polish.md`
-（「不要なconsole.log、死んだコード、MLB固有コードの整理」）
-
-## 判断の基準
+## 判断の基準（当時の分類）
 
 | 区分 | 意味 | 扱い |
 | --- | --- | --- |
@@ -21,97 +19,90 @@ mlb-app 由来のコードを一覧にしたもの。
 
 ## backend
 
-### 再利用（残す）
+### 再利用した（現存）
 
 | ファイル | 役割 |
 | --- | --- |
 | `app.js` / `server.js` | アプリ組み立てと起動の分離（DB無しでsupertestできる構造） |
 | `config/db.js` | MongoDB接続 |
-| `models/User.js` | 認証ユーザー（`favoriteTeam` / `hasCompletedOnboarding` はMLB固有、Phase 1で整理） |
+| `models/User.js` | 認証ユーザー |
 | `controllers/authController.js` | register / login / JWT発行 |
-| `routes/authRoutes.js` | 認証ルート |
-| `middleware/authMiddleware.js` | `protect`（JWT検証 → `req.user`） |
-| `services/fastApiService.js` | FastAPI呼び出しのパターン（timeout + フォールバック）。中身のMLB関数は削除候補 |
-| `tests/app.test.js` | 404ハンドラのテストのみ再利用可 |
+| `middleware/authenticate.js` | JWT検証 → `req.user`（旧`authMiddleware.js`から改名） |
+| `services/fastApiService.js` | FastAPI呼び出しのパターン（timeout + フォールバック） |
 
-### 削除候補
+### 削除済み（2026-08確認）
 
-| 種別 | 対象 | 件数 |
-| --- | --- | --- |
-| controllers | `archetype` `compare` `externalPlayer` `favorite` `game` `interaction` `league` `matchup` `news` `player` `position` `recommendation` `scout` `similarPlayer` `stats` `team` | 16 |
-| routes | 上記に対応する `*Routes.js` | 16 |
-| models | `Player.js` `FavoritePlayer.js` `Interaction.js` | 3 |
-| services | `mlb/` 配下すべて | 17 |
-| services | `recommendations/` 配下すべて | 6 |
-| services | `mlbApiService.js` `recommendationService.js` `interactionService.js` | 3 |
-| services | `cacheService.js`（Redis。MVPの要件に無い） | 1 |
-| middleware | `uploadMiddleware.js`（アバター画像アップロード。MVP対象外） | 1 |
-| data | `players.js` `oaa_2026.csv` `sprint_speed_2026.csv` `arm_strength_2006.csv` `catcher_framing_2026.csv` | 5 |
-| script | `seedPlayers.js`（Phase 1 のマスターデータseedで置換） | 1 |
-| tests | `playerFormatter.test.js` | 1 |
-| 依存 | `ioredis`（cacheService削除時）、`multer`（uploadMiddleware削除時） | 2 |
+以下はすべて実在しないことを確認済み: `controllers/`配下のMLB系16種
+（archetype/compare/externalPlayer/favorite/game/interaction/league/
+matchup/news/player/position/recommendation/scout/similarPlayer/stats/team）
+と対応する`routes/`16種、`models/Player.js` `FavoritePlayer.js`
+`Interaction.js`、`services/mlb/`・`services/recommendations/`配下一式、
+`mlbApiService.js` `recommendationService.js` `interactionService.js`
+`cacheService.js`、`middleware/uploadMiddleware.js`、
+`data/players.js`と各種CSV、`seedPlayers.js`（`seeds/run.js`・
+`seeds/runDemo.js`へ置換済み）、`tests/playerFormatter.test.js`。
+依存パッケージの`ioredis`・`multer`も`package.json`に存在しない。
 
-`controllers/userController.js` と `routes/userRoutes.js` は
-プロフィール更新として再利用できるが、`favoriteTeam` などMLB固有項目を含むため **置換** 扱い。
+`controllers/userController.js`・`routes/userRoutes.js`は、当時の想定通り
+コーヒードメイン向けに置換済み（`favoriteTeam`等のMLB固有項目は無い）。
 
 ## frontend
 
-### 再利用（残す）
+### 再利用した（現存）
 
 `utils/apiConfig.js` / `utils/authStorage.js` / `utils/datetime.js` /
 `services/api/apiError.js` / `services/api/authApi.js` /
 `components/ProtectedRoute.jsx` / `contexts/ToastContext.jsx` /
 `components/ErrorCard.jsx` / `components/SkeletonCard.jsx` /
-`components/SearchInput.jsx` / `components/PageHeader.jsx` /
-`components/Navbar.jsx` + `components/BottomTabBar.jsx`（レスポンシブ構造のみ。項目はコーヒー版へ）
+`components/SearchInput.jsx` /
+`components/Navbar.jsx` + `components/BottomTabBar.jsx`
 
-### 削除候補
+`components/PageHeader.jsx`は再利用予定だったが、実際には
+どのページからも使われていない死んだコンポーネントとして残っている
+（IMPLEMENTATION.mdの未解決事項参照。削除候補）。
 
-| 種別 | 対象 | 件数 |
-| --- | --- | --- |
-| pages | `Archetype` `Compare` `Discover` `ExternalPlayers` `FavoriteEdit` `Favorites` `ForYou` `Game` `Home` `League` `Matchup` `News` `OnboardingFavorites` `PlayerDetail` `Players` `Position` `Positions` `Prospects` `Recommendations` `Scout` `Search` `Stats` `Team` ほか | 約26 |
-| services/api | `authApi` `userApi` `apiError` 以外すべて | 16 |
-| components | `PlayerCard` `ExternalPlayerCard` `FavoritePlayerCard` `PlayerForm` `PlayerSearchSelect` `PlayerSection` `PlayerStats` `PlayerYearByYear` `ScoreCard` `TeamCard` `NewsList` `HomeHero` `FilterControls` | 13 |
-| services | `mlbTeams.js` `teamColors.js` `archetypeColors.js` | 3 |
-| その他 | `src/text.jsx`、`src/assets/hero.png`、`home-ui.png` / `home-ui-image.png`（MLBのスクリーンショット） | 4 |
+### 削除済み（2026-08確認）
 
-`App.jsx` のルート定義と `App.css` はコーヒー版の画面へ全面的に書き換える（Phase 3・5）。
+MLB系ページ約26件（`Archetype` `Compare` `Game` `League` `Matchup`
+`News` `Player*` `Team` ほか）、`services/api/`のMLB系16件、
+`PlayerCard`等のMLB系コンポーネント13件、`mlbTeams.js` `teamColors.js`
+`archetypeColors.js`、`src/text.jsx`、`src/assets/hero.png`・
+`home-ui*.png`は、いずれも実ファイルが存在しないことを確認済み。
+
+`frontend/public/`直下に残っていた前身プロジェクト由来の未参照画像
+`yozo.png` `logo-pop.JPG`も2026-08に削除した（コードから一切
+参照されておらず、ポートフォリオとして公開する意味も無いため）。
+
+`App.jsx`のルート定義は全面的にコーヒー版へ書き換え済み。ただし
+`App.css`には、Home画面のチームカラーバナー・クイックアクション・
+チームダッシュボード等、MLB時代のCSSがJSXから一切参照されないまま
+約460行残っていた（2026-08に削除。lint/build成功・CSSバンドル
+サイズの縮小で確認済み）。さらに同じクラス名の**別の**未参照ブロック
+（`.home-player-section` `.home-team-section` `.home-favorites-section`
+`.home-recommendations-section`等、Team/Favorites/Recommendations
+セクション向けの古い定義）が別の行にも見つかっており、こちらは
+規模が大きいため今回は未対応（IMPLEMENTATION.mdの未解決事項に記載）。
 
 ## fastapi-service
 
-`docs/architecture.md` は「MVPの単純なグラフ変換はExpress内の純粋関数を優先」としているため、
-MVPでは FastAPI に新規責務を持たせない想定。
+### 削除済み（2026-08確認）
 
-### 削除候補
-
-| 対象 | 内容 |
-| --- | --- |
-| `routers/archetype.py` | 選手タイプのk-means分類 |
-| `routers/compare.py` | 2選手の統計比較 |
-| `routers/discover.py` | 類似選手・好み一致度 |
-| `routers/matchup.py` | 投手vs打者の予測 |
-| `routers/preference.py` | 行動履歴からの好み計算 |
-| `routers/recommend.py` | 推薦スコアリング |
-| `routers/similar.py` | 類似選手（レガシー） |
-| `routers/scouting.py` | スカウティングレポート |
-| `core/math_utils.py` | パーセンタイル計算。将来の味覚分析で一部流用できる可能性あり |
-| `tests/test_math_utils.py` | 上記のテスト |
-
-削除する場合は `main.py` の `include_router` と、
-`backend/services/fastApiService.js` の対応関数も同時に消す必要がある。
+`routers/archetype.py` `compare.py` `discover.py` `matchup.py`
+`preference.py` `recommend.py` `similar.py` `scouting.py`、
+`core/math_utils.py`、`tests/test_math_utils.py`はいずれも存在しない
+（`routers/`・`core/`は`__init__.py`のみ）。`docs/architecture.md`の
+方針通り、MVPではFastAPIに新規責務を持たせていない
+（現状はヘルスチェックのみ）。
 
 ## インフラ
 
-| 対象 | 判断 |
+| 対象 | 現状 |
 | --- | --- |
-| `docker-compose.yml` の `redis` サービス | `cacheService.js` 削除時に一緒に削除 |
-| `.github/workflows/test.yml` | ジョブ構成は再利用。テスト対象の変更に追随させる |
-| `backend/Dockerfile` / `frontend/Dockerfile` | 再利用（変更不要） |
-| `frontend/vercel.json` | 再利用（SPAのrewriteのみ） |
-| `README.md` | Phase 6 でプロダクト中心に全面刷新 |
+| `docker-compose.yml`の`redis`サービス | 削除済み（記載なし） |
+| `.github/workflows/test.yml` | 再利用し、3サービス分のジョブ構成のまま維持 |
+| `README.md` | プロダクト中心に全面刷新済み |
 
 ## 外部API依存
 
-mlb-app は MLB Stats API と Baseball Savant のCSVに依存している。
-coffee-app は外部APIに依存しないため、これらの削除後は
-`backend/services/mlb/mlbClient.js` と `mlbUrlBuilder.js` も不要になる。
+mlb-app が依存していた MLB Stats API・Baseball Savant のCSVへの
+依存は無くなっている（`services/mlb/`配下ごと削除済み）。
