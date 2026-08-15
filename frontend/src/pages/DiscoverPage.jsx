@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 
 import { useAllDiscoverSuggestions } from "../features/discover/hooks/useAllDiscoverSuggestions";
 import SuggestionCard from "../features/discover/components/SuggestionCard";
-import { getErrorMessage } from "../utils/errorMessage";
+import DiscoverSkeleton from "../features/discover/components/DiscoverSkeleton";
+import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 
 /**
  * Discover専用ページ（`/discover`）。
@@ -26,15 +27,12 @@ import { getErrorMessage } from "../utils/errorMessage";
  */
 function DiscoverPage() {
   const { t } = useTranslation();
-  const { origins, isLoading, error } = useAllDiscoverSuggestions();
+  const { origins, isLoading, error, reload } = useAllDiscoverSuggestions();
 
   if (isLoading) {
     return (
       <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-        <div className="flex flex-col gap-2" aria-busy="true">
-          <div className="skeleton-block h-6 w-1/3 rounded" />
-          <div className="skeleton-block h-24 w-full rounded" />
-        </div>
+        <DiscoverSkeleton />
       </div>
     );
   }
@@ -42,7 +40,7 @@ function DiscoverPage() {
   if (error) {
     return (
       <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-        <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>
+        <RecordsErrorState error={error} onRetry={reload} />
       </div>
     );
   }

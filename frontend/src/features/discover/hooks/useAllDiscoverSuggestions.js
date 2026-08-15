@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchAllDiscoverSuggestions } from "../api/discoverApi";
 
 /**
  * Discover専用ページ用の、条件を満たす産地すべての提案一覧を取得する。
  *
  * features/insights/hooks/useInsights.js と同じ構成（loading/error/dataの
- * 3状態、フィルターを持たずマウント時に1回だけ取得）。
+ * 3状態、フィルターを持たずマウント時と`reload()`呼び出し時のみ取得）。
  */
 export const useAllDiscoverSuggestions = () => {
   const [origins, setOrigins] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -33,7 +34,9 @@ export const useAllDiscoverSuggestions = () => {
     load();
 
     return () => controller.abort();
-  }, []);
+  }, [reloadKey]);
 
-  return { origins, isLoading, error };
+  const reload = useCallback(() => setReloadKey((key) => key + 1), []);
+
+  return { origins, isLoading, error, reload };
 };
