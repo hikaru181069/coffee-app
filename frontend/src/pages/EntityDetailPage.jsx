@@ -27,7 +27,7 @@ function EntityDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
         <div className="flex flex-col gap-2" aria-busy="true">
           <div className="skeleton-block h-6 w-1/3 rounded" />
           <div className="skeleton-block h-4 w-1/2 rounded" />
@@ -38,7 +38,7 @@ function EntityDetailPage() {
 
   if (error) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
         <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>
       </div>
     );
@@ -51,7 +51,7 @@ function EntityDetailPage() {
   const relatedTypes = Object.keys(detail.relatedAttributes);
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+    <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
       <header className="mb-6">
         <div className="flex items-center gap-2">
           <Icon size={16} aria-hidden="true" className={visual.colorClass} />

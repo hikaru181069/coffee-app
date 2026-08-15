@@ -673,6 +673,14 @@ Tier 1に続き、モバイル幅での既知の崩れと、Statsページ再設
 
 - Tier 3以降（スクリーンショット・アーキテクチャ図の追加、アクセシビリティ、フロントエンドのテスト基盤等）は未着手
 
+### 2026-08: Entity詳細・Discoverページのmax-widthを調整
+
+Statsページ・Record詳細ページで行ったmax-width調整（`max-w-3xl`だと左右の余白が広すぎる）と同じ指摘。Tier 3に進む前に、残っていた`EntityDetailPage.jsx`・`DiscoverPage.jsx`（どちらも`max-w-3xl`＝768pxのまま）も対応した。
+
+- 両ページとも、3列のstat cardグリッドやチップ群・グループ化されたカードリストという、Records/RecordDetailと近い密度の構成のため、`RecordsPage.jsx`・`RecordDetailPage.jsx`と同じ`max-w-[900px]`に揃えた（Statsの`max-w-[1100px]`ほどは広げていない）
+- `frontend/lint`・`frontend/build`成功を確認
+- Docker Compose環境で実機確認: EntityDetailPage（産地ページ）・DiscoverPageともに、stat cardグリッドやカードが間延びせず、左右の余白が改善されていることを確認
+
 ---
 
 ## 変更ファイル（現在の構成）
