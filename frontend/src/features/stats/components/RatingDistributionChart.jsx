@@ -8,7 +8,7 @@ function RatingDistributionChart({ distribution, t }) {
 
   return (
     <section className="rounded-xl border border-ctp-surface1 bg-ctp-mantle p-4">
-      <h2 className="mb-3 text-sm font-semibold text-ctp-text">{t("stats.ratingDistributionHeading")}</h2>
+      <h3 className="mb-3 text-xs font-semibold text-ctp-subtext0">{t("stats.ratingDistributionHeading")}</h3>
       <div className="flex items-end justify-between gap-2">
         {distribution.map((entry) => (
           <div key={entry.rating} className="flex flex-1 flex-col items-center gap-1.5">

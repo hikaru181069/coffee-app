@@ -37,11 +37,16 @@ describe("空の記録", () => {
 
     expect(stats.overview).toEqual({
       recordCount: 0,
-      originCount: 0,
-      varietyCount: 0,
-      flavorCount: 0,
       avgRating: null,
       firstRecordedAt: null,
+    });
+    expect(stats.collection).toEqual({
+      originCount: 0,
+      varietyCount: 0,
+      processCount: 0,
+      farmCount: 0,
+      cafeCount: 0,
+      flavorCount: 0,
     });
     expect(stats.topOrigins).toEqual([]);
     expect(stats.ratingDistribution).toEqual([
@@ -60,7 +65,7 @@ describe("空の記録", () => {
 });
 
 describe("overview", () => {
-  test("recordCount・各属性の種類数・平均評価を集計する", () => {
+  test("recordCount・平均評価を集計する（種類数はcollection側で扱う）", () => {
     const records = [
       buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA, flavors: [FLAVOR_BERRY], rating: 5 }),
       buildRecord({ id: "b", origin: ORIGIN_KENYA, rating: 3 }),
@@ -69,8 +74,6 @@ describe("overview", () => {
 
     expect(stats.overview).toMatchObject({
       recordCount: 2,
-      originCount: 2,
-      flavorCount: 1,
       avgRating: 4,
     });
   });
@@ -83,6 +86,45 @@ describe("overview", () => {
     const stats = buildStats(records);
 
     expect(stats.overview.firstRecordedAt).toBe("2026-01-15T00:00:00.000Z");
+  });
+});
+
+describe("collection", () => {
+  test("産地・品種・精製方法・農園・カフェ・フレーバーの種類数を集計する", () => {
+    const records = [
+      buildRecord({
+        id: "a",
+        origin: ORIGIN_ETHIOPIA,
+        varieties: [VARIETY_HEIRLOOM],
+        process: PROCESS_WASHED,
+        farmName: "Test Farm",
+        cafeName: "Blue Bottle Coffee",
+        flavors: [FLAVOR_BERRY],
+      }),
+      buildRecord({ id: "b", origin: ORIGIN_KENYA }),
+    ];
+    const stats = buildStats(records);
+
+    expect(stats.collection).toEqual({
+      originCount: 2,
+      varietyCount: 1,
+      processCount: 1,
+      farmCount: 1,
+      cafeCount: 1,
+      flavorCount: 1,
+    });
+  });
+
+  test("farmNameは正規化した名前で統合される（cafeと同じ扱い。全角スペース・大文字小文字・前後の空白の表記ゆれを吸収する）", () => {
+    const records = [
+      buildRecord({ id: "a", farmName: "Finca La Esperanza" }),
+      buildRecord({ id: "b", farmName: "  finca la esperanza  " }),
+      buildRecord({ id: "c", farmName: "Finca　La　Esperanza" }),
+      buildRecord({ id: "d", farmName: "Another Farm" }),
+    ];
+    const stats = buildStats(records);
+
+    expect(stats.collection.farmCount).toBe(2);
   });
 });
 

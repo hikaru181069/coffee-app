@@ -219,18 +219,27 @@
   "stats": {
     "heading": "統計",
     "subtitle": "これまで記録したコーヒーのふりかえりです。",
+    "emptyTitle": "まだ振り返れる記録がありません",
     "emptyDesc": "記録が増えると、ここに傾向が表示されます。",
+    "paceHeading": "記録のペース",
+    "collectionHeading": "Collection",
+    "tasteHeading": "味の傾向",
     "monthlyTrendHeading": "月ごとの記録数",
     "ratingDistributionHeading": "評価の分布",
     "homeVsCafeHeading": "家とカフェ",
     "overview": {
       "recordCount": "記録数",
       "avgRating": "平均評価",
-      "originCount": "産地の種類",
-      "varietyCount": "品種の種類",
-      "flavorCount": "フレーバーの種類",
       "daysSinceStart": "記録を始めてから",
       "daysCount": "{{count}}日"
+    },
+    "collection": {
+      "originCount": "産地の種類",
+      "varietyCount": "品種の種類",
+      "processCount": "精製方法の種類",
+      "farmCount": "農園の種類",
+      "cafeCount": "カフェの種類",
+      "flavorCount": "フレーバーの種類"
     }
   },
   "validation": {
