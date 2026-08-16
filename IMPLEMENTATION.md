@@ -700,6 +700,14 @@ Tier 3（ポートフォリオとしての見せ方）に着手する前にREADM
 - Tier 3の残り項目（`docs/features.md`のStats節更新。内容はユーザー本人が書く方針のため未着手）
 - Tier 4（アクセシビリティ）・Tier 5（フロントエンドのテスト基盤）は未着手
 
+### 2026-08: docs/features.mdのStats節を更新（Tier 3の残り項目）
+
+Statsページの3段構成＋Collectionセクション追加に、`docs/features.md`のStats節が追随していなかった件（上記エントリの未解決事項）。「内容はユーザー本人が書き、書式のみこちらで整える」という以前のdocs書き直しプロジェクトでの合意があったが、「Tier 3は長いので今回はそちらで書いてください」という明示的な指示を受け、今回に限り内容も含めて執筆した。
+
+- 他セクション（Insights/Search/Entity Detail/Discover）と同じ構成（Purpose→ルールベースの説明→Source of Truth→表示する情報→Response Shape→表示）で、3段構成のテーマ・Collectionの試した種類数6項目・農園やカフェの表記ゆれ対策（`normalizeName`）・"Collection"を翻訳しないブランド語として扱う理由・`homeVsCafe`が非表示のままAPIに残っている経緯を記載
+- Response Shapeを実際のAPI形状（`collection`オブジェクトの新設）に更新し、`overview`と分けた理由（「記録の頻度」と「試した種類の多さ」は別の問い）を明記
+- ユーザーへ「内容が自分の言葉になっているか確認してほしい」と伝えた上で、修正指示なくコミットの指示を受けた
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -830,7 +838,6 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - CQI参照データ（`backend/data/cqiDatabase.json`）は目安値であり、実際のCQIデータベースの正確な値を再現したものではない（開発環境に外部データセットを取得するネットワークアクセスが無いため。ファイル内コメントに明記済み）
 - `frontend/src/App.css`に、MLB時代のホーム画面（Team/Favorites/Recommendationsセクション、`player-list-carousel`等）向けの未参照CSSが別のブロックとしてもう1箇所残っている（2026-08に`.home-banner`等460行分は削除済みだが、`.home-player-section`等の同名クラスの別定義がまだ残存。`docs/mlb-legacy-inventory.md`参照）。JSXから一切参照されていないことは確認済みで、削除候補
 - `frontend/src/components/PageHeader.jsx`は、当初Records/RecordDetail等で再利用する想定だったが、現在どのページからもimportされていない死んだコンポーネントとして残っている（`docs/mlb-legacy-inventory.md`参照）。削除候補
-- `docs/features.md`のStats節（表示する情報・Response Shape）が、Statsページの3段構成＋Collectionセクション追加（`collection`オブジェクトの新設、`overview`からの型数フィールド移動）に未追随。内容の加筆はユーザー本人が書く方針のため、まだ更新していない
 - `HomeVsCafeCard.jsx`と対応するi18nキー（`stats.homeVsCafeHeading`）・APIの`homeVsCafe`フィールドは、Statsページの3段構成からは表示を外したが、削除せず残している（将来の再導入候補）。当面はコード上に存在するが画面には出ない状態が続く
 - `/api/auth/*`（register/loginそのもののエラー）と`/api/users/*`（`authenticate`ミドルウェアの401等）でエラー応答の形式が異なる（前者は`{message}`、後者は`{error: {code, message, details}}`）。frontendの`errorMessage.js`が前者の英語メッセージ文字列をそのまま照合する仕組みに依存しているため、今回は統一を見送った（上記Tier 1エントリ参照）
 - `npm audit`で`body-parser`・`brace-expansion`・`js-yaml`・`mongoose`・`qs`に脆弱性が出ている（1 low, 2 moderate, 2 high）。今回追加した依存（helmet/express-rate-limit）とは無関係な既存の間接依存で、`npm audit fix`で解決できるかは未検証
@@ -840,13 +847,12 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 
 MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手する場合の候補（優先度順）:
 
-1. `docs/features.md`のStats節を、今回のStatsページ再設計（3段構成・Collectionセクション）に合わせて更新する（内容はユーザー本人が加筆）
-2. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
-3. Discoverの「この産地を記録してみる」を、産地を事前入力した状態で`/records/new`へ渡せるようにする
-4. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
-5. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
-6. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
-7. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）とスクリーンショットの追加
-8. `npm audit`の脆弱性（body-parser/brace-expansion/js-yaml/mongoose/qs）を`npm audit fix`で解決できるか調査する
-9. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
-10. 「本番品質にするための改善」ロードマップのTier 3以降（スクリーンショット・アーキテクチャ図の追加、アクセシビリティ、フロントエンドのテスト基盤）に着手する（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`参照）
+1. Graph画面のフィルターUIに`dateFrom` / `dateTo`を追加する（バックエンドは実装済み）
+2. Discoverの「この産地を記録してみる」を、産地を事前入力した状態で`/records/new`へ渡せるようにする
+3. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
+4. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
+5. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
+6. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）を実施する
+7. `npm audit`の脆弱性（body-parser/brace-expansion/js-yaml/mongoose/qs）を`npm audit fix`で解決できるか調査する
+8. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
+9. 「本番品質にするための改善」ロードマップのTier 4（アクセシビリティ）・Tier 5（フロントエンドのテスト基盤）に着手する（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`参照）
