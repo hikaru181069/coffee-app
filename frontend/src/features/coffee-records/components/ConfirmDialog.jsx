@@ -18,6 +18,10 @@ import { dangerButtonClass, secondaryButtonClass } from "./formStyles";
  *   - 開いたときにキャンセル側へフォーカスを当てる。
  *     破壊的な操作にいきなりフォーカスを当てると、Enter連打で消えてしまう
  *   - 背景のスクロールを止める
+ *   - フォーカストラップ: Tab/Shift+Tabでダイアログ内の要素だけを循環させる。
+ *     これが無いと、開いている間にTabで背景側の要素（隠れているだけで
+ *     フォーカス自体は届く）へ移ってしまい、キーボード操作だけのユーザーが
+ *     「今どこにいるか」を見失う
  */
 function ConfirmDialog({
   isOpen,
@@ -32,6 +36,7 @@ function ConfirmDialog({
   const { t } = useTranslation();
   const resolvedConfirmLabel = confirmLabel ?? t("common.deleteConfirmLabel");
   const resolvedCancelLabel = cancelLabel ?? t("common.cancel");
+  const dialogRef = useRef(null);
   const cancelButtonRef = useRef(null);
 
   useEffect(() => {
@@ -40,7 +45,30 @@ function ConfirmDialog({
     cancelButtonRef.current?.focus();
 
     const handleKeyDown = (event) => {
-      if (event.key === "Escape" && !isProcessing) onCancel();
+      if (event.key === "Escape" && !isProcessing) {
+        onCancel();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      // このダイアログはボタン2つだけなので、都度querySelectorAllしても
+      // コスト上問題ない。ConfirmDialog以外で使い回す予定が無いため、
+      // 汎用のフォーカストラップhookへは切り出していない
+      const focusable = dialogRef.current?.querySelectorAll(
+        'button:not(:disabled), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable || focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
 
     document.addEventListener("keydown", handleKeyDown);
@@ -58,6 +86,7 @@ function ConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center">
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"

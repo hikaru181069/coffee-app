@@ -708,6 +708,21 @@ Statsページの3段構成＋Collectionセクション追加に、`docs/feature
 - Response Shapeを実際のAPI形状（`collection`オブジェクトの新設）に更新し、`overview`と分けた理由（「記録の頻度」と「試した種類の多さ」は別の問い）を明記
 - ユーザーへ「内容が自分の言葉になっているか確認してほしい」と伝えた上で、修正指示なくコミットの指示を受けた
 
+### 2026-08: 「本番品質にするための改善」Tier 4（アクセシビリティの底上げ）
+
+- `frontend/src/features/coffee-records/components/ConfirmDialog.jsx`にフォーカストラップを実装した。Tab/Shift+Tabでダイアログ内の要素（キャンセル・削除するの2ボタン）だけを循環させ、背景側の要素へフォーカスが漏れないようにした。開いたときにキャンセル側へフォーカスする既存の挙動、Escapeで閉じる既存の挙動は変更していない。汎用のフォーカストラップhookへは切り出さず、このコンポーネント専用の実装にとどめた（他に同種のモーダルが無いため）
+  - ブラウザで実際にダイアログを開き、Tab/Shift+Tabでフォーカスが2ボタン間を正しく循環すること（`document.activeElement`を都度確認）、Escapeで記録を削除せずに閉じられることを確認した
+- `eslint-plugin-jsx-a11y`を導入し、`eslint.config.js`の`extends`に`jsxA11y.flatConfigs.recommended`を追加した。導入直後のlintで検出されたのは3件のみ（想定より少なく、警告過多で導入を見送る必要は無かった）:
+  - `Navbar.jsx`のモバイル用バックドロップ（クリックでドロワーを閉じる半透明の背景div）に`aria-hidden="true"`を追加。ドロワーを閉じる正規の手段（ハンバーガーボタン）は既にキーボード操作可能なため、マウス専用の補助要素をスクリーンリーダー・キーボード操作から隠す方針にした（要素をinteractiveにしてキーボードハンドラを追加する方向は取らなかった）
+  - `NodeDetailPanel.jsx`の`<aside role="complementary">`から、暗黙のroleと重複する`role="complementary"`を削除
+- `frontend/lint`（jsx-a11y導入後、0件）・`frontend/build`成功を確認
+- Docker Compose環境で実機確認: ConfirmDialogのフォーカストラップをブラウザで直接検証（上記）。Navbarのモバイルドロワーは、`aria-hidden`がクリックハンドラ・CSSに影響しない属性であることをコードレベルで確認し、実機でのモバイル幅再現はブラウザ自動化ツールの制約（既知）により今回も見送った
+
+未解決事項（次のエントリの「未解決事項」にも反映）:
+
+- `npm install`でdevDependencyとして`eslint-plugin-jsx-a11y`を追加した際、新たに8件の脆弱性（1 low, 7 high）がnpm auditで報告された。devDependency（ビルド成果物には含まれない）だが、内容は未調査
+- Tier 5（フロントエンドのテスト基盤）は未着手
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -818,6 +833,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 
 「本番品質」改善Tier 3（README技術面の修正・スクリーンショット・アーキテクチャ図）時は、コード変更を伴わないため（README.md・画像ファイルのみ）`cd backend && npm test`は対象外。`cd frontend && npm run lint && npm run build`の成功のみ確認済み（Markdown/画像の変更でも既存コードに影響が無いことの確認として実施）。
 
+「本番品質」改善Tier 4（アクセシビリティ）時は、フロントエンドのみの変更のため`cd backend && npm test`は未実施。`cd frontend && npm run lint`（`eslint-plugin-jsx-a11y`導入後、0件）・`npm run build`の成功と、ConfirmDialogのフォーカストラップをブラウザで実際に操作しての確認を実施済み。
+
 ---
 
 ## 未解決事項
@@ -842,6 +859,7 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - `/api/auth/*`（register/loginそのもののエラー）と`/api/users/*`（`authenticate`ミドルウェアの401等）でエラー応答の形式が異なる（前者は`{message}`、後者は`{error: {code, message, details}}`）。frontendの`errorMessage.js`が前者の英語メッセージ文字列をそのまま照合する仕組みに依存しているため、今回は統一を見送った（上記Tier 1エントリ参照）
 - `npm audit`で`body-parser`・`brace-expansion`・`js-yaml`・`mongoose`・`qs`に脆弱性が出ている（1 low, 2 moderate, 2 high）。今回追加した依存（helmet/express-rate-limit）とは無関係な既存の間接依存で、`npm audit fix`で解決できるかは未検証
 - `userController.js`の`findOneAndUpdate`が使う`new`オプションはMongooseの非推奨警告が出ている（`returnDocument: "after"`への置き換えが必要。動作には影響なし）
+- frontendに`eslint-plugin-jsx-a11y`を追加した際、npm auditで新たに8件の脆弱性（1 low, 7 high）が報告された。devDependencyのため本番ビルドには含まれないが、内容は未調査
 
 ## 次に実装すべき最小単位
 
@@ -853,6 +871,6 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 4. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
 5. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
 6. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）を実施する
-7. `npm audit`の脆弱性（body-parser/brace-expansion/js-yaml/mongoose/qs）を`npm audit fix`で解決できるか調査する
+7. `npm audit`の脆弱性（backend: body-parser/brace-expansion/js-yaml/mongoose/qs、frontend: eslint-plugin-jsx-a11y追加分）を`npm audit fix`で解決できるか調査する
 8. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
-9. 「本番品質にするための改善」ロードマップのTier 4（アクセシビリティ）・Tier 5（フロントエンドのテスト基盤）に着手する（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`参照）
+9. 「本番品質にするための改善」ロードマップのTier 5（フロントエンドのテスト基盤）に着手する（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`参照）
