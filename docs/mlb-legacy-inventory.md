@@ -28,7 +28,15 @@ mlb-app 由来のコードを一覧にしたもの（bootstrap時点の棚卸し
 | `models/User.js` | 認証ユーザー |
 | `controllers/authController.js` | register / login / JWT発行 |
 | `middleware/authenticate.js` | JWT検証 → `req.user`（旧`authMiddleware.js`から改名） |
-| `services/fastApiService.js` | FastAPI呼び出しのパターン（timeout + フォールバック） |
+
+2026-08、「本番品質」改善のTier 6（実デプロイの動作確認）中に、上記の
+表に誤って`services/fastApiService.js`を「再利用した（現存）」として
+記載していたことが判明した。実際には`services/`配下は`coffee/`のみで
+このファイルは存在せず、`process.env.FASTAPI_URL`を読むコードも
+backend全体に無い。FastAPIサービス自体はデプロイ・起動しているが、
+frontend・backendのどちらからも呼び出されておらず、ヘルスチェックの
+みが動いている状態（`docs/architecture.md`の方針通りの意図的な状態で
+あり、バグではない）。
 
 ### 削除済み（2026-08確認）
 
