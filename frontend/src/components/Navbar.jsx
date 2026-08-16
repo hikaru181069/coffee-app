@@ -262,8 +262,12 @@ function Navbar() {
         </div>
       </aside>
 
-      {/* ── モバイル用バックドロップ（背景を暗くしてクリックで閉じる） ── */}
+      {/* ── モバイル用バックドロップ（背景を暗くしてクリックで閉じる） ──
+          マウス操作の補助であり、ドロワーを閉じる正規の手段は上の
+          ハンバーガーボタン（キーボードでも操作可能）なので、
+          スクリーンリーダー・キーボード操作からは隠す */}
       <div
+        aria-hidden="true"
         className={[
           "fixed inset-0 z-40 bg-ctp-crust/60 backdrop-blur-sm md:hidden",
           "transition-opacity duration-300",
