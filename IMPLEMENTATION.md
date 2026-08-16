@@ -741,6 +741,24 @@ Statsページの3段構成＋Collectionセクション追加に、`docs/feature
 - フロントエンドのテストは検証ロジックと1コンポーネントのみ。`RecordForm`本体（フック・API通信を含む結合的な部分）、Graph関連（canvasに依存しjsdomでは動かない）はまだテスト対象外
 - 「本番品質にするための改善」ロードマップの6段階（Tier 0〜5）はこれで一通り完了。残るのは各Tierのエントリに記載した個別の未解決事項と、デプロイ（Tier 6、任意）
 
+### 2026-08: 「本番品質にするための改善」Tier 6（実デプロイの動作確認）
+
+デプロイ自体（Vercel + Render）はユーザーが既に完了済みだったため、このエントリはDEPLOYMENT.mdの「デプロイ後の動作確認チェックリスト」を実際の本番環境で確認した記録。アカウント作成・秘密情報の入力はユーザーの領分のため関与せず、確認作業のみ担当した。
+
+- コードレベルでのデプロイ readiness を先に確認: `backend/server.js`が`process.env.PORT`を正しく読む、`backend/package.json`に`start`スクリプトがある、`frontend/vercel.json`のSPA rewriteが正しい、`.env.example`がDEPLOYMENT.mdの環境変数表と一致、をそれぞれ確認した
+- `fastapi-service/main.py`のCORS設定が`http://localhost:5001`にハードコードされたままだったが、実害は無いと判断した。アーキテクチャ上FastAPIを呼ぶのはブラウザではなくExpressサーバー間通信のみで、CORSはブラウザのみが強制する仕組みのため
+- 本番URL（`https://coffee-app-seven-alpha.vercel.app/`）へブラウザ自動化ツールで実際にアクセスし、DEPLOYMENT.mdのチェックリストを確認した: フロントエンド表示、ログイン状態の維持、Records/Graph/Statsの各画面表示、コンソールエラー無し（CORSエラーもここに出るはずだが皆無）。ユーザーの許可を得た上で、実際に記録を1件作成→編集→削除するCRUDテストも行い、既存の記録には影響を与えずに一連の操作が正しく動くことを確認した
+- ユーザーから「パスワードを教える」提案があったが、ログイン情報の入力は行わない方針のため辞退した。ブラウザが既にユーザー自身のセッションでログイン済みだったため、認証情報を扱わずにCRUDテストができた
+- ユーザーからの質問（「FastAPIはそもそも使われているか」）に対して調査したところ、`backend/services/fastApiService.js`というファイルが実際には存在せず、`process.env.FASTAPI_URL`を読むコードもbackend全体に無いことが判明した。FastAPIはデプロイされているが、frontend・backendのどちらからも呼ばれていない（`docs/architecture.md`の方針通りの意図的な状態）
+- 上記の過程で、`docs/mlb-legacy-inventory.md`（Tier 0で私が書き直した際に誤って記載）に`services/fastApiService.js`を「再利用した（現存）」としていた誤りを発見し、実態に合わせて修正した
+- FastAPIのヘルスチェック確認・Renderのログ確認は、前者は「呼ばれていないため優先度低」と判断して省略、後者は私にRenderへのアクセス権が無いため対象外とした
+
+未解決事項（次のエントリの「未解決事項」にも反映）:
+
+- `fastapi-service/main.py`のCORS設定（`http://localhost:5001`ハードコード）は実害が無いため今回は修正していない。将来frontendから直接FastAPIを呼ぶ設計に変わった場合は要修正
+- Renderのログにエラーが出ていないかは、ユーザー自身での確認が必要（未確認）
+- これで「本番品質にするための改善」ロードマップ（Tier 0〜6）がすべて完了した
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -879,6 +897,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - `/api/auth/*`（register/loginそのもののエラー）と`/api/users/*`（`authenticate`ミドルウェアの401等）でエラー応答の形式が異なる（前者は`{message}`、後者は`{error: {code, message, details}}`）。frontendの`errorMessage.js`が前者の英語メッセージ文字列をそのまま照合する仕組みに依存しているため、今回は統一を見送った（上記Tier 1エントリ参照）
 - `userController.js`の`findOneAndUpdate`が使う`new`オプションはMongooseの非推奨警告が出ている（`returnDocument: "after"`への置き換えが必要。動作には影響なし）
 - フロントエンドのテストは検証ロジックと`ConfirmDialog`のみ。`RecordForm`本体・Graph関連（canvasに依存しjsdomでは動かない）はまだテスト対象外
+- `fastapi-service/main.py`のCORS設定が`http://localhost:5001`にハードコードされたまま（実害は無いと判断し今回は未修正。frontendから直接FastAPIを呼ぶ設計に変わった場合は要修正）
+- 本番環境（Render）のログにエラーが出ていないかは未確認（アクセス権が無いため、ユーザー自身での確認が必要）
 
 ## 次に実装すべき最小単位
 
@@ -889,7 +909,6 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 3. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
 4. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
 5. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
-6. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）を実施する
-7. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
-8. フロントエンドのテストを、`RecordForm`本体や他の重要コンポーネントへ広げる
-9. 「本番品質にするための改善」ロードマップのTier 5（フロントエンドのテスト基盤）に着手する（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`参照）
+6. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
+7. フロントエンドのテストを、`RecordForm`本体や他の重要コンポーネントへ広げる
+8. `fastapi-service/main.py`のCORS設定（`http://localhost:5001`ハードコード）を、本番のURLを想定した形へ更新する（優先度は低い。実害は無いため）
