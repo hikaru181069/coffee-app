@@ -759,6 +759,22 @@ Statsページの3段構成＋Collectionセクション追加に、`docs/feature
 - Renderのログにエラーが出ていないかは、ユーザー自身での確認が必要（未確認）
 - これで「本番品質にするための改善」ロードマップ（Tier 0〜6）がすべて完了した
 
+### 2026-08: CI（GitHub Actions）のfrontend-buildが落ちる不具合を修正
+
+Tier 5でCIに`npm test`を追加した2コミット（Tier 5・Tier 6）がいずれも`Test / frontend-build`で失敗していたと報告を受け、`gh run view --log-failed`で実際のログを確認した。
+
+原因: `jsdom@30.0.1`が`engines.node`に`^22.22.2 || ^24.15.0 || >=26.0.0`を要求しており、CI（`.github/workflows/test.yml`で`node-version: "20"`固定）で`vitest run`を実行すると`webidl.util.markAsUncloneable is not a function`（undiciのCacheStorage初期化時）で即座に落ちていた。ローカルで気づけなかったのは、開発機のNode（v24.15.0）がたまたま`jsdom@30`の対応範囲に入っていたため。`@testing-library/jest-dom@7.0.1`も同様に`node: '>=22'`を要求しており、警告は出ていたがこちらはエラーにはなっていなかった。
+
+- READMEの「必要なもの: Node.js 20.11+」という既存の前提（`import.meta.dirname`のため）を維持する方針とし、CI側のNode版を上げるのではなく、依存側をNode 20対応バージョンへ固定した:
+  - `jsdom`: `^30.0.1` → `^25.0.1`（`engines.node: '>=18'`）
+  - `@testing-library/jest-dom`: `^7.0.1` → `^6.9.1`（`node: '>=22'`要求が入る直前の最終版。`node: '>=14'`）
+- 修正後、`docker run node:20`でCIと同じNode 20環境を再現し、`npm ci && npm run lint && npm test && npm run build`が警告無しで通ることを確認してからコミットした（ローカルのNodeバージョンだけで確認して同じ失敗を繰り返さないため）
+- `npm audit`は変更後も0件のまま
+
+未解決事項:
+
+- 今後`jsdom`・`@testing-library/jest-dom`を更新する際は、CIのNode版（20）と`engines.node`の整合を確認すること。CI側のNode版を上げる選択肢も、README・`docker-compose.yml`等の前提を含めて見直せば取れるが、今回は依存側の固定で対応した
+
 ---
 
 ## 変更ファイル（現在の構成）
