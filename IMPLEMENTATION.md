@@ -723,6 +723,24 @@ Statsページの3段構成＋Collectionセクション追加に、`docs/feature
 - `npm install`でdevDependencyとして`eslint-plugin-jsx-a11y`を追加した際、新たに8件の脆弱性（1 low, 7 high）がnpm auditで報告された。devDependency（ビルド成果物には含まれない）だが、内容は未調査
 - Tier 5（フロントエンドのテスト基盤）は未着手
 
+### 2026-08: 「本番品質にするための改善」Tier 5（フロントエンドのテスト基盤）とnpm auditの解消
+
+- Vitest + React Testing Library + user-eventを導入。`vite.config.js`に`test`ブロックを追加（`environment: "jsdom"`、`setupFiles: "./src/test/setup.js"`）。`test.globals`はあえて`false`にし、他のimportと同じくvitestから`describe`/`test`/`expect`等を明示的にimportする方針にした（グローバルを暗黙で生やさない、という既存のコードスタイルに合わせた）
+  - `src/test/setup.js`: `@testing-library/jest-dom/vitest`の読み込み、i18nをテスト内でも動く状態にし言語を`ja`へ固定（jsdomの`navigator.language`をLanguageDetectorが拾い、fallbackLng（ja）より優先されてテスト結果が環境依存になっていたため）、`@testing-library/react`の自動クリーンアップを明示的な`afterEach(cleanup)`で代替（`test.globals: false`にした副作用でreact-testing-library内部のグローバル検出によるクリーンアップ登録が効かず、テストごとに前回の`render()`結果がDOMに残ってしまう不具合を踏んだ）
+- テストを2ファイル、21件作成:
+  - `features/coffee-records/validation/recordFormValidation.test.js`: DOM非依存の純粋関数（`validateRecordForm`/`hasErrors`/`toApiPayload`）の正常系・異常系。backendの`coffeeRecordValidator.test.js`と対になる、フロントエンド側の入力検証テスト
+  - `features/coffee-records/components/ConfirmDialog.test.jsx`: Tier 4で実装したフォーカストラップ（Tab/Shift+Tabでの循環）・Escapeでの閉鎖・確認ボタンのコールバックを、実際にuserEventでキーボード操作させて検証
+- `.github/workflows/test.yml`の`frontend-build`ジョブに`npm run lint`・`npm test`のステップを追加（ジョブ名の実態に合わせてコメントも修正）。あわせて、`backend-tests`ジョブの「DB非依存のみが対象」という古いコメント（実際はmongodb-memory-serverを使ったDB込みの統合テストが大半）を実態に合わせて修正した
+- Tier 1・4で「未調査」としていたnpm auditの脆弱性を、両方とも`npm audit fix`（`--force`無し、semver範囲内の更新のみ）で解消した:
+  - frontend: 実際には`eslint-plugin-jsx-a11y`ではなく、`react-router-dom`（CSRF・XSS等を含む7件）・`vite`など既存の依存が原因だった（Tier 4時点の「jsx-a11y導入で新たに8件」という記録は誤りで、これは元々あった脆弱性だったと判明）。`npm audit fix`後、`package.json`の依存バージョン範囲（`^`）は変わらず、`package-lock.json`のみ更新。8件→0件
+  - backend: `mongoose`のprototype pollution（moderate）を含む5件。同様に`package.json`は無変更、`package-lock.json`のみ更新。5件→0件
+- `cd frontend && npm run lint && npm test && npm run build`成功（21件のテストすべて成功）。`cd backend && npm test`成功（23 suites / 330 tests、audit fix後のリグレッション無しを確認）
+
+未解決事項（次のエントリの「未解決事項」にも反映）:
+
+- フロントエンドのテストは検証ロジックと1コンポーネントのみ。`RecordForm`本体（フック・API通信を含む結合的な部分）、Graph関連（canvasに依存しjsdomでは動かない）はまだテスト対象外
+- 「本番品質にするための改善」ロードマップの6段階（Tier 0〜5）はこれで一通り完了。残るのは各Tierのエントリに記載した個別の未解決事項と、デプロイ（Tier 6、任意）
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -835,6 +853,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 
 「本番品質」改善Tier 4（アクセシビリティ）時は、フロントエンドのみの変更のため`cd backend && npm test`は未実施。`cd frontend && npm run lint`（`eslint-plugin-jsx-a11y`導入後、0件）・`npm run build`の成功と、ConfirmDialogのフォーカストラップをブラウザで実際に操作しての確認を実施済み。
 
+「本番品質」改善Tier 5（フロントエンドのテスト基盤）とnpm audit解消時に、`cd frontend && npm run lint && npm test && npm run build`（新規21テストすべて成功）、`cd backend && npm test`（`npm audit fix`後のリグレッション確認、23 suites / 330 tests）をあわせて実行し、いずれも成功を確認済み。
+
 ---
 
 ## 未解決事項
@@ -857,9 +877,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - `frontend/src/components/PageHeader.jsx`は、当初Records/RecordDetail等で再利用する想定だったが、現在どのページからもimportされていない死んだコンポーネントとして残っている（`docs/mlb-legacy-inventory.md`参照）。削除候補
 - `HomeVsCafeCard.jsx`と対応するi18nキー（`stats.homeVsCafeHeading`）・APIの`homeVsCafe`フィールドは、Statsページの3段構成からは表示を外したが、削除せず残している（将来の再導入候補）。当面はコード上に存在するが画面には出ない状態が続く
 - `/api/auth/*`（register/loginそのもののエラー）と`/api/users/*`（`authenticate`ミドルウェアの401等）でエラー応答の形式が異なる（前者は`{message}`、後者は`{error: {code, message, details}}`）。frontendの`errorMessage.js`が前者の英語メッセージ文字列をそのまま照合する仕組みに依存しているため、今回は統一を見送った（上記Tier 1エントリ参照）
-- `npm audit`で`body-parser`・`brace-expansion`・`js-yaml`・`mongoose`・`qs`に脆弱性が出ている（1 low, 2 moderate, 2 high）。今回追加した依存（helmet/express-rate-limit）とは無関係な既存の間接依存で、`npm audit fix`で解決できるかは未検証
 - `userController.js`の`findOneAndUpdate`が使う`new`オプションはMongooseの非推奨警告が出ている（`returnDocument: "after"`への置き換えが必要。動作には影響なし）
-- frontendに`eslint-plugin-jsx-a11y`を追加した際、npm auditで新たに8件の脆弱性（1 low, 7 high）が報告された。devDependencyのため本番ビルドには含まれないが、内容は未調査
+- フロントエンドのテストは検証ロジックと`ConfirmDialog`のみ。`RecordForm`本体・Graph関連（canvasに依存しjsdomでは動かない）はまだテスト対象外
 
 ## 次に実装すべき最小単位
 
@@ -871,6 +890,6 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 4. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
 5. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
 6. デプロイ設定の確認（Vercel / Render / MongoDB Atlas）を実施する
-7. `npm audit`の脆弱性（backend: body-parser/brace-expansion/js-yaml/mongoose/qs、frontend: eslint-plugin-jsx-a11y追加分）を`npm audit fix`で解決できるか調査する
-8. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
+7. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
+8. フロントエンドのテストを、`RecordForm`本体や他の重要コンポーネントへ広げる
 9. 「本番品質にするための改善」ロードマップのTier 5（フロントエンドのテスト基盤）に着手する（`/Users/hikarusato/.claude/plans/mossy-hatching-pebble.md`参照）
