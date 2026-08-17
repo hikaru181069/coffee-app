@@ -141,6 +141,8 @@
     "checkInput": "Please check your input."
   },
   "profile": {
+    "heading": "Profile",
+    "subtitle": "Update your name and password, or delete your account.",
     "name": "Name",
     "email": "Email",
     "saveName": "Save Name",
