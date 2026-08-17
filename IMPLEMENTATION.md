@@ -775,6 +775,19 @@ Tier 5でCIに`npm test`を追加した2コミット（Tier 5・Tier 6）がい�
 
 - 今後`jsdom`・`@testing-library/jest-dom`を更新する際は、CIのNode版（20）と`engines.node`の整合を確認すること。CI側のNode版を上げる選択肢も、README・`docker-compose.yml`等の前提を含めて見直せば取れるが、今回は依存側の固定で対応した
 
+### 2026-08: Profileページのデザイン刷新（RecordDetail/Statsと同水準の構成へ）
+
+Records/RecordDetail/Statsは既に「カードの積み重ね」から「header→`divide-y`で区切ったsection群」という1本の縦の流れへ再設計済みだったが、Profileページ（`/profile`）だけがこの再設計から取り残され、`max-w-xl`（他の詳細系ページは`max-w-[900px]`で統一済み）・カード積み重ね・ローディング/エラー専用UIの欠如・未i18n化のh1、といった不整合を抱えていた。
+
+- 全体構成をRecordDetailPage/StatsPage型（header+subtitle→`divide-y`のsection群）へ揃え、max-widthを`max-w-[900px]`に統一した
+- `features/profile/`を新設し、`useProfile`（取得専用hook。`useCoffeeRecord`/`useStats`と同じ`{data, isLoading, error, reload}`形状）と`ProfileSkeleton`（`StatsSkeleton`と同じ考え方）を追加した。`features/discover`/`features/insights`/`features/stats`が機能規模に関わらず`hooks/`を持つ既存の慣習に合わせた。ミューテーション（名前変更・パスワード変更・退会）は他ページ同様pageコンポーネント側に残した（取得と更新の非対称はRecordDetailPage/RecordFormPageと同型）
+- email欄は編集不可なのに`FormField`の「任意」バッジが付いていた不整合を修正し、RecordDetailPageのProperty Gridと同じ`dl/dt/dd`の読み取り専用表示に変えた
+- `useProfile`の取得失敗が401の場合、HomePageと同じ`isUnauthorizedError`判定＋`clearAuthData()`に揃えた
+- 実装中、ESLintの`react-hooks/set-state-in-effect`ルールに2箇所引っかかった。1つ目（`useProfile`の`setIsLoading`/`setError`）は`useCoffeeRecord.js`/`useStats.js`と同じ「effect内で`load`という非同期関数を定義して呼ぶ」形に合わせて解消。2つ目（`user`が取得できたらローカルの`name`stateへ同期する処理）はそもそもeffectを使うべきでないパターン（[React公式ドキュメントの"Adjusting some state when a prop changes"](https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)）だったため、レンダー中に直接`setState`する公式パターンへ書き換えた
+- `docs/design.md`に`### Profile / Settings`節を追加（他画面と同じ粒度の箇条書き）
+- 検証: `npm run lint && npm run build && npm test`が通ることを確認。ブラウザでも実機確認した（名前変更→トースト→反映、日本語/英語表示、退会確認ダイアログの表示、コンソールエラー無し）
+- なお`npm run build`が初回、ローカルの`node_modules`内`rolldown`のプラットフォーム別バイナリが見つからず失敗したが、`npm install`で解消した（今回の変更とは無関係な、ローカル環境側の既存の状態）
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -912,7 +925,7 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - `HomeVsCafeCard.jsx`と対応するi18nキー（`stats.homeVsCafeHeading`）・APIの`homeVsCafe`フィールドは、Statsページの3段構成からは表示を外したが、削除せず残している（将来の再導入候補）。当面はコード上に存在するが画面には出ない状態が続く
 - `/api/auth/*`（register/loginそのもののエラー）と`/api/users/*`（`authenticate`ミドルウェアの401等）でエラー応答の形式が異なる（前者は`{message}`、後者は`{error: {code, message, details}}`）。frontendの`errorMessage.js`が前者の英語メッセージ文字列をそのまま照合する仕組みに依存しているため、今回は統一を見送った（上記Tier 1エントリ参照）
 - `userController.js`の`findOneAndUpdate`が使う`new`オプションはMongooseの非推奨警告が出ている（`returnDocument: "after"`への置き換えが必要。動作には影響なし）
-- フロントエンドのテストは検証ロジックと`ConfirmDialog`のみ。`RecordForm`本体・Graph関連（canvasに依存しjsdomでは動かない）はまだテスト対象外
+- フロントエンドのテストは検証ロジックと`ConfirmDialog`のみ。`RecordForm`本体・Graph関連（canvasに依存しjsdomでは動かない）・`ProfilePage`/`useProfile`はまだテスト対象外
 - `fastapi-service/main.py`のCORS設定が`http://localhost:5001`にハードコードされたまま（実害は無いと判断し今回は未修正。frontendから直接FastAPIを呼ぶ設計に変わった場合は要修正）
 - 本番環境（Render）のログにエラーが出ていないかは未確認（アクセス権が無いため、ユーザー自身での確認が必要）
 
@@ -926,5 +939,5 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 4. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
 5. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
 6. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
-7. フロントエンドのテストを、`RecordForm`本体や他の重要コンポーネントへ広げる
+7. フロントエンドのテストを、`RecordForm`本体・`ProfilePage`/`useProfile`や他の重要コンポーネントへ広げる
 8. `fastapi-service/main.py`のCORS設定（`http://localhost:5001`ハードコード）を、本番のURLを想定した形へ更新する（優先度は低い。実害は無いため）
