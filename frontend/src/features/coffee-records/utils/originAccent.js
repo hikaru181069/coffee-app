@@ -10,21 +10,19 @@
  * 完結する）。同じ産地名なら常に同じ色になり、産地が増えても
  * マスター側の追加作業なしに自動で色が付く。
  *
- * ctp-blue（主要アクション）とctp-red（エラー・危険操作）は、
+ * primary（主要アクション）とdanger（エラー・危険操作）は、
  * このアプリの他の箇所で意味を持たせているため、混同を避けるために
  * パレットから外している。
  */
 
 const ORIGIN_ACCENT_PALETTE = [
-  "bg-ctp-lavender",
-  "bg-ctp-sapphire",
-  "bg-ctp-green",
-  "bg-ctp-teal",
-  "bg-ctp-peach",
-  "bg-ctp-yellow",
-  "bg-ctp-maroon",
-  "bg-ctp-mauve",
-  "bg-ctp-pink",
+  "bg-accent-moss-light",
+  "bg-accent-moss-dark",
+  "bg-accent-slate",
+  "bg-accent-clay",
+  "bg-accent-ochre",
+  "bg-accent-rose",
+  "bg-accent-mist",
 ];
 
 /** 文字列から安定したハッシュ値を作る（DJB2） */
