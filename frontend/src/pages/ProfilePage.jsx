@@ -7,6 +7,7 @@ import { changePassword, deleteAccount, updateProfile } from "../services/api/us
 import { clearAuthData, getAuthToken, saveAuthUserName } from "../utils/authStorage";
 import { useProfile } from "../features/profile/hooks/useProfile";
 import ProfileSkeleton from "../features/profile/components/ProfileSkeleton";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import FormField from "../features/coffee-records/components/FormField";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
@@ -35,6 +36,12 @@ import { getErrorMessage } from "../utils/errorMessage";
  * 常時出るフッターだった。docs/design.mdの「派手な実績表示で惹きつけない、
  * 道具としての静けさ」という方針と噛み合わないという指摘を受け、
  * 見たい人が能動的にたどり着く場所であるProfile画面の末尾へ移した。
+ *
+ * 言語切り替え（LanguageSwitcher）も、以前は常時表示のNavbarに置いていたが、
+ * 同じ理由でProfile画面の先頭セクションへ移した。未ログイン状態（/login・
+ * /register）では切り替えられなくなるが、ユーザーと相談の上、許容する
+ * トレードオフとした（LandingPageには専用のLanguageSwitcherが別途あるため、
+ * ログイン前の訪問者が最初に触れる画面では引き続き切り替えられる）。
  */
 const TECH_STACK = ["MongoDB", "Express", "React", "Node.js", "FastAPI", "JWT"];
 
@@ -141,6 +148,13 @@ function ProfilePage() {
 
       <div className="flex flex-col divide-y divide-ctp-surface1">
         <section className="pb-6">
+          <h2 className="text-sm font-semibold text-ctp-text">{t("profile.languageHeading")}</h2>
+          <div className="mt-4">
+            <LanguageSwitcher />
+          </div>
+        </section>
+
+        <section className="py-6">
           <form onSubmit={handleSaveName} className="flex flex-col gap-4">
             <FormField id="profile-name" label={t("profile.name")} required>
               <input

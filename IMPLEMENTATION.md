@@ -788,6 +788,17 @@ Records/RecordDetail/Statsは既に「カードの積み重ね」から「header
 - 検証: `npm run lint && npm run build && npm test`が通ることを確認。ブラウザでも実機確認した（名前変更→トースト→反映、日本語/英語表示、退会確認ダイアログの表示、コンソールエラー無し）
 - なお`npm run build`が初回、ローカルの`node_modules`内`rolldown`のプラットフォーム別バイナリが見つからず失敗したが、`npm install`で解消した（今回の変更とは無関係な、ローカル環境側の既存の状態）
 
+### 2026-08: 言語切り替え（LanguageSwitcher）をNavbarからProfileページへ移動
+
+ユーザーからの依頼。Navbarは全ページ（`/login`・`/register`含む）に常時表示されるため、そのままProfileページ（ログイン必須）へ移すと未ログイン状態で言語を切り替える手段が無くなる。この点をユーザーに確認したところ、「未ログイン状態でもprofileページで良い」との回答だったため、Navbarから完全に削除する方針で実装した（`LandingPage.jsx`には別途専用の`LanguageSwitcher`があり、ログイン前に最初に訪れる画面では引き続き切り替えられる）。
+
+- `Navbar.jsx`からモバイル用ドロワー・デスクトップ用ナビバー両方の`<LanguageSwitcher />`とimportを削除
+- `ProfilePage.jsx`の`divide-y`セクション群の先頭に「表示言語」セクションを追加し、既存の`LanguageSwitcher`コンポーネントをそのまま再利用（新規コンポーネントは作らず）
+- `profile.languageHeading`のi18nキーを追加し、`profile.subtitle`の文言も言語切り替えに触れる内容へ更新
+- `docs/design.md`の`### Profile / Settings`に「表示言語の切り替え」を追記
+- `ProfileSkeleton.jsx`を4セクション構成（表示言語／名前／パスワード変更／退会）に合わせて骨格を追加
+- 検証: `npm run lint && npm run build && npm test`が通ることを確認。ブラウザでも実機確認した（Profileページでの言語切り替えがアプリ全体に反映されること、`/login`ページのNavbarに言語切り替えが表示されないこと、コンソールエラー無し）
+
 ---
 
 ## 変更ファイル（現在の構成）

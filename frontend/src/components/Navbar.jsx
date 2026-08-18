@@ -11,7 +11,6 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { clearAuthData, getAuthToken, getAuthUserName } from "../utils/authStorage";
-import LanguageSwitcher from "./LanguageSwitcher";
 
 // ── Inline SVG icons ──────────────────────────────────────────────────────────
 // アイコンライブラリ(lucide-react)もあるが、既存のこの構成に合わせて
@@ -219,10 +218,6 @@ function Navbar() {
             })}
           </nav>
 
-          <div className="mt-4 px-3">
-            <LanguageSwitcher />
-          </div>
-
           {/* 認証エリア（sticky で常に下端に固定） */}
           <div className="sticky bottom-16 mt-auto flex flex-col gap-1 border-t border-ctp-surface1/50 bg-ctp-mantle pt-5 pb-2">
             {token ? (
@@ -298,7 +293,6 @@ function Navbar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
-          <LanguageSwitcher />
           {token ? (
             <>
               <NavLink to="/profile" className={navLinkClass}>
