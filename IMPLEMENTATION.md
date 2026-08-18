@@ -818,6 +818,19 @@ Records/RecordDetail/Statsは既に「カードの積み重ね」から「header
 
 - グラフ/産地アクセントの新7色（特に`accent-slate`等の値）は目安値であり、より広い実データ・実機での微調整の余地がある
 
+### 2026-08: ローディングスケルトン表示の改善
+
+ユーザーからの依頼「ローディング中のスケルトン表示を改善してください」。調査の結果、`StatsSkeleton.jsx`/`ProfileSkeleton.jsx`/`RecordListSkeleton`/`DiscoverSkeleton.jsx`は既に実レイアウトに忠実な専用スケルトンだったが、`RecordDetailPage.jsx`/`RecordFormPage.jsx`/`EntityDetailPage.jsx`/`GraphStates.jsx`の`GraphLoadingState`/`NodeDetailPanel.jsx`の5箇所は2〜3本の汎用バーだけの簡素なインラインプレースホルダのままだった。この5箇所を既存の水準へ引き上げた。
+
+- `features/coffee-records/components/RecordDetailSkeleton.jsx`（新規）: Breadcrumb→Header→divide-yのProperty Grid/Tasting Note/Connectionsという実際の構成をそのまま骨格化。`RecordDetailPage.jsx`のisLoading分岐をこれへ差し替え
+- `features/coffee-records/components/RecordFormSkeleton.jsx`（新規）: 編集時ローディング（`isEditing && isRecordLoading`）専用。Title/日時/種別/評価/メモのカード形を再現。新規作成時はこれまで通りスケルトン無し（即フォーム表示）を維持
+- `EntityDetailPage.jsx`にページローカルな`EntityDetailSkeleton`関数を追加（`StatCard`/`RelatedAttributeGroup`と同じくファイル内のヘルパー。entity-detail専用のfeatureディレクトリが無いため）。統計カード3枚・関連属性チップ・関連記録一覧を再現
+- `GraphStates.jsx`の`GraphLoadingState`: 円1個だけだったのを、円形（recordノード相当）・角丸矩形（属性ノード相当）を`absolute`配置で散りばめ、薄い斜め線でエッジを軽く連想させる形に拡充（物理演算の再現はしない）
+- `NodeDetailPanel.jsx`のインラインスケルトン: `node.data.type`（選択した時点で既知）で record相当/属性相当の2パターンに出し分け。あわせて欠けていた`aria-label`を追加
+- 未使用コードの削除: `components/SkeletonCard.jsx`（どこからもimportされていない死んだコンポーネント）と、`App.css`内`.discovery-card-skeleton`系4クラス（JSXから未参照、旧DiscoverSkeleton実装の残骸）を削除。`docs/mlb-legacy-inventory.md`のSkeletonCard.jsx記載も削除の旨へ更新
+- 検証方法: `httpClient.js`の`apiRequest`に一時的に`setTimeout`遅延（1.5秒→確認しづらかったため4秒に延長）を仕込み、ブラウザ実機で5箇所すべてのスケルトンを実際に表示させて確認した後、変更を完全に元へ戻した（`git diff`で無変更を確認済み）。5箇所とも実際のレイアウトと一致した形で表示されることを確認
+- 検証: `npm run lint && npm run build && npm test`（21件）成功。`grep -rn "SkeletonCard|discovery-card-skeleton" frontend/src`が0件であることを確認
+
 ---
 
 ## 変更ファイル（現在の構成）

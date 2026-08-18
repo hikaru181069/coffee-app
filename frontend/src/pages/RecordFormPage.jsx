@@ -11,6 +11,7 @@ import {
   updateCoffeeRecord,
 } from "../features/coffee-records/api/coffeeRecordApi";
 import RecordForm from "../features/coffee-records/components/RecordForm";
+import RecordFormSkeleton from "../features/coffee-records/components/RecordFormSkeleton";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { useToast } from "../contexts/ToastContext";
@@ -70,8 +71,7 @@ function RecordFormPage() {
   if (isEditing && isRecordLoading) {
     return (
       <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-        <div className="skeleton-block h-6 w-40 rounded" />
-        <div className="skeleton-block mt-6 h-64 w-full rounded-xl" />
+        <RecordFormSkeleton />
       </div>
     );
   }

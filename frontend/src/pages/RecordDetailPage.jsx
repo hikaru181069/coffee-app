@@ -7,6 +7,7 @@ import "../features/coffee-records/coffee-records.css";
 import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecord";
 import { deleteCoffeeRecord } from "../features/coffee-records/api/coffeeRecordApi";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
+import RecordDetailSkeleton from "../features/coffee-records/components/RecordDetailSkeleton";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { primaryButtonClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import {
@@ -68,9 +69,7 @@ function RecordDetailPage() {
   if (isLoading) {
     return (
       <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
-        <div className="skeleton-block h-4 w-32 rounded" />
-        <div className="skeleton-block mt-4 h-8 w-2/3 rounded" />
-        <div className="skeleton-block mt-6 h-40 w-full rounded-xl" />
+        <RecordDetailSkeleton />
       </div>
     );
   }
