@@ -4,6 +4,7 @@ import { forceCollide } from "d3-force";
 
 import { getNodeVisual } from "../utils/nodeVisuals";
 import { getNodeIconImage } from "../utils/canvasIcons";
+import { getCanvasColor } from "../utils/canvasColors";
 
 /**
  * 知識グラフの描画本体。
@@ -104,14 +105,25 @@ const CLICK_TOLERANCE_PX = 6;
 const LABEL_MAX_WIDTH = 100;
 const LABEL_GAP = 4;
 
-// frontend/src/App.css の --ctp-* と同じ値（canvasはTailwindクラスを
-// 使えないため、utils/nodeVisuals.js の canvasColor と同様に直接持つ）
+// canvasはTailwindクラスもCSSカスタムプロパティも直接解釈できないため、
+// index.cssの@themeが生成する--color-*から動的に解決する
+// （utils/nodeVisuals.jsのcanvasColorと同じ仕組み。utils/canvasColors.js参照）
 const CTP = {
-  mantle: "#0f1011",
-  surface1: "#232326",
-  text: "#f7f8f8",
-  subtext0: "#8a8f98",
-  yellow: "#f9e2af",
+  get mantle() {
+    return getCanvasColor("--color-raised");
+  },
+  get surface1() {
+    return getCanvasColor("--color-surface-2");
+  },
+  get text() {
+    return getCanvasColor("--color-text");
+  },
+  get subtext0() {
+    return getCanvasColor("--color-text-tertiary");
+  },
+  get yellow() {
+    return getCanvasColor("--color-rating");
+  },
 };
 
 const recordRadius = (node, isSelected = false) => {

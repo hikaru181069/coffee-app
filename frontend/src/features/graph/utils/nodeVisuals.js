@@ -1,4 +1,5 @@
 import { Coffee, Droplets, Flame, Globe, Leaf, Sparkles, Sprout, Store } from "lucide-react";
+import { getCanvasColor } from "./canvasColors";
 
 /**
  * ノード種別ごとの見た目（アイコン・色）とラベルの翻訳キー。
@@ -15,21 +16,92 @@ import { Coffee, Droplets, Flame, Globe, Leaf, Sparkles, Sprout, Store } from "l
  * labelKeyはテキストではなく翻訳キー。呼び出し側が t(visual.labelKey) の
  * 形で翻訳する（DOM・i18nextに依存しない純粋関数のままにするため）。
  *
- * canvasColorは、Tailwindのcolor-*クラスが使えないcanvas描画
- * （react-force-graph-2dのnodeCanvasObject）向けの実際の色コード。
- * frontend/src/App.cssの--ctp-*と同じ値を直接持つ（Tailwindの
- * @themeと同様、値の手動同期が必要。どちらかを変える時はもう片方も
- * 忘れずに更新すること）。
+ * 色の設計（prompts/design/00-design-principles.md 6.1参照）:
+ * recordはprimary(モス)、origin/roastLevelはモスの濃淡2段階、
+ * 残り5種（farm/variety/process/flavor/cafe）はモスと彩度を揃えた
+ * ミュートな別色相5色。アイコンで種別を区別できているため、色は
+ * 識別性より階層表現（主役=モス、属性=ミュートな色）に使っている。
+ *
+ * canvasColorは、Tailwindのcolor-*クラスもCSSカスタムプロパティも
+ * 解釈できないcanvas描画（react-force-graph-2dのnodeCanvasObject）向けの
+ * 実際の色コード。getterにして、初回アクセス時に`getComputedStyle`経由で
+ * index.cssの@themeが生成する--color-*から動的に解決する
+ * （utils/canvasColors.js参照。以前はhexを手打ちして@theme側と手動
+ * 同期する必要があったが、その技術的負債を解消した）。
  */
 export const NODE_VISUALS = {
-  record: { icon: Coffee, labelKey: "graph.nodeTypes.record", colorClass: "text-ctp-lavender", ringClass: "ring-ctp-lavender/50", canvasColor: "#b4befe" },
-  origin: { icon: Globe, labelKey: "graph.nodeTypes.origin", colorClass: "text-ctp-sapphire", ringClass: "ring-ctp-sapphire/50", canvasColor: "#74c7ec" },
-  farm: { icon: Leaf, labelKey: "graph.nodeTypes.farm", colorClass: "text-ctp-green", ringClass: "ring-ctp-green/50", canvasColor: "#a6e3a1" },
-  variety: { icon: Sprout, labelKey: "graph.nodeTypes.variety", colorClass: "text-ctp-teal", ringClass: "ring-ctp-teal/50", canvasColor: "#94e2d5" },
-  process: { icon: Droplets, labelKey: "graph.nodeTypes.process", colorClass: "text-ctp-sky", ringClass: "ring-ctp-sky/50", canvasColor: "#89dceb" },
-  roastLevel: { icon: Flame, labelKey: "graph.nodeTypes.roastLevel", colorClass: "text-ctp-peach", ringClass: "ring-ctp-peach/50", canvasColor: "#fab387" },
-  flavor: { icon: Sparkles, labelKey: "graph.nodeTypes.flavor", colorClass: "text-ctp-pink", ringClass: "ring-ctp-pink/50", canvasColor: "#f5c2e7" },
-  cafe: { icon: Store, labelKey: "graph.nodeTypes.cafe", colorClass: "text-ctp-maroon", ringClass: "ring-ctp-maroon/50", canvasColor: "#eba0ac" },
+  record: {
+    icon: Coffee,
+    labelKey: "graph.nodeTypes.record",
+    colorClass: "text-primary",
+    ringClass: "ring-primary/50",
+    get canvasColor() {
+      return getCanvasColor("--color-primary");
+    },
+  },
+  origin: {
+    icon: Globe,
+    labelKey: "graph.nodeTypes.origin",
+    colorClass: "text-accent-moss-light",
+    ringClass: "ring-accent-moss-light/50",
+    get canvasColor() {
+      return getCanvasColor("--color-accent-moss-light");
+    },
+  },
+  farm: {
+    icon: Leaf,
+    labelKey: "graph.nodeTypes.farm",
+    colorClass: "text-accent-clay",
+    ringClass: "ring-accent-clay/50",
+    get canvasColor() {
+      return getCanvasColor("--color-accent-clay");
+    },
+  },
+  variety: {
+    icon: Sprout,
+    labelKey: "graph.nodeTypes.variety",
+    colorClass: "text-accent-ochre",
+    ringClass: "ring-accent-ochre/50",
+    get canvasColor() {
+      return getCanvasColor("--color-accent-ochre");
+    },
+  },
+  process: {
+    icon: Droplets,
+    labelKey: "graph.nodeTypes.process",
+    colorClass: "text-accent-slate",
+    ringClass: "ring-accent-slate/50",
+    get canvasColor() {
+      return getCanvasColor("--color-accent-slate");
+    },
+  },
+  roastLevel: {
+    icon: Flame,
+    labelKey: "graph.nodeTypes.roastLevel",
+    colorClass: "text-accent-moss-dark",
+    ringClass: "ring-accent-moss-dark/50",
+    get canvasColor() {
+      return getCanvasColor("--color-accent-moss-dark");
+    },
+  },
+  flavor: {
+    icon: Sparkles,
+    labelKey: "graph.nodeTypes.flavor",
+    colorClass: "text-accent-rose",
+    ringClass: "ring-accent-rose/50",
+    get canvasColor() {
+      return getCanvasColor("--color-accent-rose");
+    },
+  },
+  cafe: {
+    icon: Store,
+    labelKey: "graph.nodeTypes.cafe",
+    colorClass: "text-accent-mist",
+    ringClass: "ring-accent-mist/50",
+    get canvasColor() {
+      return getCanvasColor("--color-accent-mist");
+    },
+  },
 };
 
 /** 属性ノードの種別一覧（凡例・フィルターの並び順に使う。recordは含めない） */
