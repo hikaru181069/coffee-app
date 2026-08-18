@@ -831,6 +831,15 @@ Records/RecordDetail/Statsは既に「カードの積み重ね」から「header
 - 検証方法: `httpClient.js`の`apiRequest`に一時的に`setTimeout`遅延（1.5秒→確認しづらかったため4秒に延長）を仕込み、ブラウザ実機で5箇所すべてのスケルトンを実際に表示させて確認した後、変更を完全に元へ戻した（`git diff`で無変更を確認済み）。5箇所とも実際のレイアウトと一致した形で表示されることを確認
 - 検証: `npm run lint && npm run build && npm test`（21件）成功。`grep -rn "SkeletonCard|discovery-card-skeleton" frontend/src`が0件であることを確認
 
+### 2026-08: Home画面「Recent Records」のスケルトンをグリッド形状に合わせて修正
+
+ユーザーからの依頼「homeのローディングを再度レビューしてください」。前エントリのスケルトン改善時にHomeページは対象外にしていたが、レビューの結果、`HomePage.jsx`が読み込み中に出す`RecordListSkeleton`（`/records`一覧・検索結果と共有、縦積み1カラムの形）と、読み込み完了後に実際に表示される`grid grid-cols-1 sm:grid-cols-3`の`HomeRecordCard`グリッド（小さめのタイル）とで形が一致しておらず、読み込み完了時にレイアウトが飛ぶ不具合を発見した。
+
+- `features/coffee-records/components/HomeRecordCardSkeleton.jsx`（新規）: `HomeRecordCard.jsx`（産地アクセントバー+ラベル、タイトル+評価、精製方法、フレーバー）と同じ形を、実際に使われる3カラムグリッドで再現。`HomePage.jsx`の`RecordListSkeleton`をこれへ差し替え
+- `RecordListSkeleton`自体は`/records`・検索結果（縦積みリスト）では引き続き正しい形のため変更していない。Home画面専用の別コンポーネントとして切り出した
+- あわせてDiscoverCard/GraphPreviewの読み込み中表示（データが確定するまで何も表示しない設計）を確認し、意図的な「静かな道具」方針（コメントに明記済み）であり問題無いと判断、変更しなかった
+- 検証: 前エントリと同じ`httpClient.js`への一時遅延挿入→ブラウザ実機確認→完全に元へ戻す、という方法で確認（`git diff`で無変更確認済み）。`npm run lint && npm run build && npm test`（21件）成功
+
 ---
 
 ## 変更ファイル（現在の構成）

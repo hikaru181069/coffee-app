@@ -9,7 +9,7 @@ import { clearAuthData, getAuthToken } from "../utils/authStorage";
 import { isUnauthorizedError } from "../services/api/apiError";
 import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeRecords";
 import HomeRecordCard from "../features/coffee-records/components/HomeRecordCard";
-import { RecordListSkeleton } from "../features/coffee-records/components/RecordListStates";
+import HomeRecordCardSkeleton from "../features/coffee-records/components/HomeRecordCardSkeleton";
 import { getErrorMessage } from "../utils/errorMessage";
 // GraphPreviewは以前はreact-force-graph-2dを縮小描画しておりlazy importが
 // 必要だったが、静的なイラスト+件数表示へ変更した際に依存が無くなった
@@ -155,7 +155,7 @@ function HomePage() {
           </Link>
         </div>
 
-        {isLoading && <RecordListSkeleton count={3} />}
+        {isLoading && <HomeRecordCardSkeleton count={3} />}
         {!isLoading && error && (
           <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>
         )}
