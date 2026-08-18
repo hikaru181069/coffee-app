@@ -1,41 +1,49 @@
 @import "tailwindcss";
 
-/* App.cssの:root(--ctp-*)と同じLinear実測値。Tailwindの@themeはCSS変数を
-   参照できずここに直接値を書く必要があるため、値を手動で同期している。
-   どちらかを変える時はもう片方も忘れずに更新すること。 */
+/* 唯一の色トークン定義箇所（frontend/src/App.cssや
+   frontend/src/features/graph/utils/nodeVisuals.jsからはここが生成する
+   --color-*カスタムプロパティをvar()で参照する。値の手動同期は不要）。
+   Tailwind v4の@themeはCSS変数を参照できずリテラル値を書く必要があるため、
+   ここだけはハードコードされたhexになる。
+   命名・配色方針は prompts/design/00-design-principles.md 6.1 参照。 */
 @theme {
   /* 数値・日付・件数など「事実としての値」用。本文はInterのまま
      （prompts/design/00-design-principles.md 6.2 Typography） */
   --font-mono: "Space Mono", monospace;
 
-  --color-ctp-base: #08090a;
-  --color-ctp-mantle: #0f1011;
-  --color-ctp-crust: #08090a;
-  --color-ctp-surface0: #1c1c1f;
-  --color-ctp-surface1: #232326;
-  --color-ctp-surface2: #28282c;
-  --color-ctp-overlay0: #3e3e44;
-  --color-ctp-text: #f7f8f8;
-  --color-ctp-subtext0: #8a8f98;
-  --color-ctp-subtext1: #b4bcd0;
-  --color-ctp-blue: #5e6ad2;
-  --color-ctp-sapphire: #74c7ec;
-  --color-ctp-lavender: #b4befe;
-  --color-ctp-green: #a6e3a1;
-  --color-ctp-teal: #94e2d5;
-  --color-ctp-peach: #fab387;
-  --color-ctp-yellow: #f9e2af;
-  --color-ctp-red: #f38ba8;
-  --color-ctp-maroon: #eba0ac;
-  --color-ctp-mauve: #cba6f7;
-  --color-ctp-pink: #f5c2e7;
+  /* 背景・テキストの階調 */
+  --color-base: #08090a;
+  --color-raised: #0f1011;
+  --color-surface-1: #1c1c1f;
+  --color-surface-2: #232326;
+  --color-surface-3: #28282c;
+  --color-line: #3e3e44;
+  --color-line-strong: #62666d;
+  --color-text: #f7f8f8;
+  --color-text-secondary: #bcbcb4;
+  --color-text-tertiary: #93938e;
+
+  /* 意味を固定したセマンティック色 */
+  --color-primary: #7c8363;
+  --color-danger: #f38ba8;
+  --color-warn: #f9e2af;
+  --color-rating: #f9e2af;
+  --color-success: #a6e3a1;
+
+  /* グラフノード・産地アクセント専用の差し色パレット（モス2段階+ミュートな5色） */
+  --color-accent-moss-light: #a3ab86;
+  --color-accent-moss-dark: #545a42;
+  --color-accent-slate: #8a97a3;
+  --color-accent-clay: #ad8770;
+  --color-accent-ochre: #ada07a;
+  --color-accent-rose: #a3888f;
+  --color-accent-mist: #9089a3;
 }
 
 :root {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #f7f8f8;
-  /* ▼ 背景色: #1e1e2e (Base) か #181825 (Mantle) で切り替え */
-  --app-bg: #08090a;
+  color: var(--color-text);
+  --app-bg: var(--color-base);
   background-color: var(--app-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;

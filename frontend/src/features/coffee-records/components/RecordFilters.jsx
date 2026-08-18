@@ -10,8 +10,8 @@ import { RECORD_TYPES } from "../utils/recordFormat";
  * ここに閉じる（RecordForm側の見た目には影響させない）。
  */
 const compactSelectClass =
-  "w-auto rounded-lg border border-ctp-overlay0/60 bg-ctp-surface0 py-1.5 pl-2.5 pr-7 text-sm text-ctp-text " +
-  "transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50";
+  "w-auto rounded-lg border border-line/60 bg-surface-1 py-1.5 pl-2.5 pr-7 text-sm text-text " +
+  "transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50";
 
 /**
  * 一覧の絞り込み。
@@ -45,8 +45,8 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
           aria-pressed={filters.recordType === ""}
           className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
             filters.recordType === ""
-              ? "border-ctp-blue bg-ctp-blue/15 font-semibold text-ctp-text"
-              : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0"
+              ? "border-primary bg-primary/15 font-semibold text-text"
+              : "border-line/60 text-text-secondary hover:border-line"
           }`}
         >
           {t("common.all")}
@@ -59,8 +59,8 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
             aria-pressed={filters.recordType === type.value}
             className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
               filters.recordType === type.value
-                ? "border-ctp-blue bg-ctp-blue/15 font-semibold text-ctp-text"
-                : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0"
+                ? "border-primary bg-primary/15 font-semibold text-text"
+                : "border-line/60 text-text-secondary hover:border-line"
             }`}
           >
             {t(type.labelKey)}
@@ -125,7 +125,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
           <button
             type="button"
             onClick={onClear}
-            className="inline-flex items-center gap-1 text-xs text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
+            className="inline-flex items-center gap-1 text-xs text-text-tertiary underline underline-offset-2 hover:text-text"
           >
             <X size={12} aria-hidden="true" />
             {t("common.clearFilters")}

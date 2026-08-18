@@ -55,27 +55,27 @@ function DiscoverCard() {
   if (!insightText && !hasTeaser) return null;
 
   return (
-    <div className="flex h-full flex-col gap-4 rounded-xl border border-ctp-surface1 bg-ctp-mantle p-6">
-      <span className="text-xs font-semibold uppercase tracking-wide text-ctp-subtext0">Discover</span>
+    <div className="flex h-full flex-col gap-4 rounded-xl border border-surface-2 bg-raised p-6">
+      <span className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">Discover</span>
 
       <div className="flex flex-1 flex-col justify-center gap-3">
         {insightText && (
           <Link
             to="/graph"
-            className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-ctp-surface0/60"
+            className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
-            <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-ctp-mauve" />
-            <p className="text-base text-ctp-text">{insightText}</p>
+            <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-primary" />
+            <p className="text-base text-text">{insightText}</p>
           </Link>
         )}
 
         {hasTeaser && (
           <Link
             to="/discover"
-            className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-ctp-surface0/60"
+            className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
-            <Compass size={22} aria-hidden="true" className="flex-shrink-0 text-ctp-green" />
-            <p className="text-base text-ctp-text">
+            <Compass size={22} aria-hidden="true" className="flex-shrink-0 text-success" />
+            <p className="text-base text-text">
               {t("discover.teaserLink", { suggestedLabel: teaser.suggestedOrigin.label })}
             </p>
           </Link>

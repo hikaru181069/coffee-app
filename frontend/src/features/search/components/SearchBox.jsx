@@ -15,7 +15,7 @@ function SearchBox({ value, onChange }) {
       <Search
         size={16}
         aria-hidden="true"
-        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ctp-subtext0"
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary"
       />
       <input
         type="search"
@@ -23,7 +23,7 @@ function SearchBox({ value, onChange }) {
         onChange={(event) => onChange(event.target.value)}
         placeholder={t("search.placeholder")}
         aria-label={t("search.ariaLabel")}
-        className="w-full rounded-lg border border-ctp-overlay0/60 bg-ctp-surface0 py-2 pl-9 pr-3 text-sm text-ctp-text placeholder:text-ctp-subtext0/60 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
+        className="w-full rounded-lg border border-line/60 bg-surface-1 py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-tertiary/60 transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
     </div>
   );

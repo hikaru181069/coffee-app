@@ -98,10 +98,10 @@ function RecordForm({
             {RECORD_TYPES.map((type) => (
               <label
                 key={type.value}
-                className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-ctp-blue/50 ${
+                className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-primary/50 ${
                   values.recordType === type.value
-                    ? "border-ctp-blue bg-ctp-blue/15 font-semibold text-ctp-text"
-                    : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0"
+                    ? "border-primary bg-primary/15 font-semibold text-text"
+                    : "border-line/60 text-text-secondary hover:border-line"
                 }`}
               >
                 <input
@@ -167,15 +167,15 @@ function RecordForm({
           className="flex w-full items-center justify-between gap-3 text-left"
         >
           <span>
-            <span className="block text-sm font-semibold text-ctp-text">{t("records.detailsHeading")}</span>
-            <span className="mt-0.5 block text-xs text-ctp-subtext0">
+            <span className="block text-sm font-semibold text-text">{t("records.detailsHeading")}</span>
+            <span className="mt-0.5 block text-xs text-text-tertiary">
               {t("recordForm.detailsHint")}
             </span>
           </span>
           <ChevronDown
             size={18}
             aria-hidden="true"
-            className={`flex-shrink-0 text-ctp-subtext0 transition-transform duration-200 ${
+            className={`flex-shrink-0 text-text-tertiary transition-transform duration-200 ${
               showDetails ? "rotate-180" : ""
             }`}
           />
@@ -184,7 +184,7 @@ function RecordForm({
         {showDetails && (
           <div id="coffee-details" className="mt-5 flex flex-col gap-5">
             {masterDataError && (
-              <p className="rounded-lg border border-ctp-peach/40 bg-ctp-peach/10 px-3 py-2 text-xs text-ctp-peach">
+              <p className="rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
                 {t("recordForm.masterDataError")}
               </p>
             )}
@@ -296,12 +296,12 @@ function RecordForm({
 
       {/* 項目に紐づかないエラー（通信エラーなど）はここへ出す */}
       {submitError && !submitError.isValidationError && (
-        <p role="alert" className="rounded-lg border border-ctp-red/40 bg-ctp-red/10 px-3 py-2 text-sm text-ctp-red">
+        <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
           {getErrorMessage(submitError, t)}
         </p>
       )}
       {submitError?.isValidationError && (
-        <p role="alert" className="rounded-lg border border-ctp-red/40 bg-ctp-red/10 px-3 py-2 text-sm text-ctp-red">
+        <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
           {t("recordForm.checkInput")}
         </p>
       )}

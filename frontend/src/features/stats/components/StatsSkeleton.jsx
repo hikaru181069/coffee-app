@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 function StatsSkeleton() {
   const { t } = useTranslation();
   return (
-    <div aria-busy="true" aria-label={t("common.loading")} className="flex flex-col divide-y divide-ctp-surface1">
+    <div aria-busy="true" aria-label={t("common.loading")} className="flex flex-col divide-y divide-surface-2">
       <div className="pb-6">
         <div className="skeleton-block mb-4 h-6 w-1/3 rounded" />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

@@ -13,11 +13,11 @@ import { primaryButtonClass } from "../../coffee-records/components/formStyles";
 function StatsEmptyState() {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
-      <TrendingUp size={32} aria-hidden="true" className="text-ctp-subtext0" strokeWidth={1.5} />
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+      <TrendingUp size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
       <div>
-        <p className="text-sm font-medium text-ctp-text">{t("stats.emptyTitle")}</p>
-        <p className="mt-1 text-sm text-ctp-subtext0">{t("stats.emptyDesc")}</p>
+        <p className="text-sm font-medium text-text">{t("stats.emptyTitle")}</p>
+        <p className="mt-1 text-sm text-text-tertiary">{t("stats.emptyDesc")}</p>
       </div>
       <Link to="/records/new" className={`${primaryButtonClass} mt-1`}>
         {t("records.emptyCta")}

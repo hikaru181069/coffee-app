@@ -14,7 +14,7 @@ function SuggestionCard({ suggestion }) {
 
   return (
     <li className={cardClass}>
-      <p className="text-sm text-ctp-text">
+      <p className="text-sm text-text">
         {t("discover.similarProcessOrigin", {
           originLabel: suggestion.basedOn.originLabel,
           processLabel: suggestion.basedOn.processLabel,

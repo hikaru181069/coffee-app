@@ -117,11 +117,11 @@ function HomePage() {
   return (
     <div className="coffee-page mx-auto w-full max-w-[1480px] px-4 py-6 sm:px-6">
       <header className="mb-6">
-        <h1 className="text-xl font-bold text-ctp-text">
+        <h1 className="text-xl font-bold text-text">
           {getGreeting(t)}
           {user?.name ? t("home.nameSuffix", { name: user.name }) : ""}.
         </h1>
-        <p className="mt-1 text-sm text-ctp-subtext0">{t("home.subtitle")}</p>
+        <p className="mt-1 text-sm text-text-tertiary">{t("home.subtitle")}</p>
       </header>
 
       {/* Record Coffee: 主要CTA。初回（記録が無い）は独立したセクションとして
@@ -129,13 +129,13 @@ function HomePage() {
           には、同じ強さで毎回出す必要が無いため小さいボタンへ縮小する */}
       <section className="mb-6">
         {!isRepeatVisitor && (
-          <h2 className="mb-3 text-sm font-semibold text-ctp-text">
+          <h2 className="mb-3 text-sm font-semibold text-text">
             {t("home.recordCoffeeHeading")}
           </h2>
         )}
         <Link
           to="/records/new"
-          className={`flex items-center justify-center gap-2 rounded-xl border border-ctp-overlay0/60 text-ctp-subtext0 transition-colors duration-150 hover:border-ctp-overlay0 hover:text-ctp-text focus:outline-none focus:ring-2 focus:ring-ctp-blue/50 ${
+          className={`flex items-center justify-center gap-2 rounded-xl border border-line/60 text-text-tertiary transition-colors duration-150 hover:border-line hover:text-text focus:outline-none focus:ring-2 focus:ring-primary/50 ${
             isRepeatVisitor ? "py-3" : "flex-col py-10"
           }`}
         >
@@ -146,10 +146,10 @@ function HomePage() {
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ctp-text">{t("home.recentRecords")}</h2>
+          <h2 className="text-sm font-semibold text-text">{t("home.recentRecords")}</h2>
           <Link
             to="/records"
-            className="text-xs text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
+            className="text-xs text-text-tertiary underline underline-offset-2 hover:text-text"
           >
             {t("common.viewAll")}
           </Link>
@@ -157,10 +157,10 @@ function HomePage() {
 
         {isLoading && <RecordListSkeleton count={3} />}
         {!isLoading && error && (
-          <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>
+          <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>
         )}
         {!isLoading && !error && records.length === 0 && (
-          <p className="rounded-xl border border-dashed border-ctp-overlay0/60 px-4 py-6 text-center text-sm text-ctp-subtext0">
+          <p className="rounded-xl border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
             {t("records.emptyDesc")}
           </p>
         )}

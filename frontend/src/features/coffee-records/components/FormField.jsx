@@ -17,19 +17,19 @@ function FormField({ id, label, required = false, hint, error, children }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="flex items-center gap-2 text-sm font-medium text-ctp-text">
+      <label htmlFor={id} className="flex items-center gap-2 text-sm font-medium text-text">
         {label}
         {required ? (
-          <span className="rounded bg-ctp-surface1 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ctp-subtext1">
+          <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
             {t("common.required")}
           </span>
         ) : (
-          <span className="text-[11px] font-normal text-ctp-subtext0">{t("common.optional")}</span>
+          <span className="text-[11px] font-normal text-text-tertiary">{t("common.optional")}</span>
         )}
       </label>
 
       {hint && (
-        <p id={hintId} className="text-xs text-ctp-subtext0">
+        <p id={hintId} className="text-xs text-text-tertiary">
           {hint}
         </p>
       )}
@@ -39,7 +39,7 @@ function FormField({ id, label, required = false, hint, error, children }) {
       {children}
 
       {error && (
-        <p id={errorId} role="alert" className="flex items-start gap-1.5 text-xs text-ctp-red">
+        <p id={errorId} role="alert" className="flex items-start gap-1.5 text-xs text-danger">
           <span aria-hidden="true">⚠</span>
           <span>{error}</span>
         </p>

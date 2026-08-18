@@ -48,12 +48,12 @@ function DiscoverPage() {
   return (
     <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
       <header className="mb-6">
-        <h1 className="text-xl font-bold text-ctp-text">Discover</h1>
-        <p className="mt-1 text-sm text-ctp-subtext0">{t("discover.pageSubtitle")}</p>
+        <h1 className="text-xl font-bold text-text">Discover</h1>
+        <p className="mt-1 text-sm text-text-tertiary">{t("discover.pageSubtitle")}</p>
       </header>
 
       {origins.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-ctp-overlay0/60 px-4 py-6 text-center text-sm text-ctp-subtext0">
+        <p className="rounded-xl border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
           {t("discover.emptyDesc")}
         </p>
       ) : (
@@ -62,7 +62,7 @@ function DiscoverPage() {
             <section key={group.nodeId}>
               <Link
                 to={`/entities/${encodeURIComponent(group.nodeId)}`}
-                className="mb-3 inline-block text-sm font-semibold text-ctp-text underline underline-offset-2 hover:text-ctp-blue"
+                className="mb-3 inline-block text-sm font-semibold text-text underline underline-offset-2 hover:text-primary"
               >
                 {group.originLabel}
               </Link>
@@ -74,7 +74,7 @@ function DiscoverPage() {
             </section>
           ))}
 
-          <p className="text-xs text-ctp-subtext0">{t("discover.sourceNote")}</p>
+          <p className="text-xs text-text-tertiary">{t("discover.sourceNote")}</p>
         </div>
       )}
     </div>

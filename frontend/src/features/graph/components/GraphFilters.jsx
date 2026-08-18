@@ -36,8 +36,8 @@ function GraphFilters({ filters, onChange }) {
           aria-pressed={filters.recordType === ""}
           className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
             filters.recordType === ""
-              ? "border-ctp-blue bg-ctp-blue/15 font-semibold text-ctp-text"
-              : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0"
+              ? "border-primary bg-primary/15 font-semibold text-text"
+              : "border-line/60 text-text-secondary hover:border-line"
           }`}
         >
           {t("common.all")}
@@ -50,20 +50,20 @@ function GraphFilters({ filters, onChange }) {
             aria-pressed={filters.recordType === type.value}
             className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
               filters.recordType === type.value
-                ? "border-ctp-blue bg-ctp-blue/15 font-semibold text-ctp-text"
-                : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0"
+                ? "border-primary bg-primary/15 font-semibold text-text"
+                : "border-line/60 text-text-secondary hover:border-line"
             }`}
           >
             {t(type.labelKey)}
           </button>
         ))}
 
-        <label className="ml-auto flex items-center gap-1.5 text-xs text-ctp-subtext0">
+        <label className="ml-auto flex items-center gap-1.5 text-xs text-text-tertiary">
           {t("common.rating")}
           <select
             value={filters.ratingMin}
             onChange={(event) => onChange({ ...filters, ratingMin: event.target.value })}
-            className="rounded-lg border border-ctp-overlay0/60 bg-ctp-surface0 px-2 py-1 text-xs text-ctp-text"
+            className="rounded-lg border border-line/60 bg-surface-1 px-2 py-1 text-xs text-text"
           >
             <option value="">{t("graph.ratingUnfiltered")}</option>
             {[5, 4, 3, 2].map((score) => (
@@ -92,8 +92,8 @@ function GraphFilters({ filters, onChange }) {
               aria-pressed={active}
               className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors duration-150 ${
                 active
-                  ? "border-ctp-overlay0 bg-ctp-surface1 text-ctp-text"
-                  : "border-ctp-overlay0/40 text-ctp-subtext0 hover:border-ctp-overlay0/60"
+                  ? "border-line bg-surface-2 text-text"
+                  : "border-line/40 text-text-tertiary hover:border-line/60"
               }`}
             >
               {active && <Check size={11} aria-hidden="true" strokeWidth={2.5} />}

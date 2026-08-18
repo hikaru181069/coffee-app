@@ -19,7 +19,7 @@ function LanguageSwitcher({ className = "" }) {
     <div
       role="group"
       aria-label="Language / 表示言語"
-      className={`inline-flex overflow-hidden rounded-lg border border-ctp-surface2 text-xs font-semibold ${className}`}
+      className={`inline-flex overflow-hidden rounded-lg border border-surface-3 text-xs font-semibold ${className}`}
     >
       {LANGUAGES.map(({ code, label }) => {
         const isActive = i18n.language === code;
@@ -31,8 +31,8 @@ function LanguageSwitcher({ className = "" }) {
             aria-pressed={isActive}
             className={`px-2.5 py-1.5 transition-colors duration-150 ${
               isActive
-                ? "bg-ctp-blue/15 text-ctp-blue"
-                : "text-ctp-subtext1 hover:bg-ctp-surface0/60 hover:text-ctp-text"
+                ? "bg-primary/15 text-primary"
+                : "text-text-secondary hover:bg-surface-1/60 hover:text-text"
             }`}
           >
             {label}
