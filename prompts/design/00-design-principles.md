@@ -76,36 +76,68 @@ Coffee Appの中心体験は、Record → Connect → Discoverである。
 
 ### 6.1 Color
 
-Linear（linear.app）の本番CSSから実際に取得した値をそのまま使っている
-配色（`frontend/src/App.css`の`--ctp-*`、`frontend/src/index.css`の
-`--color-ctp-*`としてTailwindの`@theme`へ再定義）。変数名は
-mlb-app時代の命名（`ctp-`）を既存コードを書き換えずに引き継いでいる
-だけで、Catppuccinを意匠として参照しているわけではない
-（このアプリの配色はCatppuccinとは無関係）。
-派手な単色ブランドカラーではなく、背景の階調と少数のアクセントで
-Linear/Obsidianに近い落ち着いた見た目を作る。
+2026-08、配色を全面刷新した。以前はLinear（linear.app）の本番CSSから
+実際に取得した値をそのまま使い、変数名だけmlb-app時代の`ctp-*`
+（Catppuccinのスロット名）を書き換えずに引き継いでいた。「Catppuccinを
+名乗りながら中身はLinear」という不一致がこのアプリの刷新動機になった
+ため、今回は配色そのものに加えてトークン名も、値の意味を表す
+セマンティックな名前へ改名した（`ctp-blue`→`primary`など）。名前と
+実体を一致させることを優先し、値だけ変えて名前を残すという妥協は
+取らなかった。
 
-背景の階調（暗い順）:
+唯一の定義箇所は`frontend/src/index.css`の`@theme`ブロック
+（Tailwind v4の制約でリテラル値のみ）。他のCSS（`App.css`等）は
+そこが生成する`--color-*`カスタムプロパティを`var()`で参照するだけで、
+値の手動同期は発生しない。
 
-- `ctp-crust` / `ctp-base`（#08090a）: 画面の最背面
-- `ctp-mantle`（#0f1011）: カード・パネルの背景
-- `ctp-surface0` / `ctp-surface1` / `ctp-surface2`: 段階的に明るいUI要素（バッジ、区切り）
-- `ctp-overlay0`: 枠線
+背景の階調（暗い順、値はLinear実測値からほぼ変更していない。
+既にほぼ無彩色に近く、変える意味が薄いため）:
 
-テキスト:
+- `base`（#08090a）: 画面の最背面（旧`ctp-base`/`ctp-crust`。
+  同値だった2トークンを1つに統合した）
+- `raised`（#0f1011）: カード・パネルの背景（旧`ctp-mantle`）
+- `surface-1` / `surface-2` / `surface-3`: 段階的に明るいUI要素（バッジ、区切り。
+  旧`ctp-surface0/1/2`）
+- `line` / `line-strong`: 枠線（旧`ctp-overlay0/1`）
 
-- `ctp-text`（#f7f8f8）: 主要テキスト
-- `ctp-subtext0` / `ctp-subtext1`: 補助テキスト
+テキスト（旧`ctp-subtext0/1`は青みがかっていたため、暖色寄りのグレーへ
+微調整した）:
 
-アクセントカラーは意味を固定して使う（装飾目的で増やさない）:
+- `text`（#f7f8f8）: 主要テキスト
+- `text-secondary` / `text-tertiary`: 補助テキスト
 
-- `ctp-blue`（#5e6ad2）: プライマリアクション・フォーカスリング。
-  Linear本家のブランドカラーそのもの
-- `ctp-red`: エラー・削除などの危険操作
-- `ctp-yellow`: 評価（★）
-- `ctp-lavender`: 知識グラフへの導線・グラフ関連のアクセント
-- 産地アクセントバー（`utils/originAccent.js`）は上記2色（blue/red）を除いた
-  9色から、産地名のハッシュ値で決定的に選ぶ。同じ産地は常に同じ色になる。
+意味を固定したセマンティック色（装飾目的で増やさない）:
+
+- `primary`（#7c8363、モス/オリーブ系）: プライマリアクション・フォーカス
+  リング・アクティブ状態・知識グラフの`record`ノード・トーストinfo。
+  旧`ctp-blue`（Linear本家のブランドカラーそのもの）を置き換えた。
+  モス背景に白文字はコントラスト比約3.74:1でWCAG AA未達のため、
+  ボタン文字色はダーク（`text-base`）にしている
+- `danger`（#f38ba8、維持）: エラー・削除などの危険操作
+- `warn` / `rating`（#f9e2af、維持、同値の別名2つ）: `warn`=トースト警告、
+  `rating`=評価（★）。用途で読みやすい名前を使い分けている
+- `success`（#a6e3a1、維持）: トースト成功
+
+知識グラフのノード種別カラー（`features/graph/utils/nodeVisuals.js`）と
+産地アクセントバー（`features/coffee-records/utils/originAccent.js`）は、
+モスの濃淡2段階＋彩度を落とした5色（ミュートな多色）の共有パレットを使う:
+
+- `accent-moss-light` / `accent-moss-dark`: モスの明暗（グラフの`origin`/
+  `roastLevel`ノード）
+- `accent-slate` / `accent-clay` / `accent-ochre` / `accent-rose` /
+  `accent-mist`: モスと彩度を揃えたブルーグレー/テラコッタ/黄土色/ローズ/
+  ラベンダーグレー（グラフの`process`/`farm`/`variety`/`flavor`/`cafe`
+  ノード）
+
+グレーの濃淡5段階だけにする案も検討したが、隣り合う段階が近すぎて
+瞬時に見分けにくいという指摘があり撤回した。ノードは既にlucideアイコンで
+種別を区別できている（UI Rules「色だけで状態を表現しない」）ため、色は
+識別性の唯一の手段ではないが、それでも一目で見分けられることは維持する。
+
+産地アクセントバー（`getOriginAccentClass`）は、上記の差し色7色から
+産地名のハッシュ値で決定的に選ぶ（同じ産地は常に同じ色になる）。
+`primary`と`danger`は他の箇所で意味を持たせているためパレットから
+除外している。
 
 ### 6.2 Typography
 

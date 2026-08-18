@@ -799,6 +799,25 @@ Records/RecordDetail/Statsは既に「カードの積み重ね」から「header
 - `ProfileSkeleton.jsx`を4セクション構成（表示言語／名前／パスワード変更／退会）に合わせて骨格を追加
 - 検証: `npm run lint && npm run build && npm test`が通ることを確認。ブラウザでも実機確認した（Profileページでの言語切り替えがアプリ全体に反映されること、`/login`ページのNavbarに言語切り替えが表示されないこと、コンソールエラー無し）
 
+### 2026-08: カラーテーマ刷新（モノクロ+モス差し色 + トークンのセマンティックリネーム）
+
+ユーザーからの依頼「現状Linearを参考にしているカラーテーマを刷新するなら」に対して、複数の方向性案を提示し、ユーザーが「モノクロ+差し色1色のミニマル路線、差し色はモス(オリーブ)系」を選んだ。調査の結果、既存配色は「Catppuccinを装っているが実態はLinear本番CSSの実測値」（`prompts/design/00-design-principles.md` 6.1に既に明記されていた）であることを再確認し、この機会に配色だけでなくトークン名（`ctp-*`）自体もセマンティックな名前（`primary`/`danger`等）へリネームすることになった（値だけ変えて名前を残すと、今回の刷新動機と同種の「名前と実体の不一致」を再生産するため）。
+
+- **新パレット**: primaryはモス`#7c8363`。背景階調（base/raised/surface-1/2/3/line/line-strong）と主要テキスト（text）は実質据え置き、text-secondary/text-tertiaryはLinear由来の青みを抜いて暖色寄りに微調整。danger/warn/rating/successは意味固定色として値を維持
+- **グラフノード・産地アクセントの再設計**: 当初「グレー5段階」を提案したが、ユーザーから「グレーの濃淡は見分けにくい」という指摘を受けて撤回し、モスと彩度を揃えた「ミュートな多色」5色（`accent-slate`/`accent-clay`/`accent-ochre`/`accent-rose`/`accent-mist`）+モス2段階（`accent-moss-light`/`accent-moss-dark`）の7色パレットへ変更した。各色はノードアイコンの意味とゆるく対応させた（process=droplets→ブルーグレー、farm=leaf→テラコッタ、等）。`originAccent.js`のパレットもグラフと共有し、デザインシステムとして一貫させた
+- **トークン管理の一元化**: `frontend/src/index.css`の`@theme`ブロックを唯一の定義箇所とし、`frontend/src/App.css`にあった重複`:root { --ctp-*: <hex> }`ブロック（値の手動同期が必要という既知の技術的負債）を削除。App.css内の`var(--ctp-旧名)`（~937箇所）は`var(--color-新名)`へ直接置き換え、二重管理を構造的に解消した
+- **canvas描画色の動的化**: `nodeVisuals.js`の`canvasColor`（react-force-graph-2dのcanvas描画向けhexの手打ち値、@theme側との手動同期が必要だった）を、新規`features/graph/utils/canvasColors.js`（`getComputedStyle`ベース）で解決するgetterに変更した。`GraphCanvas.jsx`内のローカル`CTP`定数も同じ仕組みへ統合
+- **副次的に見つかったバグの修正**: `process`ノードが使っていた`ctp-sky`が`index.css`の`@theme`に定義されておらず、Tailwind v4のCSS-first制約によりTailwindユーティリティが生成されていなかった（意図した色になっていなかった可能性が高い）。今回の再設計で解消
+- **primaryボタンの文字色**: モス背景×白文字はコントラスト比約3.74:1でWCAG AA(4.5:1)未達だったため、`formStyles.js`の`primaryButtonClass`を`text-white`→`text-base`（既存の`dangerButtonClass`と同じダーク文字パターン）に変更
+- **リネームの実行方法**: JSXのTailwindユーティリティ約459箇所・CSSの`var(--ctp-*)`約937箇所という規模のため、トークンごとに`ctp-<旧名>`→`<新名>`の機械的な文字列置換（sed）を適用し、都度`npm run lint && npm run build`で確認しながら進めた。`ctp-lavender`/`ctp-sapphire`は「グラフ/産地の可視化」用途と「一般UI」用途が混在していたため、`nodeVisuals.js`/`originAccent.js`を除外した上で残りをまとめて`primary`へ置換し、グラフ2ファイルは手動で新パレットへ書き換えた。個別に見つかった非機械的な残存箇所（`DiscoverCard.jsx`の装飾アイコン→`primary`、`RecordForm.jsx`のmasterDataErrorコールアウト→`warn`）も併せて修正した
+- **ドキュメント**: `prompts/design/00-design-principles.md` 6.1節を新パレット・命名方針に合わせて全面書き直し。`docs/design.md`は色の具体値を持たないため変更不要と判断した
+- **スコープ外として残したもの**: `App.css`に残るもう1箇所の未参照MLB系CSS（`.archetype-badge`/`.mbar-fill`/`.pred-bar-fill`/`.home-player-section`等。既存の未解決事項・次に実装すべき最小単位に記載済み）で使われている`ctp-mauve`/`ctp-teal`/`ctp-maroon`/`ctp-peach`/`ctp-sky`/`ctp-pink`は今回リネームせず据え置いた（`rosewater`/`flamingo`は完全未使用と確認できたため削除）。生きているUIには一切影響しないことをgrepで確認済み。このCSSブロック自体を削除すれば、残った`ctp-*`もまとめて消える
+- 検証: `npm run lint && npm run build && npm test`（21件）がすべて成功することを確認。Docker Compose環境のブラウザ実機で、Home/Graph（ノード色・選択リング・凡例）/Stats（棒グラフ）/Profile（primary/danger各ボタン、言語切り替えの選択状態）/Records（フィルターチップ）/トースト（成功）を目視確認し、コンソールエラー無し
+
+未解決事項:
+
+- グラフ/産地アクセントの新7色（特に`accent-slate`等の値）は目安値であり、より広い実データ・実機での微調整の余地がある
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -931,7 +950,7 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - Statsページは全期間の記録から計算しており、期間フィルター（直近3か月/今年など）は未実装（`docs/stats.md`の設計通り、Insightと同じく「記録全体のふりかえり」を示すための意図的な仕様だが、記録件数が増えた場合は要検討）
 - Discoverの提案（`docs/discover.md`）の「この産地を記録してみる」リンクは`/records/new`への単純な遷移で、産地の事前入力はしていない（`RecordForm`にプリフィル機構が無いため）
 - CQI参照データ（`backend/data/cqiDatabase.json`）は目安値であり、実際のCQIデータベースの正確な値を再現したものではない（開発環境に外部データセットを取得するネットワークアクセスが無いため。ファイル内コメントに明記済み）
-- `frontend/src/App.css`に、MLB時代のホーム画面（Team/Favorites/Recommendationsセクション、`player-list-carousel`等）向けの未参照CSSが別のブロックとしてもう1箇所残っている（2026-08に`.home-banner`等460行分は削除済みだが、`.home-player-section`等の同名クラスの別定義がまだ残存。`docs/mlb-legacy-inventory.md`参照）。JSXから一切参照されていないことは確認済みで、削除候補
+- `frontend/src/App.css`に、MLB時代のホーム画面（Team/Favorites/Recommendationsセクション、`player-list-carousel`等）向けの未参照CSSが別のブロックとしてもう1箇所残っている（2026-08に`.home-banner`等460行分は削除済みだが、`.home-player-section`等の同名クラスの別定義がまだ残存。`docs/mlb-legacy-inventory.md`参照）。JSXから一切参照されていないことは確認済みで、削除候補（同ブロック内で使われている旧`ctp-mauve`/`ctp-teal`/`ctp-maroon`/`ctp-peach`/`ctp-sky`/`ctp-pink`も、カラーテーマ刷新時にリネームせず残した。このブロックごと削除すれば一緒に消える）
 - `frontend/src/components/PageHeader.jsx`は、当初Records/RecordDetail等で再利用する想定だったが、現在どのページからもimportされていない死んだコンポーネントとして残っている（`docs/mlb-legacy-inventory.md`参照）。削除候補
 - `HomeVsCafeCard.jsx`と対応するi18nキー（`stats.homeVsCafeHeading`）・APIの`homeVsCafe`フィールドは、Statsページの3段構成からは表示を外したが、削除せず残している（将来の再導入候補）。当面はコード上に存在するが画面には出ない状態が続く
 - `/api/auth/*`（register/loginそのもののエラー）と`/api/users/*`（`authenticate`ミドルウェアの401等）でエラー応答の形式が異なる（前者は`{message}`、後者は`{error: {code, message, details}}`）。frontendの`errorMessage.js`が前者の英語メッセージ文字列をそのまま照合する仕組みに依存しているため、今回は統一を見送った（上記Tier 1エントリ参照）
