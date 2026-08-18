@@ -61,9 +61,13 @@ matchup/news/player/position/recommendation/scout/similarPlayer/stats/team）
 `utils/apiConfig.js` / `utils/authStorage.js` / `utils/datetime.js` /
 `services/api/apiError.js` / `services/api/authApi.js` /
 `components/ProtectedRoute.jsx` / `contexts/ToastContext.jsx` /
-`components/ErrorCard.jsx` / `components/SkeletonCard.jsx` /
+`components/ErrorCard.jsx` /
 `components/SearchInput.jsx` /
 `components/Navbar.jsx` + `components/BottomTabBar.jsx`
+
+`components/SkeletonCard.jsx`も再利用予定だったが、`PageHeader.jsx`と同様
+どのページからも使われていない死んだコンポーネントとして残っていたため、
+2026-08のスケルトン表示改善時に削除した。
 
 `components/PageHeader.jsx`は再利用予定だったが、実際には
 どのページからも使われていない死んだコンポーネントとして残っている

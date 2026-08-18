@@ -28,10 +28,7 @@ function EntityDetailPage() {
   if (isLoading) {
     return (
       <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
-        <div className="flex flex-col gap-2" aria-busy="true">
-          <div className="skeleton-block h-6 w-1/3 rounded" />
-          <div className="skeleton-block h-4 w-1/2 rounded" />
-        </div>
+        <EntityDetailSkeleton />
       </div>
     );
   }
@@ -163,6 +160,51 @@ function RelatedAttributeGroup({ type, items, t }) {
             {item.label}
             <span className="font-mono text-text-tertiary">{item.count}</span>
           </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 読み込み中のエンティティ詳細ページ。実際の構成
+ * （header→統計カード3枚→グラフで見るボタン→関連属性チップ→関連記録一覧）
+ * と同じ形の骨格を出す（StatCard/RelatedAttributeGroupと同じくページ
+ * ローカルなヘルパー。entity-detail専用のfeatureディレクトリが無いため）。
+ */
+function EntityDetailSkeleton() {
+  const { t } = useTranslation();
+  return (
+    <div aria-busy="true" aria-label={t("common.loading")}>
+      <div className="mb-6 flex flex-col gap-2">
+        <div className="skeleton-block h-3 w-16 rounded" />
+        <div className="skeleton-block h-6 w-40 rounded" />
+      </div>
+
+      <div className="mb-6 grid grid-cols-3 gap-3">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index} className={cardClass}>
+            <div className="skeleton-block h-3 w-14 rounded" />
+            <div className="skeleton-block mt-2 h-4 w-10 rounded" />
+          </div>
+        ))}
+      </div>
+
+      <div className="skeleton-block mb-6 h-9 w-36 rounded-lg" />
+
+      <div className="mb-6 flex flex-col gap-4">
+        <div className="skeleton-block h-4 w-24 rounded" />
+        <div className="flex flex-wrap gap-2">
+          {Array.from({ length: 3 }, (_, index) => (
+            <div key={index} className="skeleton-block h-7 w-20 rounded-full" />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <div className="skeleton-block h-4 w-28 rounded" />
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index} className="skeleton-block h-14 w-full rounded-lg" />
         ))}
       </div>
     </div>

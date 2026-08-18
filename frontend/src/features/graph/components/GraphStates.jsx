@@ -15,15 +15,30 @@ import { getErrorMessage } from "../../../utils/errorMessage";
  * loading / empty / error を必ず用意する（prompts/05 の Checks）。
  */
 
+/**
+ * ノード・エッジを軽く連想させる骨格（物理演算の再現はしない。
+ * 円=recordノード、角丸矩形=属性ノードに見立てた形をいくつか散りばめ、
+ * 薄い斜め線でエッジを表現する）。
+ */
 export function GraphLoadingState() {
   const { t } = useTranslation();
   return (
     <div
       aria-busy="true"
       aria-label={t("common.loading")}
-      className="flex h-full min-h-64 items-center justify-center rounded-xl border border-surface-2 bg-raised"
+      className="relative h-full min-h-64 overflow-hidden rounded-xl border border-surface-2 bg-raised"
     >
-      <div className="skeleton-block h-40 w-40 rounded-full" />
+      <div className="absolute left-[18%] top-[55%] h-px w-40 origin-left rotate-[18deg] bg-line/40" />
+      <div className="absolute left-[32%] top-[30%] h-px w-36 origin-left rotate-[-22deg] bg-line/40" />
+      <div className="absolute left-[48%] top-[62%] h-px w-44 origin-left rotate-[8deg] bg-line/40" />
+      <div className="absolute left-[55%] top-[25%] h-px w-32 origin-left rotate-[35deg] bg-line/40" />
+
+      <div className="skeleton-block absolute left-[15%] top-[48%] h-16 w-16 rounded-full" />
+      <div className="skeleton-block absolute left-[38%] top-[22%] h-10 w-10 rounded-full" />
+      <div className="skeleton-block absolute left-[58%] top-[58%] h-12 w-12 rounded-full" />
+      <div className="skeleton-block absolute left-[30%] top-[68%] h-8 w-16 rounded-lg" />
+      <div className="skeleton-block absolute left-[68%] top-[30%] h-8 w-20 rounded-lg" />
+      <div className="skeleton-block absolute left-[50%] top-[78%] h-8 w-14 rounded-lg" />
     </div>
   );
 }

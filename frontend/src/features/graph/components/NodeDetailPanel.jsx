@@ -51,12 +51,7 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
       </div>
 
       <div className="mt-4">
-        {isLoading && (
-          <div className="flex flex-col gap-2" aria-busy="true">
-            <div className="skeleton-block h-4 w-2/3 rounded" />
-            <div className="skeleton-block h-4 w-1/2 rounded" />
-          </div>
-        )}
+        {isLoading && <NodeDetailSkeleton isRecord={node.data.type === "record"} t={t} />}
 
         {error && <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>}
 
@@ -75,6 +70,37 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
         )}
       </div>
     </aside>
+  );
+}
+
+/**
+ * 読み込み中のパネル本体。選択したノードの種類（node.data.type）は
+ * 選択した時点で既に分かっている（読み込み中なのはdetailだけ）ため、
+ * RecordNodeDetail/AttributeNodeDetailの形に合わせて出し分ける。
+ */
+function NodeDetailSkeleton({ isRecord, t }) {
+  return (
+    <div aria-busy="true" aria-label={t("common.loading")} className="flex flex-col gap-3">
+      {isRecord ? (
+        <>
+          <div className="skeleton-block h-4 w-24 rounded" />
+          <div className="skeleton-block h-4 w-20 rounded" />
+          <div className="flex flex-col gap-1.5">
+            <div className="skeleton-block h-3.5 w-full rounded" />
+            <div className="skeleton-block h-3.5 w-full rounded" />
+            <div className="skeleton-block h-3.5 w-2/3 rounded" />
+          </div>
+          <div className="skeleton-block mt-1 h-9 w-full rounded-lg" />
+        </>
+      ) : (
+        <>
+          <div className="skeleton-block h-4 w-32 rounded" />
+          <div className="skeleton-block h-9 w-full rounded-lg" />
+          <div className="skeleton-block h-14 w-full rounded-lg" />
+          <div className="skeleton-block h-14 w-full rounded-lg" />
+        </>
+      )}
+    </div>
   );
 }
 
