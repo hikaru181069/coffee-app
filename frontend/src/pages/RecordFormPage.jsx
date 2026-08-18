@@ -83,9 +83,9 @@ function RecordFormPage() {
     return (
       <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
         {isNotFound ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
-            <p className="text-sm font-medium text-ctp-text">{t("records.notFoundTitle")}</p>
-            <p className="text-sm text-ctp-subtext0">
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+            <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
+            <p className="text-sm text-text-tertiary">
               {t("records.notFoundDesc")}
             </p>
             <Link to="/records" className={secondaryButtonClass}>
@@ -104,15 +104,15 @@ function RecordFormPage() {
       <header className="mb-5">
         <Link
           to={isEditing ? `/records/${recordId}` : "/records"}
-          className="text-sm text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
+          className="text-sm text-text-tertiary underline underline-offset-2 hover:text-text"
         >
           ← {isEditing ? t("records.backToDetail") : t("common.backToList")}
         </Link>
-        <h1 className="mt-2 text-xl font-bold text-ctp-text">
+        <h1 className="mt-2 text-xl font-bold text-text">
           {isEditing ? t("records.editTitle") : t("records.newTitle")}
         </h1>
         {!isEditing && (
-          <p className="mt-1 text-sm text-ctp-subtext0">
+          <p className="mt-1 text-sm text-text-tertiary">
             {t("records.newSubtitle")}
           </p>
         )}

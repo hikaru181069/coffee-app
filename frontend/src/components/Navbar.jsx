@@ -133,8 +133,8 @@ const navLinkClass = ({ isActive }) =>
   [
     "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all duration-150",
     isActive
-      ? "bg-ctp-surface0 text-ctp-blue"
-      : "text-ctp-subtext1 hover:bg-ctp-surface0/60 hover:text-ctp-text",
+      ? "bg-surface-1 text-primary"
+      : "text-text-secondary hover:bg-surface-1/60 hover:text-text",
   ].join(" ");
 
 function Navbar() {
@@ -158,13 +158,13 @@ function Navbar() {
   return (
     <>
       {/* ── モバイル用トップバー (md 未満のみ表示) ── */}
-      <div className="fixed inset-x-0 top-0 z-50 flex h-14 items-center gap-3 border-b border-ctp-surface1/50 bg-ctp-mantle/85 px-4 backdrop-blur-lg md:hidden">
+      <div className="fixed inset-x-0 top-0 z-50 flex h-14 items-center gap-3 border-b border-surface-2/50 bg-raised/85 px-4 backdrop-blur-lg md:hidden">
         {/* ハンバーガーボタン: 3本線 → X への CSS トランスフォームで表現 */}
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle menu"
-          className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 rounded-md text-ctp-subtext1 transition-colors hover:bg-ctp-surface0/60"
+          className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 rounded-md text-text-secondary transition-colors hover:bg-surface-1/60"
         >
           <span
             className={`block h-0.5 w-5 bg-current transition-transform duration-200 ${open ? "translate-y-2 rotate-45" : ""}`}
@@ -179,7 +179,7 @@ function Navbar() {
         <NavLink
           to="/"
           onClick={close}
-          className="flex items-center gap-2 text-ctp-lavender transition-colors hover:text-ctp-blue"
+          className="flex items-center gap-2 text-primary transition-colors hover:text-primary"
         >
           <span className="text-base font-black tracking-tight">Coffee App</span>
         </NavLink>
@@ -191,7 +191,7 @@ function Navbar() {
           - 開いた状態: translate-x-0 (画面内に表示) */}
       <aside
         className={[
-          "fixed left-0 top-0 z-50 h-full w-52 border-r border-ctp-surface1/50 bg-ctp-mantle md:hidden",
+          "fixed left-0 top-0 z-50 h-full w-52 border-r border-surface-2/50 bg-raised md:hidden",
           "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
@@ -201,7 +201,7 @@ function Navbar() {
           <NavLink
             to="/"
             onClick={close}
-            className="mb-8 flex items-center gap-2.5 px-3 text-ctp-lavender transition-colors duration-150 hover:text-ctp-blue"
+            className="mb-8 flex items-center gap-2.5 px-3 text-primary transition-colors duration-150 hover:text-primary"
           >
             <span className="text-base font-black tracking-tight">Coffee App</span>
           </NavLink>
@@ -219,7 +219,7 @@ function Navbar() {
           </nav>
 
           {/* 認証エリア（sticky で常に下端に固定） */}
-          <div className="sticky bottom-16 mt-auto flex flex-col gap-1 border-t border-ctp-surface1/50 bg-ctp-mantle pt-5 pb-2">
+          <div className="sticky bottom-16 mt-auto flex flex-col gap-1 border-t border-surface-2/50 bg-raised pt-5 pb-2">
             {token ? (
               <>
                 <NavLink to="/profile" onClick={close} className={navLinkClass}>
@@ -229,7 +229,7 @@ function Navbar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:bg-ctp-red/10 hover:text-ctp-red"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
                 >
                   <LogoutIcon />
                   Logout
@@ -240,14 +240,14 @@ function Navbar() {
                 <NavLink
                   to="/login"
                   onClick={close}
-                  className="flex w-full items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-2 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
+                  className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-primary hover:text-primary"
                 >
                   Login
                 </NavLink>
                 <NavLink
                   to="/register"
                   onClick={close}
-                  className="flex w-full items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-2 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
+                  className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-primary hover:text-primary"
                 >
                   Register
                 </NavLink>
@@ -264,7 +264,7 @@ function Navbar() {
       <div
         aria-hidden="true"
         className={[
-          "fixed inset-0 z-40 bg-ctp-crust/60 backdrop-blur-sm md:hidden",
+          "fixed inset-0 z-40 bg-base/60 backdrop-blur-sm md:hidden",
           "transition-opacity duration-300",
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         ].join(" ")}
@@ -272,10 +272,10 @@ function Navbar() {
       />
 
       {/* ── デスクトップ用 上部ナビバー (md 以上のみ表示) ── */}
-      <div className="fixed inset-x-0 top-0 z-50 hidden h-14 items-center gap-6 border-b border-ctp-surface1/50 bg-ctp-mantle/85 px-6 backdrop-blur-lg md:flex">
+      <div className="fixed inset-x-0 top-0 z-50 hidden h-14 items-center gap-6 border-b border-surface-2/50 bg-raised/85 px-6 backdrop-blur-lg md:flex">
         <NavLink
           to="/"
-          className="flex items-center gap-2 text-ctp-lavender transition-colors duration-150 hover:text-ctp-blue"
+          className="flex items-center gap-2 text-primary transition-colors duration-150 hover:text-primary"
         >
           <span className="text-base font-black tracking-tight">Coffee App</span>
         </NavLink>
@@ -302,7 +302,7 @@ function Navbar() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:bg-ctp-red/10 hover:text-ctp-red"
+                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
               >
                 <LogoutIcon />
                 Logout
@@ -312,13 +312,13 @@ function Navbar() {
             <>
               <NavLink
                 to="/login"
-                className="flex items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-1.5 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
+                className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-primary hover:text-primary"
               >
                 Login
               </NavLink>
               <NavLink
                 to="/register"
-                className="flex items-center justify-center rounded-lg border border-ctp-surface2 px-3 py-1.5 text-sm font-semibold text-ctp-subtext1 transition-all duration-150 hover:border-ctp-sapphire hover:text-ctp-sapphire"
+                className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-primary hover:text-primary"
               >
                 Register
               </NavLink>

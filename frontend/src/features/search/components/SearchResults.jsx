@@ -17,11 +17,11 @@ function SearchResults({ query, entities, records, isLoading, error }) {
   const { t } = useTranslation();
 
   if (isLoading) return <RecordListSkeleton count={3} />;
-  if (error) return <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>;
+  if (error) return <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>;
 
   if (entities.length === 0 && records.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-ctp-overlay0/60 px-4 py-6 text-center text-sm text-ctp-subtext0">
+      <p className="rounded-xl border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
         {t("search.noResults", { query })}
       </p>
     );
@@ -31,7 +31,7 @@ function SearchResults({ query, entities, records, isLoading, error }) {
     <div className="flex flex-col gap-6">
       {entities.length > 0 && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-ctp-text">{t("search.entitiesHeading")}</h2>
+          <h2 className="mb-3 text-sm font-semibold text-text">{t("search.entitiesHeading")}</h2>
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {entities.map((entity) => (
               <li key={entity.id}>
@@ -44,7 +44,7 @@ function SearchResults({ query, entities, records, isLoading, error }) {
 
       {records.length > 0 && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-ctp-text">{t("search.recordsHeading")}</h2>
+          <h2 className="mb-3 text-sm font-semibold text-text">{t("search.recordsHeading")}</h2>
           <ul className="flex flex-col gap-3">
             {records.map((record) => (
               <RecordCard key={record.id} record={record} />

@@ -30,21 +30,21 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
   return (
     <aside
       aria-label={t("graph.selectedNodeAriaLabel")}
-      className="fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-ctp-surface1 bg-ctp-mantle p-4 shadow-xl sm:absolute sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-80 sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0"
+      className="fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-surface-2 bg-raised p-4 shadow-xl sm:absolute sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-80 sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <Icon size={18} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
           <div>
-            <p className="text-xs text-ctp-subtext0">{t(visual.labelKey)}</p>
-            <h2 className="text-sm font-semibold text-ctp-text">{node.data.label}</h2>
+            <p className="text-xs text-text-tertiary">{t(visual.labelKey)}</p>
+            <h2 className="text-sm font-semibold text-text">{node.data.label}</h2>
           </div>
         </div>
         <button
           type="button"
           onClick={onClose}
           aria-label={t("common.close")}
-          className="rounded p-1 text-ctp-subtext0 hover:bg-ctp-surface1 hover:text-ctp-text"
+          className="rounded p-1 text-text-tertiary hover:bg-surface-2 hover:text-text"
         >
           <X size={16} aria-hidden="true" />
         </button>
@@ -58,7 +58,7 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
           </div>
         )}
 
-        {error && <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>}
+        {error && <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>}
 
         {!isLoading && !error && detail?.kind === "record" && (
           <RecordNodeDetail record={detail.record} language={i18n.language} t={t} />
@@ -84,17 +84,17 @@ function RecordNodeDetail({ record, language, t }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="font-mono text-sm text-ctp-subtext1">
+      <p className="font-mono text-sm text-text-secondary">
         {formatConsumedAtShort(record.consumedAt, language)}
       </p>
       {record.rating !== null && (
-        <p className="flex items-center gap-1 text-sm text-ctp-yellow">
+        <p className="flex items-center gap-1 text-sm text-warn">
           <Star size={14} aria-hidden="true" fill="currentColor" strokeWidth={0} />
           <span className="font-mono">{record.rating} / 5</span>
         </p>
       )}
       {record.notes && (
-        <p className="line-clamp-3 text-sm text-ctp-subtext1">{record.notes}</p>
+        <p className="line-clamp-3 text-sm text-text-secondary">{record.notes}</p>
       )}
       <Link to={`/records/${record.id}`} className={`${secondaryButtonClass} mt-2`}>
         {t("graph.viewRecordDetail")}
@@ -107,7 +107,7 @@ function RecordNodeDetail({ record, language, t }) {
 function AttributeNodeDetail({ nodeId, recordCount, relatedRecords, language, t }) {
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-ctp-subtext0">
+      <p className="text-sm text-text-tertiary">
         <Trans
           i18nKey="graph.appearsInCount"
           count={recordCount}
@@ -124,20 +124,20 @@ function AttributeNodeDetail({ nodeId, recordCount, relatedRecords, language, t 
           <li key={record.id}>
             <Link
               to={`/records/${record.id}`}
-              className="block rounded-lg border border-ctp-surface1 px-3 py-2 transition-colors duration-150 hover:border-ctp-overlay0"
+              className="block rounded-lg border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
             >
-              <p className="truncate text-sm font-medium text-ctp-text">{record.title}</p>
-              <p className="mt-0.5 flex items-center gap-2 text-xs text-ctp-subtext0">
+              <p className="truncate text-sm font-medium text-text">{record.title}</p>
+              <p className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
                 <span className="font-mono">{formatConsumedAtShort(record.consumedAt, language)}</span>
                 {record.rating !== null && (
-                  <span className="flex items-center gap-0.5 text-ctp-yellow">
+                  <span className="flex items-center gap-0.5 text-warn">
                     <Star size={10} aria-hidden="true" fill="currentColor" strokeWidth={0} />
                     <span className="font-mono">{record.rating}</span>
                   </span>
                 )}
               </p>
               {record.notesExcerpt && (
-                <p className="mt-1 truncate text-xs text-ctp-subtext1">{record.notesExcerpt}</p>
+                <p className="mt-1 truncate text-xs text-text-secondary">{record.notesExcerpt}</p>
               )}
             </Link>
           </li>

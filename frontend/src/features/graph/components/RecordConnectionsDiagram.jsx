@@ -41,7 +41,7 @@ function RecordConnectionsDiagram({ record }) {
               y1={edge.y1}
               x2={edge.x2}
               y2={edge.y2}
-              className="stroke-ctp-surface1"
+              className="stroke-surface-2"
               strokeWidth="0.6"
             />
           ))}
@@ -52,12 +52,12 @@ function RecordConnectionsDiagram({ record }) {
           className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1"
           style={{ left: `${layout.center.x}%`, top: `${layout.center.y}%` }}
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ctp-surface0 ring-2 ring-ctp-surface1">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-1 ring-2 ring-surface-2">
             <RecordIcon size={18} aria-hidden="true" className={recordVisual.colorClass} strokeWidth={1.75} />
           </span>
           {/* 中心ノードだけは省略されすぎないよう、他ノードより広い幅で2行まで許容する */}
           <span
-            className="line-clamp-2 max-w-[10rem] text-center text-[11px] font-medium leading-tight text-ctp-text"
+            className="line-clamp-2 max-w-[10rem] text-center text-[11px] font-medium leading-tight text-text"
             title={record.title}
           >
             {record.title}
@@ -70,7 +70,7 @@ function RecordConnectionsDiagram({ record }) {
       </div>
 
       {layout.flavorOverflowCount > 0 && (
-        <p className="mt-2 text-center text-xs text-ctp-subtext0">
+        <p className="mt-2 text-center text-xs text-text-tertiary">
           {t("records.connectionsFlavorOverflow", { count: layout.flavorOverflowCount })}
         </p>
       )}
@@ -101,17 +101,17 @@ function ConnectionNode({ node }) {
     >
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-ctp-surface1 bg-ctp-mantle px-2 py-1 text-[10px] text-ctp-subtext1 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-surface-2 bg-raised px-2 py-1 text-[10px] text-text-secondary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
       >
-        <span className="font-medium text-ctp-text">{node.label}</span>
-        <span className="mx-1 text-ctp-subtext0" aria-hidden="true">→</span>
+        <span className="font-medium text-text">{node.label}</span>
+        <span className="mx-1 text-text-tertiary" aria-hidden="true">→</span>
         {t(visual.labelKey)}
       </span>
 
-      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-ctp-surface0 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:border-ctp-overlay0/60 group-hover:bg-ctp-surface1 group-focus-visible:ring-2 group-focus-visible:ring-ctp-blue/50">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-surface-1 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:border-line/60 group-hover:bg-surface-2 group-focus-visible:ring-2 group-focus-visible:ring-primary/50">
         <Icon size={14} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
       </span>
-      <span className="max-w-[4.5rem] truncate text-[10px] text-ctp-subtext1 transition-colors duration-150 group-hover:text-ctp-text">
+      <span className="max-w-[4.5rem] truncate text-[10px] text-text-secondary transition-colors duration-150 group-hover:text-text">
         {node.label}
       </span>
     </Link>

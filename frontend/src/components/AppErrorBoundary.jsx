@@ -31,18 +31,18 @@ class AppErrorBoundary extends Component {
     if (!this.state.error) return this.props.children;
 
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-ctp-base px-4 text-center text-ctp-text">
-        <AlertCircle size={32} strokeWidth={1.5} className="text-ctp-red" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-base px-4 text-center text-text">
+        <AlertCircle size={32} strokeWidth={1.5} className="text-danger" />
         <div>
           <p className="text-sm font-semibold">問題が発生しました</p>
-          <p className="mt-1 text-sm text-ctp-subtext0">
+          <p className="mt-1 text-sm text-text-tertiary">
             ページを再読み込みしてもう一度お試しください。
           </p>
         </div>
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="rounded-lg border border-ctp-overlay0/60 px-4 py-2 text-sm text-ctp-text transition-colors duration-150 hover:border-ctp-overlay0"
+          className="rounded-lg border border-line/60 px-4 py-2 text-sm text-text transition-colors duration-150 hover:border-line"
         >
           再読み込み
         </button>

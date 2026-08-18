@@ -65,7 +65,7 @@ function AnimatedRoutes() {
             element={
               <Suspense
                 fallback={
-                  <p className="p-6 text-center text-sm text-ctp-subtext0">{t("common.loading")}</p>
+                  <p className="p-6 text-center text-sm text-text-tertiary">{t("common.loading")}</p>
                 }
               >
                 <GraphPage />

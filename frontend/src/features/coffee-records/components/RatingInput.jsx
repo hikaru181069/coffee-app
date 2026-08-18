@@ -30,8 +30,8 @@ function RatingInput({ id, value, onChange, disabled = false }) {
           return (
             <label
               key={score}
-              className={`cursor-pointer rounded p-1 transition-colors duration-150 focus-within:ring-2 focus-within:ring-ctp-blue/50 ${
-                disabled ? "cursor-not-allowed opacity-60" : "hover:bg-ctp-surface1"
+              className={`cursor-pointer rounded p-1 transition-colors duration-150 focus-within:ring-2 focus-within:ring-primary/50 ${
+                disabled ? "cursor-not-allowed opacity-60" : "hover:bg-surface-2"
               }`}
             >
               {/* sr-only: 画面には出さないがキーボードと支援技術からは使える */}
@@ -47,7 +47,7 @@ function RatingInput({ id, value, onChange, disabled = false }) {
               <Star
                 size={22}
                 aria-hidden="true"
-                className={isActive ? "text-ctp-yellow" : "text-ctp-overlay0"}
+                className={isActive ? "text-warn" : "text-line"}
                 fill={isActive ? "currentColor" : "none"}
                 strokeWidth={1.5}
               />
@@ -58,7 +58,7 @@ function RatingInput({ id, value, onChange, disabled = false }) {
       </div>
 
       {/* 星の数を文字でも示す（色・形だけで状態を表現しない） */}
-      <span className="text-sm text-ctp-subtext1">
+      <span className="text-sm text-text-secondary">
         {selected === 0 ? t("common.unrated") : `${selected} / 5`}
       </span>
 
@@ -66,7 +66,7 @@ function RatingInput({ id, value, onChange, disabled = false }) {
         <button
           type="button"
           onClick={() => onChange("")}
-          className="text-xs text-ctp-subtext0 underline underline-offset-2 hover:text-ctp-text"
+          className="text-xs text-text-tertiary underline underline-offset-2 hover:text-text"
         >
           {t("common.clear")}
         </button>

@@ -21,21 +21,21 @@ function EntityResultCard({ entity }) {
   return (
     <Link
       to={`/entities/${encodeURIComponent(entity.id)}`}
-      className="block rounded-xl border border-ctp-surface1 bg-ctp-mantle p-4 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
+      className="block rounded-xl border border-surface-2 bg-raised p-4 transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50"
     >
       <div className="flex items-center gap-2">
         <Icon size={16} aria-hidden="true" className={visual.colorClass} />
-        <span className="text-xs text-ctp-subtext0">{t(visual.labelKey)}</span>
+        <span className="text-xs text-text-tertiary">{t(visual.labelKey)}</span>
       </div>
 
-      <h3 className="mt-1 text-base font-bold text-ctp-text">{entity.label}</h3>
+      <h3 className="mt-1 text-base font-bold text-text">{entity.label}</h3>
 
-      <p className="mt-1 text-sm text-ctp-subtext0">
+      <p className="mt-1 text-sm text-text-tertiary">
         {t("search.recordCount", { count: entity.recordCount })}
       </p>
 
       {entity.relatedLabels.length > 0 && (
-        <p className="mt-1 text-xs text-ctp-subtext1">
+        <p className="mt-1 text-xs text-text-secondary">
           {t(`search.related.${entity.relatedType}`, { labels: entity.relatedLabels.join(" • ") })}
         </p>
       )}

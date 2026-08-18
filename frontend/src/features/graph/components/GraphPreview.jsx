@@ -41,18 +41,18 @@ function GraphPreview() {
   return (
     <Link
       to="/graph"
-      className="flex h-full items-center gap-8 rounded-xl border border-ctp-surface1 bg-ctp-mantle p-8 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
+      className="flex h-full items-center gap-8 rounded-xl border border-surface-2 bg-raised p-8 transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50"
     >
       <div className="min-w-0 flex-1">
-        <h3 className="text-2xl font-bold text-ctp-text">{t("home.knowledgeGraph.heading")}</h3>
-        <p className="mt-2 text-base text-ctp-subtext0">{t("home.knowledgeGraph.tagline")}</p>
+        <h3 className="text-2xl font-bold text-text">{t("home.knowledgeGraph.heading")}</h3>
+        <p className="mt-2 text-base text-text-tertiary">{t("home.knowledgeGraph.tagline")}</p>
 
-        <div className="mt-6 flex items-center gap-6 font-mono text-xl text-ctp-subtext1">
+        <div className="mt-6 flex items-center gap-6 font-mono text-xl text-text-secondary">
           <span>{t("home.knowledgeGraph.nodeCount", { count: graph.summary.nodeCount })}</span>
           <span>{t("home.knowledgeGraph.edgeCount", { count: graph.summary.edgeCount })}</span>
         </div>
 
-        <span className="mt-6 inline-flex items-center gap-1 text-sm text-ctp-subtext0">
+        <span className="mt-6 inline-flex items-center gap-1 text-sm text-text-tertiary">
           {t("home.knowledgeGraph.explore")}
           <ArrowRight size={16} aria-hidden="true" />
         </span>
@@ -86,7 +86,7 @@ function GraphIllustration({ layout }) {
           y1={edge.y1}
           x2={edge.x2}
           y2={edge.y2}
-          className="stroke-ctp-overlay0"
+          className="stroke-line"
           strokeWidth="1"
         />
       ))}

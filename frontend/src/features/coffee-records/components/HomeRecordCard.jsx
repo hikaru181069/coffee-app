@@ -33,7 +33,7 @@ function HomeRecordCard({ record }) {
     <li>
       <Link
         to={`/records/${record.id}`}
-        className="block h-full rounded-xl border border-ctp-surface1 bg-ctp-mantle p-4 transition-colors duration-150 hover:border-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50 sm:p-5"
+        className="block h-full rounded-xl border border-surface-2 bg-raised p-4 transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50 sm:p-5"
       >
         {record.origin && (
           <div className="flex items-center gap-2">
@@ -41,16 +41,16 @@ function HomeRecordCard({ record }) {
               aria-hidden="true"
               className={`h-3 w-0.5 rounded-full ${getOriginAccentClass(record.origin.name)}`}
             />
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-ctp-subtext0">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
               {record.origin.name}
             </span>
           </div>
         )}
 
         <div className="mt-2 flex items-start justify-between gap-2">
-          <h3 className="truncate text-base font-bold text-ctp-text">{record.title}</h3>
+          <h3 className="truncate text-base font-bold text-text">{record.title}</h3>
           {record.rating !== null && (
-            <span className="inline-flex flex-shrink-0 items-center gap-0.5 text-xs font-semibold text-ctp-yellow">
+            <span className="inline-flex flex-shrink-0 items-center gap-0.5 text-xs font-semibold text-warn">
               <Star size={12} aria-hidden="true" fill="currentColor" strokeWidth={0} />
               <span className="font-mono">{record.rating}</span>
               <span className="sr-only">{t("records.outOf5Sr")}</span>
@@ -59,17 +59,17 @@ function HomeRecordCard({ record }) {
         </div>
 
         {record.process && (
-          <p className="mt-1 text-sm text-ctp-subtext0">{record.process.name}</p>
+          <p className="mt-1 text-sm text-text-tertiary">{record.process.name}</p>
         )}
 
         {flavors.length > 0 && (
-          <p className="mt-2 truncate text-xs text-ctp-subtext1">
+          <p className="mt-2 truncate text-xs text-text-secondary">
             {flavors.map((flavor) => flavor.name).join(" • ")}
           </p>
         )}
 
         {!hasCoffeeDetails(record) && (
-          <p className="mt-2 text-xs text-ctp-subtext0">{t("records.detailEmptyHint")}</p>
+          <p className="mt-2 text-xs text-text-tertiary">{t("records.detailEmptyHint")}</p>
         )}
       </Link>
     </li>

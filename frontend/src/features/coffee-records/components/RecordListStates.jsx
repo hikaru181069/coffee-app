@@ -21,7 +21,7 @@ export function RecordListSkeleton({ count = 4 }) {
       {Array.from({ length: count }, (_, index) => (
         <li
           key={index}
-          className="rounded-xl border border-ctp-surface1 bg-ctp-mantle p-5 sm:p-6"
+          className="rounded-xl border border-surface-2 bg-raised p-5 sm:p-6"
         >
           <div className="skeleton-block h-4 w-1/2 rounded" />
           <div className="skeleton-block mt-2 h-3 w-1/3 rounded" />
@@ -42,11 +42,11 @@ export function RecordListSkeleton({ count = 4 }) {
 export function RecordsEmptyState() {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
-      <Coffee size={32} aria-hidden="true" className="text-ctp-subtext0" strokeWidth={1.5} />
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+      <Coffee size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
       <div>
-        <p className="text-sm font-medium text-ctp-text">{t("records.emptyTitle")}</p>
-        <p className="mt-1 text-sm text-ctp-subtext0">
+        <p className="text-sm font-medium text-text">{t("records.emptyTitle")}</p>
+        <p className="mt-1 text-sm text-text-tertiary">
           {t("records.emptyDesc")}
         </p>
       </div>
@@ -61,11 +61,11 @@ export function RecordsEmptyState() {
 export function RecordsNoMatchState({ onClearFilters }) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
-      <SearchX size={32} aria-hidden="true" className="text-ctp-subtext0" strokeWidth={1.5} />
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+      <SearchX size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
       <div>
-        <p className="text-sm font-medium text-ctp-text">{t("records.noMatchTitle")}</p>
-        <p className="mt-1 text-sm text-ctp-subtext0">{t("records.noMatchDesc")}</p>
+        <p className="text-sm font-medium text-text">{t("records.noMatchTitle")}</p>
+        <p className="mt-1 text-sm text-text-tertiary">{t("records.noMatchDesc")}</p>
       </div>
       <button type="button" onClick={onClearFilters} className={secondaryButtonClass}>
         {t("common.clearFilters")}
@@ -80,10 +80,10 @@ export function RecordsErrorState({ error, onRetry }) {
   return (
     <div
       role="alert"
-      className="flex flex-col items-center gap-3 rounded-xl border border-ctp-red/40 bg-ctp-red/5 px-6 py-12 text-center"
+      className="flex flex-col items-center gap-3 rounded-xl border border-danger/40 bg-danger/5 px-6 py-12 text-center"
     >
-      <AlertCircle size={32} aria-hidden="true" className="text-ctp-red" strokeWidth={1.5} />
-      <p className="text-sm text-ctp-text">{error ? getErrorMessage(error, t) : t("common.loadFailed")}</p>
+      <AlertCircle size={32} aria-hidden="true" className="text-danger" strokeWidth={1.5} />
+      <p className="text-sm text-text">{error ? getErrorMessage(error, t) : t("common.loadFailed")}</p>
       {onRetry && (
         <button type="button" onClick={onRetry} className={secondaryButtonClass}>
           {t("common.retry")}

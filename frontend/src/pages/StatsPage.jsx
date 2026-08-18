@@ -67,7 +67,7 @@ function StatsPage() {
     return (
       <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
         <header className="mb-6">
-          <h1 className="text-xl font-bold text-ctp-text">{t("stats.heading")}</h1>
+          <h1 className="text-xl font-bold text-text">{t("stats.heading")}</h1>
         </header>
         <StatsEmptyState />
       </div>
@@ -77,13 +77,13 @@ function StatsPage() {
   return (
     <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
       <header className="mb-6">
-        <h1 className="text-xl font-bold text-ctp-text">{t("stats.heading")}</h1>
-        <p className="mt-1 text-sm text-ctp-subtext0">{t("stats.subtitle")}</p>
+        <h1 className="text-xl font-bold text-text">{t("stats.heading")}</h1>
+        <p className="mt-1 text-sm text-text-tertiary">{t("stats.subtitle")}</p>
       </header>
 
-      <div className="flex flex-col divide-y divide-ctp-surface1">
+      <div className="flex flex-col divide-y divide-surface-2">
         <section className="pb-6">
-          <h2 className="mb-4 text-sm font-semibold text-ctp-text">{t("stats.paceHeading")}</h2>
+          <h2 className="mb-4 text-sm font-semibold text-text">{t("stats.paceHeading")}</h2>
           <div className="flex flex-col gap-4">
             <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} t={t} />
             <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} t={t} />
@@ -91,12 +91,12 @@ function StatsPage() {
         </section>
 
         <section className="py-6">
-          <h2 className="mb-4 text-sm font-semibold text-ctp-text">{t("stats.collectionHeading")}</h2>
+          <h2 className="mb-4 text-sm font-semibold text-text">{t("stats.collectionHeading")}</h2>
           <CollectionStats collection={stats.collection} t={t} />
         </section>
 
         <section className="pt-6">
-          <h2 className="mb-4 text-sm font-semibold text-ctp-text">{t("stats.tasteHeading")}</h2>
+          <h2 className="mb-4 text-sm font-semibold text-text">{t("stats.tasteHeading")}</h2>
           <div className="flex flex-col gap-6">
             <RatingDistributionChart distribution={stats.ratingDistribution} t={t} />
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

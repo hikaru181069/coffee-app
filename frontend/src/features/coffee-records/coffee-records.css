@@ -3,7 +3,7 @@
  *
  * なぜ必要か:
  *   App.css には要素セレクタの `h1 { font-size: clamp(32px, 6vw, 56px);
- *   text-align: center; color: var(--ctp-lavender); ... }` がある。
+ *   text-align: center; color: var(--primary); ... }` がある。
  *   これは中央寄せの大きな見出しを前提にしたMLB画面向けの指定で、
  *   coffee-app の画面ではタイトルが巨大になり中央へ寄ってしまう。
  *

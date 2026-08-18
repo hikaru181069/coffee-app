@@ -7,7 +7,7 @@ import { entityDetailPath } from "../../graph/utils/entityLink";
 
 /** タグ1個分の共通見た目。エンティティ詳細ページへのLinkとして使う */
 const tagClass =
-  "inline-flex items-center gap-1 rounded-full border border-transparent bg-ctp-surface0 px-2 py-0.5 text-[11px] text-ctp-subtext1 transition-all duration-150 hover:-translate-y-px hover:border-ctp-overlay0/60 hover:bg-ctp-surface1 focus:outline-none focus:ring-2 focus:ring-ctp-blue/50";
+  "inline-flex items-center gap-1 rounded-full border border-transparent bg-surface-1 px-2 py-0.5 text-[11px] text-text-secondary transition-all duration-150 hover:-translate-y-px hover:border-line/60 hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-primary/50";
 
 /**
  * 一覧に並ぶ記録1件のカード。
@@ -42,17 +42,17 @@ function RecordCard({ record }) {
   const flavors = record.flavors ?? [];
 
   return (
-    <li className="relative rounded-xl border border-ctp-surface1 bg-ctp-mantle p-5 transition-all duration-200 hover:-translate-y-px hover:border-ctp-overlay0 hover:bg-ctp-surface0/40 sm:p-6">
+    <li className="relative rounded-xl border border-surface-2 bg-raised p-5 transition-all duration-200 hover:-translate-y-px hover:border-line hover:bg-surface-1/40 sm:p-6">
       <Link
         to={`/records/${record.id}`}
         aria-label={record.title}
-        className="absolute inset-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-ctp-blue/50"
+        className="absolute inset-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-ctp-text sm:text-[17px]">{record.title}</h3>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ctp-subtext0">
+          <h3 className="truncate text-base font-semibold text-text sm:text-[17px]">{record.title}</h3>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-tertiary">
             <span className="font-mono">{formatConsumedAtShort(record.consumedAt, i18n.language)}</span>
             <span aria-hidden="true">·</span>
             {/* 記録タイプはアイコンと文字の両方で示す（色だけで区別しない） */}
@@ -74,7 +74,7 @@ function RecordCard({ record }) {
         </div>
 
         {record.rating !== null && (
-          <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-ctp-surface0 px-2 py-1 text-xs font-semibold text-ctp-yellow">
+          <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-surface-1 px-2 py-1 text-xs font-semibold text-warn">
             <Star size={12} aria-hidden="true" fill="currentColor" strokeWidth={0} />
             <span className="font-mono">{record.rating}</span>
             <span className="sr-only">{t("records.outOf5Sr")}</span>
@@ -103,7 +103,7 @@ function RecordCard({ record }) {
             </Link>
           ))}
           {flavors.length > 3 && (
-            <span className="text-[11px] text-ctp-subtext0">+{flavors.length - 3}</span>
+            <span className="text-[11px] text-text-tertiary">+{flavors.length - 3}</span>
           )}
         </div>
       )}

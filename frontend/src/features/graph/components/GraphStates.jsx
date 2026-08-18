@@ -21,7 +21,7 @@ export function GraphLoadingState() {
     <div
       aria-busy="true"
       aria-label={t("common.loading")}
-      className="flex h-full min-h-64 items-center justify-center rounded-xl border border-ctp-surface1 bg-ctp-mantle"
+      className="flex h-full min-h-64 items-center justify-center rounded-xl border border-surface-2 bg-raised"
     >
       <div className="skeleton-block h-40 w-40 rounded-full" />
     </div>
@@ -32,11 +32,11 @@ export function GraphLoadingState() {
 export function GraphEmptyState() {
   const { t } = useTranslation();
   return (
-    <div className="flex h-full min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
-      <Share2 size={32} aria-hidden="true" className="text-ctp-subtext0" strokeWidth={1.5} />
+    <div className="flex h-full min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+      <Share2 size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
       <div>
-        <p className="text-sm font-medium text-ctp-text">{t("graph.emptyTitle")}</p>
-        <p className="mt-1 text-sm text-ctp-subtext0">
+        <p className="text-sm font-medium text-text">{t("graph.emptyTitle")}</p>
+        <p className="mt-1 text-sm text-text-tertiary">
           {t("graph.emptyDesc")}
         </p>
       </div>
@@ -51,8 +51,8 @@ export function GraphEmptyState() {
 export function GraphNoMatchState({ onClearFilters }) {
   const { t } = useTranslation();
   return (
-    <div className="flex h-full min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
-      <p className="text-sm font-medium text-ctp-text">{t("records.noMatchTitle")}</p>
+    <div className="flex h-full min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+      <p className="text-sm font-medium text-text">{t("records.noMatchTitle")}</p>
       <button type="button" onClick={onClearFilters} className={secondaryButtonClass}>
         {t("common.clearFilters")}
       </button>
@@ -65,10 +65,10 @@ export function GraphErrorState({ error, onRetry }) {
   return (
     <div
       role="alert"
-      className="flex h-full min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-ctp-red/40 bg-ctp-red/5 px-6 py-12 text-center"
+      className="flex h-full min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-danger/40 bg-danger/5 px-6 py-12 text-center"
     >
-      <AlertCircle size={32} aria-hidden="true" className="text-ctp-red" strokeWidth={1.5} />
-      <p className="text-sm text-ctp-text">{error ? getErrorMessage(error, t) : t("common.loadFailed")}</p>
+      <AlertCircle size={32} aria-hidden="true" className="text-danger" strokeWidth={1.5} />
+      <p className="text-sm text-text">{error ? getErrorMessage(error, t) : t("common.loadFailed")}</p>
       {onRetry && (
         <button type="button" onClick={onRetry} className={secondaryButtonClass}>
           {t("common.retry")}

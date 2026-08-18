@@ -33,8 +33,8 @@ function DiscoverSuggestions({ nodeId }) {
   return (
     <section className="mb-6 flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <Compass size={16} aria-hidden="true" className="text-ctp-green" />
-        <h2 className="text-sm font-semibold text-ctp-text">{t("discover.heading")}</h2>
+        <Compass size={16} aria-hidden="true" className="text-success" />
+        <h2 className="text-sm font-semibold text-text">{t("discover.heading")}</h2>
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -43,7 +43,7 @@ function DiscoverSuggestions({ nodeId }) {
         ))}
       </ul>
 
-      <p className="text-xs text-ctp-subtext0">{t("discover.sourceNote")}</p>
+      <p className="text-xs text-text-tertiary">{t("discover.sourceNote")}</p>
     </section>
   );
 }

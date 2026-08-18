@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 function ChipMultiSelect({ id, options, selectedIds, onToggle, disabled = false, emptyMessage }) {
   const { t } = useTranslation();
   if (options.length === 0) {
-    return <p className="text-sm text-ctp-subtext0">{emptyMessage ?? t("common.noOptions")}</p>;
+    return <p className="text-sm text-text-tertiary">{emptyMessage ?? t("common.noOptions")}</p>;
   }
 
   return (
@@ -26,10 +26,10 @@ function ChipMultiSelect({ id, options, selectedIds, onToggle, disabled = false,
         return (
           <label
             key={option.id}
-            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-ctp-blue/50 ${
+            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-primary/50 ${
               isSelected
-                ? "border-ctp-blue bg-ctp-blue/15 text-ctp-text"
-                : "border-ctp-overlay0/60 text-ctp-subtext1 hover:border-ctp-overlay0 hover:text-ctp-text"
+                ? "border-primary bg-primary/15 text-text"
+                : "border-line/60 text-text-secondary hover:border-line hover:text-text"
             } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
           >
             <input

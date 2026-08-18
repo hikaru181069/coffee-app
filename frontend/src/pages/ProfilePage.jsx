@@ -142,13 +142,13 @@ function ProfilePage() {
   return (
     <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
       <header className="mb-6">
-        <h1 className="text-xl font-bold text-ctp-text">{t("profile.heading")}</h1>
-        <p className="mt-1 text-sm text-ctp-subtext0">{t("profile.subtitle")}</p>
+        <h1 className="text-xl font-bold text-text">{t("profile.heading")}</h1>
+        <p className="mt-1 text-sm text-text-tertiary">{t("profile.subtitle")}</p>
       </header>
 
-      <div className="flex flex-col divide-y divide-ctp-surface1">
+      <div className="flex flex-col divide-y divide-surface-2">
         <section className="pb-6">
-          <h2 className="text-sm font-semibold text-ctp-text">{t("profile.languageHeading")}</h2>
+          <h2 className="text-sm font-semibold text-text">{t("profile.languageHeading")}</h2>
           <div className="mt-4">
             <LanguageSwitcher />
           </div>
@@ -168,8 +168,8 @@ function ProfilePage() {
             </FormField>
 
             <dl>
-              <dt className="text-xs text-ctp-subtext0">{t("profile.email")}</dt>
-              <dd className="mt-0.5 text-sm text-ctp-text">{user.email}</dd>
+              <dt className="text-xs text-text-tertiary">{t("profile.email")}</dt>
+              <dd className="mt-0.5 text-sm text-text">{user.email}</dd>
             </dl>
 
             <div>
@@ -181,7 +181,7 @@ function ProfilePage() {
         </section>
 
         <section className="py-6">
-          <h2 className="text-sm font-semibold text-ctp-text">{t("profile.changePasswordHeading")}</h2>
+          <h2 className="text-sm font-semibold text-text">{t("profile.changePasswordHeading")}</h2>
           <form onSubmit={handleChangePassword} className="mt-4 flex flex-col gap-4">
             <FormField id="current-password" label={t("profile.currentPassword")} required>
               <input
@@ -218,8 +218,8 @@ function ProfilePage() {
         </section>
 
         <section className="pt-6">
-          <h2 className="text-sm font-semibold text-ctp-red">{t("profile.deleteAccountHeading")}</h2>
-          <p className="mt-1 text-xs text-ctp-subtext0">{t("profile.deleteAccountWarning")}</p>
+          <h2 className="text-sm font-semibold text-danger">{t("profile.deleteAccountHeading")}</h2>
+          <p className="mt-1 text-xs text-text-tertiary">{t("profile.deleteAccountWarning")}</p>
           <button
             type="button"
             onClick={() => setIsConfirmOpen(true)}
@@ -239,7 +239,7 @@ function ProfilePage() {
         onCancel={() => setIsConfirmOpen(false)}
       />
 
-      <div className="mt-8 flex flex-col items-center gap-3 border-t border-ctp-surface1 pt-6 pb-2">
+      <div className="mt-8 flex flex-col items-center gap-3 border-t border-surface-2 pt-6 pb-2">
         <div className="footer-stack">
           {TECH_STACK.map((tech) => (
             <span key={tech} className="footer-badge">{tech}</span>

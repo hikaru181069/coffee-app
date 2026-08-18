@@ -79,9 +79,9 @@ function RecordDetailPage() {
     return (
       <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
         {error.isNotFound ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ctp-overlay0/60 px-6 py-12 text-center">
-            <p className="text-sm font-medium text-ctp-text">{t("records.notFoundTitle")}</p>
-            <p className="text-sm text-ctp-subtext0">
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+            <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
+            <p className="text-sm text-text-tertiary">
               {t("records.notFoundDesc")}
             </p>
             <Link to="/records" className={secondaryButtonClass}>
@@ -110,19 +110,19 @@ function RecordDetailPage() {
       <nav aria-label={t("records.breadcrumbAriaLabel")} className="flex items-center gap-1.5 text-sm">
         <Link
           to="/records"
-          className="text-ctp-subtext0 transition-colors duration-150 hover:text-ctp-text"
+          className="text-text-tertiary transition-colors duration-150 hover:text-text"
         >
           Records
         </Link>
-        <ChevronRight size={14} aria-hidden="true" className="flex-shrink-0 text-ctp-overlay0" />
-        <span className="truncate text-ctp-subtext1">{record.title}</span>
+        <ChevronRight size={14} aria-hidden="true" className="flex-shrink-0 text-line" />
+        <span className="truncate text-text-secondary">{record.title}</span>
       </nav>
 
       {/* ── Header ───────────────────────────────── */}
       <header className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-ctp-text">{record.title}</h1>
-          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ctp-subtext0">
+          <h1 className="text-2xl font-bold text-text">{record.title}</h1>
+          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-tertiary">
             <span className="font-mono">{formatConsumedAt(record.consumedAt, i18n.language)}</span>
             <span aria-hidden="true">·</span>
             <span className="inline-flex items-center gap-1">
@@ -143,18 +143,18 @@ function RecordDetailPage() {
         </div>
 
         {record.rating !== null && (
-          <div className="flex items-center gap-1.5 rounded-full bg-ctp-surface0 px-3 py-1.5">
+          <div className="flex items-center gap-1.5 rounded-full bg-surface-1 px-3 py-1.5">
             {[1, 2, 3, 4, 5].map((score) => (
               <Star
                 key={score}
                 size={14}
                 aria-hidden="true"
-                className={score <= record.rating ? "text-ctp-yellow" : "text-ctp-overlay0"}
+                className={score <= record.rating ? "text-warn" : "text-line"}
                 fill={score <= record.rating ? "currentColor" : "none"}
                 strokeWidth={1.5}
               />
             ))}
-            <span className="ml-1 font-mono text-sm font-semibold text-ctp-text">
+            <span className="ml-1 font-mono text-sm font-semibold text-text">
               {record.rating}
               <span className="sr-only"> / 5</span>
             </span>
@@ -163,26 +163,26 @@ function RecordDetailPage() {
       </header>
 
       {hasCoffeeInfo || record.notes || hasConnections ? (
-        <div className="mt-6 divide-y divide-ctp-surface1">
+        <div className="mt-6 divide-y divide-surface-2">
           {/* ── Coffee Information（Property Grid） ─── */}
           {hasCoffeeInfo && (
             <section className="py-6 first:pt-0">
-              <h2 className="text-sm font-semibold text-ctp-text">{t("records.detailsHeading")}</h2>
+              <h2 className="text-sm font-semibold text-text">{t("records.detailsHeading")}</h2>
               <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
                 {details.map((detail) => (
                   <div key={detail.key}>
-                    <dt className="text-xs text-ctp-subtext0">{detail.label}</dt>
-                    <dd className="mt-0.5 text-sm text-ctp-text">{detail.value}</dd>
+                    <dt className="text-xs text-text-tertiary">{detail.label}</dt>
+                    <dd className="mt-0.5 text-sm text-text">{detail.value}</dd>
                   </div>
                 ))}
                 {flavors.length > 0 && (
                   <div>
-                    <dt className="text-xs text-ctp-subtext0">{t("records.flavorsHeading")}</dt>
+                    <dt className="text-xs text-text-tertiary">{t("records.flavorsHeading")}</dt>
                     <dd className="mt-1.5 flex flex-wrap gap-1.5">
                       {flavors.map((flavor) => (
                         <span
                           key={flavor.id}
-                          className="rounded-full bg-ctp-surface0 px-2.5 py-1 text-xs text-ctp-subtext1"
+                          className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary"
                         >
                           {flavor.name}
                         </span>
@@ -197,9 +197,9 @@ function RecordDetailPage() {
           {/* ── Tasting Note ─────────────────────────── */}
           {record.notes && (
             <section className="py-6 first:pt-0">
-              <h2 className="text-sm font-semibold text-ctp-text">{t("records.notesHeading")}</h2>
+              <h2 className="text-sm font-semibold text-text">{t("records.notesHeading")}</h2>
               {/* whitespace-pre-wrap: 入力時の改行を表示にも反映する */}
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ctp-subtext1">
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-text-secondary">
                 {record.notes}
               </p>
             </section>
@@ -209,10 +209,10 @@ function RecordDetailPage() {
           {hasConnections && (
             <section className="py-6 first:pt-0">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-ctp-text">{t("records.connectionsHeading")}</h2>
+                <h2 className="text-sm font-semibold text-text">{t("records.connectionsHeading")}</h2>
                 <Link
                   to={`/graph?focus=record:${record.id}`}
-                  className="inline-flex items-center gap-1 text-xs text-ctp-subtext0 transition-colors duration-150 hover:text-ctp-text"
+                  className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
                 >
                   <Share2 size={12} aria-hidden="true" />
                   <span className="underline underline-offset-2">{t("common.viewOnGraph")}</span>
@@ -227,7 +227,7 @@ function RecordDetailPage() {
         </div>
       ) : (
         // 詳細が何も無いときは、次に何ができるかを示す
-        <p className="mt-6 rounded-xl border border-dashed border-ctp-overlay0/60 px-4 py-6 text-center text-sm text-ctp-subtext0">
+        <p className="mt-6 rounded-xl border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
           {t("records.detailEmptyHint")}
         </p>
       )}
@@ -299,7 +299,7 @@ function MoreMenu({ onDelete }) {
       {isOpen && (
         <div
           role="menu"
-          className="absolute right-0 z-10 mt-2 w-40 rounded-lg border border-ctp-surface1 bg-ctp-mantle p-1 shadow-xl"
+          className="absolute right-0 z-10 mt-2 w-40 rounded-lg border border-surface-2 bg-raised p-1 shadow-xl"
         >
           <button
             type="button"
@@ -308,7 +308,7 @@ function MoreMenu({ onDelete }) {
               setIsOpen(false);
               onDelete();
             }}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-ctp-red transition-colors duration-150 hover:bg-ctp-red/10"
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-danger transition-colors duration-150 hover:bg-danger/10"
           >
             <Trash2 size={14} aria-hidden="true" />
             {t("common.delete")}

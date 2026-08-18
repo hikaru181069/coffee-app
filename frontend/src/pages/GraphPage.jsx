@@ -122,8 +122,8 @@ function GraphPage() {
   return (
     <div className="coffee-page flex h-[calc(100vh-3.5rem)] flex-col gap-3 px-4 py-4 sm:h-screen sm:px-6">
       <header>
-        <h1 className="text-xl font-bold text-ctp-text">Graph</h1>
-        <p className="mt-1 text-sm text-ctp-subtext0">
+        <h1 className="text-xl font-bold text-text">Graph</h1>
+        <p className="mt-1 text-sm text-text-tertiary">
           {t("graph.subtitle")}
         </p>
       </header>
@@ -131,7 +131,7 @@ function GraphPage() {
       <GraphFilters filters={filters} onChange={setFilters} />
       <GraphLegend />
 
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-ctp-surface1">
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-surface-2">
         {renderBody()}
       </div>
     </div>

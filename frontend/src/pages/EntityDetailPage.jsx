@@ -39,7 +39,7 @@ function EntityDetailPage() {
   if (error) {
     return (
       <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
-        <p className="text-sm text-ctp-red">{getErrorMessage(error, t)}</p>
+        <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>
       </div>
     );
   }
@@ -55,9 +55,9 @@ function EntityDetailPage() {
       <header className="mb-6">
         <div className="flex items-center gap-2">
           <Icon size={16} aria-hidden="true" className={visual.colorClass} />
-          <span className="text-xs text-ctp-subtext0">{t(visual.labelKey)}</span>
+          <span className="text-xs text-text-tertiary">{t(visual.labelKey)}</span>
         </div>
-        <h1 className="mt-1 text-xl font-bold text-ctp-text">{detail.label}</h1>
+        <h1 className="mt-1 text-xl font-bold text-text">{detail.label}</h1>
       </header>
 
       <section className="mb-6 grid grid-cols-3 gap-3">
@@ -70,7 +70,7 @@ function EntityDetailPage() {
           value={
             detail.avgRating != null ? (
               <span className="inline-flex items-center gap-1">
-                <Star size={14} aria-hidden="true" fill="currentColor" strokeWidth={0} className="text-ctp-yellow" />
+                <Star size={14} aria-hidden="true" fill="currentColor" strokeWidth={0} className="text-warn" />
                 {detail.avgRating}
               </span>
             ) : (
@@ -95,7 +95,7 @@ function EntityDetailPage() {
 
       {relatedTypes.length > 0 && (
         <section className="mb-6 flex flex-col gap-4">
-          <h2 className="text-sm font-semibold text-ctp-text">{t("entityDetail.relatedHeading")}</h2>
+          <h2 className="text-sm font-semibold text-text">{t("entityDetail.relatedHeading")}</h2>
           {relatedTypes.map((type) => (
             <RelatedAttributeGroup key={type} type={type} items={detail.relatedAttributes[type]} t={t} />
           ))}
@@ -103,26 +103,26 @@ function EntityDetailPage() {
       )}
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-ctp-text">{t("entityDetail.recordsHeading")}</h2>
+        <h2 className="mb-3 text-sm font-semibold text-text">{t("entityDetail.recordsHeading")}</h2>
         <ul className="flex flex-col gap-2">
           {detail.records.map((record) => (
             <li key={record.id}>
               <Link
                 to={`/records/${record.id}`}
-                className="block rounded-lg border border-ctp-surface1 px-3 py-2 transition-colors duration-150 hover:border-ctp-overlay0"
+                className="block rounded-lg border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
               >
-                <p className="truncate text-sm font-medium text-ctp-text">{record.title}</p>
-                <p className="mt-0.5 flex items-center gap-2 text-xs text-ctp-subtext0">
+                <p className="truncate text-sm font-medium text-text">{record.title}</p>
+                <p className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
                   <span className="font-mono">{formatConsumedAtShort(record.consumedAt, i18n.language)}</span>
                   {record.rating !== null && (
-                    <span className="flex items-center gap-0.5 text-ctp-yellow">
+                    <span className="flex items-center gap-0.5 text-warn">
                       <Star size={10} aria-hidden="true" fill="currentColor" strokeWidth={0} />
                       <span className="font-mono">{record.rating}</span>
                     </span>
                   )}
                 </p>
                 {record.notesExcerpt && (
-                  <p className="mt-1 truncate text-xs text-ctp-subtext1">{record.notesExcerpt}</p>
+                  <p className="mt-1 truncate text-xs text-text-secondary">{record.notesExcerpt}</p>
                 )}
               </Link>
             </li>
@@ -137,8 +137,8 @@ function EntityDetailPage() {
 function StatCard({ label, value }) {
   return (
     <div className={cardClass}>
-      <p className="text-xs text-ctp-subtext0">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-ctp-text">{value}</p>
+      <p className="text-xs text-text-tertiary">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-text">{value}</p>
     </div>
   );
 }
@@ -152,16 +152,16 @@ function RelatedAttributeGroup({ type, items, t }) {
 
   return (
     <div>
-      <p className="mb-2 text-xs text-ctp-subtext0">{t(visual.labelKey)}</p>
+      <p className="mb-2 text-xs text-text-tertiary">{t(visual.labelKey)}</p>
       <div className="flex flex-wrap gap-2">
         {items.map((item) => (
           <Link
             key={item.id}
             to={`/entities/${encodeURIComponent(item.id)}`}
-            className="inline-flex items-center gap-1 rounded-full bg-ctp-surface0 px-3 py-1 text-xs text-ctp-subtext1 transition-colors duration-150 hover:bg-ctp-surface1 hover:text-ctp-text"
+            className="inline-flex items-center gap-1 rounded-full bg-surface-1 px-3 py-1 text-xs text-text-secondary transition-colors duration-150 hover:bg-surface-2 hover:text-text"
           >
             {item.label}
-            <span className="font-mono text-ctp-subtext0">{item.count}</span>
+            <span className="font-mono text-text-tertiary">{item.count}</span>
           </Link>
         ))}
       </div>

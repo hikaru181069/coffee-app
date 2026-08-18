@@ -9,12 +9,12 @@
    このボタンだけ単色インディゴで上書きする(a.navCtaで.home-linkより
    詳細度を上げる。PlayerCard.module.cssのa.glassCardと同じ手法)。 */
 a.navCta {
-  background: var(--ctp-blue);
+  background: var(--color-primary);
   box-shadow: none;
 }
 
 a.navCta:hover {
-  background: var(--ctp-blue);
+  background: var(--color-primary);
   opacity: 0.9;
   box-shadow: none;
 }
@@ -43,7 +43,7 @@ a.navCta:hover {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ctp-subtext0);
+  color: var(--color-text-tertiary);
   margin: 0 0 24px;
 }
 
@@ -53,7 +53,7 @@ a.navCta:hover {
   font-weight: 700;
   line-height: 1.08;
   letter-spacing: -0.03em;
-  color: var(--ctp-text);
+  color: var(--color-text);
   max-width: 900px;
   margin: 0 0 40px;
 }
@@ -81,8 +81,8 @@ a.navCta:hover {
   gap: 8px;
   padding: 13px 26px;
   border-radius: 999px;
-  background: var(--ctp-blue);
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-base);
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
@@ -147,20 +147,20 @@ a.navCta:hover {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--ctp-blue);
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
 .stepTitle {
   font-size: 14.5px;
   font-weight: 700;
-  color: var(--ctp-text);
+  color: var(--color-text);
   margin: 0 0 4px;
 }
 
 .stepDesc {
   font-size: 13px;
-  color: var(--ctp-subtext0);
+  color: var(--color-text-tertiary);
   line-height: 1.5;
   margin: 0;
 }

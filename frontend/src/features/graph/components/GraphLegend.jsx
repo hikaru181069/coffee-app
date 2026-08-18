@@ -14,13 +14,13 @@ function GraphLegend() {
   const types = ["record", ...ATTRIBUTE_NODE_TYPES];
 
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1.5 rounded-lg border border-ctp-surface1 bg-ctp-mantle px-3 py-2">
+    <div className="flex flex-wrap gap-x-3 gap-y-1.5 rounded-lg border border-surface-2 bg-raised px-3 py-2">
       {types.map((type) => {
         const visual = getNodeVisual(type);
         const Icon = visual.icon;
 
         return (
-          <span key={type} className="inline-flex items-center gap-1 text-[11px] text-ctp-subtext1">
+          <span key={type} className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
             <Icon size={12} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
             {t(visual.labelKey)}
           </span>

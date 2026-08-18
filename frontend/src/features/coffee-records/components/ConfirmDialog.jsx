@@ -91,13 +91,13 @@ function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby={description ? "confirm-dialog-description" : undefined}
-        className="w-full max-w-sm rounded-xl border border-ctp-surface1 bg-ctp-mantle p-5 shadow-xl"
+        className="w-full max-w-sm rounded-xl border border-surface-2 bg-raised p-5 shadow-xl"
       >
-        <h2 id="confirm-dialog-title" className="text-base font-semibold text-ctp-text">
+        <h2 id="confirm-dialog-title" className="text-base font-semibold text-text">
           {title}
         </h2>
         {description && (
-          <p id="confirm-dialog-description" className="mt-2 text-sm text-ctp-subtext1">
+          <p id="confirm-dialog-description" className="mt-2 text-sm text-text-secondary">
             {description}
           </p>
         )}
