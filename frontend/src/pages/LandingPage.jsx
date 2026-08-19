@@ -68,7 +68,6 @@ function LandingPage() {
           <div className={heroStyles.heroGraph}>
             <LandingGraphIllustration variant="ambient" />
           </div>
-          <div className={heroStyles.grain} aria-hidden="true" />
           <p className={heroStyles.kicker}>{t("landing.kicker")}</p>
           <h1 className={heroStyles.title}>
             {t("landing.hero.title").split(" ").map((word, i) => (
