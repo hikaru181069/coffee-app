@@ -7,7 +7,7 @@ function RatingDistributionChart({ distribution, t }) {
   const maxCount = Math.max(1, ...distribution.map((entry) => entry.count));
 
   return (
-    <section className="rounded-xl border border-surface-2 bg-raised p-4">
+    <section className="rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated">
       <h3 className="mb-3 text-xs font-semibold text-text-tertiary">{t("stats.ratingDistributionHeading")}</h3>
       <div className="flex items-end justify-between gap-2">
         {distribution.map((entry) => (

@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
+import { useReveal } from "../../../hooks/useReveal";
+import { revealDelayClass } from "../../../utils/revealDelay";
 
 /**
  * 検索でヒットした属性（産地・農園・品種・精製方法・焙煎度・フレーバー・
@@ -13,15 +15,17 @@ import { getNodeVisual } from "../../graph/utils/nodeVisuals";
  * 知識グラフをただの可視化ではなくナビゲーションにする方針
  * （2026-08、`/graph?focus=`から変更）。
  */
-function EntityResultCard({ entity }) {
+function EntityResultCard({ entity, index = 0 }) {
   const { t } = useTranslation();
   const visual = getNodeVisual(entity.type);
   const Icon = visual.icon;
+  const [ref, isVisible] = useReveal();
 
   return (
     <Link
+      ref={ref}
       to={`/entities/${encodeURIComponent(entity.id)}`}
-      className="block rounded-xl border border-surface-2 bg-raised p-4 transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50"
+      className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} block rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50`}
     >
       <div className="flex items-center gap-2">
         <Icon size={16} aria-hidden="true" className={visual.colorClass} />

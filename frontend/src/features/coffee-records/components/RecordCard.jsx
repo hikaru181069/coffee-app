@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 
 import { formatConsumedAtShort, recordTypeLabel } from "../utils/recordFormat";
 import { entityDetailPath } from "../../graph/utils/entityLink";
+import { useReveal } from "../../../hooks/useReveal";
+import { revealDelayClass } from "../../../utils/revealDelay";
 
 /** タグ1個分の共通見た目。エンティティ詳細ページへのLinkとして使う */
 const tagClass =
@@ -37,16 +39,20 @@ const tagClass =
  * 同じpositioned層に乗り、DOM順で後にあるほうが勝ってstretched link
  * を覆ってしまい、タイトルクリックが反応しなくなる）。
  */
-function RecordCard({ record }) {
+function RecordCard({ record, index = 0 }) {
   const { t, i18n } = useTranslation();
   const flavors = record.flavors ?? [];
+  const [ref, isVisible] = useReveal();
 
   return (
-    <li className="relative rounded-xl border border-surface-2 bg-raised p-5 transition-all duration-200 hover:-translate-y-px hover:border-line hover:bg-surface-1/40 sm:p-6">
+    <li
+      ref={ref}
+      className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} relative rounded-2xl border border-surface-2 bg-raised p-5 shadow-elevated transition-all duration-200 hover:-translate-y-px hover:border-line hover:bg-surface-1/40 sm:p-6`}
+    >
       <Link
         to={`/records/${record.id}`}
         aria-label={record.title}
-        className="absolute inset-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+        className="absolute inset-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
 
       <div className="flex items-start justify-between gap-3">

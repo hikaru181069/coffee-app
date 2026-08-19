@@ -33,9 +33,9 @@ function SearchResults({ query, entities, records, isLoading, error }) {
         <section>
           <h2 className="mb-3 text-sm font-semibold text-text">{t("search.entitiesHeading")}</h2>
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {entities.map((entity) => (
+            {entities.map((entity, index) => (
               <li key={entity.id}>
-                <EntityResultCard entity={entity} />
+                <EntityResultCard entity={entity} index={index} />
               </li>
             ))}
           </ul>
@@ -46,8 +46,8 @@ function SearchResults({ query, entities, records, isLoading, error }) {
         <section>
           <h2 className="mb-3 text-sm font-semibold text-text">{t("search.recordsHeading")}</h2>
           <ul className="flex flex-col gap-3">
-            {records.map((record) => (
-              <RecordCard key={record.id} record={record} />
+            {records.map((record, index) => (
+              <RecordCard key={record.id} record={record} index={index} />
             ))}
           </ul>
         </section>

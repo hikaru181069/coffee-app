@@ -3,7 +3,7 @@ import { Coffee, Store } from "lucide-react";
 /** 自宅とカフェ、それぞれの件数・平均評価を並べて見せる */
 function HomeVsCafeCard({ homeVsCafe, t }) {
   return (
-    <section className="rounded-xl border border-surface-2 bg-raised p-4">
+    <section className="rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated">
       <h2 className="mb-3 text-sm font-semibold text-text">{t("stats.homeVsCafeHeading")}</h2>
       <div className="grid grid-cols-2 gap-3">
         <RecordTypeStat icon={Coffee} label={t("recordForm.home")} stat={homeVsCafe.home} t={t} />

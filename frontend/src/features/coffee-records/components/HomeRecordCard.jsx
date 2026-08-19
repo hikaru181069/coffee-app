@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 
 import { getOriginAccentClass } from "../utils/originAccent";
 import { hasCoffeeDetails } from "../utils/recordFormat";
+import { useReveal } from "../../../hooks/useReveal";
+import { revealDelayClass } from "../../../utils/revealDelay";
 
 /**
  * Home画面専用の記録カード。
@@ -25,15 +27,17 @@ import { hasCoffeeDetails } from "../utils/recordFormat";
  * 記録が増えてしまう）。カードを空白のまま見せると気づけないため、
  * RecordDetailPage.jsxと同じヒント文（records.detailEmptyHint）を出す。
  */
-function HomeRecordCard({ record }) {
+function HomeRecordCard({ record, index = 0 }) {
   const { t } = useTranslation();
   const flavors = record.flavors ?? [];
+  const [ref, isVisible] = useReveal();
 
   return (
     <li>
       <Link
+        ref={ref}
         to={`/records/${record.id}`}
-        className="block h-full rounded-xl border border-surface-2 bg-raised p-4 transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50 sm:p-5"
+        className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} block h-full rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50 sm:p-5`}
       >
         {record.origin && (
           <div className="flex items-center gap-2">

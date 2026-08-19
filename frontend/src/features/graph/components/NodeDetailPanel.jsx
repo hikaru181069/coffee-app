@@ -30,7 +30,7 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
   return (
     <aside
       aria-label={t("graph.selectedNodeAriaLabel")}
-      className="fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-surface-2 bg-raised p-4 shadow-xl sm:absolute sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-80 sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0"
+      className="fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-surface-2 bg-raised/90 p-4 shadow-panel backdrop-blur-xl sm:absolute sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-80 sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">

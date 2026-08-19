@@ -21,7 +21,7 @@ export function RecordListSkeleton({ count = 4 }) {
       {Array.from({ length: count }, (_, index) => (
         <li
           key={index}
-          className="rounded-xl border border-surface-2 bg-raised p-5 sm:p-6"
+          className="rounded-2xl border border-surface-2 bg-raised p-5 sm:p-6"
         >
           <div className="skeleton-block h-4 w-1/2 rounded" />
           <div className="skeleton-block mt-2 h-3 w-1/3 rounded" />

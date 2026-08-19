@@ -170,7 +170,17 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
     ctx.beginPath();
     ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
     ctx.fillStyle = CTP.mantle;
+    // mobbin.com準拠の柔らかい影（他要素と質感を揃える、付随的な適用）。
+    // 描画後は必ずリセットする。canvasのshadowはfill/stroke/drawImage/
+    // fillTextすべてに掛かり続けるため、リセットし忘れると以降のアイコン・
+    // 文字にも影が付いてしまう
+    ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+    ctx.shadowBlur = 10 / globalScale;
+    ctx.shadowOffsetY = 3 / globalScale;
     ctx.fill();
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
     ctx.lineWidth = borderWidth;
     ctx.strokeStyle = selected ? visual.canvasColor : CTP.surface1;
     ctx.stroke();
@@ -197,7 +207,13 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
     ctx.beginPath();
     ctx.roundRect(node.x - halfWidth, node.y - halfHeight, halfWidth * 2, halfHeight * 2, 6);
     ctx.fillStyle = CTP.mantle;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+    ctx.shadowBlur = 10 / globalScale;
+    ctx.shadowOffsetY = 3 / globalScale;
     ctx.fill();
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
     ctx.lineWidth = borderWidth;
     ctx.strokeStyle = selected ? visual.canvasColor : CTP.surface1;
     ctx.stroke();
