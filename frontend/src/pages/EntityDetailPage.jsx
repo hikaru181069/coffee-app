@@ -8,6 +8,8 @@ import { formatConsumedAtShort } from "../features/coffee-records/utils/recordFo
 import { getErrorMessage } from "../utils/errorMessage";
 import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import DiscoverSuggestions from "../features/discover/components/DiscoverSuggestions";
+import { useReveal } from "../hooks/useReveal";
+import { revealDelayClass } from "../utils/revealDelay";
 
 /**
  * エンティティ詳細ページ。
@@ -102,31 +104,40 @@ function EntityDetailPage() {
       <section>
         <h2 className="mb-3 text-sm font-semibold text-text">{t("entityDetail.recordsHeading")}</h2>
         <ul className="flex flex-col gap-2">
-          {detail.records.map((record) => (
-            <li key={record.id}>
-              <Link
-                to={`/records/${record.id}`}
-                className="block rounded-lg border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
-              >
-                <p className="truncate text-sm font-medium text-text">{record.title}</p>
-                <p className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
-                  <span className="font-mono">{formatConsumedAtShort(record.consumedAt, i18n.language)}</span>
-                  {record.rating !== null && (
-                    <span className="flex items-center gap-0.5 text-warn">
-                      <Star size={10} aria-hidden="true" fill="currentColor" strokeWidth={0} />
-                      <span className="font-mono">{record.rating}</span>
-                    </span>
-                  )}
-                </p>
-                {record.notesExcerpt && (
-                  <p className="mt-1 truncate text-xs text-text-secondary">{record.notesExcerpt}</p>
-                )}
-              </Link>
-            </li>
+          {detail.records.map((record, index) => (
+            <RelatedRecordRow key={record.id} record={record} index={index} language={i18n.language} />
           ))}
         </ul>
       </section>
     </div>
+  );
+}
+
+/** 関連記録一覧の1行。スクロールインで段階的にカスケード表示する */
+function RelatedRecordRow({ record, index, language }) {
+  const [ref, isVisible] = useReveal();
+
+  return (
+    <li ref={ref} className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)}`}>
+      <Link
+        to={`/records/${record.id}`}
+        className="block rounded-lg border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
+      >
+        <p className="truncate text-sm font-medium text-text">{record.title}</p>
+        <p className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
+          <span className="font-mono">{formatConsumedAtShort(record.consumedAt, language)}</span>
+          {record.rating !== null && (
+            <span className="flex items-center gap-0.5 text-warn">
+              <Star size={10} aria-hidden="true" fill="currentColor" strokeWidth={0} />
+              <span className="font-mono">{record.rating}</span>
+            </span>
+          )}
+        </p>
+        {record.notesExcerpt && (
+          <p className="mt-1 truncate text-xs text-text-secondary">{record.notesExcerpt}</p>
+        )}
+      </Link>
+    </li>
   );
 }
 

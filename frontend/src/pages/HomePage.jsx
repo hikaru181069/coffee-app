@@ -166,8 +166,8 @@ function HomePage() {
         )}
         {!isLoading && !error && records.length > 0 && (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {records.map((record) => (
-              <HomeRecordCard key={record.id} record={record} />
+            {records.map((record, index) => (
+              <HomeRecordCard key={record.id} record={record} index={index} />
             ))}
           </ul>
         )}

@@ -41,7 +41,7 @@ function GraphPreview() {
   return (
     <Link
       to="/graph"
-      className="flex h-full items-center gap-8 rounded-xl border border-surface-2 bg-raised p-8 transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50"
+      className="flex h-full items-center gap-8 rounded-2xl border border-surface-2 bg-raised p-8 shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50"
     >
       <div className="min-w-0 flex-1">
         <h3 className="text-2xl font-bold text-text">{t("home.knowledgeGraph.heading")}</h3>

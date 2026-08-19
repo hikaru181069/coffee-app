@@ -89,8 +89,8 @@ function RecordsPage() {
 
     return (
       <ul className="flex flex-col gap-3">
-        {records.map((record) => (
-          <RecordCard key={record.id} record={record} />
+        {records.map((record, index) => (
+          <RecordCard key={record.id} record={record} index={index} />
         ))}
       </ul>
     );

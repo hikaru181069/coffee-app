@@ -26,7 +26,7 @@ export function GraphLoadingState() {
     <div
       aria-busy="true"
       aria-label={t("common.loading")}
-      className="relative h-full min-h-64 overflow-hidden rounded-xl border border-surface-2 bg-raised"
+      className="relative h-full min-h-64 overflow-hidden rounded-2xl border border-surface-2 bg-raised shadow-elevated"
     >
       <div className="absolute left-[18%] top-[55%] h-px w-40 origin-left rotate-[18deg] bg-line/40" />
       <div className="absolute left-[32%] top-[30%] h-px w-36 origin-left rotate-[-22deg] bg-line/40" />

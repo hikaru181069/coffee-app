@@ -14,7 +14,7 @@ function HomeRecordCardSkeleton({ count = 3 }) {
   return (
     <ul aria-busy="true" aria-label={t("common.loading")} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {Array.from({ length: count }, (_, index) => (
-        <li key={index} className="rounded-xl border border-surface-2 bg-raised p-4 sm:p-5">
+        <li key={index} className="rounded-2xl border border-surface-2 bg-raised p-4 sm:p-5">
           <div className="flex items-center gap-2">
             <div className="skeleton-block h-3 w-0.5 rounded-full" />
             <div className="skeleton-block h-3 w-16 rounded" />
