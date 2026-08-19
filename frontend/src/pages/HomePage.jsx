@@ -16,6 +16,7 @@ import { getErrorMessage } from "../utils/errorMessage";
 // ため、他のコンポーネントと同じ通常のimportに戻した。
 import GraphPreview from "../features/graph/components/GraphPreview";
 import DiscoverCard from "../features/discover/components/DiscoverCard";
+import { wideContainerClass } from "../styles/pageContainer";
 
 /**
  * ホーム画面。
@@ -115,7 +116,7 @@ function HomePage() {
   const isRepeatVisitor = !isLoading && records.length > 0;
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-[1480px] px-4 py-6 sm:px-6">
+    <div className={wideContainerClass}>
       <header className="mb-6">
         <h1 className="text-xl font-bold text-text">
           {getGreeting(t)}

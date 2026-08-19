@@ -1091,6 +1091,24 @@ Space Monoへの統一（上記エントリ）で、font-weightによる階層�
 
 ---
 
+### 2026-08-19: デスクトップ表示の左右余白を解消（ページ幅の統一）
+
+ユーザーから「デスクトップ表示で画面全体を満遍なく表示させたい。左右の空白が気になる」と要望があった。調査したところ、原因は共通レイアウトではなく、各ページが個別に`max-w-[Npx] mx-auto`のラッパーで自分の中身を狭く固定しており、値もページごとにバラバラ（900px/1100px/1480px/768px）で、`docs/design.md`にも幅の方針の記載が無い、根拠のない既定値だったことが判明した（`App.jsx`の`<main>`・`Navbar.jsx`は元々フル幅で無関係）。
+
+ユーザーに方向性を確認し、「一覧・ダッシュボード系はほぼ画面幅いっぱいに、記録詳細・フォーム・プロフィールのような読み物/入力系は読みやすい適度な幅に保つ」という、ページ種別で使い分ける方針（Linear/Notion/GitHubと同じ考え方）を採用した。
+
+**実装**: `frontend/src/styles/pageContainer.js`を新設し、2つの幅ティアを定数化した（`features/coffee-records/components/formStyles.js`と同じ「クラス文字列を定数化してJSXへ何度も書かない」パターン）:
+- `wideContainerClass`（`max-w-[1600px]`）: `HomePage.jsx`（旧1480px）、`RecordsPage.jsx`（旧900px）、`StatsPage.jsx`（旧1100px、4箇所）
+- `contentContainerClass`（`max-w-5xl`=1024px、Tailwindの標準トークン）: `RecordDetailPage.jsx`（旧900px、3箇所）、`RecordFormPage.jsx`（旧768px=`max-w-3xl`、3箇所）、`ProfilePage.jsx`（旧900px、3箇所）、`EntityDetailPage.jsx`（旧900px、3箇所）
+
+各ページのloading/error/success分岐に3回ずつ重複していた同一のラッパー文字列リテラルも、この定数への置き換えにあわせて解消した。
+
+**対象外（意図的に変更しなかったもの）**: `GraphPage.jsx`（元々幅制限なし）、`LoginPage.jsx`/`RegisterPage.jsx`の`.auth-card`（420px、中央寄せの小さい認証カードとして意図的な幅）、`App.css`の未使用`.app { max-width: 900px }`（`className="app"`を使うJSXが存在しない死んだCSSで、今回の問題とは無関係）。
+
+**検証**: `cd frontend && npm run lint && npm run build`成功。claude-in-chromeでウィンドウ幅1800px相当にリサイズし、Home/Records/Statsが`max-w-[1600px]`（`getComputedStyle`のgetBoundingClientRectで実測1600px）まで広がること、RecordDetail/RecordFormが適度な幅で本文・フォーム欄が間延びしていないことを目視確認。モバイル幅での実機確認は、claude-in-chromeの`resize_window`がこの環境では反映されなかったため未実施だが、`max-w-*`は`w-full`と併用しており、ビューポートがmax-width未満なら常に画面幅に収まる（今回の変更前から成立していた挙動で、上限値を上げても小さい画面の見た目には影響しない）ため実害は無いと判断した。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
@@ -1206,6 +1224,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 mobbin.com刷新一式のブラウザ実機確認・`.auth-card-kicker`修正時（2026-08-19）は、CSS1行の変更のみのため`cd backend && npm test`は未実施。`cd frontend && npm run lint && npm run build`の成功と、claude-in-chromeによるDocker Compose環境（`http://localhost:5174`）での実機確認（Home/Records/Graph/Stats/Login/Register/RecordDetail/EntityDetailの各画面、コンソールエラー無し）を実施済み。
 
 New Record・Editボタンの見づらさ修正時（2026-08-19）は、CSS1行（`a`セレクタを`@layer base`で囲む）の変更のみのため`cd backend && npm test`は未実施。`cd frontend && npm run lint && npm run build`の成功と、`getComputedStyle`による修正前後の`color`値比較、Records/RecordDetail/RecordFormの各画面でのzoom screenshot目視確認を実施済み。
+
+デスクトップ表示の左右余白解消時（2026-08-19）は、frontendのみの変更（新規`styles/pageContainer.js`+7ページのclassName置き換え）のため`cd backend && npm test`は未実施。`cd frontend && npm run lint && npm run build`の成功と、claude-in-chromeでウィンドウ幅1800px相当にリサイズした上でのHome/Records/Stats/RecordDetail/RecordFormの目視確認、`getBoundingClientRect`による実測幅の確認を実施済み。
 
 ---
 

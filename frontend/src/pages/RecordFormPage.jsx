@@ -14,6 +14,7 @@ import RecordForm from "../features/coffee-records/components/RecordForm";
 import RecordFormSkeleton from "../features/coffee-records/components/RecordFormSkeleton";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
+import { contentContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
 
 /**
@@ -70,7 +71,7 @@ function RecordFormPage() {
   // ── 編集対象の読み込みに関わる状態 ──────────────────
   if (isEditing && isRecordLoading) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <div className={contentContainerClass}>
         <RecordFormSkeleton />
       </div>
     );
@@ -81,7 +82,7 @@ function RecordFormPage() {
     const isNotFound = recordError.isNotFound;
 
     return (
-      <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      <div className={contentContainerClass}>
         {isNotFound ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
             <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
@@ -100,7 +101,7 @@ function RecordFormPage() {
   }
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+    <div className={contentContainerClass}>
       <header className="mb-5">
         <Link
           to={isEditing ? `/records/${recordId}` : "/records"}

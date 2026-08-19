@@ -9,6 +9,7 @@ import TopRankingList from "../features/stats/components/TopRankingList";
 import StatsSkeleton from "../features/stats/components/StatsSkeleton";
 import StatsEmptyState from "../features/stats/components/StatsEmptyState";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
+import { wideContainerClass } from "../styles/pageContainer";
 
 const RANKING_TYPES = ["origin", "variety", "process", "flavor", "cafe"];
 const RANKING_KEYS = {
@@ -47,7 +48,7 @@ function StatsPage() {
 
   if (isLoading) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
+      <div className={wideContainerClass}>
         <StatsSkeleton />
       </div>
     );
@@ -55,7 +56,7 @@ function StatsPage() {
 
   if (error) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
+      <div className={wideContainerClass}>
         <RecordsErrorState error={error} onRetry={reload} />
       </div>
     );
@@ -65,7 +66,7 @@ function StatsPage() {
 
   if (stats.overview.recordCount === 0) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
+      <div className={wideContainerClass}>
         <header className="mb-6">
           <h1 className="text-xl font-bold text-text">{t("stats.heading")}</h1>
         </header>
@@ -75,7 +76,7 @@ function StatsPage() {
   }
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6">
+    <div className={wideContainerClass}>
       <header className="mb-6">
         <h1 className="text-xl font-bold text-text">{t("stats.heading")}</h1>
         <p className="mt-1 text-sm text-text-tertiary">{t("stats.subtitle")}</p>
