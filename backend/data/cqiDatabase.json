@@ -1,7 +1,7 @@
 {
   "_comment": [
     "Coffee Quality Institute (CQI) の公開レビューデータを参考にした、静的な参照データ。",
-    "docs/discover.md 参照。一度読み込んだら終わりの静的ファイルであり、外部APIへライブで",
+    "docs/features.md「Discover」参照。一度読み込んだら終わりの静的ファイルであり、外部APIへライブで",
     "問い合わせるものではない（backend/services/coffee/discoverService.js が起動後に一度だけ",
     "読み込み、メモリにキャッシュする）。",
     "originName/processNameは、backend/seeds/data/origins.js・processes.js の name と",

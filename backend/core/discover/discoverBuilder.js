@@ -2,7 +2,7 @@
  * 知識グラフの隣接関係（同じ精製方法）を使って、まだ試していない産地を
  * 提案する純粋関数。
  *
- * docs/discover.md 参照。DB・HTTPに依存しない（graphBuilder.js /
+ * docs/features.md「Discover」参照。DB・HTTPに依存しない（graphBuilder.js /
  * insightBuilder.js と同じ方針）。CoffeeRecord（自分の記録）と、
  * 静的なCQI（Coffee Quality Institute）参照データの両方を受け取る。
  *
@@ -94,7 +94,7 @@ export const buildOriginDiscovery = (records, cqiDataset, originName) => {
 /**
  * Home画面用の、全産地を横断した提案1件（最も品質スコアが高いもの）。
  *
- * docs/discover.md「Home Teaser」参照。Entity Detailページ（特定の産地）
+ * docs/features.md「Discover」の「Home Teaser」参照。Entity Detailページ（特定の産地）
  * ではなく、Home画面から「Discover機能があること」への導線を作るための
  * 集計。ユーザーが記録した産地をすべて走査してbuildOriginDiscoveryを
  * 呼び、候補が1つも無ければteaser: nullを返す（InsightBannerと同じ
@@ -125,40 +125,4 @@ export const buildDiscoverTeaser = (records, cqiDataset) => {
   const { originId, type, basedOn, suggestedOrigin } = candidates[0];
 
   return { teaser: { nodeId: `origin:${originId}`, type, basedOn, suggestedOrigin } };
-};
-
-/**
- * Discover専用ページ用の、全産地を横断した提案の一覧。
- *
- * docs/discover.md「Discoverページ」参照。buildDiscoverTeaser（Home用、
- * 全産地の中から最良の1件だけ）とは違い、条件を満たす産地をすべて
- * 返す。産地1件ごとに、その産地のEntity DetailページへのnodeIdと、
- * buildOriginDiscoveryが返す提案（最大2件）をまとめる。
- *
- * 各産地グループは、その産地の最良の提案（品質スコアが最も高いもの）で
- * 降順に並べる（buildDiscoverTeaserと同じ「最も説得力がある順」の考え方）。
- *
- * @param {Array} records serializeCoffeeRecordsが返す形と同じ配列（自分の記録すべて）
- * @param {object} cqiDataset buildOriginDiscoveryと同じCQI参照データ
- * @returns {{ origins: Array<{ nodeId: string, originLabel: string, suggestions: Array }> }}
- */
-export const buildAllOriginDiscoveries = (records, cqiDataset) => {
-  const originIdByName = new Map();
-  for (const record of records) {
-    if (!record.origin || originIdByName.has(record.origin.name)) continue;
-    originIdByName.set(record.origin.name, record.origin.id);
-  }
-
-  const groups = [];
-  for (const [originName, originId] of originIdByName) {
-    const { suggestions } = buildOriginDiscovery(records, cqiDataset, originName);
-    if (suggestions.length === 0) continue;
-    groups.push({ nodeId: `origin:${originId}`, originLabel: originName, suggestions });
-  }
-
-  groups.sort(
-    (a, b) => b.suggestions[0].suggestedOrigin.avgQualityScore - a.suggestions[0].suggestedOrigin.avgQualityScore,
-  );
-
-  return { origins: groups };
 };

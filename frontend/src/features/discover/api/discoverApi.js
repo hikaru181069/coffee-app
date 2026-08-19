@@ -5,7 +5,8 @@ import { apiRequest } from "../../coffee-records/api/httpClient";
  *
  * features/insights/api/insightApi.js と同じ方針: httpClientはcoffee-records
  * featureのものをそのまま使う。Insightとは完全に独立した機能・エンドポイント
- * （docs/discover.md参照。core/insights/insightBuilder.jsには一切触れていない）。
+ * （docs/features.md「Discover」参照。core/insights/insightBuilder.jsには
+ * 一切触れていない）。
  */
 
 const DISCOVER_PATH = "/api/discover";
@@ -26,13 +27,5 @@ export const fetchOriginDiscovery = async (nodeId, { signal } = {}) => {
  */
 export const fetchDiscoverTeaser = async ({ signal } = {}) => {
   const payload = await apiRequest(DISCOVER_PATH, { signal });
-  return payload.data;
-};
-
-/**
- * Discover専用ページ用の、条件を満たす産地すべての提案一覧を取得する。
- */
-export const fetchAllDiscoverSuggestions = async ({ signal } = {}) => {
-  const payload = await apiRequest(`${DISCOVER_PATH}/all`, { signal });
   return payload.data;
 };

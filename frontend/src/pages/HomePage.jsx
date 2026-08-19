@@ -69,7 +69,7 @@ import DiscoverCard from "../features/discover/components/DiscoverCard";
  * よう`flex-[2]`/`flex-[5]`（400:1000と同じ2:5の比率）へ変更した。
  * 高さは両カードとも400pxで揃えたまま。
  *
- * 2026-08、Discover機能（docs/discover.md）を追加した際、最初はHome画面
+ * 2026-08、Discover機能（docs/features.md「Discover」）を追加した際、最初はHome画面
  * 下部に控えめな1行のテキストリンク（Discoverへの導線）を別途置いたが、
  * 「見つけにくい」という指摘と、「Record→Connect→Discoverという
  * プロダクトの方向性をHome画面でも明確にしたい」という要望から、
