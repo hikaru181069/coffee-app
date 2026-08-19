@@ -12,6 +12,7 @@ import FormField from "../features/coffee-records/components/FormField";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { controlClass, dangerButtonClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
+import { contentContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
 import { getErrorMessage } from "../utils/errorMessage";
 
@@ -74,7 +75,7 @@ function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+      <div className={contentContainerClass}>
         <ProfileSkeleton />
       </div>
     );
@@ -82,7 +83,7 @@ function ProfilePage() {
 
   if (error) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+      <div className={contentContainerClass}>
         <RecordsErrorState error={error} onRetry={reload} />
       </div>
     );
@@ -140,7 +141,7 @@ function ProfilePage() {
   };
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+    <div className={contentContainerClass}>
       <header className="mb-6">
         <h1 className="text-xl font-bold text-text">{t("profile.heading")}</h1>
         <p className="mt-1 text-sm text-text-tertiary">{t("profile.subtitle")}</p>

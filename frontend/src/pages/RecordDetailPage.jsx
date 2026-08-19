@@ -16,6 +16,7 @@ import {
   recordTypeLabel,
 } from "../features/coffee-records/utils/recordFormat";
 import RecordConnectionsDiagram from "../features/graph/components/RecordConnectionsDiagram";
+import { contentContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
 import { getErrorMessage } from "../utils/errorMessage";
 
@@ -68,7 +69,7 @@ function RecordDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+      <div className={contentContainerClass}>
         <RecordDetailSkeleton />
       </div>
     );
@@ -76,7 +77,7 @@ function RecordDetailPage() {
 
   if (error) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+      <div className={contentContainerClass}>
         {error.isNotFound ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
             <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
@@ -104,7 +105,7 @@ function RecordDetailPage() {
   const hasConnections = Boolean(record.origin || record.process || record.roastLevel || flavors.length > 0);
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+    <div className={contentContainerClass}>
       {/* ── Breadcrumb ───────────────────────────── */}
       <nav aria-label={t("records.breadcrumbAriaLabel")} className="flex items-center gap-1.5 text-sm">
         <Link

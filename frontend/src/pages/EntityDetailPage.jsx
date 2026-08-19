@@ -8,6 +8,7 @@ import { formatConsumedAtShort } from "../features/coffee-records/utils/recordFo
 import { getErrorMessage } from "../utils/errorMessage";
 import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import DiscoverSuggestions from "../features/discover/components/DiscoverSuggestions";
+import { contentContainerClass } from "../styles/pageContainer";
 import { useReveal } from "../hooks/useReveal";
 import { revealDelayClass } from "../utils/revealDelay";
 
@@ -29,7 +30,7 @@ function EntityDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+      <div className={contentContainerClass}>
         <EntityDetailSkeleton />
       </div>
     );
@@ -37,7 +38,7 @@ function EntityDetailPage() {
 
   if (error) {
     return (
-      <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+      <div className={contentContainerClass}>
         <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>
       </div>
     );
@@ -50,7 +51,7 @@ function EntityDetailPage() {
   const relatedTypes = Object.keys(detail.relatedAttributes);
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+    <div className={contentContainerClass}>
       <header className="mb-6">
         <div className="flex items-center gap-2">
           <Icon size={16} aria-hidden="true" className={visual.colorClass} />

@@ -18,6 +18,7 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "../features/coffee-records/components/formStyles";
+import { wideContainerClass } from "../styles/pageContainer";
 import SearchBox from "../features/search/components/SearchBox";
 import SearchResults from "../features/search/components/SearchResults";
 import { useSearch } from "../features/search/hooks/useSearch";
@@ -97,7 +98,7 @@ function RecordsPage() {
   };
 
   return (
-    <div className="coffee-page mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6">
+    <div className={wideContainerClass}>
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-text">Records</h1>
