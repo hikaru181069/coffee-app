@@ -10,120 +10,23 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { HouseIcon, ChartNetworkIcon, CoffeeIcon, ChartBarIcon, UserIcon, LogOutIcon } from "@animateicons/react/lucide";
 import { clearAuthData, getAuthToken, getAuthUserName } from "../utils/authStorage";
 
-// ── Inline SVG icons ──────────────────────────────────────────────────────────
-// アイコンライブラリ(lucide-react)もあるが、既存のこの構成に合わせて
-// 必要な分だけ SVG を直書きする。viewBox="0 0 24 24" は標準的なグリッドサイズ。
-const HomeIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-    <polyline points="9 22 9 12 15 12 15 22" />
-  </svg>
-);
-// Graph用。つながりを示すノード+線
-const GraphIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="6" cy="6" r="3" />
-    <circle cx="18" cy="6" r="3" />
-    <circle cx="12" cy="18" r="3" />
-    <line x1="8.5" y1="7.5" x2="10" y2="15.5" />
-    <line x1="15.5" y1="7.5" x2="14" y2="15.5" />
-  </svg>
-);
-// Records用。コーヒーカップ
-const RecordsIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M17 8h1a4 4 0 010 8h-1" />
-    <path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4z" />
-    <line x1="6" y1="2" x2="6" y2="4" />
-    <line x1="10" y1="2" x2="10" y2="4" />
-    <line x1="14" y1="2" x2="14" y2="4" />
-  </svg>
-);
-// Stats用。棒グラフ
-const StatsIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="6" y1="20" x2="6" y2="10" />
-    <line x1="12" y1="20" x2="12" y2="4" />
-    <line x1="18" y1="20" x2="18" y2="14" />
-  </svg>
-);
-const UserIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-const LogoutIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
-  </svg>
-);
+// 2026-08、以前はlucide-reactも使わず必要な分だけSVGを自前で書いていたが、
+// ホバーで動くアイコン（mobbin.comで見た体験の再現）を導入するため
+// @animateicons/react（MIT、Lucideベースのアイコンをホバーアニメーション
+// 付きで提供するライブラリ）へ置き換えた。stroke="currentColor" /
+// viewBox="0 0 24 24" / strokeWidth="2"など、以前の自前SVGと同じ規約で
+// 実装されているため、既存のnavLinkClass（色の継承）はそのまま使える。
 
 // docs/design.md の Main Navigation（Home / Records / Graph / Stats / Profile）に対応する。
 // New Record は各画面の「記録する」CTAから遷移するため、ナビ自体には持たせない。
 const PRIMARY_ITEMS = [
-  { to: "/", label: "Home", Icon: HomeIcon, end: true },
-  { to: "/records", label: "Records", Icon: RecordsIcon },
-  { to: "/graph", label: "Graph", Icon: GraphIcon },
-  { to: "/stats", label: "Stats", Icon: StatsIcon },
+  { to: "/", label: "Home", Icon: HouseIcon, end: true },
+  { to: "/records", label: "Records", Icon: CoffeeIcon },
+  { to: "/graph", label: "Graph", Icon: ChartNetworkIcon },
+  { to: "/stats", label: "Stats", Icon: ChartBarIcon },
 ];
 
 // NavLink の isActive に応じてクラスを切り替えるヘルパー関数。
@@ -211,7 +114,7 @@ function Navbar() {
               const { to, label, Icon, end } = item;
               return (
                 <NavLink key={to} to={to} end={end} className={navLinkClass} onClick={close}>
-                  <Icon />
+                  <Icon size={16} />
                   {label}
                 </NavLink>
               );
@@ -223,7 +126,7 @@ function Navbar() {
             {token ? (
               <>
                 <NavLink to="/profile" onClick={close} className={navLinkClass}>
-                  <UserIcon />
+                  <UserIcon size={16} />
                   {userName || "Profile"}
                 </NavLink>
                 <button
@@ -231,7 +134,7 @@ function Navbar() {
                   onClick={handleLogout}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
                 >
-                  <LogoutIcon />
+                  <LogOutIcon size={16} />
                   Logout
                 </button>
               </>
@@ -285,7 +188,7 @@ function Navbar() {
             const { to, label, Icon, end } = item;
             return (
               <NavLink key={to} to={to} end={end} className={navLinkClass}>
-                <Icon />
+                <Icon size={16} />
                 {label}
               </NavLink>
             );
@@ -296,7 +199,7 @@ function Navbar() {
           {token ? (
             <>
               <NavLink to="/profile" className={navLinkClass}>
-                <UserIcon />
+                <UserIcon size={16} />
                 {userName || "Profile"}
               </NavLink>
               <button
@@ -304,7 +207,7 @@ function Navbar() {
                 onClick={handleLogout}
                 className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
               >
-                <LogoutIcon />
+                <LogOutIcon size={16} />
                 Logout
               </button>
             </>

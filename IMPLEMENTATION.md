@@ -907,6 +907,32 @@ Records/RecordDetail/Statsは既に「カードの積み重ね」から「header
 
 ---
 
+### 2026-08: Navbarアイコンへホバーアニメーションを導入（`@animateicons/react`）
+
+ユーザーからmobbin.comで見た「保存アイコンがホバー時に動く」体験（`DotLottieReact`というLottie再生コンポーネントのHTML断片を共有された）をNavbarの6アイコン（Home/Records/Graph/Stats/Profile/Logout）に再現したいという依頼。
+
+Mobbin自体のLottieアセットは取得・流用できず、`lottiefiles.com`もCloudflareのJS challengeで調査不能だったため、同じ「ホバーで動く」体験を代替ライブラリで用意する方針に切り替えた。npm registry・GitHub上のソースを直接調査し、**`@animateicons/react`**（MIT、Lucideベース509アイコン、GitHub 1,081スター）を採用した。収録アイコンが`house`/`coffee`/`chart-network`/`chart-bar`/`user`/`log-out`とNavbarの6項目すべてに意味的に一致し、実装規約（`stroke="currentColor"`/`viewBox="0 0 24 24"`）が既存の自前SVGと同じで`currentColor`継承がそのまま使えたため。
+
+**変更内容**:
+- `frontend/package.json`に`@animateicons/react`を追加（`npm install`）
+- `frontend/src/components/Navbar.jsx`: 自前定義していた6個のインラインSVGアイコン（`HomeIcon`/`GraphIcon`/`RecordsIcon`/`StatsIcon`/`UserIcon`/`LogoutIcon`）をすべて削除し、`import { HouseIcon, ChartNetworkIcon, CoffeeIcon, ChartBarIcon, UserIcon, LogOutIcon } from "@animateicons/react/lucide"`へ置き換え。`PRIMARY_ITEMS`とモバイル/デスクトップ両方の呼び出し箇所（計6箇所）に`size={16}`を明示指定（ライブラリ既定が24pxのため）。色は`color`propを渡さず既存の`navLinkClass`（`text-text-secondary`/`text-text`）にそのまま任せている
+- ホバー検知・`prefers-reduced-motion`対応（`useReducedMotion()`）はライブラリ内蔵のため追加実装なし
+
+**バンドルサイズの見積もりミス（正直な報告）**: 実装前の事前調査では、npm tarballを展開して`motion`のバンドル済み共有チャンクが74KB（未圧縮）であることを確認し、「+15〜25KB gzip程度」と見積もっていた。しかし実際に`npm run build`した結果、**+89.6KB gzip**（122.90kB→212.49kB）という、見積もりを大きく超える増加になった。原因を`grep -c`で調査したところ、`node_modules/@animateicons/react/dist/lucide.js`が509アイコン全部を1つのファイル内に`forwardRef(...)`のトップレベル呼び出しとして持つ構造で、`sideEffects: false`があってもVite/Rollupのツリーシェイキングが機能せず、インポートしていない505種のアイコンも含めてバンドルされていたことが判明した（未使用アイコン名がビルド成果物に同じ回数出現することを確認）。
+
+この事実をユーザーに報告し、`npx animateicons add`によるソースコピー方式（使うアイコンだけ`.tsx`としてコピーし`motion`を個別依存として追加する方式）への切り替えを推奨したが、ユーザーから「npm依存のまま進める」と明確な指示を受け、バンドルサイズ増加を受け入れた上でnpm依存のまま実装を完了した。ソースコピー方式は将来アイコンライブラリ自体を更新する際の手間が増えるトレードオフがあり、その点も含めてユーザーが判断した。
+
+**Vite dev server（Docker）のimport解決エラー**: 実装後、Docker Compose上の`coffee-app-frontend`コンテナ（ホストとは別のnode_modulesを持つ）で`npm install`を実行して依存を同期させたが、その後もViteのdevサーバーが`Failed to resolve import "@animateicons/react/lucide"`エラーを返し続けた。原因はViteの依存事前バンドルキャッシュ（`node_modules/.vite`）が、パッケージインストール前の状態のまま残っていたこと。`docker exec coffee-app-frontend sh -c "rm -rf /app/node_modules/.vite"`でキャッシュを削除し、`docker restart coffee-app-frontend`でViteプロセスを再起動したところ解消した（`/src/components/Navbar.jsx`のトランスフォーム、`/node_modules/.vite/deps/@animateicons_react_lucide.js`のいずれも200を返すことを確認）。
+
+**検証**: `cd frontend && npm run lint && npm run build && npm run test`すべて成功（21件のテストがパス、ビルド成功、gzip 212.49kB）。claude-in-chrome MCPサーバーが未接続のため、ブラウザでの実際のホバー動作・キーボードフォーカス時の挙動・`prefers-reduced-motion`環境での無効化確認は未実施（コードレベルではライブラリの`useReducedMotion()`実装に依拠していることのみ確認済み）。
+
+未解決事項:
+
+- ブラウザでの視覚的な最終確認が未実施（claude-in-chrome接続断のため）。次回セッションで、デスクトップ/モバイル両方のNavbarでの実際のホバーアニメーション、アクティブ/非アクティブ時の色継承、キーボードフォーカス時の挙動、`prefers-reduced-motion`環境での無効化を確認する必要がある
+- バンドルサイズが+89.6KB gzip増加した状態を受け入れている。将来的にバンドルサイズが問題になった場合は、ソースコピー方式（`npx animateicons add`）への切り替えを再検討する
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
@@ -1047,6 +1073,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - 本番環境（Render）のログにエラーが出ていないかは未確認（アクセス権が無いため、ユーザー自身での確認が必要）
 - mobbin.com準拠のデザイン刷新（色・奥行き・モーション）は、claude-in-chrome MCPサーバーの接続断によりブラウザでの視覚的な最終確認が未実施。次回セッションで実機確認が必要（上記エントリ参照）
 - danger/warn/rating/successの新しい値（mobbin.com実測のhue系）は、実際にmobbin.com上で可視使用されている場面を確認できないまま採用した。コントラスト・見やすさの最終確認が必要
+- Navbarアイコンのホバーアニメーション（`@animateicons/react`）は、claude-in-chrome接続断によりブラウザでの実機確認（ホバー動作・キーボードフォーカス時の挙動・`prefers-reduced-motion`環境）が未実施
+- `@animateicons/react`導入により初期バンドルが+89.6KB gzip増加した状態を、ユーザーの明示的な判断で受け入れている（ツリーシェイキングが効かない構造のため。上記エントリ参照）。将来バンドルサイズが問題になった場合はソースコピー方式への切り替えを検討する
 
 ## 次に実装すべき最小単位
 
@@ -1061,3 +1089,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 7. フロントエンドのテストを、`RecordForm`本体・`ProfilePage`/`useProfile`や他の重要コンポーネントへ広げる
 8. `fastapi-service/main.py`のCORS設定（`http://localhost:5001`ハードコード）を、本番のURLを想定した形へ更新する（優先度は低い。実害は無いため）
 9. mobbin.com準拠のデザイン刷新をブラウザで実機確認する（次回セッションでclaude-in-chromeが使えるタイミングで最優先）。特にdanger/warn/rating/successの新しい値のコントラスト、影・すりガラスの見え方、スクロールイン演出の動作を確認する
+10. Navbarアイコンのホバーアニメーションをブラウザで実機確認する（上記9と同時に、claude-in-chromeが使えるタイミングで実施）
