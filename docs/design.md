@@ -28,6 +28,27 @@ MVPの主ナビゲーション:
 
 ## Screens
 
+### Landing
+
+未ログインの訪問者が最初に見る、`/landing`の公開ページ。Main Navigationの対象外（ログイン後はHomeへ遷移するため表示されない）。
+
+目的:
+
+- プロダクトの世界観（Record → Connect → Discover）を一目で伝える
+- 他のジャーナル型・SNS型アプリとの違い（知識グラフでつながる点）を伝える
+- Get Startedへの導線を作る（primary actionは1つ）
+
+構成例:
+
+- ミニナビ（ロゴ、言語切り替え、Login、Get Started）
+- Hero（見出し、Get Started CTA、装飾的な知識グラフのイラスト）
+- How it works（Record → Connect → Discoverの3ステップ説明）
+- Your Knowledge Graph（知識グラフの視覚的なイメージ。実データではなく固定サンプル）
+- Why Coffee App?（他のジャーナル型アプリとの比較）
+- 末尾のGet Started CTA（Heroと同じ導線の再掲）
+
+Record / Connect / Discoverは言語を問わず共通のブランド語として扱い、翻訳しない。
+
 ### Home
 
 目的:

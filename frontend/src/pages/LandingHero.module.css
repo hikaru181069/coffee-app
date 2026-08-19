@@ -30,6 +30,21 @@ a.navCta:hover {
   overflow: hidden;
 }
 
+/* Hero背景の装飾グラフ。.grainと同じ理由でz-indexは使わない
+   （.heroとその子要素はposition:relative/absoluteが混在するが、
+   z-index:autoの要素はDOM順で重なるため、.heroGraphを.grainと同じく
+   最初の子として置くだけでkicker/title/ctaより下に描画される）。
+   テキストの後ろに置き、操作対象ではないためpointer-events: noneと
+   aria-hidden（LandingGraphIllustration側）で完全に無視させる。 */
+.heroGraph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
 .grain {
   position: absolute;
   inset: 0;
@@ -112,7 +127,8 @@ a.navCta:hover {
 
 @media (prefers-reduced-motion: reduce) {
   .word,
-  .cta {
+  .cta,
+  .graphNode {
     animation: none !important;
     opacity: 1 !important;
     filter: none !important;
@@ -120,25 +136,130 @@ a.navCta:hover {
   }
 }
 
-/* 仕組みの説明(3ステップ)。クリックできない純粋な説明カード。 */
-.howItWorks {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+/* 装飾グラフイラスト（LandingGraphIllustration.jsx）。
+   ノードはfeature/graph/utils/nodeVisuals.jsのcolorClass（text-*）を
+   currentColorで受けるだけで、新しい色は増やさない。 */
+.graphIllustration {
+  display: block;
+  overflow: visible;
+}
+
+.graphEdge {
+  stroke: var(--color-line);
+  stroke-width: 1.5;
+}
+
+.graphNode {
+  animation: node-pulse 3.2s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes node-pulse {
+  0%, 100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* Hero背景用: 大きく・薄く・全体がゆっくり漂う */
+.graphAmbient {
+  width: min(90vw, 640px);
+  height: auto;
+  opacity: 0.16;
+  animation: graph-drift 24s ease-in-out infinite alternate;
+}
+
+@keyframes graph-drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(-2%, 1.5%) scale(1.03);
+  }
+}
+
+/* Your Knowledge Graphセクション用: くっきり見せる */
+.graphFeature {
   width: 100%;
-  max-width: 920px;
+  max-width: 420px;
+  height: auto;
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .graphAmbient {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* セクション共通の見出し（eyebrow + タイトル）。Landing内の各セクション
+   （How it works / Your Knowledge Graph / Why Coffee App?）で使い回す */
+.section {
+  width: 100%;
+  max-width: 760px;
   margin: 0 auto;
   padding: 0 24px 100px;
+  text-align: center;
+}
+
+.sectionEyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0 0 12px;
+}
+
+.sectionTitle {
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  margin: 0 0 40px;
+}
+
+/* 仕組みの説明(3ステップ)。クリックできない純粋な説明カード。
+   Record→Connect→Discoverと「How it works」は元々別々のセクションに
+   分かれていたが、同じ内容を2度説明していたため1つに統合した。 */
+.howItWorks {
+  display: grid;
+  /* card / arrow / card / arrow / card。矢印は内容幅(auto)、
+     カードは等分(1fr)にする */
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 12px;
+  align-items: stretch;
 }
 
 .stepCard {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   gap: 14px;
   padding: 22px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
+  text-align: left;
+}
+
+.stepHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stepNumber {
+  font-family: var(--app-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
 }
 
 .stepIcon {
@@ -150,7 +271,9 @@ a.navCta:hover {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-primary);
+  /* 以前ここがvar(--color-primary)（キーボードフォーカス専用色、
+     00-design-principles.md 6.1）になっていたバグを修正 */
+  color: var(--color-text-secondary);
   flex-shrink: 0;
 }
 
@@ -158,7 +281,7 @@ a.navCta:hover {
   font-size: 14.5px;
   font-weight: 700;
   color: var(--color-text);
-  margin: 0 0 4px;
+  margin: 0;
 }
 
 .stepDesc {
@@ -168,8 +291,114 @@ a.navCta:hover {
   margin: 0;
 }
 
+.stepArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  padding: 0 4px;
+}
+
 @media (max-width: 760px) {
   .howItWorks {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
+
+  .stepArrow {
+    transform: rotate(90deg);
+    padding: 0;
+    margin: -4px 0;
+  }
+}
+
+/* Your Knowledge Graph */
+.graphSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.graphCaption {
+  margin: 24px 0 0;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+}
+
+/* Why Coffee App?（比較） */
+.comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.comparisonCard {
+  flex: 1;
+  padding: 24px 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.comparisonCard.comparisonHighlight {
+  border-color: color-mix(in srgb, var(--color-accent-moss) 40%, transparent);
+  background: color-mix(in srgb, var(--color-accent-moss) 8%, transparent);
+}
+
+.comparisonLabel {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin: 0 0 8px;
+}
+
+.comparisonValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.comparisonArrow {
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .comparison {
+    flex-direction: column;
+  }
+
+  .comparisonArrow {
+    transform: rotate(90deg);
+  }
+}
+
+/* 末尾のCTA（Heroと同じGet Startedの再掲） */
+.finalCta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100px 24px 120px;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.finalCtaTitle {
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  max-width: 480px;
+  margin: 0 0 28px;
+}
+
+/* Heroの.cta はページ読み込み時のreveal演出(opacity:0から開始し
+   900ms後にフェードイン)を前提にしているが、末尾のCTAはスクロールで
+   後から現れるため同じ演出は不要。.ctaに重ねて打ち消す */
+.ctaStatic {
+  opacity: 1;
+  animation: none;
 }

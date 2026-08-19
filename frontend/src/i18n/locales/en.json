@@ -44,6 +44,10 @@
     "next": "Next"
   },
   "landing": {
+    "kicker": "Coffee Journal & Knowledge Graph",
+    "hero": {
+      "title": "Record your coffee. Discover your taste."
+    },
     "steps": {
       "record": {
         "desc": "Record the coffee you drank, along with its origin and flavors."
@@ -54,6 +58,19 @@
       "discover": {
         "desc": "Discover your preferences and unexpected connections through the knowledge graph."
       }
+    },
+    "graph": {
+      "heading": "Your Knowledge Graph",
+      "caption": "Every record builds new connections between origins and flavors."
+    },
+    "comparison": {
+      "heading": "Why Coffee App?",
+      "othersLabel": "Other journal apps",
+      "othersValue": "Just a timeline",
+      "thisValue": "Connected knowledge graph"
+    },
+    "finalCta": {
+      "heading": "Start building your coffee knowledge graph."
     }
   },
   "auth": {
