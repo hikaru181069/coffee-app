@@ -9,11 +9,12 @@
  *   画面幅をほぼ使い切る
  * - contentContainerClass: 読み物・フォーム系（RecordDetail/RecordForm/
  *   Profile/EntityDetail）。単一カラムの本文・フォームが間延びしないよう
- *   適度な幅に留める
+ *   適度な幅に留める（初回は1024pxにしたが、変化が乏しいとのフィードバック
+ *   を受けて1200pxへ拡大した）
  */
 
 export const wideContainerClass =
   "coffee-page mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6";
 
 export const contentContainerClass =
-  "coffee-page mx-auto w-full max-w-5xl px-4 py-6 sm:px-6";
+  "coffee-page mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-6";

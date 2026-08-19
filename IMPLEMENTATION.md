@@ -1105,6 +1105,8 @@ Space Monoへの統一（上記エントリ）で、font-weightによる階層�
 
 **対象外（意図的に変更しなかったもの）**: `GraphPage.jsx`（元々幅制限なし）、`LoginPage.jsx`/`RegisterPage.jsx`の`.auth-card`（420px、中央寄せの小さい認証カードとして意図的な幅）、`App.css`の未使用`.app { max-width: 900px }`（`className="app"`を使うJSXが存在しない死んだCSSで、今回の問題とは無関係）。
 
+**追記（同日）**: リリース後、ユーザーから「RecordDetail・EntityDetailページは変化していないように見える」と指摘があった。実測（`getBoundingClientRect`）で確認したところ、900px→1024pxへは正しく拡大されていたが、`wideContainerClass`側の変化（最大+700px）と比べて+124pxと控えめなため体感しづらかっただけで、バグではなかった。ユーザーに確認のうえ、`contentContainerClass`を`max-w-5xl`（1024px）から`max-w-[1200px]`へ再度拡大した（対象4ページとも自動的に反映）。
+
 **検証**: `cd frontend && npm run lint && npm run build`成功。claude-in-chromeでウィンドウ幅1800px相当にリサイズし、Home/Records/Statsが`max-w-[1600px]`（`getComputedStyle`のgetBoundingClientRectで実測1600px）まで広がること、RecordDetail/RecordFormが適度な幅で本文・フォーム欄が間延びしていないことを目視確認。モバイル幅での実機確認は、claude-in-chromeの`resize_window`がこの環境では反映されなかったため未実施だが、`max-w-*`は`w-full`と併用しており、ビューポートがmax-width未満なら常に画面幅に収まる（今回の変更前から成立していた挙動で、上限値を上げても小さい画面の見た目には影響しない）ため実害は無いと判断した。
 
 ---
