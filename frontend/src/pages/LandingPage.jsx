@@ -2,6 +2,7 @@ import { Link, Navigate } from "react-router-dom";
 import { Coffee, Share2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getAuthToken } from "../utils/authStorage";
+import CoffeeLogo from "../components/CoffeeLogo";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import heroStyles from "./LandingHero.module.css";
 
@@ -41,7 +42,10 @@ function LandingPage() {
 
       {/* ミニナビ */}
       <nav className="landing-nav">
-        <span className="text-base font-black tracking-tight text-text">Coffee App</span>
+        <span className="flex items-center gap-2 text-text">
+          <CoffeeLogo size={22} />
+          <span className="text-base font-black tracking-tight">Coffee App</span>
+        </span>
         <div className="landing-nav-actions">
           <LanguageSwitcher />
           <Link to="/login" className="landing-nav-login">Login</Link>

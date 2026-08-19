@@ -950,6 +950,36 @@ Mobbin自体のLottieアセットは取得・流用できず、`lottiefiles.com`
 
 ---
 
+### 2026-08: アプリロゴ（CoffeeLogo）を新規作成し全ブランド表示箇所へ導入
+
+これまでこのアプリには専用のロゴマークが無く、「Coffee App」という文字だけがNavbar 3箇所・LandingPage 1箇所に直書きされていた。`frontend/public/favicon.svg`も、コーヒーと無関係な紫のグラデーション画像（starterテンプレート由来と思われるプレースホルダー）のまま残っていた。
+
+ユーザーから、産地・農園・品種などがrecordへリンクし合う知識グラフ（`docs/product.md`のCore Experience: Record → Connect → Discover）を、ノード・エッジ+コーヒー豆のモチーフで表現したSVGロゴ案が提示され、それをベースに実装した。
+
+**新規コンポーネント `frontend/src/components/CoffeeLogo.jsx`**:
+- ユーザー提示のSVGをほぼそのまま採用しつつ、2点だけこのアプリの規約に合わせて調整した
+  1. 豆の溝（groove）が`stroke="white"`とハードコードされていたのを`stroke="var(--color-base)"`へ変更。このアプリの`currentColor`は基本`--color-text`（#fafafa、ほぼ白）になるため、`white`のままだと豆の塗りと溝がほぼ同色になり溝が見えなくなるため
+  2. 常に「Coffee App」という可視テキストの直前に置く用途しか無いため、`aria-label`は付けず`aria-hidden="true"`にし、スクリーンリーダーでの二重読み上げを避けた（`ConfirmDialog`のバックドロップ等、既存のa11y方針を踏襲）
+- ノード・エッジ・豆の塗りは`currentColor`のままなので、置き先の`text-text`等の色をそのまま継承する
+
+**導入箇所（5箇所、ユーザーへの確認の上で決定）**:
+- `Navbar.jsx`: モバイル用トップバー・モバイル用ドロワー・デスクトップ用上部ナビバーの3箇所
+- `LandingPage.jsx`: ミニナビの「Coffee App」を`flex items-center gap-2`でラップしロゴを追加
+- `LoginPage.jsx` / `RegisterPage.jsx`: これまでブランド表示が一切無かったため、新規`.auth-brand`（`frontend/src/App.css`に追加、`display: flex; justify-content: center;`）でカード上部にロゴのみ中央配置
+
+**`frontend/public/favicon.svg`の全面差し替え**:
+- 旧ファイルはフィルター・マスク・十数個の楕円で構成された紫のグラデーション画像で、コードからの参照は`index.html`のfaviconリンクのみ、意味的な繋がりは無かった
+- favicon.svgはブラウザが直接読み込む独立したファイルでアプリの`@theme`（CSS変数）にアクセスできないため、`currentColor`/`var(--color-base)`ではなく実際の16進値をハードコードした: ノード・エッジ・豆の塗りは`#7c8363`（`--color-accent-moss`と同値。グラフのorigin/recordノードで既に使っている差し色で、単色よりタブアイコンとして認識しやすいため採用）、豆の溝は元のスニペット通り`#ffffff`固定
+
+**検証**: `cd frontend && npm run lint && npm run build && npm run test`すべて成功（21件パス、ビルド成功、gzip 212.83kB）。Docker dev環境で`curl`により、Navbar/LandingPage/LoginPage/RegisterPageの変換結果に`CoffeeLogo`が反映されていること、`favicon.svg`が新しい内容（`#7c8363`）で配信されていることを確認済み。
+
+未解決事項:
+
+- ブラウザでの視覚的な最終確認が未実施（claude-in-chrome接続断のため）。ロゴのサイズ・位置バランス、豆の溝の視認性、ブラウザタブでのfavicon表示を次回セッションで確認する必要がある
+- 実装中に`.auth-card-kicker`（`frontend/src/App.css`）が`color: var(--primary)`という、現行の`@theme`には存在しない変数（正しくは`--color-primary`）を参照していることに気付いた。今回のロゴ追加とは無関係のため修正していないが、意図しない色（未定義変数のフォールバックで実質`inherit`）で表示されている可能性がある。次回調査・修正が必要
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
@@ -1092,6 +1122,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - danger/warn/rating/successの新しい値（mobbin.com実測のhue系）は、実際にmobbin.com上で可視使用されている場面を確認できないまま採用した。コントラスト・見やすさの最終確認が必要
 - Navbarアイコンのホバーアニメーション（`@animateicons/react`）は、claude-in-chrome接続断によりブラウザでの実機確認（ホバー動作・キーボードフォーカス時の挙動・`prefers-reduced-motion`環境）が未実施
 - `@animateicons/react`導入により初期バンドルが+89.6KB gzip増加した状態を、ユーザーの明示的な判断で受け入れている（ツリーシェイキングが効かない構造のため。上記エントリ参照）。将来バンドルサイズが問題になった場合はソースコピー方式への切り替えを検討する
+- 新規ロゴ（`CoffeeLogo`）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認（サイズ・位置バランス、豆の溝の視認性、favicon表示）が未実施
+- `frontend/src/App.css`の`.auth-card-kicker`が`color: var(--primary)`という、現行の`@theme`（`frontend/src/index.css`）には存在しない変数（正しくは`--color-primary`）を参照している。ロゴ追加作業中に発見したが今回のスコープ外のため未修正。Login/Registerページの「Welcome Back」「Get Started」の文字色が意図しない色（未定義変数のフォールバックで実質`inherit`）になっている可能性があり、次回調査・修正が必要
 
 ## 次に実装すべき最小単位
 
@@ -1107,3 +1139,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 8. `fastapi-service/main.py`のCORS設定（`http://localhost:5001`ハードコード）を、本番のURLを想定した形へ更新する（優先度は低い。実害は無いため）
 9. mobbin.com準拠のデザイン刷新をブラウザで実機確認する（次回セッションでclaude-in-chromeが使えるタイミングで最優先）。特にdanger/warn/rating/successの新しい値のコントラスト、影・すりガラスの見え方、スクロールイン演出の動作を確認する
 10. Navbarアイコンのホバーアニメーションをブラウザで実機確認する（上記9と同時に、claude-in-chromeが使えるタイミングで実施）
+11. 新規ロゴ（`CoffeeLogo`）をブラウザで実機確認する（上記9・10と同時に実施）。あわせて`.auth-card-kicker`の未定義CSS変数（`var(--primary)`）を`var(--color-primary)`へ修正する

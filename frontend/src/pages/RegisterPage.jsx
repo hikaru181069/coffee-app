@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
+import CoffeeLogo from "../components/CoffeeLogo";
 import { registerUser } from "../services/api/authApi";
 import { saveAuthData } from "../utils/authStorage";
 import { getErrorMessage } from "../utils/errorMessage";
@@ -37,6 +38,9 @@ function RegisterPage() {
   return (
     <div className="auth-page">
       <section className="auth-card">
+        <div className="auth-brand">
+          <CoffeeLogo size={32} />
+        </div>
         <p className="auth-card-kicker">Get Started</p>
         <h1>Register</h1>
         <p className="auth-card-desc">
