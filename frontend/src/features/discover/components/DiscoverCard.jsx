@@ -18,7 +18,7 @@ import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
  *   - Insight行は useInsights（core/insights/insightBuilder.js、
  *     MongoDBのCoffeeRecordのみが正、docs/insights.md）
  *   - Discover行は useDiscoverTeaser（core/discover/discoverBuilder.js、
- *     CoffeeRecord + 静的CQIデータが正、docs/discover.md）
+ *     CoffeeRecord + 静的CQIデータが正、docs/features.md「Discover」）
  * `docs/insights.md`の「Source of Truth: MongoDBのCoffeeRecordとマスター
  * データを正とする」という記述は、あくまでInsightの6種別の計算ロジック
  * （insightBuilder.js）についての記述であり、この2つを画面上どこに
@@ -34,14 +34,15 @@ import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
  * （読み込み中・エラー含む）ときはカード自体を表示しない
  * （GraphPreview.jsxと同じ「静かな道具」の方針）。
  *
- * 2026-08、Discover行のリンク先を、提案の根拠になった産地（例: Guatemala）
- * のEntity Detailページから、Discover専用ページ（`/discover`、
- * `pages/DiscoverPage.jsx`）へ変更した。以前は「話題になっている産地
- * （例: Costa Rica）ではなく、提案の根拠になった産地のページに飛ぶ」
- * という遠回りな導線になっていたため。一度は別に「すべて見る」リンクを
- * 追加して補っていたが、ユーザーから「Discover行自体を`/discover`への
- * 導線にすれば、別リンクは不要」という指摘を受け、Discover行のリンク先を
- * 差し替えて「すべて見る」リンクは削除した。
+ * 2026-08、一時期はDiscover行のリンク先を専用の一覧ページ（`/discover`）
+ * にしていたが、実データで検証したところ条件を満たす産地グループは
+ * デモデータでもせいぜい2件程度で、「複数産地を横断して比較する」という
+ * 専用ページ固有の価値がほとんど発揮されないと判断し、`/discover`
+ * ページ自体を削除した（ユーザーと相談して決定。IMPLEMENTATION.md
+ * 参照）。Discover行のリンク先は、提案の根拠になった産地（例: Guatemala）
+ * のEntity Detailページ（`/entities/${teaser.nodeId}`）へ戻し、そこに
+ * 既に埋め込み表示されている`DiscoverSuggestions`で同じ提案を見せる形に
+ * 一本化した。
  */
 function DiscoverCard() {
   const { t } = useTranslation();
@@ -71,7 +72,7 @@ function DiscoverCard() {
 
         {hasTeaser && (
           <Link
-            to="/discover"
+            to={`/entities/${encodeURIComponent(teaser.nodeId)}`}
             className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
             <Compass size={22} aria-hidden="true" className="flex-shrink-0 text-success" />

@@ -7,7 +7,7 @@ import SuggestionCard from "./SuggestionCard";
 /**
  * Entity Detailページ（産地）専用の「まだ試していない産地」提案セクション。
  *
- * docs/discover.md参照。Insight機能（features/insights/）とは完全に独立した
+ * docs/features.md「Discover」参照。Insight機能（features/insights/）とは完全に独立した
  * 機能で、core/insights/insightBuilder.jsには一切触れていない
  * （Home画面ではInsightの一文と並べて`DiscoverCard.jsx`に表示している
  * が、見せ方を1枚のカードにまとめているだけで、ロジックは別）。

@@ -17,7 +17,6 @@ import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
 import EntityDetailPage from "./pages/EntityDetailPage";
 import StatsPage from "./pages/StatsPage";
-import DiscoverPage from "./pages/DiscoverPage";
 // GraphPageはreact-force-graph-2d（canvas描画・物理演算）を含み、
 // 他の画面より明確に重い。このルートを開かないユーザーにその分を
 // 読み込ませないよう、遅延読み込みにする。
@@ -74,11 +73,6 @@ function AnimatedRoutes() {
           />
 
           <Route path="/stats" element={<StatsPage />} />
-
-          {/* Discover専用ページ。常設ナビには追加せず、Home画面の
-              Discoverカードからの「すべて見る」リンクだけで到達する
-              （docs/discover.md参照） */}
-          <Route path="/discover" element={<DiscoverPage />} />
 
           <Route path="/profile" element={<ProfilePage />} />
         </Route>

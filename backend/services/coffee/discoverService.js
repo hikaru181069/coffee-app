@@ -3,11 +3,7 @@ import path from "node:path";
 
 import * as coffeeRecordRepository from "../../repositories/coffeeRecordRepository.js";
 import { serializeCoffeeRecords } from "./coffeeRecordSerializer.js";
-import {
-  buildOriginDiscovery,
-  buildDiscoverTeaser,
-  buildAllOriginDiscoveries,
-} from "../../core/discover/discoverBuilder.js";
+import { buildOriginDiscovery, buildDiscoverTeaser } from "../../core/discover/discoverBuilder.js";
 import { notFoundError } from "../../utils/AppError.js";
 
 /**
@@ -23,7 +19,7 @@ import { notFoundError } from "../../utils/AppError.js";
 
 const ORIGIN_NODE_PREFIX = "origin:";
 
-// CQIデータは一度読み込んだら終わりの静的ファイル（docs/discover.md）。
+// CQIデータは一度読み込んだら終わりの静的ファイル（docs/features.md「Discover」）。
 // リクエストのたびにファイルI/Oが発生しないよう、モジュールスコープに
 // キャッシュする（プロセスの生存期間中は不変のため、TTLや再読み込みは
 // 持たない）
@@ -69,7 +65,7 @@ export const getOriginDiscovery = async (userId, nodeId) => {
 /**
  * Home画面用の、全産地を横断した提案1件を返す（GET /discover）。
  *
- * docs/discover.md「Home Teaser」参照。Entity Detailページへの導線を
+ * docs/features.md「Discover」の「Home Teaser」参照。Entity Detailページへの導線を
  * Home画面にも作るための集計。フィルターは持たない（insightServiceと
  * 同じ方針。「自分の記録全体から」の集計のため）。
  */
@@ -79,17 +75,4 @@ export const getHomeTeaser = async (userId) => {
   const cqiDataset = loadCqiDataset();
 
   return buildDiscoverTeaser(serialized, cqiDataset);
-};
-
-/**
- * Discover専用ページ用の、全産地を横断した提案の一覧を返す
- * （GET /discover/all）。フィルターは持たない（他のDiscover/Insight
- * エンドポイントと同じ方針）。
- */
-export const getAllOriginDiscoveries = async (userId) => {
-  const records = await coffeeRecordRepository.findAllForUser(userId);
-  const serialized = serializeCoffeeRecords(records);
-  const cqiDataset = loadCqiDataset();
-
-  return buildAllOriginDiscoveries(serialized, cqiDataset);
 };

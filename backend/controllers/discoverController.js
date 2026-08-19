@@ -20,10 +20,3 @@ export const getTeaser = async (req, res) => {
 
   res.status(200).json({ data: result });
 };
-
-/** GET /api/discover/all （Discover専用ページ用の全産地一覧） */
-export const getAllDiscoveries = async (req, res) => {
-  const result = await discoverService.getAllOriginDiscoveries(req.user._id);
-
-  res.status(200).json({ data: result });
-};

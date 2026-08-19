@@ -5,11 +5,7 @@
  * （tests/insightBuilder.test.js と同じ方針）。
  */
 
-import {
-  buildOriginDiscovery,
-  buildDiscoverTeaser,
-  buildAllOriginDiscoveries,
-} from "../core/discover/discoverBuilder.js";
+import { buildOriginDiscovery, buildDiscoverTeaser } from "../core/discover/discoverBuilder.js";
 
 const ORIGIN_ETHIOPIA = { id: "origin-ethiopia", name: "Ethiopia" };
 const ORIGIN_KENYA = { id: "origin-kenya", name: "Kenya" };
@@ -142,47 +138,5 @@ describe("buildDiscoverTeaser（Home画面用の全産地横断1件）", () => {
       basedOn: { originLabel: "Ethiopia", processLabel: "Natural", count: 2 },
       suggestedOrigin: { label: "Panama", avgQualityScore: 86.1 },
     });
-  });
-});
-
-describe("buildAllOriginDiscoveries（Discoverページ用の全産地横断一覧）", () => {
-  test("どの産地も条件を満たさなければ空配列", () => {
-    const records = [buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })];
-    expect(buildAllOriginDiscoveries(records, CQI_DATASET)).toEqual({ origins: [] });
-  });
-
-  test("条件を満たす産地だけを、最良の提案のスコアが高い順に並べる", () => {
-    const ORIGIN_RWANDA = { id: "origin-rwanda", name: "Rwanda" };
-    const records = [
-      // Ethiopia×Natural → 最高スコアはPanama(86.1)
-      buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL }),
-      buildRecord({ id: "b", origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL }),
-      // Rwanda×Washed → 最高スコアはKenya(86.0)
-      buildRecord({ id: "c", origin: ORIGIN_RWANDA, process: PROCESS_WASHED }),
-      buildRecord({ id: "d", origin: ORIGIN_RWANDA, process: PROCESS_WASHED }),
-    ];
-
-    const { origins } = buildAllOriginDiscoveries(records, CQI_DATASET);
-
-    expect(origins).toHaveLength(2);
-    // Ethiopiaの最良スコア(86.1) > Rwandaの最良スコア(86.0)なのでEthiopiaが先
-    expect(origins[0]).toEqual({
-      nodeId: "origin:origin-ethiopia",
-      originLabel: "Ethiopia",
-      suggestions: [
-        {
-          type: "similarProcessOrigin",
-          basedOn: { originLabel: "Ethiopia", processLabel: "Natural", count: 2 },
-          suggestedOrigin: { label: "Panama", avgQualityScore: 86.1 },
-        },
-        {
-          type: "similarProcessOrigin",
-          basedOn: { originLabel: "Ethiopia", processLabel: "Natural", count: 2 },
-          suggestedOrigin: { label: "Yemen", avgQualityScore: 85.0 },
-        },
-      ],
-    });
-    expect(origins[1].originLabel).toBe("Rwanda");
-    expect(origins[1].suggestions[0].suggestedOrigin.label).toBe("Kenya");
   });
 });

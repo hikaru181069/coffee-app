@@ -6,8 +6,10 @@ import { cardClass, secondaryButtonClass } from "../../coffee-records/components
 /**
  * Discoverの提案1件分のカード。
  *
- * Entity Detailページ（`DiscoverSuggestions.jsx`）とDiscover専用ページ
- * （`pages/DiscoverPage.jsx`）の両方から使う共通の見た目。
+ * Entity Detailページに埋め込む`DiscoverSuggestions.jsx`が使う見た目。
+ * 2026-08、専用の`/discover`一覧ページ（`pages/DiscoverPage.jsx`）は
+ * 実データで検証した結果、比較対象がほとんどの場合1〜2件に留まり
+ * 専用ページの価値が薄いと判断して削除した（IMPLEMENTATION.md参照）。
  */
 function SuggestionCard({ suggestion }) {
   const { t } = useTranslation();
