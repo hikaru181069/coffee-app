@@ -1,7 +1,20 @@
 {
   "nav": {
     "mainNavigation": "メインナビゲーション",
-    "bottomNavigation": "下部ナビゲーション"
+    "bottomNavigation": "下部ナビゲーション",
+    "home": "ホーム",
+    "records": "記録",
+    "graph": "グラフ",
+    "stats": "統計",
+    "profile": "プロフィール",
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "register": "新規登録"
+  },
+  "notFound": {
+    "title": "ページが見つかりません",
+    "desc": "URLが間違っているか、このページは移動・削除された可能性があります。",
+    "cta": "Homeへ戻る"
   },
   "common": {
     "loading": "読み込み中...",
@@ -44,6 +57,18 @@
     }
   },
   "auth": {
+    "welcomeBack": "おかえりなさい",
+    "getStarted": "はじめましょう",
+    "loginHeading": "ログイン",
+    "registerHeading": "新規登録",
+    "password": "パスワード",
+    "namePlaceholder": "お名前",
+    "loginCta": "ログイン",
+    "loginCtaPending": "ログイン中…",
+    "registerCta": "アカウントを作成",
+    "registerCtaPending": "作成中…",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "hasAccount": "すでにアカウントをお持ちですか？",
     "login": {
       "desc": "ログインして、あなたのコーヒー記録を続けましょう。",
       "fallbackError": "ログインに失敗しました。メールアドレスとパスワードをご確認ください。"
@@ -75,6 +100,7 @@
     }
   },
   "records": {
+    "heading": "記録",
     "newRecordCta": "記録する",
     "countLabel": "{{count}} 件の記録",
     "subtitleEmpty": "飲んだコーヒーを記録しましょう",
@@ -249,7 +275,10 @@
     "dateRequired": "日付を入力してください",
     "dateInvalid": "日付の形式が正しくありません",
     "recordTypeRequired": "記録タイプを選択してください",
-    "ratingRange": "評価は1〜5で選択してください"
+    "ratingRange": "評価は1〜5で選択してください",
+    "nameRequired": "名前を入力してください",
+    "emailRequired": "メールアドレスを入力してください",
+    "passwordRequired": "パスワードを入力してください"
   },
   "errors": {
     "byCode": {

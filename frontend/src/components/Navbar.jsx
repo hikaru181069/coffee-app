@@ -31,11 +31,13 @@ import { clearAuthData, getAuthToken, getAuthUserName } from "../utils/authStora
 
 // docs/design.md の Main Navigation（Home / Records / Graph / Stats / Profile）に対応する。
 // New Record は各画面の「記録する」CTAから遷移するため、ナビ自体には持たせない。
+// labelKeyはi18nのnav.*キー。PRIMARY_ITEMSはモジュールスコープの定数で
+// useTranslation()を呼べないため、表示直前（NavIconLink内）でt()に通す。
 const PRIMARY_ITEMS = [
-  { to: "/", label: "Home", Icon: HouseIcon, end: true },
-  { to: "/records", label: "Records", Icon: CoffeeIcon },
-  { to: "/graph", label: "Graph", Icon: ChartNetworkIcon },
-  { to: "/stats", label: "Stats", Icon: ChartBarIcon },
+  { to: "/", labelKey: "nav.home", Icon: HouseIcon, end: true },
+  { to: "/records", labelKey: "nav.records", Icon: CoffeeIcon },
+  { to: "/graph", labelKey: "nav.graph", Icon: ChartNetworkIcon },
+  { to: "/stats", labelKey: "nav.stats", Icon: ChartBarIcon },
 ];
 
 // NavLink の isActive に応じてクラスを切り替えるヘルパー関数。
@@ -52,8 +54,11 @@ const navLinkClass = ({ isActive }) =>
 // ナビ項目全体（アイコン+テキスト）のホバーでアイコンアニメーションを
 // 発火させるためのラッパー。個別にrefを持つ必要があるため、PRIMARY_ITEMSの
 // map内では呼べず（Rules of Hooks）、小さなコンポーネントとして切り出した
+// label: そのまま表示する文字列（ユーザー名など、翻訳不要なもの）
+// labelKey: i18nのキー。両方渡された場合はlabelを優先する
 function NavIconLink(props) {
-  const { to, end, label, Icon, onClick } = props;
+  const { to, end, label, labelKey, Icon, onClick } = props;
+  const { t } = useTranslation();
   const iconRef = useRef(null);
   return (
     <NavLink
@@ -65,7 +70,7 @@ function NavIconLink(props) {
       onMouseLeave={() => iconRef.current?.stopAnimation()}
     >
       <Icon ref={iconRef} size={16} />
-      {label}
+      {label ?? t(labelKey)}
     </NavLink>
   );
 }
@@ -169,13 +174,13 @@ function Navbar() {
           <div className="sticky bottom-16 mt-auto flex flex-col gap-1 border-t border-surface-2/50 bg-raised pt-5 pb-2">
             {token ? (
               <>
-                <NavIconLink to="/profile" Icon={UserIcon} label={userName || "Profile"} onClick={close} />
+                <NavIconLink to="/profile" Icon={UserIcon} label={userName || t("nav.profile")} onClick={close} />
                 <NavIconButton
                   onClick={handleLogout}
                   Icon={LogOutIcon}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
                 >
-                  Logout
+                  {t("nav.logout")}
                 </NavIconButton>
               </>
             ) : (
@@ -185,14 +190,14 @@ function Navbar() {
                   onClick={close}
                   className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
                 >
-                  Login
+                  {t("nav.login")}
                 </NavLink>
                 <NavLink
                   to="/register"
                   onClick={close}
                   className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
                 >
-                  Register
+                  {t("nav.register")}
                 </NavLink>
               </>
             )}
@@ -233,13 +238,13 @@ function Navbar() {
         <div className="ml-auto flex items-center gap-3">
           {token ? (
             <>
-              <NavIconLink to="/profile" Icon={UserIcon} label={userName || "Profile"} />
+              <NavIconLink to="/profile" Icon={UserIcon} label={userName || t("nav.profile")} />
               <NavIconButton
                 onClick={handleLogout}
                 Icon={LogOutIcon}
                 className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
               >
-                Logout
+                {t("nav.logout")}
               </NavIconButton>
             </>
           ) : (
@@ -248,13 +253,13 @@ function Navbar() {
                 to="/login"
                 className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
               >
-                Login
+                {t("nav.login")}
               </NavLink>
               <NavLink
                 to="/register"
                 className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
               >
-                Register
+                {t("nav.register")}
               </NavLink>
             </>
           )}

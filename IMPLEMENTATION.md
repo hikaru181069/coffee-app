@@ -1111,6 +1111,30 @@ Space Monoへの統一（上記エントリ）で、font-weightによる階層�
 
 ---
 
+### 2026-08-20: UI/UXレビュー（Artifact）で見つかった6件をまとめて修正
+
+前回セッションで実施したUI/UXレビュー（claude-in-chromeでの全ルート実機確認、`prompts/design/00-design-principles.md`との整合性チェック）の結果をArtifactとして発行し、ユーザーから「まとめて、着手してください」と実装の指示があった。重大度順にすべて対応した。
+
+**1. `consumedAt`のタイムゾーン変換バグ（Critical）**: `frontend/src/features/coffee-records/validation/recordFormValidation.js`の`toApiPayload()`が、datetime-local入力の生文字列（タイムゾーン情報なし）をそのまま`consumedAt`として送信しており、UTCで動くバックエンドがそれをUTCとして誤って解釈するため、記録を編集するたびに+9時間（ブラウザのタイムゾーン分）ずつ加算されるバグを修正した。変換用に既に存在していたが呼ばれていなかった`fromDateTimeLocalValue()`（`utils/recordFormat.js`）を送信直前に通すよう1行変更。実機で新規作成→編集→再編集を行い、時刻が動かないことを確認した（バックエンドが`docker exec`でUTC稼働と確認済み）。検証時にDemo Userの既存記録（Onibus Coffee - Ethiopia）の時刻を誤って壊してしまったため、MongoDB上で元の値（`2026-07-24T16:00:00.000Z`）へ復元済み。
+
+**2. LandingヒーローCTAの色（High）**: `frontend/src/pages/LandingHero.module.css`の`.cta`が`background: var(--color-primary)`（キーボードフォーカス専用の青、`00-design-principles.md` 6.1）を主要CTAに使ってしまっていたのを、他の主要ボタンと同じ反転配色（`--color-inverse` / `--color-on-inverse`）へ修正。同じページのヘッダーCTA（`home-link`）と見た目が揃った。
+
+**3. Navbar/BottomTabBarの英語固定ラベル（Medium）**: `PRIMARY_ITEMS`（`Navbar.jsx`）・`TABS`（`BottomTabBar.jsx`）が`label`にリテラル文字列を持ち`t()`を通していなかったため、言語を日本語に切り替えても常時表示のナビだけ英語のままだった。`labelKey`へ置き換え、i18nの`nav.*`キー（ja: ホーム/記録/グラフ/統計/プロフィール/ログイン/ログアウト/新規登録）を新設して翻訳されるようにした。実装中に、NavbarのLogin/Logout/Registerボタン・Profileのフォールバック表示（`label={userName || "Profile"}`）も同じ理由で未翻訳だったことが分かり、あわせて修正。さらに`RecordsPage.jsx`の`<h1>Records</h1>`も同じパターンの未翻訳（`StatsPage.jsx`は`t("stats.heading")`で翻訳済みなのに`RecordsPage.jsx`だけ素の文字列だった）と分かったため、`records.heading`キーを新設して統一した。
+
+**4. Login/Registerのバリデーション表示（Medium）**: 認証フォームには元々クライアント側検証が無く、必須項目が空でもサーバーへ送信され、サーバーからの単一のエラー文言（例: `"Name is required"`、`errors.legacy`に無いため未翻訳のまま表示）が欄の外に1件だけ出る作りだった。`utils/authFormValidation.js`を新設し（`recordFormValidation.js`と同じ形の純粋関数）、`LoginPage.jsx` / `RegisterPage.jsx`を`FormField` + `controlClass`（`features/coffee-records/components/formStyles.js`）を使う構成に書き換え、記録フォームと同じ「欄ごとの赤枠＋直下にアイコン付きメッセージ、全項目のエラーを一度に表示」にそろえた。あわせて、この2ページの見出し・ラベル・ボタン・切り替えリンク（"Login"/"Email"/"Password"/"Create Account"等）がすべて未翻訳だったことも判明したため、`auth.*`キーを新設して翻訳した（`profile.name`/`profile.email`は既存キーを再利用）。
+
+実装中に、`frontend/src/App.css`の要素セレクタ`input { ... border: 1px solid var(--color-surface-2); ... }`（250行目）が、`@layer`の外にあるため詳細度に関係なくTailwindの`border-danger`等のutilityクラスに常に勝ってしまい、`controlClass`のエラー枠線が機能しない問題を発見した。これは`frontend/src/features/coffee-records/coffee-records.css`の`.coffee-page input { ... revert-layer ... }`が既に同じ理由で対処済みの問題と同一で、Login/Registerは`.coffee-page`を使っていないため対象外だった。同じ`revert-layer`の手法を`.auth-form input`に適用して解決した（`.auth-form input:focus`の独自の枠線色・box-shadowも、`controlClass`の`focus:ring-2 focus:ring-primary/50`と二重管理にならないよう削除）。
+
+**5. 404ページが存在しない（Medium）**: `App.jsx`にcatch-allルートが無く、無効なURLへアクセスするとNavbar以外が完全に空白になっていた。`NotFoundPage.jsx`を新設し（`RecordsEmptyState`等と同じ「破線枠+アイコン+見出し+説明文+CTA」の見た目）、`ProtectedRoute`配下の最後に`<Route path="*">`として追加した。未ログイン時は従来どおり`ProtectedRoute`が先に`/landing`へリダイレクトするため、この画面が出るのはログイン済みユーザーのみ。
+
+**6. 言語切り替え時に`<html lang>`が更新されない（Medium）**: `frontend/index.html`に`lang="en"`が静的に書かれたままで、i18nextの言語切り替えに追従していなかった。`frontend/src/i18n/index.js`に`i18n.on("languageChanged", ...)`で`document.documentElement.lang`を同期する処理を追加し、初期化時にも一度同期するようにした。
+
+**ついでに修正したもの**: `App.css`の`.auth-switch a:hover { color: var(--primary); }`が、`.auth-card-kicker`で以前修正したのと同じ「存在しない`--primary`変数を参照する」バグだったため、`.auth-switch`が実際に使われているCSS（未使用の`.back-link`等、`docs/mlb-legacy-inventory.md`記載の死んだCSSは対象外）である今回に限り、あわせて`--color-primary`へ修正した。
+
+**検証**: `cd frontend && npm run lint && npm run test && npm run build`すべて成功。`cd backend && npm test`（Test Suites: 23 passed, Tests: 325 passed、フロントエンドのみの変更のため回帰確認目的）。claude-in-chromeで、①新規作成→編集→再編集で時刻が動かないこと、②Landing・Login・Register・Navbar・BottomTabBarが日本語/英語両方で正しく表示されること、③Register/Loginで空欄のまま送信すると欄ごとの赤枠とメッセージが出ること、④存在しないURLでNotFoundPageが表示され「Homeへ戻る」が機能すること、⑤言語切り替えで`document.documentElement.lang`が`ja`/`en`に切り替わることを、それぞれ実機で確認した。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
@@ -1255,7 +1279,7 @@ New Record・Editボタンの見づらさ修正時（2026-08-19）は、CSS1行�
 - フロントエンドのテストは検証ロジックと`ConfirmDialog`のみ。`RecordForm`本体・Graph関連（canvasに依存しjsdomでは動かない）・`ProfilePage`/`useProfile`はまだテスト対象外
 - `fastapi-service/main.py`のCORS設定が`http://localhost:5001`にハードコードされたまま（実害は無いと判断し今回は未修正。frontendから直接FastAPIを呼ぶ設計に変わった場合は要修正）
 - 本番環境（Render）のログにエラーが出ていないかは未確認（アクセス権が無いため、ユーザー自身での確認が必要）
-- danger/warn/rating/successの新しい値（mobbin.com実測のhue系）は、実際にmobbin.com上で可視使用されている場面を確認できないまま採用した。今回の実機確認では評価の星（rating色）の表示のみ確認しており、danger/warn/successを実際に発火させる画面（バリデーションエラー等）はまだ未確認
+- danger/warn/rating/successの新しい値（mobbin.com実測のhue系）は、実際にmobbin.com上で可視使用されている場面を確認できないまま採用した。danger色はRegister/Loginのバリデーションエラー（欄の枠線・メッセージ）で実機確認済み（2026-08-20）。warn/successのトースト表示はまだ未確認
 - Navbarアイコンのホバーアニメーション（`@animateicons/react`）は、ホバー時の背景ピル表示・アイコン切り替わりの範囲はブラウザで確認したが、キーボードフォーカス時の挙動と`prefers-reduced-motion`環境での見え方は未確認（静止スクリーンショットでは動きそのものの検証に限界があるため）
 - `@animateicons/react`導入により初期バンドルが+89.6KB gzip増加した状態を、ユーザーの明示的な判断で受け入れている（ツリーシェイキングが効かない構造のため。上記エントリ参照）。将来バンドルサイズが問題になった場合はソースコピー方式への切り替えを検討する
 
@@ -1270,5 +1294,6 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 5. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
 6. フロントエンドのテストを、`RecordForm`本体・`ProfilePage`/`useProfile`や他の重要コンポーネントへ広げる
 7. `fastapi-service/main.py`のCORS設定（`http://localhost:5001`ハードコード）を、本番のURLを想定した形へ更新する（優先度は低い。実害は無いため）
-8. danger/warn/successカラーを実際に発火させる画面（バリデーションエラー等）をブラウザで実機確認する
-9. Navbarアイコンのホバーアニメーションを、キーボードフォーカス時の挙動と`prefers-reduced-motion`環境で確認する
+8. Navbarアイコンのホバーアニメーションを、キーボードフォーカス時の挙動と`prefers-reduced-motion`環境で確認する
+9. warn/successカラーが使われるトースト通知をブラウザで実機確認する
+10. `records.countLabel`等、Space Monoが未適用の数値表示への適用可否を判断する

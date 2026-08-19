@@ -32,4 +32,13 @@ i18n
     },
   });
 
+// <html lang>を実際の表示言語と同期させる。frontend/index.htmlには
+// 静的に lang="en" と書かれているため、これを更新しないと言語を
+// 切り替えてもスクリーンリーダー等が英語のまま読み上げてしまう。
+const syncHtmlLang = (language) => {
+  document.documentElement.lang = language;
+};
+syncHtmlLang(i18n.resolvedLanguage ?? i18n.language);
+i18n.on("languageChanged", syncHtmlLang);
+
 export default i18n;
