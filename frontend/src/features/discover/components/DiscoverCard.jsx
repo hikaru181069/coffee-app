@@ -56,7 +56,7 @@ function DiscoverCard() {
   if (!insightText && !hasTeaser) return null;
 
   return (
-    <div className="flex h-full flex-col gap-4 rounded-xl border border-surface-2 bg-raised p-6">
+    <div className="flex h-full flex-col gap-4 rounded-2xl border border-surface-2 bg-raised p-6 shadow-elevated">
       <span className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">Discover</span>
 
       <div className="flex flex-1 flex-col justify-center gap-3">
@@ -65,7 +65,7 @@ function DiscoverCard() {
             to="/graph"
             className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
-            <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-primary" />
+            <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-text-secondary" />
             <p className="text-base text-text">{insightText}</p>
           </Link>
         )}

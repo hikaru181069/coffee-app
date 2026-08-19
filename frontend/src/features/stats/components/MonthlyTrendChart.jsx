@@ -16,7 +16,7 @@ function MonthlyTrendChart({ monthlyTrend, language, t }) {
           <div key={entry.month} className="flex flex-shrink-0 flex-col items-center gap-1.5">
             <span className="font-mono text-xs text-text-secondary">{entry.count}</span>
             <div
-              className="w-6 rounded-t bg-primary/70"
+              className="w-6 rounded-t bg-text-secondary/70"
               style={{ height: `${Math.max(4, (entry.count / maxCount) * CHART_HEIGHT_PX)}px` }}
             />
             <span className="font-mono text-[10px] text-text-tertiary">

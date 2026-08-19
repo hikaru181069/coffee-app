@@ -133,7 +133,7 @@ const navLinkClass = ({ isActive }) =>
   [
     "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all duration-150",
     isActive
-      ? "bg-surface-1 text-primary"
+      ? "bg-surface-2 text-text"
       : "text-text-secondary hover:bg-surface-1/60 hover:text-text",
   ].join(" ");
 
@@ -179,7 +179,7 @@ function Navbar() {
         <NavLink
           to="/"
           onClick={close}
-          className="flex items-center gap-2 text-primary transition-colors hover:text-primary"
+          className="flex items-center gap-2 text-text transition-colors hover:text-text-secondary"
         >
           <span className="text-base font-black tracking-tight">Coffee App</span>
         </NavLink>
@@ -201,7 +201,7 @@ function Navbar() {
           <NavLink
             to="/"
             onClick={close}
-            className="mb-8 flex items-center gap-2.5 px-3 text-primary transition-colors duration-150 hover:text-primary"
+            className="mb-8 flex items-center gap-2.5 px-3 text-text transition-colors duration-150 hover:text-text-secondary"
           >
             <span className="text-base font-black tracking-tight">Coffee App</span>
           </NavLink>
@@ -240,14 +240,14 @@ function Navbar() {
                 <NavLink
                   to="/login"
                   onClick={close}
-                  className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-primary hover:text-primary"
+                  className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
                 >
                   Login
                 </NavLink>
                 <NavLink
                   to="/register"
                   onClick={close}
-                  className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-primary hover:text-primary"
+                  className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
                 >
                   Register
                 </NavLink>
@@ -275,7 +275,7 @@ function Navbar() {
       <div className="fixed inset-x-0 top-0 z-50 hidden h-14 items-center gap-6 border-b border-surface-2/50 bg-raised/85 px-6 backdrop-blur-lg md:flex">
         <NavLink
           to="/"
-          className="flex items-center gap-2 text-primary transition-colors duration-150 hover:text-primary"
+          className="flex items-center gap-2 text-text transition-colors duration-150 hover:text-text-secondary"
         >
           <span className="text-base font-black tracking-tight">Coffee App</span>
         </NavLink>
@@ -312,13 +312,13 @@ function Navbar() {
             <>
               <NavLink
                 to="/login"
-                className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-primary hover:text-primary"
+                className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
               >
                 Login
               </NavLink>
               <NavLink
                 to="/register"
-                className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-primary hover:text-primary"
+                className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
               >
                 Register
               </NavLink>

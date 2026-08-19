@@ -31,7 +31,7 @@ function LanguageSwitcher({ className = "" }) {
             aria-pressed={isActive}
             className={`px-2.5 py-1.5 transition-colors duration-150 ${
               isActive
-                ? "bg-primary/15 text-primary"
+                ? "bg-inverse text-on-inverse"
                 : "text-text-secondary hover:bg-surface-1/60 hover:text-text"
             }`}
           >
