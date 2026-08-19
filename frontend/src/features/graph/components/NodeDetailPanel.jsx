@@ -120,7 +120,7 @@ function RecordNodeDetail({ record, language, t }) {
         </p>
       )}
       {record.notes && (
-        <p className="line-clamp-3 text-sm text-text-secondary">{record.notes}</p>
+        <p className="line-clamp-3 text-sm italic text-text-secondary">{record.notes}</p>
       )}
       <Link to={`/records/${record.id}`} className={`${secondaryButtonClass} mt-2`}>
         {t("graph.viewRecordDetail")}
@@ -163,7 +163,7 @@ function AttributeNodeDetail({ nodeId, recordCount, relatedRecords, language, t 
                 )}
               </p>
               {record.notesExcerpt && (
-                <p className="mt-1 truncate text-xs text-text-secondary">{record.notesExcerpt}</p>
+                <p className="mt-1 truncate text-xs italic text-text-secondary">{record.notesExcerpt}</p>
               )}
             </Link>
           </li>

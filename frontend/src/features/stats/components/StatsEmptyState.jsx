@@ -17,7 +17,7 @@ function StatsEmptyState() {
       <TrendingUp size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
       <div>
         <p className="text-sm font-medium text-text">{t("stats.emptyTitle")}</p>
-        <p className="mt-1 text-sm text-text-tertiary">{t("stats.emptyDesc")}</p>
+        <p className="mt-1 text-sm italic text-text-tertiary">{t("stats.emptyDesc")}</p>
       </div>
       <Link to="/records/new" className={`${primaryButtonClass} mt-1`}>
         {t("records.emptyCta")}

@@ -46,7 +46,7 @@ export function RecordsEmptyState() {
       <Coffee size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
       <div>
         <p className="text-sm font-medium text-text">{t("records.emptyTitle")}</p>
-        <p className="mt-1 text-sm text-text-tertiary">
+        <p className="mt-1 text-sm italic text-text-tertiary">
           {t("records.emptyDesc")}
         </p>
       </div>
@@ -65,7 +65,7 @@ export function RecordsNoMatchState({ onClearFilters }) {
       <SearchX size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
       <div>
         <p className="text-sm font-medium text-text">{t("records.noMatchTitle")}</p>
-        <p className="mt-1 text-sm text-text-tertiary">{t("records.noMatchDesc")}</p>
+        <p className="mt-1 text-sm italic text-text-tertiary">{t("records.noMatchDesc")}</p>
       </div>
       <button type="button" onClick={onClearFilters} className={secondaryButtonClass}>
         {t("common.clearFilters")}
