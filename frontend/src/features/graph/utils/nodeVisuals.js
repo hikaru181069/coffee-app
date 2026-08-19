@@ -17,10 +17,14 @@ import { getCanvasColor } from "./canvasColors";
  * 形で翻訳する（DOM・i18nextに依存しない純粋関数のままにするため）。
  *
  * 色の設計（prompts/design/00-design-principles.md 6.1参照）:
- * recordはprimary(モス)、origin/roastLevelはモスの濃淡2段階、
+ * recordとorigin/roastLevelはモスの濃淡3段階（record=`accent-moss`）、
  * 残り5種（farm/variety/process/flavor/cafe）はモスと彩度を揃えた
  * ミュートな別色相5色。アイコンで種別を区別できているため、色は
  * 識別性より階層表現（主役=モス、属性=ミュートな色）に使っている。
+ * 2026-08、配色をmobbin.com準拠へ刷新した際、`primary`が
+ * フォーカスリング専用の青へ変わったため、recordノードは独立した
+ * `accent-moss`トークン（旧primaryと同じ値）へ切り離した。グラフの
+ * 見た目自体は変えていない。
  *
  * canvasColorは、Tailwindのcolor-*クラスもCSSカスタムプロパティも
  * 解釈できないcanvas描画（react-force-graph-2dのnodeCanvasObject）向けの
@@ -33,10 +37,10 @@ export const NODE_VISUALS = {
   record: {
     icon: Coffee,
     labelKey: "graph.nodeTypes.record",
-    colorClass: "text-primary",
-    ringClass: "ring-primary/50",
+    colorClass: "text-accent-moss",
+    ringClass: "ring-accent-moss/50",
     get canvasColor() {
-      return getCanvasColor("--color-primary");
+      return getCanvasColor("--color-accent-moss");
     },
   },
   origin: {

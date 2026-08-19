@@ -41,7 +41,7 @@ function LandingPage() {
 
       {/* ミニナビ */}
       <nav className="landing-nav">
-        <span className="text-base font-black tracking-tight text-primary">Coffee App</span>
+        <span className="text-base font-black tracking-tight text-text">Coffee App</span>
         <div className="landing-nav-actions">
           <LanguageSwitcher />
           <Link to="/login" className="landing-nav-login">Login</Link>

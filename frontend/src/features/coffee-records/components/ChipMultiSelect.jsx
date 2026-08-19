@@ -28,7 +28,7 @@ function ChipMultiSelect({ id, options, selectedIds, onToggle, disabled = false,
             key={option.id}
             className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-primary/50 ${
               isSelected
-                ? "border-primary bg-primary/15 text-text"
+                ? "border-line-strong bg-surface-2 text-text"
                 : "border-line/60 text-text-secondary hover:border-line hover:text-text"
             } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
           >

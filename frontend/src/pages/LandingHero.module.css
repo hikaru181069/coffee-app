@@ -9,12 +9,13 @@
    このボタンだけ単色インディゴで上書きする(a.navCtaで.home-linkより
    詳細度を上げる。PlayerCard.module.cssのa.glassCardと同じ手法)。 */
 a.navCta {
-  background: var(--color-primary);
+  background: var(--color-inverse);
+  color: var(--color-on-inverse);
   box-shadow: none;
 }
 
 a.navCta:hover {
-  background: var(--color-primary);
+  background: var(--color-inverse);
   opacity: 0.9;
   box-shadow: none;
 }

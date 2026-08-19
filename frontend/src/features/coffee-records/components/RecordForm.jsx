@@ -100,7 +100,7 @@ function RecordForm({
                 key={type.value}
                 className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-primary/50 ${
                   values.recordType === type.value
-                    ? "border-primary bg-primary/15 font-semibold text-text"
+                    ? "border-line-strong bg-surface-2 font-semibold text-text"
                     : "border-line/60 text-text-secondary hover:border-line"
                 }`}
               >

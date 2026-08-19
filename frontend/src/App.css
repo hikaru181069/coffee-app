@@ -45,7 +45,7 @@
 @keyframes page-transition-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -55,8 +55,10 @@
 
 .page-transition {
   /* backwards: 入場アニメ後に transform を残さない。
-     （both だと translateY(0) が残り、子の position:sticky を壊すため） */
-  animation: page-transition-in 380ms cubic-bezier(0.4, 0, 0.2, 1) backwards;
+     （both だと translateY(0) が残り、子の position:sticky を壊すため）
+     2026-08、mobbin.com実測のイージング（--ease-decel）とタイミングへ
+     更新した（prompts/design/00-design-principles.md 6.6参照）。 */
+  animation: page-transition-in 450ms var(--ease-decel) backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2266,8 +2268,8 @@ input {
 
 .home-link {
   display: inline-block;
-  color: var(--color-base);
-  background: linear-gradient(135deg, var(--color-success), var(--ctp-teal));
+  color: var(--color-on-inverse);
+  background: var(--color-inverse);
   border: 0;
   text-decoration: none;
   padding: 13px 20px;
@@ -2275,7 +2277,7 @@ input {
   font-weight: 700;
   cursor: pointer;
   font-family: var(--app-font);
-  box-shadow: 0 4px 14px rgba(166, 227, 161, 0.22);
+  box-shadow: var(--shadow-elevated);
   transition:
     transform 200ms var(--ease-spring),
     box-shadow 200ms var(--ease-smooth),
@@ -2283,8 +2285,8 @@ input {
 }
 
 .home-link:hover {
-  background: linear-gradient(135deg, var(--ctp-teal), var(--primary));
-  box-shadow: 0 6px 22px rgba(148, 226, 213, 0.32);
+  background: color-mix(in srgb, var(--color-inverse) 90%, transparent);
+  box-shadow: var(--shadow-panel);
   transform: translateY(-1px);
 }
 
@@ -2310,15 +2312,15 @@ input {
 }
 
 .home-link.danger {
-  color: var(--color-base);
-  background: linear-gradient(135deg, var(--color-danger), var(--ctp-maroon));
-  box-shadow: 0 4px 14px rgba(243, 139, 168, 0.22);
+  color: var(--color-on-inverse);
+  background: var(--color-danger);
+  box-shadow: var(--shadow-elevated);
   border: 0;
 }
 
 .home-link.danger:hover {
-  background: linear-gradient(135deg, var(--ctp-maroon), var(--color-danger));
-  box-shadow: 0 6px 22px rgba(243, 139, 168, 0.32);
+  background: color-mix(in srgb, var(--color-danger) 85%, transparent);
+  box-shadow: var(--shadow-panel);
   transform: translateY(-1px);
 }
 
@@ -4565,13 +4567,17 @@ button:disabled,
   color: var(--color-danger);
 }
 
-/* ── Reveal (scroll entrance) ── */
+/* ── Reveal (scroll entrance) ──
+   2026-08、mobbin.com実測のタイミング（500ms）とイージング
+   （--ease-decel）へ更新した（prompts/design/00-design-principles.md
+   6.6参照）。frontend/src/hooks/useReveal.js（IntersectionObserverで
+   要素の可視化を検知）と組み合わせて使う。 */
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
+  transform: translateY(24px);
   transition:
-    opacity 560ms var(--ease-smooth),
-    transform 560ms var(--ease-smooth);
+    opacity 500ms var(--ease-decel),
+    transform 500ms var(--ease-decel);
 }
 
 .reveal.visible {

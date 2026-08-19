@@ -36,7 +36,7 @@ function GraphFilters({ filters, onChange }) {
           aria-pressed={filters.recordType === ""}
           className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
             filters.recordType === ""
-              ? "border-primary bg-primary/15 font-semibold text-text"
+              ? "border-line-strong bg-surface-2 font-semibold text-text"
               : "border-line/60 text-text-secondary hover:border-line"
           }`}
         >
@@ -50,7 +50,7 @@ function GraphFilters({ filters, onChange }) {
             aria-pressed={filters.recordType === type.value}
             className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
               filters.recordType === type.value
-                ? "border-primary bg-primary/15 font-semibold text-text"
+                ? "border-line-strong bg-surface-2 font-semibold text-text"
                 : "border-line/60 text-text-secondary hover:border-line"
             }`}
           >
