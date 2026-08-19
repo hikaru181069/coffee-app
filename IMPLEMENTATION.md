@@ -1077,6 +1077,20 @@ Space Monoへの統一（上記エントリ）で、font-weightによる階層�
 
 ---
 
+### 2026-08-19: RecordsページのNew Record・Editボタンが背景色と同化して見づらいバグを修正
+
+ユーザーから「recordsページのnew recordボタンとeditボタンがフォントと背景色が似ていてとても見づらい」と報告があり、claude-in-chromeで実機確認したところ、白背景の反転ボタン（`primaryButtonClass`、`bg-inverse` + `text-on-inverse`）に対し、`<Link>`（`<a>`タグ）で実装された箇所だけ文字色がほぼ白（`getComputedStyle`で`rgb(250, 250, 250)` = `--color-text`）になっており、白背景に白文字で事実上読めなくなっていた（`<button>`で実装された箇所は正常）。
+
+**原因**: `frontend/src/index.css`の`a { color: inherit; }`が`@import "tailwindcss";`の作る`@layer`の外（レイヤー無し）に書かれていた。CSSカスケード層の仕様上、レイヤー無しの宣言はどのレイヤーに属す宣言（Tailwindのutilityクラスも含む）よりも常に優先されるため、クラス名の特異性に関わらず`.text-on-inverse`（`color: var(--color-on-inverse)`、意図した値は`#141414`）が`a { color: inherit }`に負け、親要素から継承した`--color-text`（`#fafafa`）が使われていた。`<button>`は`a`セレクタの対象外のため影響を受けず、この非対称性が「一部のボタンだけ見づらい」という見え方の原因だった。
+
+**影響範囲**: `primaryButtonClass`・`secondaryButtonClass`・`dangerButtonClass`を使う`<Link>`実装全箇所（RecordsページのNew Record、RecordDetailページのEdit・戻る・Delete関連ボタン等）。白背景の`primaryButtonClass`は文字が実質見えなくなる重大な見づらさだったが、透明背景の`secondaryButtonClass`は継承色がたまたま読める色になっていたため、今回指摘された箇所以外では気づかれていなかった。
+
+**修正**: `a { color: inherit; }`を`@layer base { ... }`で囲み、Tailwindのbaseレイヤーに参加させることで、utilityクラスとの優先度がクラス特異性どおりに決まるようにした（`frontend/src/index.css`）。ボタン側のクラス指定は変更していない。
+
+**検証**: 修正前後で`getComputedStyle`により対象リンクの`color`を確認（修正前`rgb(250, 250, 250)`→修正後`rgb(20, 20, 20)`）。Records/RecordDetail/RecordFormの各画面をclaude-in-chromeでzoom screenshotし、New Record・Edit・Save Recordボタンが黒文字で明瞭に読めることを目視確認。`cd frontend && npm run lint && npm run build`成功。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
@@ -1190,6 +1204,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 「本番品質」改善Tier 5（フロントエンドのテスト基盤）とnpm audit解消時に、`cd frontend && npm run lint && npm test && npm run build`（新規21テストすべて成功）、`cd backend && npm test`（`npm audit fix`後のリグレッション確認、23 suites / 330 tests）をあわせて実行し、いずれも成功を確認済み。
 
 mobbin.com刷新一式のブラウザ実機確認・`.auth-card-kicker`修正時（2026-08-19）は、CSS1行の変更のみのため`cd backend && npm test`は未実施。`cd frontend && npm run lint && npm run build`の成功と、claude-in-chromeによるDocker Compose環境（`http://localhost:5174`）での実機確認（Home/Records/Graph/Stats/Login/Register/RecordDetail/EntityDetailの各画面、コンソールエラー無し）を実施済み。
+
+New Record・Editボタンの見づらさ修正時（2026-08-19）は、CSS1行（`a`セレクタを`@layer base`で囲む）の変更のみのため`cd backend && npm test`は未実施。`cd frontend && npm run lint && npm run build`の成功と、`getComputedStyle`による修正前後の`color`値比較、Records/RecordDetail/RecordFormの各画面でのzoom screenshot目視確認を実施済み。
 
 ---
 

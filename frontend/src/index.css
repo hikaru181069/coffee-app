@@ -97,6 +97,13 @@ select {
   font: inherit;
 }
 
-a {
-  color: inherit;
+/* @layerで囲むことで、Tailwindのutilityクラス（例: text-on-inverse）と
+   カスケード層で競合したときにutility側が優先されるようにする。
+   層の外に書くと、レイヤー無しの宣言は仕様上どのutilityより強くなり、
+   Linkコンポーネント（<a>）へのtext-*指定がすべて無効になってしまう
+   （New Record・Editボタンの文字が背景色に沈んで見えなくなった原因）。 */
+@layer base {
+  a {
+    color: inherit;
+  }
 }
