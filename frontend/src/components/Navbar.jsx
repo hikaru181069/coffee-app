@@ -7,7 +7,7 @@
 // 少なく、常時208px分の横幅を専有するサイドバーほどの必然性が無いと判断
 // したため。モバイルのハンバーガー+ドロワー方式はそのまま変更していない。
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { HouseIcon, ChartNetworkIcon, CoffeeIcon, ChartBarIcon, UserIcon, LogOutIcon } from "@animateicons/react/lucide";
@@ -19,6 +19,14 @@ import { clearAuthData, getAuthToken, getAuthUserName } from "../utils/authStora
 // 付きで提供するライブラリ）へ置き換えた。stroke="currentColor" /
 // viewBox="0 0 24 24" / strokeWidth="2"など、以前の自前SVGと同じ規約で
 // 実装されているため、既存のnavLinkClass（色の継承）はそのまま使える。
+//
+// 各アイコンはデフォルトで「アイコンの絵柄自体にカーソルが乗った時」だけ
+// 発火するが、ナビ項目はNavLink全体が一つのホバー領域として見える
+// （hover:bg-surface-1/60）ため、アイコンだけに当たり判定を絞ると不自然。
+// refを渡すと内蔵の自動ホバー検知が無効化され、startAnimation() /
+// stopAnimation()を外から呼ぶ方式に切り替わる仕様を利用し、NavLink/button
+// 側のonMouseEnter・onMouseLeaveから発火させている（NavIconLink /
+// NavIconButton）。
 
 // docs/design.md の Main Navigation（Home / Records / Graph / Stats / Profile）に対応する。
 // New Record は各画面の「記録する」CTAから遷移するため、ナビ自体には持たせない。
@@ -39,6 +47,45 @@ const navLinkClass = ({ isActive }) =>
       ? "bg-surface-2 text-text"
       : "text-text-secondary hover:bg-surface-1/60 hover:text-text",
   ].join(" ");
+
+// ナビ項目全体（アイコン+テキスト）のホバーでアイコンアニメーションを
+// 発火させるためのラッパー。個別にrefを持つ必要があるため、PRIMARY_ITEMSの
+// map内では呼べず（Rules of Hooks）、小さなコンポーネントとして切り出した
+function NavIconLink(props) {
+  const { to, end, label, Icon, onClick } = props;
+  const iconRef = useRef(null);
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onClick}
+      className={navLinkClass}
+      onMouseEnter={() => iconRef.current?.startAnimation()}
+      onMouseLeave={() => iconRef.current?.stopAnimation()}
+    >
+      <Icon ref={iconRef} size={16} />
+      {label}
+    </NavLink>
+  );
+}
+
+// Logoutボタン用。NavIconLinkと役割は同じだがNavLinkではなくbuttonのため分ける
+function NavIconButton(props) {
+  const { onClick, className, Icon, children } = props;
+  const iconRef = useRef(null);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={className}
+      onMouseEnter={() => iconRef.current?.startAnimation()}
+      onMouseLeave={() => iconRef.current?.stopAnimation()}
+    >
+      <Icon ref={iconRef} size={16} />
+      {children}
+    </button>
+  );
+}
 
 function Navbar() {
   const { t } = useTranslation();
@@ -110,33 +157,23 @@ function Navbar() {
           </NavLink>
 
           <nav aria-label={t("nav.mainNavigation")} className="flex flex-col gap-0.5">
-            {PRIMARY_ITEMS.map((item) => {
-              const { to, label, Icon, end } = item;
-              return (
-                <NavLink key={to} to={to} end={end} className={navLinkClass} onClick={close}>
-                  <Icon size={16} />
-                  {label}
-                </NavLink>
-              );
-            })}
+            {PRIMARY_ITEMS.map((item) => (
+              <NavIconLink key={item.to} {...item} onClick={close} />
+            ))}
           </nav>
 
           {/* 認証エリア（sticky で常に下端に固定） */}
           <div className="sticky bottom-16 mt-auto flex flex-col gap-1 border-t border-surface-2/50 bg-raised pt-5 pb-2">
             {token ? (
               <>
-                <NavLink to="/profile" onClick={close} className={navLinkClass}>
-                  <UserIcon size={16} />
-                  {userName || "Profile"}
-                </NavLink>
-                <button
-                  type="button"
+                <NavIconLink to="/profile" Icon={UserIcon} label={userName || "Profile"} onClick={close} />
+                <NavIconButton
                   onClick={handleLogout}
+                  Icon={LogOutIcon}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
                 >
-                  <LogOutIcon size={16} />
                   Logout
-                </button>
+                </NavIconButton>
               </>
             ) : (
               <>
@@ -184,32 +221,22 @@ function Navbar() {
         </NavLink>
 
         <nav aria-label={t("nav.mainNavigation")} className="flex items-center gap-1">
-          {PRIMARY_ITEMS.map((item) => {
-            const { to, label, Icon, end } = item;
-            return (
-              <NavLink key={to} to={to} end={end} className={navLinkClass}>
-                <Icon size={16} />
-                {label}
-              </NavLink>
-            );
-          })}
+          {PRIMARY_ITEMS.map((item) => (
+            <NavIconLink key={item.to} {...item} />
+          ))}
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
           {token ? (
             <>
-              <NavLink to="/profile" className={navLinkClass}>
-                <UserIcon size={16} />
-                {userName || "Profile"}
-              </NavLink>
-              <button
-                type="button"
+              <NavIconLink to="/profile" Icon={UserIcon} label={userName || "Profile"} />
+              <NavIconButton
                 onClick={handleLogout}
+                Icon={LogOutIcon}
                 className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
               >
-                <LogOutIcon size={16} />
                 Logout
-              </button>
+              </NavIconButton>
             </>
           ) : (
             <>
