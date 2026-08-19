@@ -133,7 +133,7 @@ function Navbar() {
           className="flex items-center gap-2 text-text transition-colors hover:text-text-secondary"
         >
           <CoffeeLogo size={22} />
-          <span className="font-mono text-base font-black tracking-tight">Coffee App</span>
+          <span className="font-mono text-base font-black tracking-tight text-inverse">Coffee App</span>
         </NavLink>
       </div>
 
@@ -156,7 +156,7 @@ function Navbar() {
             className="mb-8 flex items-center gap-2.5 px-3 text-text transition-colors duration-150 hover:text-text-secondary"
           >
             <CoffeeLogo size={24} />
-            <span className="font-mono text-base font-black tracking-tight">Coffee App</span>
+            <span className="font-mono text-base font-black tracking-tight text-inverse">Coffee App</span>
           </NavLink>
 
           <nav aria-label={t("nav.mainNavigation")} className="flex flex-col gap-0.5">
@@ -221,7 +221,7 @@ function Navbar() {
           className="flex items-center gap-2 text-text transition-colors duration-150 hover:text-text-secondary"
         >
           <CoffeeLogo size={22} />
-          <span className="font-mono text-base font-black tracking-tight">Coffee App</span>
+          <span className="font-mono text-base font-black tracking-tight text-inverse">Coffee App</span>
         </NavLink>
 
         <nav aria-label={t("nav.mainNavigation")} className="flex items-center gap-1">
