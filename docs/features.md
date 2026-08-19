@@ -378,10 +378,18 @@ GET /api/discover/nodes/origin%3A507f...
 `origin:`以外のプレフィックスは404にせず空配列。`origin:`で自分の記録に
 無い産地IDは404。
 
-### Home Teaser・Discoverページ
+### Home Teaser
 
-- `GET /discover`: 自分が記録した産地を横断し、条件を満たす提案の中から
-  品質スコアが最も高い1件を返す（`teaser: null`もあり）。Home画面の
-  「Discover」カード内に表示
-- `GET /discover/all`: 条件を満たす産地すべてを返す。`/discover`専用
-  ページ（常設ナビには無い）で使う
+`GET /discover`は、自分が記録した産地を横断し、条件を満たす提案の中から
+品質スコアが最も高い1件を返す（`teaser: null`もあり）。Home画面の
+「Discover」カード内に表示し、クリックすると提案の根拠になった産地の
+Entity Detailページ（`/entities/:nodeId`）へ遷移する。そこには
+「対象範囲」節の`GET /discover/nodes/:nodeId`による提案が埋め込み
+表示されている。
+
+2026-08、条件を満たす産地すべてを一覧表示する専用ページ（`/discover`、
+`GET /discover/all`）を一時期実装していたが、実データで検証したところ
+比較対象になる産地グループはよく作り込んだデモデータでも2件程度にしか
+ならず、「複数産地を横断して比較する」という専用ページ固有の価値が
+ほとんど発揮されないと判断し削除した。Home Teaser・Entity Detail埋め込みの
+2箇所でDiscover機能としては十分と判断した（IMPLEMENTATION.md参照）。
