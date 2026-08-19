@@ -1,5 +1,5 @@
 :root {
-  --app-font: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --app-font: "Maple Mono", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --app-font-mono: "Space Mono", monospace;
 
   /* 2026-08、配色をLinear実測値からモス系の差し色へ刷新した際に、色トークンの
