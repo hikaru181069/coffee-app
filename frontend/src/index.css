@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/* アプリ全体の本文フォント。latinサブセットのみ（@fontsource/maple-mono）
+   のため、実使用しているfont-weight(400/500/600/700 + font-blackの900相当
+   をカバーする800)だけを読み込む。日本語グリフを持たないため、
+   :rootのfallbackスタック（後述）で元々Interも素通りしてOSのシステム
+   フォントへ委ねていた日本語表示への影響は無い */
+@import "@fontsource/maple-mono/400.css";
+@import "@fontsource/maple-mono/500.css";
+@import "@fontsource/maple-mono/600.css";
+@import "@fontsource/maple-mono/700.css";
+@import "@fontsource/maple-mono/800.css";
+
 /* 唯一の色トークン定義箇所（frontend/src/App.cssや
    frontend/src/features/graph/utils/nodeVisuals.jsからはここが生成する
    --color-*カスタムプロパティをvar()で参照する。値の手動同期は不要）。
@@ -67,7 +78,7 @@
 }
 
 :root {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Maple Mono", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--color-text);
   --app-bg: var(--color-base);
   background-color: var(--app-bg);

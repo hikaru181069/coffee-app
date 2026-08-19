@@ -980,6 +980,28 @@ Mobbin自体のLottieアセットは取得・流用できず、`lottiefiles.com`
 
 ---
 
+### 2026-08: Navbarの「Coffee App」をSpace Mono、アプリ全体のフォントをMaple Monoへ変更
+
+ユーザーからの依頼で、本文フォントを`Inter`から`Maple Mono`へ、Navbarのブランド文字「Coffee App」を（既存のデータ表示用トークンである）`Space Mono`へ変更した。
+
+**Maple Monoの導入方法の調査**: Maple MonoはGoogle Fontsで配信されていないため、npm registryを調査し`@fontsource/maple-mono`（OFL-1.1ライセンス、latinサブセットのwoff2/woffをバンドルしたセルフホスト用パッケージ）を採用した。tarballを展開して確認したところ、収録サブセットは`latin`のみで日本語グリフを含まない。ただし、このアプリの既存の`:root`フォントスタック（`"Inter", -apple-system, BlinkMacSystemFont, sans-serif`）はそもそも`Inter`も日本語グリフを持たないため、日本語テキストは元々`-apple-system`等のOSシステムフォントへフォールバックしていた。`Maple Mono`をスタックの先頭に追加してもこの経路は変わらないため、日本語表示への影響は無いと判断した。
+
+**読み込むweightの選定**: `grep`で実際に使われているTailwindのfont-weightユーティリティ（`font-semibold` 47件、`font-medium` 12件、`font-bold` 12件、`font-black` 4件、`font-normal` 1件、italicは0件）を調査し、400/500/600/700/800（`font-black`=900はMaple Monoに存在しないため、CSSの標準的なフォントマッチングで最も近い800が自動的に使われる）の5weightのみを`frontend/src/index.css`で`@import`した。ビルド後、`dist/assets/`に各weightのwoff2/woffファイルが出力されていることを確認済み（フォントファイルはJSバンドルとは別の静的アセットとしてオンデマンドで読み込まれるため、JSバンドルのgzipサイズには影響しない）。
+
+**変更内容**:
+- `frontend/package.json`: `@fontsource/maple-mono`を追加
+- `frontend/src/index.css`: `@import "@fontsource/maple-mono/{400,500,600,700,800}.css";`を追加、`:root`の`font-family`を`"Maple Mono", "Inter", -apple-system, BlinkMacSystemFont, sans-serif`へ変更
+- `frontend/src/App.css`: 同じ理由で`--app-font`（レガシーCSSクラスが`var(--app-font)`で参照している変数）も同じスタックへ変更
+- `frontend/src/components/Navbar.jsx`: 「Coffee App」の`<span>`3箇所（モバイルトップバー・モバイルドロワー・デスクトップナビバー）に、既存のTailwindトークン`font-mono`（`frontend/src/index.css`の`--font-mono: "Space Mono", monospace`）を追加。新しい依存追加は不要だった（Space Monoは既にGoogle Fontsから読み込み済みで、評価・日付・グラフの件数など「事実としての値」表示に既に使われているトークンを流用した）
+
+**検証**: `cd frontend && npm run lint && npm run build && npm run test`すべて成功（21件パス、ビルド成功、gzip 212.83kB、フォントファイルは別アセットのため対象外）。Docker dev環境でも`npm install`実行後、`curl`で`index.css`の配信内容に`maple-mono`が含まれること、`@fontsource/maple-mono/400.css`が200を返すことを確認済み。
+
+未解決事項:
+
+- ブラウザでの視覚的な最終確認が未実施（claude-in-chrome接続断のため）。Maple Monoが本文に、Space MonoがNavbarのブランド文字に正しく適用されていること、`font-black`(900)が800へフォールバックした際の見た目に違和感が無いことを次回セッションで確認する必要がある
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
@@ -1124,6 +1146,7 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - `@animateicons/react`導入により初期バンドルが+89.6KB gzip増加した状態を、ユーザーの明示的な判断で受け入れている（ツリーシェイキングが効かない構造のため。上記エントリ参照）。将来バンドルサイズが問題になった場合はソースコピー方式への切り替えを検討する
 - 新規ロゴ（`CoffeeLogo`）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認（サイズ・位置バランス、豆の溝の視認性、favicon表示）が未実施
 - `frontend/src/App.css`の`.auth-card-kicker`が`color: var(--primary)`という、現行の`@theme`（`frontend/src/index.css`）には存在しない変数（正しくは`--color-primary`）を参照している。ロゴ追加作業中に発見したが今回のスコープ外のため未修正。Login/Registerページの「Welcome Back」「Get Started」の文字色が意図しない色（未定義変数のフォールバックで実質`inherit`）になっている可能性があり、次回調査・修正が必要
+- アプリ全体のフォント（Maple Mono）・Navbarのブランド文字（Space Mono）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認が未実施
 
 ## 次に実装すべき最小単位
 
@@ -1140,3 +1163,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 9. mobbin.com準拠のデザイン刷新をブラウザで実機確認する（次回セッションでclaude-in-chromeが使えるタイミングで最優先）。特にdanger/warn/rating/successの新しい値のコントラスト、影・すりガラスの見え方、スクロールイン演出の動作を確認する
 10. Navbarアイコンのホバーアニメーションをブラウザで実機確認する（上記9と同時に、claude-in-chromeが使えるタイミングで実施）
 11. 新規ロゴ（`CoffeeLogo`）をブラウザで実機確認する（上記9・10と同時に実施）。あわせて`.auth-card-kicker`の未定義CSS変数（`var(--primary)`）を`var(--color-primary)`へ修正する
+12. Maple Mono（本文全体）・Space Mono（Navbarブランド文字）のフォント変更をブラウザで実機確認する（上記9〜11と同時に実施）
