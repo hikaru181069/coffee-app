@@ -1002,6 +1002,20 @@ Mobbin自体のLottieアセットは取得・流用できず、`lottiefiles.com`
 
 ---
 
+### 2026-08: Navbarの「Coffee App」の文字色を白に変更
+
+上記のフォント変更直後、ユーザーから「Navbarのcoffee appフォントの色が見づらい」という指摘を受けた。変更前は親`NavLink`の`text-text`（`--color-text: #fafafa`、ほぼ白）を継承していたが、視認性向上のため`frontend/src/components/Navbar.jsx`の「Coffee App」`<span>`3箇所に、既存の反転配色トークン`text-inverse`（`--color-inverse: #ffffff`、純白）を明示的に追加した。ハードコードした16進値ではなく、既にボタン等で使っている既存トークンを再利用している。
+
+なお、この変更により当該`<span>`は親`NavLink`の`hover:text-text-secondary`（ホバー時に暗くする効果）の対象外になる（要素自身のcolorが親より優先されるため）。隣接する`CoffeeLogo`アイコンは`currentColor`のまま親のホバー効果を受け続けるため、ホバー時にアイコンだけ暗くなりテキストは白のまま、という差が生まれる。ユーザーからの指摘は文字色の視認性のみだったためこの挙動差は許容し、見た目に問題があれば次回調整する。
+
+**検証**: `cd frontend && npm run lint && npm run build && npm run test`すべて成功（21件パス、ビルド成功）。Docker dev環境で`curl`により`Navbar.jsx`の変換結果に`text-inverse`が反映されていることを確認済み。
+
+未解決事項:
+
+- ブラウザでの視覚的な最終確認が未実施（claude-in-chrome接続断のため）。文字が白になっていること、ホバー時にアイコンとテキストの明るさが異なる見た目に違和感が無いかを次回セッションで確認する必要がある
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
@@ -1146,7 +1160,7 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - `@animateicons/react`導入により初期バンドルが+89.6KB gzip増加した状態を、ユーザーの明示的な判断で受け入れている（ツリーシェイキングが効かない構造のため。上記エントリ参照）。将来バンドルサイズが問題になった場合はソースコピー方式への切り替えを検討する
 - 新規ロゴ（`CoffeeLogo`）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認（サイズ・位置バランス、豆の溝の視認性、favicon表示）が未実施
 - `frontend/src/App.css`の`.auth-card-kicker`が`color: var(--primary)`という、現行の`@theme`（`frontend/src/index.css`）には存在しない変数（正しくは`--color-primary`）を参照している。ロゴ追加作業中に発見したが今回のスコープ外のため未修正。Login/Registerページの「Welcome Back」「Get Started」の文字色が意図しない色（未定義変数のフォールバックで実質`inherit`）になっている可能性があり、次回調査・修正が必要
-- アプリ全体のフォント（Maple Mono）・Navbarのブランド文字（Space Mono）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認が未実施
+- アプリ全体のフォント（Maple Mono）・Navbarのブランド文字（Space Mono、文字色`text-inverse`）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認が未実施。ホバー時にCoffeeLogoアイコンだけ暗くなりテキストは白のままという挙動差も含めて確認が必要
 
 ## 次に実装すべき最小単位
 
