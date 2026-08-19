@@ -933,6 +933,23 @@ Mobbin自体のLottieアセットは取得・流用できず、`lottiefiles.com`
 
 ---
 
+### 2026-08: Navbarアイコンのホバー発火範囲をアイコン単体からナビ項目全体へ拡張
+
+上記エントリの実装直後、ユーザーから「アニメーションの発火をアイコンのホバーだけでなく、アイコン＋テキスト周りのホバーで発火する方が自然」という指摘を受けた。ナビ項目は`hover:bg-surface-1/60`により見た目上すでに1つのホバー領域として扱われているのに、アニメーションだけアイコンの絵柄部分に限定されているのは確かに不自然と判断し、同意の上で対応した。
+
+**実装方法**: `@animateicons/react`の各アイコンは`ref`を渡すと内蔵の自動ホバー検知（アイコン自身の`onMouseEnter`/`onMouseLeave`）が無効化され、外部から`startAnimation()`/`stopAnimation()`を呼ぶ方式に切り替わる仕様になっている（`dist/lucide.js`を直接確認し、`useImperativeHandle`装着時に内部の自動発火ロジックが迂回されることを確認済み）。これを利用し、`frontend/src/components/Navbar.jsx`に2つの小さなラッパーコンポーネントを新設した:
+
+- `NavIconLink`: `NavLink`+アイコンの組み合わせ用（Home/Records/Graph/Stats/Profile）。`iconRef`を保持し、`NavLink`の`onMouseEnter`/`onMouseLeave`から`iconRef.current.startAnimation()`/`stopAnimation()`を呼ぶ
+- `NavIconButton`: Logoutボタン用（`<button>`のため`NavIconLink`とは別コンポーネントとして分離）
+
+`PRIMARY_ITEMS.map()`内の直書きJSXはこの2コンポーネントの呼び出しに置き換え、Profile/Logoutの4箇所（モバイル/デスクトップ×2）も同様に置き換えた。個別に`ref`を持つ必要があるためフックをmap内で直接呼べず（Rules of Hooks）、コンポーネントとして切り出す設計は`TopRankingList`の`RankingRow`等、既存のカラーテーマ刷新時に確立したパターンを踏襲した。
+
+**lintエラーの原因と対処**: 実装直後、`Icon`が「未使用」とESLintに指摘された。プロジェクトの`eslint.config.js`は`no-unused-vars`に`varsIgnorePattern: '^[A-Z_]'`を設定しており、これは大文字始まりの**変数**（`const`宣言等）をJSXコンポーネントとして使う場合の誤検知を避けるための既存の回避策だが、`argsIgnorePattern`は設定されていないため関数**引数**の分割代入には適用されない。`NavIconLink({ Icon, ... })`のように直接引数で分割代入すると誤検知が発生したため、`function NavIconLink(props) { const { Icon, ... } = props; }`という、関数本体内で分割代入する形に変更した（既存の`PRIMARY_ITEMS.map()`内の`const { Icon } = item;`と同じ回避パターン）。
+
+**検証**: `cd frontend && npm run lint && npm run build && npm run test`すべて成功（21件パス、ビルド成功、gzip 212.58kB、変更前と実質同サイズ）。Docker dev環境で`curl`により`Navbar.jsx`の変換結果に新コンポーネント名（`NavIconLink`）が反映されていることを確認済み。claude-in-chrome未接続のため、実際のホバー操作でのブラウザ確認は上記エントリと合わせて未実施のまま。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
