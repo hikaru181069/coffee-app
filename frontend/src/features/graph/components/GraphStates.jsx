@@ -51,7 +51,7 @@ export function GraphEmptyState() {
       <Share2 size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
       <div>
         <p className="text-sm font-medium text-text">{t("graph.emptyTitle")}</p>
-        <p className="mt-1 text-sm text-text-tertiary">
+        <p className="mt-1 text-sm italic text-text-tertiary">
           {t("graph.emptyDesc")}
         </p>
       </div>

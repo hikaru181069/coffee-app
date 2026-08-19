@@ -134,7 +134,7 @@ function RelatedRecordRow({ record, index, language }) {
           )}
         </p>
         {record.notesExcerpt && (
-          <p className="mt-1 truncate text-xs text-text-secondary">{record.notesExcerpt}</p>
+          <p className="mt-1 truncate text-xs italic text-text-secondary">{record.notesExcerpt}</p>
         )}
       </Link>
     </li>

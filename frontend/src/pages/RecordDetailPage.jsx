@@ -198,7 +198,7 @@ function RecordDetailPage() {
             <section className="py-6 first:pt-0">
               <h2 className="text-sm font-semibold text-text">{t("records.notesHeading")}</h2>
               {/* whitespace-pre-wrap: 入力時の改行を表示にも反映する */}
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-text-secondary">
+              <p className="mt-3 whitespace-pre-wrap text-sm italic leading-relaxed text-text-secondary">
                 {record.notes}
               </p>
             </section>

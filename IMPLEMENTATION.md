@@ -1036,6 +1036,27 @@ Mobbin自体のLottieアセットは取得・流用できず、`lottiefiles.com`
 
 ---
 
+### 2026-08: italicで「主役ではない情報」を視覚的に差別化
+
+Space Monoへの統一（上記エントリ）で、font-weightによる階層がRegular/Boldの2段階に縮まった。ユーザーから「italicを使い分けるのも効果的だと思う」という提案があり、どこに適用するか候補を出した上で実装した。
+
+**候補の選定基準**: Space Monoは`frontend/index.html`のGoogle Fontsリンクで`ital,wght@0,400;0,700;1,400;1,700`とitalicも既に読み込み済みのため追加コストは無い。ただし本文サイズでの多用は可読性を落とすため、「主役ではない情報」に絞って提案した。`auth-card-kicker`・`LandingHero.module.css`の`.kicker`は、既に大文字+letter-spacing 0.08〜0.14em+font-weight 700が重なっており、そこにitalicまで足すと詰め込みすぎになるため対象から除外した。
+
+**適用箇所（8箇所、ユーザー確認の上ですべて採用）**:
+- 記録のメモ本文（自由記述、`record.notes`）: `frontend/src/pages/RecordDetailPage.jsx`、`frontend/src/features/graph/components/NodeDetailPanel.jsx`
+- メモの抜粋（`record.notesExcerpt`）: `frontend/src/pages/EntityDetailPage.jsx`、`frontend/src/features/graph/components/NodeDetailPanel.jsx`
+- 空状態・絞り込み結果0件の説明文（`text-text-tertiary`、`records.emptyDesc`/`records.noMatchDesc`/`graph.emptyDesc`/`stats.emptyDesc`）: `frontend/src/features/coffee-records/components/RecordListStates.jsx`（2箇所）、`frontend/src/features/graph/components/GraphStates.jsx`、`frontend/src/features/stats/components/StatsEmptyState.jsx`
+
+いずれもTailwindの`italic`ユーティリティを既存のクラス文字列に追加するのみで、新規CSS・新規依存は無い。
+
+**検証**: `cd frontend && npm run lint && npm run build && npm run test`すべて成功（21件パス、ビルド成功）。Docker dev環境で`curl`により、変更した6ファイルすべての変換結果に`italic`が含まれることを確認済み。
+
+未解決事項:
+
+- ブラウザでの視覚的な最終確認が未実施（claude-in-chrome接続断のため）。italicが可読性を落としていないか、Space Monoのitalic書体の見た目に違和感が無いかを次回セッションで確認する必要がある
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
@@ -1181,6 +1202,7 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - 新規ロゴ（`CoffeeLogo`）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認（サイズ・位置バランス、豆の溝の視認性、favicon表示）が未実施
 - `frontend/src/App.css`の`.auth-card-kicker`が`color: var(--primary)`という、現行の`@theme`（`frontend/src/index.css`）には存在しない変数（正しくは`--color-primary`）を参照している。ロゴ追加作業中に発見したが今回のスコープ外のため未修正。Login/Registerページの「Welcome Back」「Get Started」の文字色が意図しない色（未定義変数のフォールバックで実質`inherit`）になっている可能性があり、次回調査・修正が必要
 - アプリ全体のフォント（Space Monoへ統一済み、文字色`text-inverse`のNavbarブランド文字含む）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認が未実施。Space Monoが400/700の2 weightしか無いため`font-medium`/`font-semibold`/`font-black`が実質700へ丸められ太さの階層が縮まっていること、ホバー時にCoffeeLogoアイコンだけ暗くなりテキストは白のままという挙動差も含めて確認が必要
+- メモ本文・メモ抜粋・空状態説明文（計8箇所）へのitalic適用は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認が未実施
 
 ## 次に実装すべき最小単位
 
@@ -1198,3 +1220,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 10. Navbarアイコンのホバーアニメーションをブラウザで実機確認する（上記9と同時に、claude-in-chromeが使えるタイミングで実施）
 11. 新規ロゴ（`CoffeeLogo`）をブラウザで実機確認する（上記9・10と同時に実施）。あわせて`.auth-card-kicker`の未定義CSS変数（`var(--primary)`）を`var(--color-primary)`へ修正する
 12. Space Monoへの全体統一（font-weightが実質2段階に縮まった影響を含む）をブラウザで実機確認する（上記9〜11と同時に実施）
+13. メモ本文・メモ抜粋・空状態説明文へのitalic適用（8箇所）をブラウザで実機確認する（上記9〜12と同時に実施）
