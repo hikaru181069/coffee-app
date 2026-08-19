@@ -5,32 +5,48 @@
    --color-*カスタムプロパティをvar()で参照する。値の手動同期は不要）。
    Tailwind v4の@themeはCSS変数を参照できずリテラル値を書く必要があるため、
    ここだけはハードコードされたhexになる。
-   命名・配色方針は prompts/design/00-design-principles.md 6.1 参照。 */
+   命名・配色方針は prompts/design/00-design-principles.md 6.1 参照。
+
+   2026-08、mobbin.comのCSSソースをcurlで取得して実測した値を基準に、
+   配色を完全無彩色（ニュートラルグレースケール）+ 反転ボタン + フォーカス
+   専用の青、へ全面刷新した（それまでのモス系配色を置き換え）。 */
 @theme {
   /* 数値・日付・件数など「事実としての値」用。本文はInterのまま
      （prompts/design/00-design-principles.md 6.2 Typography） */
   --font-mono: "Space Mono", monospace;
 
-  /* 背景・テキストの階調 */
-  --color-base: #08090a;
-  --color-raised: #0f1011;
-  --color-surface-1: #1c1c1f;
-  --color-surface-2: #232326;
-  --color-surface-3: #28282c;
-  --color-line: #3e3e44;
-  --color-line-strong: #62666d;
-  --color-text: #f7f8f8;
-  --color-text-secondary: #bcbcb4;
-  --color-text-tertiary: #93938e;
+  /* 背景・テキストの階調（完全な無彩色。mobbin.comのneutralスケール実測値） */
+  --color-base: #141414;
+  --color-raised: #1f1f1f;
+  --color-surface-1: #262626;
+  --color-surface-2: #333333;
+  --color-surface-3: #404040;
+  --color-line: #404040;
+  --color-line-strong: #5c5c5c;
+  --color-text: #fafafa;
+  --color-text-secondary: #c2c2c2;
+  --color-text-tertiary: #878787;
 
-  /* 意味を固定したセマンティック色 */
-  --color-primary: #7c8363;
-  --color-danger: #f38ba8;
-  --color-warn: #f9e2af;
-  --color-rating: #f9e2af;
-  --color-success: #a6e3a1;
+  /* 反転配色（主要ボタン専用）。mobbin.comの主要CTAは色を使わず、
+     明背景+暗文字の反転ピルボタン（bg-background-inverse text-text-inverse
+     rounded-full）だった */
+  --color-inverse: #ffffff;
+  --color-on-inverse: #141414;
 
-  /* グラフノード・産地アクセント専用の差し色パレット（モス2段階+ミュートな5色） */
+  /* 意味を固定したセマンティック色。primaryはmobbin.com実測の青
+     （blue-60）で、キーボードフォーカスリングにのみ使う
+     （mobbin.comでも通常時の色としては使われていなかった） */
+  --color-primary: #0077ff;
+  --color-danger: #ffa27a;
+  --color-warn: #ffdf52;
+  --color-rating: #ffdf52;
+  --color-success: #aff976;
+
+  /* グラフノード・産地アクセント専用の差し色パレット（モス2段階+ミュートな5色）。
+     mobbin.com側に対応する概念が無いため今回のスコープ外、値は変更していない。
+     accent-mossのみ、primaryが青に変わったことで切り離すために新設した
+     （recordノードの見た目が変わらないよう、旧primaryの値をそのまま持つ） */
+  --color-accent-moss: #7c8363;
   --color-accent-moss-light: #a3ab86;
   --color-accent-moss-dark: #545a42;
   --color-accent-slate: #8a97a3;
@@ -38,6 +54,16 @@
   --color-accent-ochre: #ada07a;
   --color-accent-rose: #a3888f;
   --color-accent-mist: #9089a3;
+
+  /* 奥行き（影・すりガラス）。mobbin.comのCSS実測値
+     （0 12px 80px rgba(0,0,0,0.16)相当）を、暗い背景でも見えるよう
+     濃度を上げ、縁に極薄の白いインセットハイライトを重ねてガラスの
+     縁のような質感を出す */
+  --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  --shadow-panel: 0 24px 64px rgba(0, 0, 0, 0.55), inset 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+
+  /* mobbin.com実測のsignatureイージング。素早く動き出して滑らかに減速する */
+  --ease-decel: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 :root {
