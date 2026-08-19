@@ -1135,6 +1135,33 @@ Space Monoへの統一（上記エントリ）で、font-weightによる階層�
 
 ---
 
+### 2026-08-20: Landingページの再設計
+
+`docs/design.md`のMain Navigation・Screens一覧のどちらにもLandingページの記載が無く（調査で判明）、仕様が無い白紙の状態だった。ユーザーと相談のうえ、Landingページのみを対象に、既存の枠組み（ミニナビ・ヒーロー・単一CTA）を保ちながら次を実装した。
+
+**構成（ユーザー提案のワイヤーフレームをベースに、ユーザーの指示で一部を調整）**:
+1. Hero: 見出し（未翻訳だったのをi18nキー化）+ Get Started CTA + 背景にごく薄く漂う装飾グラフ
+2. How it works: 以前は「Record→Connect→Discoverカード」と「How it works ①②③」が別々のセクションで同じ内容を2度説明していたため、ユーザーの指示で1つに統合（既存3カードに番号バッジ+矢印を追加）
+3. Your Knowledge Graph: 知識グラフを実際に視覚で見せるセクション（新規）
+4. Why Coffee App?: 他のジャーナル型アプリとの比較（`docs/product.md`のVisionにある「ジャーナル型・SNS型との違い」に対応、新規）
+5. 末尾のGet Started CTA（Heroと同じ導線の再掲）
+
+**Footerは検討したが、ユーザーの判断で今回は追加しないことにした。**
+
+**装飾グラフイラスト**: 未ログインの訪問者には見せられる実データが無いため、Home画面の`GraphPreview`（`useGraph()`で認証必須のAPIを叩く構造）はそのまま使えない。新規に`frontend/src/pages/LandingGraphIllustration.jsx`を作り、固定座標のサンプルノード（record 2件が属性ノード2件を共有してつながる構成。単なる星型ではなく「記録どうしが属性を介してつながる」というConnectの体験を図にした）をSVGで描く、DB/API非依存の純粋な装飾コンポーネントにした。色は`features/graph/utils/nodeVisuals.js`の`getNodeVisual().colorClass`をそのまま使い、Graph画面と同じ配色。Hero背景用（`variant="ambient"`、大きく・薄く・ゆっくり漂う）とYour Knowledge Graph用（`variant="feature"`、くっきり）で同じコンポーネントを共有し、CSSのみ（`node-pulse`・`graph-drift`のkeyframes）でアニメーションさせている（新しいJSアニメーションライブラリは追加していない）。`prefers-reduced-motion: reduce`で無効化される既存の仕組みに、このアニメーションも合流させた。
+
+**ついでに修正したバグ**: `LandingHero.module.css`の`.stepIcon`が`color: var(--color-primary)`（キーボードフォーカスリング専用色、`00-design-principles.md` 6.1）を装飾アイコンに使ってしまっていた。前回のUI/UXレビューで見つけたヒーローCTAの同型バグ（修正済み）と同じ問題で、`var(--color-text-secondary)`へ修正した。
+
+**ドキュメント**: `docs/design.md`のScreens一覧に無かったLanding節を新設した（目的・構成・Record/Connect/Discoverを翻訳しない方針を明記）。
+
+**検証**: `cd frontend && npm run lint && npm run test && npm run build`すべて成功。claude-in-chromeでログアウト状態から`/landing`を開き、日本語・英語両方で全セクション（Hero・How it works・Your Knowledge Graph・Why Coffee App?・末尾CTA）を確認。装飾グラフの`node-pulse`アニメーションが実際に適用されていることを`getComputedStyle`で確認（Hero背景用+Knowledge Graph用の計12ノードすべて）。コンソールエラー無し。
+
+未解決事項:
+
+- Heroの背景アニメーション（`graph-drift`）は「まず試してから採否を判断する」という前提で実装した。ユーザーによる見た目の最終確認はまだ
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
