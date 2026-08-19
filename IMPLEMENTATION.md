@@ -860,6 +860,51 @@ Records/RecordDetail/Statsは既に「カードの積み重ね」から「header
 
 - なし（このエントリの範囲では）
 
+### 2026-08: mobbin.com準拠のデザインシステムへ全面刷新（色・奥行き・モーション・レイアウト）
+
+ユーザーからの依頼「アプリ全体のデザインをミニマルで高級な感じにしたい」に対し、参照先として`mobbin.com`が挙がった。ブラウザ操作ツール（claude-in-chrome）が接続断でWebFetchも403だったため、`curl`で実際のHTML/CSSソース（`/discover/apps/web/latest`のNext.js配信CSS）を直接取得して解析した。
+
+**やり取りの中で2度、こちらの説明をユーザーに訂正された**:
+1. 当初「ユーザーの言う"デザイン"はアニメーション・配置のことで、色は現状維持」と解釈していたが、「デザインもですね。現在のカラー配色は全て破棄です」と明確な訂正を受けた
+2. 「mobbin.comは鮮やかな青をアクセントに使っている」と説明したところ、「青のアクセントとは何か、mobbinには使われていない」と指摘を受けた。HTML内のクラス使用箇所を再検証した結果、**ユーザーの指摘が正しかった**: 青（`blue-*`）はキーボードフォーカスリングにのみ使われており、主要CTAボタンにすら使われていなかった。実際のCTAボタンは`bg-background-inverse text-text-inverse rounded-full`という、色を使わない反転配色のピル型ボタンだった
+
+この2つの訂正を経て、色・奥行き（影/すりガラス）・角丸・モーション・レイアウトのすべてをmobbin.comの実測値に基づいて忠実に再現し、全ページへ適用する方針で実装した。
+
+**色トークン全面差し替え（`frontend/src/index.css`）**:
+- 背景・テキストを完全な無彩色（彩度0%）へ。`base`/`raised`/`surface-1〜3`/`line`/`line-strong`/`text`/`text-secondary`/`text-tertiary`をmobbin.com実測のneutralスケール相当値に変更
+- 新設`inverse`/`on-inverse`トークン: 主要ボタン専用の反転配色（色を使わない）
+- `primary`を旧モス系（#7c8363）からmobbin.com実測の青（#0077ff、blue-60相当）へ変更し、**役割をキーボードフォーカスリング専用に限定**（`ring-primary/50`、約91箇所は変更不要、値が変わるだけで用途が一致する）
+- `danger`/`warn`/`rating`/`success`はmobbin.com実測のhue系へ値を更新（用途・意味は維持）
+- グラフノード・産地アクセントの多色パレット（`accent-moss-light`等）はmobbin.com側に対応する概念が無いためスコープ外、値は変更していない。ただし`record`ノードが直接`primary`を参照していたため、新設`accent-moss`（旧primaryと同値）へ切り離し、グラフの見た目自体は変えていない
+
+**`primary`の非フォーカス用途の置き換え（役割分離）**:
+- ボタン・アクティブ状態の塗り（`bg-primary`/`text-primary`/`border-primary`、非ring箇所で35箇所・11ファイル）を、色を使わない中立トーン（`surface-2`/`text`ベース）または新設の反転配色へ置き換え: `Navbar.jsx`、`LanguageSwitcher.jsx`、`GraphFilters.jsx`、`ChipMultiSelect.jsx`、`RecordFilters.jsx`、`RecordForm.jsx`、`MonthlyTrendChart.jsx`、`DiscoverCard.jsx`、`LandingPage.jsx`、`nodeVisuals.js`
+- `formStyles.js`の`primaryButtonClass`: `bg-primary`（モス）+`rounded-lg` → `bg-inverse text-on-inverse`+`rounded-full`（色を使わない反転ピルボタン）
+- 副次的に、`App.css`の`.home-link`（Login/Register/Landingページで使う共通CTAクラス）が、既に存在しない`var(--primary)`・`var(--ctp-teal)`という未定義のCSS変数を参照しており、hover時の背景グラデーションが実質無効化されていたバグを発見・修正した（同じ反転配色へ統一）
+
+**奥行き（影・すりガラス）・角丸**:
+- 新設`shadow-elevated`/`shadow-panel`トークン（mobbin.com実測の柔らかい大きな影＋暗い背景でも見えるよう濃度を上げ、縁に極薄の白いインセットハイライトを追加）
+- `cardClass`をはじめ、`bg-raised`を持つカード状コンポーネント（`RecordCard`/`HomeRecordCard`/`EntityResultCard`/`StatCard`系/`DiscoverCard`/`GraphPreview`/`HomeVsCafeCard`/`RatingDistributionChart`/`GraphLoadingState`等）に`shadow-elevated`+`rounded-xl`→`rounded-2xl`を適用。読み込み中スケルトン（`HomeRecordCardSkeleton`/`RecordListSkeleton`）の角丸も合わせて更新し、読み込み完了時の見た目の飛びを防いだ
+- `ConfirmDialog`/`NodeDetailPanel`（モーダル・パネル）は`shadow-panel`+`bg-raised/90 backdrop-blur-xl`のすりガラスへ
+- 空状態・エラー状態の破線枠・警告色ボックスは影を付けないまま維持（「浮いている」という意味と矛盾するため、意図的な除外）
+- `GraphCanvas.jsx`のノード描画（canvas 2D API）に`ctx.shadowBlur`/`ctx.shadowColor`を追加し、他要素と質感を揃えた（描画後に必ずリセットし、アイコン・文字に影が伝播しないようにした）
+
+**モーション**:
+- `page-transition`（`App.jsx`の`AnimatedRoutes`が全ページに適用済み）のキーフレームを、mobbin.com実測のイージング（新設`--ease-decel`、`cubic-bezier(0.32,0.72,0,1)`）とタイミング（380ms→450ms、移動距離12px→20px）へ更新
+- **`frontend/src/hooks/useReveal.js`という、IntersectionObserverでスクロールイン検知するhookが実装済みだが一度も使われていなかった死んだコードを発見し、本来の目的通りに配線した**。`App.css`の`.reveal`系CSSクラスもmobbin.com準拠のタイミング（500ms、`--ease-decel`）へ更新
+- 新設`frontend/src/utils/revealDelay.js`（インデックス→`.reveal-delay-1〜3`の変換）を使い、カード一覧（`RecordCard`/`HomeRecordCard`/`EntityResultCard`/`TopRankingList`のランキング行/`EntityDetailPage`の関連記録）が段階的にカスケード表示されるよう配線した。フックはコンポーネントのトップレベルでしか呼べない（Rules of Hooks）ため、`TopRankingList`の`RankingRow`・`EntityDetailPage`の`RelatedRecordRow`という小さな行コンポーネントをそれぞれ切り出した
+
+**ドキュメント**:
+- `prompts/design/00-design-principles.md`の6.1節（Color）・6.4節（Radius/Spacing）・6.5節（Borders over Shadows→Depth & Glass）・6.6節（Motion）を全面書き換え。2度の誤った推測とユーザーによる訂正の経緯も明記した
+
+**検証**: `cd frontend && npm run lint && npm run build && npm run test`（21件）すべて成功。Tailwindのビルド成果物で`--color-inverse`/`--color-primary`（#0077ff）/`--color-accent-moss`（#7c8363、旧primaryと同値）が正しく生成されていることを確認。claude-in-chrome MCPサーバーが接続断だったため、ブラウザでの視覚的な最終確認は未実施（Docker dev環境のVite HMRが変更を反映していること、`curl`でindex.cssの配信内容が更新されていることは確認済み）。
+
+未解決事項:
+
+- ブラウザでの視覚的な最終確認が未実施（claude-in-chrome接続断のため）。次回セッションで実機確認が必要
+- danger/warn/rating/successの新しい値は、mobbin.com上での実際の可視使用が確認できないまま採用した（CSS変数としては定義されているが、調査したページ内では表示されていなかった）。コントラスト・見やすさの最終確認が必要
+- グラフキャンバスのノード影（`ctx.shadowBlur`）はパフォーマンス影響を実機で未検証。重い場合は選択中ノードのみへ限定する対応が必要
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -1000,6 +1045,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - フロントエンドのテストは検証ロジックと`ConfirmDialog`のみ。`RecordForm`本体・Graph関連（canvasに依存しjsdomでは動かない）・`ProfilePage`/`useProfile`はまだテスト対象外
 - `fastapi-service/main.py`のCORS設定が`http://localhost:5001`にハードコードされたまま（実害は無いと判断し今回は未修正。frontendから直接FastAPIを呼ぶ設計に変わった場合は要修正）
 - 本番環境（Render）のログにエラーが出ていないかは未確認（アクセス権が無いため、ユーザー自身での確認が必要）
+- mobbin.com準拠のデザイン刷新（色・奥行き・モーション）は、claude-in-chrome MCPサーバーの接続断によりブラウザでの視覚的な最終確認が未実施。次回セッションで実機確認が必要（上記エントリ参照）
+- danger/warn/rating/successの新しい値（mobbin.com実測のhue系）は、実際にmobbin.com上で可視使用されている場面を確認できないまま採用した。コントラスト・見やすさの最終確認が必要
 
 ## 次に実装すべき最小単位
 
@@ -1013,3 +1060,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 6. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
 7. フロントエンドのテストを、`RecordForm`本体・`ProfilePage`/`useProfile`や他の重要コンポーネントへ広げる
 8. `fastapi-service/main.py`のCORS設定（`http://localhost:5001`ハードコード）を、本番のURLを想定した形へ更新する（優先度は低い。実害は無いため）
+9. mobbin.com準拠のデザイン刷新をブラウザで実機確認する（次回セッションでclaude-in-chromeが使えるタイミングで最優先）。特にdanger/warn/rating/successの新しい値のコントラスト、影・すりガラスの見え方、スクロールイン演出の動作を確認する
