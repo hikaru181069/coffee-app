@@ -7,11 +7,11 @@ import { useTranslation } from "react-i18next";
 
 // docs/design.md の Main Navigation（Home / Records / Graph / Stats / Profile）に対応する。
 const TABS = [
-  { to: "/",        Icon: Home,      label: "Home",    end: true },
-  { to: "/records", Icon: Coffee,    label: "Records"            },
-  { to: "/graph",   Icon: Share2,    label: "Graph"               },
-  { to: "/stats",   Icon: BarChart3, label: "Stats"               },
-  { to: "/profile", Icon: User,      label: "Profile"             },
+  { to: "/",        Icon: Home,      labelKey: "nav.home",    end: true },
+  { to: "/records", Icon: Coffee,    labelKey: "nav.records"            },
+  { to: "/graph",   Icon: Share2,    labelKey: "nav.graph"               },
+  { to: "/stats",   Icon: BarChart3, labelKey: "nav.stats"               },
+  { to: "/profile", Icon: User,      labelKey: "nav.profile"             },
 ];
 
 function BottomTabBar() {
@@ -19,7 +19,7 @@ function BottomTabBar() {
   return (
     <nav aria-label={t("nav.bottomNavigation")} className="bottom-tab-bar md:hidden">
       {TABS.map((tab) => {
-        const { to, Icon, label, end } = tab;
+        const { to, Icon, labelKey, end } = tab;
         return (
           <NavLink
             key={to}
@@ -30,7 +30,7 @@ function BottomTabBar() {
             }
           >
             <Icon size={22} strokeWidth={2} />
-            <span className="bottom-tab-label">{label}</span>
+            <span className="bottom-tab-label">{t(labelKey)}</span>
           </NavLink>
         );
       })}

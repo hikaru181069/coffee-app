@@ -2360,7 +2360,22 @@ input {
   font-size: 14px;
 }
 
+/* App.css: input { ... color/background-color/border ... }（250行目）は
+   レイヤー無しの要素セレクタのため、詳細度に関係なくcontrolClass()の
+   Tailwindユーティリティ（bg-surface-1・text-text・border-danger等）に
+   常に勝ってしまう（frontend/src/features/coffee-records/coffee-records.css
+   の.coffee-page inputと同じ理由・同じrevert-layerでの対処）。
+   Login/Registerのフォームは.coffee-pageの外にあるため、ここでも同様に
+   打ち消す必要がある（見た目のバリデーションエラー表示が機能しなかった
+   原因）。widthやborder-radius等、認証フォーム側で独自の値を持つものは
+   revert-layerせず、このルール自身の値をそのまま使う。 */
 .auth-form input {
+  display: revert-layer;
+  margin: revert-layer;
+  color: revert-layer;
+  background-color: revert-layer;
+  border: revert-layer;
+
   width: 100%;
   max-width: none;
   border-radius: 12px;
@@ -2371,11 +2386,8 @@ input {
     box-shadow 160ms ease;
 }
 
-.auth-form input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.16);
-}
+/* フォーカスリングはcontrolClass()のfocus:ring-2 focus:ring-primary/50に統一する
+   （以前ここにあった独自のborder-color/box-shadowは削除、Tailwind側と二重管理しない） */
 
 .auth-switch {
   margin-top: 20px;
@@ -2392,7 +2404,7 @@ input {
 }
 
 .auth-switch a:hover {
-  color: var(--primary);
+  color: var(--color-primary);
 }
 
 .auth-page {

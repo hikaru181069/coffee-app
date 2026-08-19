@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import CoffeeLogo from "../components/CoffeeLogo";
+import FormField from "../features/coffee-records/components/FormField";
+import { controlClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
+import { validateLoginForm, hasErrors } from "../utils/authFormValidation";
 import {
   clearAuthData,
   getAuthToken,
@@ -14,9 +17,9 @@ import { getErrorMessage } from "../utils/errorMessage";
 
 function LoginPage() {
   const { t } = useTranslation();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [values, setValues] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
@@ -28,17 +31,36 @@ function LoginPage() {
     window.location.reload();
   };
 
+  const setValue = (field, value) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const validationErrors = validateLoginForm(values, t);
+    if (hasErrors(validationErrors)) {
+      setErrors(validationErrors);
+      setSubmitError("");
+      return;
+    }
+
     try {
       setSubmitting(true);
-      setErrorMessage("");
-      const data = await loginUser({ email, password });
+      setSubmitError("");
+      setErrors({});
+      const data = await loginUser(values);
       saveAuthData(data);
       navigate("/");
     } catch (error) {
       console.error("Login error:", error);
-      setErrorMessage(error.message ? getErrorMessage(error, t) : t("auth.login.fallbackError"));
+      setSubmitError(error.message ? getErrorMessage(error, t) : t("auth.login.fallbackError"));
     } finally {
       setSubmitting(false);
     }
@@ -55,7 +77,7 @@ function LoginPage() {
           <div className="home-actions">
             <Link className="home-link" to="/">{t("auth.goToHome")}</Link>
             <button className="home-link danger" type="button" onClick={handleLogout}>
-              Logout
+              {t("nav.logout")}
             </button>
           </div>
         </div>
@@ -69,47 +91,50 @@ function LoginPage() {
         <div className="auth-brand">
           <CoffeeLogo size={32} />
         </div>
-        <p className="auth-card-kicker">Welcome Back</p>
-        <h1>Login</h1>
+        <p className="auth-card-kicker">{t("auth.welcomeBack")}</p>
+        <h1>{t("auth.loginHeading")}</h1>
         <p className="auth-card-desc">
           {t("auth.login.desc")}
         </p>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label>
-            Email
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          <FormField id="email" label={t("profile.email")} required error={errors.email}>
             <input
+              id="email"
               type="email"
               name="email"
               placeholder="you@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              style={{ margin: 0 }}
+              value={values.email}
+              onChange={(event) => setValue("email", event.target.value)}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "email-error" : undefined}
+              className={controlClass(Boolean(errors.email))}
             />
-          </label>
+          </FormField>
 
-          <label>
-            Password
+          <FormField id="password" label={t("auth.password")} required error={errors.password}>
             <input
+              id="password"
               type="password"
               name="password"
-              placeholder="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              style={{ margin: 0 }}
+              value={values.password}
+              onChange={(event) => setValue("password", event.target.value)}
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={errors.password ? "password-error" : undefined}
+              className={controlClass(Boolean(errors.password))}
             />
-          </label>
+          </FormField>
 
-          {errorMessage && <p className="error-message" style={{ margin: 0 }}>{errorMessage}</p>}
+          {submitError && <p className="error-message" style={{ margin: 0 }}>{submitError}</p>}
 
-          <button className="home-link" type="submit" disabled={submitting}>
-            {submitting ? "Logging in…" : "Login"}
+          <button className={primaryButtonClass} type="submit" disabled={submitting}>
+            {submitting ? t("auth.loginCtaPending") : t("auth.loginCta")}
           </button>
         </form>
 
         <p className="auth-switch">
-          Don't have an account?{" "}
-          <Link to="/register">Register →</Link>
+          {t("auth.noAccount")}{" "}
+          <Link to="/register">{t("nav.register")} →</Link>
         </p>
       </section>
     </div>

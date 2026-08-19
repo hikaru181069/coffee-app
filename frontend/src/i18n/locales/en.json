@@ -1,7 +1,20 @@
 {
   "nav": {
     "mainNavigation": "Main navigation",
-    "bottomNavigation": "Bottom navigation"
+    "bottomNavigation": "Bottom navigation",
+    "home": "Home",
+    "records": "Records",
+    "graph": "Graph",
+    "stats": "Stats",
+    "profile": "Profile",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "desc": "The URL may be mistyped, or this page may have moved or been removed.",
+    "cta": "Back to Home"
   },
   "common": {
     "loading": "Loading...",
@@ -44,6 +57,18 @@
     }
   },
   "auth": {
+    "welcomeBack": "Welcome Back",
+    "getStarted": "Get Started",
+    "loginHeading": "Login",
+    "registerHeading": "Register",
+    "password": "Password",
+    "namePlaceholder": "Your name",
+    "loginCta": "Login",
+    "loginCtaPending": "Logging in…",
+    "registerCta": "Create Account",
+    "registerCtaPending": "Creating account…",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
     "login": {
       "desc": "Log in to keep recording your coffee experiences.",
       "fallbackError": "Failed to login. Please check your email and password."
@@ -77,6 +102,7 @@
     }
   },
   "records": {
+    "heading": "Records",
     "newRecordCta": "New Record",
     "countLabel_one": "{{count}} record",
     "countLabel_other": "{{count}} records",
@@ -255,7 +281,10 @@
     "dateRequired": "Please enter a date",
     "dateInvalid": "The date format is invalid",
     "recordTypeRequired": "Please select a record type",
-    "ratingRange": "Please select a rating from 1 to 5"
+    "ratingRange": "Please select a rating from 1 to 5",
+    "nameRequired": "Please enter your name",
+    "emailRequired": "Please enter your email",
+    "passwordRequired": "Please enter your password"
   },
   "errors": {
     "byCode": {

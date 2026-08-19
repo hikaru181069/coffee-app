@@ -101,7 +101,7 @@ function RecordsPage() {
     <div className={wideContainerClass}>
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-text">Records</h1>
+          <h1 className="text-xl font-bold text-text">{t("records.heading")}</h1>
           <p className="mt-1 text-sm text-text-tertiary">
             {pagination && pagination.total > 0
               ? t("records.countLabel", { count: pagination.total })

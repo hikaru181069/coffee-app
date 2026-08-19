@@ -82,8 +82,10 @@ a.navCta:hover {
   gap: 8px;
   padding: 13px 26px;
   border-radius: 999px;
-  background: var(--color-primary);
-  color: var(--color-base);
+  /* primaryはキーボードフォーカスリング専用の色（00-design-principles.md 6.1）。
+     主要CTAは他のprimaryButtonClassと同じ反転配色（明背景+暗文字）にそろえる */
+  background: var(--color-inverse);
+  color: var(--color-on-inverse);
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
@@ -94,7 +96,7 @@ a.navCta:hover {
 
 .cta:hover {
   transform: translateY(-1px);
-  opacity: 0.92;
+  opacity: 0.9;
 }
 
 @keyframes cta-reveal {

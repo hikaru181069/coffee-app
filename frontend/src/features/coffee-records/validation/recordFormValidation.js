@@ -14,6 +14,8 @@
  * フォームの状態管理から切り離してある。
  */
 
+import { fromDateTimeLocalValue } from "../utils/recordFormat";
+
 const MAX_LENGTH = {
   title: 120,
   notes: 2000,
@@ -86,7 +88,9 @@ export const hasErrors = (errors) => Object.keys(errors).length > 0;
  */
 export const toApiPayload = (values) => ({
   title: values.title.trim(),
-  consumedAt: values.consumedAt,
+  // datetime-localの値はタイムゾーン情報を持たないローカル時刻の文字列なので、
+  // サーバー（UTC）が誤ってUTCとして解釈しないよう、送信前にISO文字列へ変換する。
+  consumedAt: fromDateTimeLocalValue(values.consumedAt),
   recordType: values.recordType,
 
   rating: values.rating === "" ? null : Number(values.rating),
