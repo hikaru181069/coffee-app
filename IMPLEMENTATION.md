@@ -1057,6 +1057,26 @@ Space Monoへの統一（上記エントリ）で、font-weightによる階層�
 
 ---
 
+### 2026-08-19: mobbin.com刷新一式のブラウザ実機確認、`.auth-card-kicker`のCSSバグ修正
+
+前回セッションでclaude-in-chrome接続断のため確認できなかった一連の視覚変更（配色・影・モーション、Navbarアイコンのホバーアニメーション、新ロゴ`CoffeeLogo`、Space Monoへのフォント統一、メモ本文・メモ抜粋・空状態説明文へのitalic適用）を、起動済みのDocker Compose環境（`http://localhost:5174`）に対してclaude-in-chromeで実機確認した。
+
+**確認内容と結果**:
+
+- Navbar: ロゴ（コーヒー豆モチーフ）・「Coffee App」の白文字・Home/Records/Graph/Statsの各アイコン、いずれも問題なし。アイコンのホバー範囲がナビ項目全体（アイコン+テキストの背景ピル）に効いていることも確認
+- Space Monoへの統一: Home/Records/Graph/Stats/Login/Register全画面で適用を確認。日本語部分は別フォントへフォールバックするが違和感は無い
+- italic適用（8箇所）: `RecordsEmptyState`・`RecordsNoMatchState`・`GraphEmptyState`・`StatsEmptyState`の空状態説明文、`RecordDetailPage`のメモ本文（日本語ノート含む）、`NodeDetailPanel`の記録ノート/メモ抜粋、`EntityDetailPage`の関連記録メモ抜粋を、実データ（Demo Userアカウント）で1件ずつ表示・zoom screenshotで確認。可読性・書体とも問題なし
+- グラフ画面: 凡例（ノード種別ごとのアイコン付きフィルターチップ）、ノード選択時のサイドパネル（Record種別・属性種別）、いずれも`docs/design.md`のGraph Visual Semanticsどおり
+- コンソールエラー: Home/Records/Graph/Stats/Login/EntityDetail遷移を通して、リロード後の`read_console_messages`で確認した範囲ではエラー・警告なし
+
+**発見したバグとその場で修正したもの**: `frontend/src/App.css`の`.auth-card-kicker`が未定義の`var(--primary)`を参照しており、Login/Registerページの「WELCOME BACK」「GET STARTED」が意図した青（`--color-primary`）ではなく白（見出しからの`inherit`相当）になっていた。ブラウザで実際に白文字であることを確認したうえで`var(--color-primary)`へ修正し、Vite HMRで即座に青へ変わることを確認した。
+
+**次に実装すべき最小単位のリストの誤りを訂正**: リストの項目5「記録詳細画面に「関連ノード」を直接埋め込む」は、`RecordDetailPage.jsx`の`RecordConnectionsDiagram`（Connectionsセクション）としてすでに実装済みだった（`git log`未確認のままリストを更新し忘れていたことが判明）。未実装ではなく完了済みとして扱う。
+
+**検証**: `cd frontend && npm run lint && npm run build`成功（CSS修正1行のみのためbackend/fastapi-serviceのテストは対象外）。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
@@ -1169,6 +1189,8 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 
 「本番品質」改善Tier 5（フロントエンドのテスト基盤）とnpm audit解消時に、`cd frontend && npm run lint && npm test && npm run build`（新規21テストすべて成功）、`cd backend && npm test`（`npm audit fix`後のリグレッション確認、23 suites / 330 tests）をあわせて実行し、いずれも成功を確認済み。
 
+mobbin.com刷新一式のブラウザ実機確認・`.auth-card-kicker`修正時（2026-08-19）は、CSS1行の変更のみのため`cd backend && npm test`は未実施。`cd frontend && npm run lint && npm run build`の成功と、claude-in-chromeによるDocker Compose環境（`http://localhost:5174`）での実機確認（Home/Records/Graph/Stats/Login/Register/RecordDetail/EntityDetailの各画面、コンソールエラー無し）を実施済み。
+
 ---
 
 ## 未解決事項
@@ -1195,14 +1217,9 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - フロントエンドのテストは検証ロジックと`ConfirmDialog`のみ。`RecordForm`本体・Graph関連（canvasに依存しjsdomでは動かない）・`ProfilePage`/`useProfile`はまだテスト対象外
 - `fastapi-service/main.py`のCORS設定が`http://localhost:5001`にハードコードされたまま（実害は無いと判断し今回は未修正。frontendから直接FastAPIを呼ぶ設計に変わった場合は要修正）
 - 本番環境（Render）のログにエラーが出ていないかは未確認（アクセス権が無いため、ユーザー自身での確認が必要）
-- mobbin.com準拠のデザイン刷新（色・奥行き・モーション）は、claude-in-chrome MCPサーバーの接続断によりブラウザでの視覚的な最終確認が未実施。次回セッションで実機確認が必要（上記エントリ参照）
-- danger/warn/rating/successの新しい値（mobbin.com実測のhue系）は、実際にmobbin.com上で可視使用されている場面を確認できないまま採用した。コントラスト・見やすさの最終確認が必要
-- Navbarアイコンのホバーアニメーション（`@animateicons/react`）は、claude-in-chrome接続断によりブラウザでの実機確認（ホバー動作・キーボードフォーカス時の挙動・`prefers-reduced-motion`環境）が未実施
+- danger/warn/rating/successの新しい値（mobbin.com実測のhue系）は、実際にmobbin.com上で可視使用されている場面を確認できないまま採用した。今回の実機確認では評価の星（rating色）の表示のみ確認しており、danger/warn/successを実際に発火させる画面（バリデーションエラー等）はまだ未確認
+- Navbarアイコンのホバーアニメーション（`@animateicons/react`）は、ホバー時の背景ピル表示・アイコン切り替わりの範囲はブラウザで確認したが、キーボードフォーカス時の挙動と`prefers-reduced-motion`環境での見え方は未確認（静止スクリーンショットでは動きそのものの検証に限界があるため）
 - `@animateicons/react`導入により初期バンドルが+89.6KB gzip増加した状態を、ユーザーの明示的な判断で受け入れている（ツリーシェイキングが効かない構造のため。上記エントリ参照）。将来バンドルサイズが問題になった場合はソースコピー方式への切り替えを検討する
-- 新規ロゴ（`CoffeeLogo`）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認（サイズ・位置バランス、豆の溝の視認性、favicon表示）が未実施
-- `frontend/src/App.css`の`.auth-card-kicker`が`color: var(--primary)`という、現行の`@theme`（`frontend/src/index.css`）には存在しない変数（正しくは`--color-primary`）を参照している。ロゴ追加作業中に発見したが今回のスコープ外のため未修正。Login/Registerページの「Welcome Back」「Get Started」の文字色が意図しない色（未定義変数のフォールバックで実質`inherit`）になっている可能性があり、次回調査・修正が必要
-- アプリ全体のフォント（Space Monoへ統一済み、文字色`text-inverse`のNavbarブランド文字含む）は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認が未実施。Space Monoが400/700の2 weightしか無いため`font-medium`/`font-semibold`/`font-black`が実質700へ丸められ太さの階層が縮まっていること、ホバー時にCoffeeLogoアイコンだけ暗くなりテキストは白のままという挙動差も含めて確認が必要
-- メモ本文・メモ抜粋・空状態説明文（計8箇所）へのitalic適用は、claude-in-chrome接続断によりブラウザでの視覚的な最終確認が未実施
 
 ## 次に実装すべき最小単位
 
@@ -1212,12 +1229,8 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 2. Discoverの「この産地を記録してみる」を、産地を事前入力した状態で`/records/new`へ渡せるようにする
 3. 収束後のレイアウト密度・ラベルの重なりを調整する（優先度は低い。実用上は問題ないため）
 4. `App.css`に残るもう1箇所の未参照MLB系CSS（`.home-player-section`等）と、死んだコンポーネント`PageHeader.jsx`を削除する
-5. 記録詳細画面に「関連ノード」を直接埋め込む（現状はGraph画面・エンティティ詳細ページへの遷移のみ）
-6. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
-7. フロントエンドのテストを、`RecordForm`本体・`ProfilePage`/`useProfile`や他の重要コンポーネントへ広げる
-8. `fastapi-service/main.py`のCORS設定（`http://localhost:5001`ハードコード）を、本番のURLを想定した形へ更新する（優先度は低い。実害は無いため）
-9. mobbin.com準拠のデザイン刷新をブラウザで実機確認する（次回セッションでclaude-in-chromeが使えるタイミングで最優先）。特にdanger/warn/rating/successの新しい値のコントラスト、影・すりガラスの見え方、スクロールイン演出の動作を確認する
-10. Navbarアイコンのホバーアニメーションをブラウザで実機確認する（上記9と同時に、claude-in-chromeが使えるタイミングで実施）
-11. 新規ロゴ（`CoffeeLogo`）をブラウザで実機確認する（上記9・10と同時に実施）。あわせて`.auth-card-kicker`の未定義CSS変数（`var(--primary)`）を`var(--color-primary)`へ修正する
-12. Space Monoへの全体統一（font-weightが実質2段階に縮まった影響を含む）をブラウザで実機確認する（上記9〜11と同時に実施）
-13. メモ本文・メモ抜粋・空状態説明文へのitalic適用（8箇所）をブラウザで実機確認する（上記9〜12と同時に実施）
+5. `/api/auth/*`と`/api/users/*`のエラー応答形式の不一致を解消する（frontendの`errorMessage.js`・i18nの`errors.legacy.*`も含めた変更が必要）
+6. フロントエンドのテストを、`RecordForm`本体・`ProfilePage`/`useProfile`や他の重要コンポーネントへ広げる
+7. `fastapi-service/main.py`のCORS設定（`http://localhost:5001`ハードコード）を、本番のURLを想定した形へ更新する（優先度は低い。実害は無いため）
+8. danger/warn/successカラーを実際に発火させる画面（バリデーションエラー等）をブラウザで実機確認する
+9. Navbarアイコンのホバーアニメーションを、キーボードフォーカス時の挙動と`prefers-reduced-motion`環境で確認する
