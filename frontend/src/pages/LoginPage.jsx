@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import CoffeeLogo from "../components/CoffeeLogo";
 import {
   clearAuthData,
   getAuthToken,
@@ -65,6 +66,9 @@ function LoginPage() {
   return (
     <div className="auth-page">
       <section className="auth-card">
+        <div className="auth-brand">
+          <CoffeeLogo size={32} />
+        </div>
         <p className="auth-card-kicker">Welcome Back</p>
         <h1>Login</h1>
         <p className="auth-card-desc">

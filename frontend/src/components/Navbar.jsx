@@ -11,6 +11,7 @@ import { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { HouseIcon, ChartNetworkIcon, CoffeeIcon, ChartBarIcon, UserIcon, LogOutIcon } from "@animateicons/react/lucide";
+import CoffeeLogo from "./CoffeeLogo";
 import { clearAuthData, getAuthToken, getAuthUserName } from "../utils/authStorage";
 
 // 2026-08、以前はlucide-reactも使わず必要な分だけSVGを自前で書いていたが、
@@ -131,6 +132,7 @@ function Navbar() {
           onClick={close}
           className="flex items-center gap-2 text-text transition-colors hover:text-text-secondary"
         >
+          <CoffeeLogo size={22} />
           <span className="text-base font-black tracking-tight">Coffee App</span>
         </NavLink>
       </div>
@@ -153,6 +155,7 @@ function Navbar() {
             onClick={close}
             className="mb-8 flex items-center gap-2.5 px-3 text-text transition-colors duration-150 hover:text-text-secondary"
           >
+            <CoffeeLogo size={24} />
             <span className="text-base font-black tracking-tight">Coffee App</span>
           </NavLink>
 
@@ -217,6 +220,7 @@ function Navbar() {
           to="/"
           className="flex items-center gap-2 text-text transition-colors duration-150 hover:text-text-secondary"
         >
+          <CoffeeLogo size={22} />
           <span className="text-base font-black tracking-tight">Coffee App</span>
         </NavLink>
 
