@@ -1,16 +1,5 @@
 @import "tailwindcss";
 
-/* アプリ全体の本文フォント。latinサブセットのみ（@fontsource/maple-mono）
-   のため、実使用しているfont-weight(400/500/600/700 + font-blackの900相当
-   をカバーする800)だけを読み込む。日本語グリフを持たないため、
-   :rootのfallbackスタック（後述）で元々Interも素通りしてOSのシステム
-   フォントへ委ねていた日本語表示への影響は無い */
-@import "@fontsource/maple-mono/400.css";
-@import "@fontsource/maple-mono/500.css";
-@import "@fontsource/maple-mono/600.css";
-@import "@fontsource/maple-mono/700.css";
-@import "@fontsource/maple-mono/800.css";
-
 /* 唯一の色トークン定義箇所（frontend/src/App.cssや
    frontend/src/features/graph/utils/nodeVisuals.jsからはここが生成する
    --color-*カスタムプロパティをvar()で参照する。値の手動同期は不要）。
@@ -22,7 +11,10 @@
    配色を完全無彩色（ニュートラルグレースケール）+ 反転ボタン + フォーカス
    専用の青、へ全面刷新した（それまでのモス系配色を置き換え）。 */
 @theme {
-  /* 数値・日付・件数など「事実としての値」用。本文はInterのまま
+  /* 2026-08、本文（:rootのfont-family）もSpace Monoへ統一したため、
+     このトークンと本文フォントは同じ値になった。それでも数値・日付・
+     件数など「事実としての値」であることを示す意図的なマーキングとして
+     font-monoクラスの付与自体は残している
      （prompts/design/00-design-principles.md 6.2 Typography） */
   --font-mono: "Space Mono", monospace;
 
@@ -78,7 +70,7 @@
 }
 
 :root {
-  font-family: "Maple Mono", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Space Mono", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--color-text);
   --app-bg: var(--color-base);
   background-color: var(--app-bg);
