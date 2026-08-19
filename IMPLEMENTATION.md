@@ -840,6 +840,26 @@ Records/RecordDetail/Statsは既に「カードの積み重ね」から「header
 - あわせてDiscoverCard/GraphPreviewの読み込み中表示（データが確定するまで何も表示しない設計）を確認し、意図的な「静かな道具」方針（コメントに明記済み）であり問題無いと判断、変更しなかった
 - 検証: 前エントリと同じ`httpClient.js`への一時遅延挿入→ブラウザ実機確認→完全に元へ戻す、という方法で確認（`git diff`で無変更確認済み）。`npm run lint && npm run build && npm test`（21件）成功
 
+### 2026-08: Discover専用ページ（`/discover`）を削除し、Home Teaser・Entity Detail埋め込みに集約
+
+ユーザーからの依頼「discoverページを設計します」に対し、着手前に「そもそもこのページは必要か」を検討した。Discover機能は当時、Home画面のDiscoverCard（全産地横断で最良1件のteaser）・EntityDetailPage（産地のみ、その産地単体の提案を埋め込み表示）・`/discover`専用ページ（条件を満たす全産地の一覧）の3箇所に分散していた。
+
+調査の結果、`/discover`ページへの導線はHomeカードの1行のみで常設ナビには意図的に入れていない（「静かな道具」方針）こと、`docs/design.md`のScreens節・Main Navigationに一度も記載されたことがない「未文書化の画面」だったことが判明した。さらに、よく作り込んだデモデータ（15件・7産地）で実際に検証したところ、`buildAllOriginDiscoveries`が返す産地グループはEthiopia・Kenyaの2件のみ（Guatemala/Colombiaは精製方法が同率首位のため対象外、Rwanda/Panama/Brazilは記録数不足で対象外）だった。「複数産地を横断して比較できる」という専用ページ固有の価値が実際にはほとんど発揮されないことをユーザーと確認し、削除する方針で合意した。
+
+- フロントエンド削除: `pages/DiscoverPage.jsx`、`features/discover/hooks/useAllDiscoverSuggestions.js`、`features/discover/components/DiscoverSkeleton.jsx`
+- `App.jsx`から`/discover`ルートを削除
+- `DiscoverCard.jsx`のDiscover行のリンク先を、`teaser.nodeId`（元々レスポンスに含まれていた、提案の根拠になった産地のノードID）を使って`/entities/${teaser.nodeId}`へ変更。そこには既に`DiscoverSuggestions`として同じ提案が埋め込み表示されているため、機能の実質的な後退は無い
+- i18nの`discover.pageSubtitle`・`discover.emptyDesc`（DiscoverPage専用、他画面で未使用と確認済み）を削除
+- バックエンド削除: `GET /api/discover/all`一式（`discoverRoutes.js`のルート、`discoverController.js`の`getAllDiscoveries`、`discoverService.js`の`getAllOriginDiscoveries`、`discoverBuilder.js`の`buildAllOriginDiscoveries`）。`GET /api/discover`（teaser）・`GET /api/discover/nodes/:nodeId`は変更なし
+- バックエンドテスト: `discoverBuilder.test.js`・`discoverApi.test.js`から該当describeブロックを削除
+- `docs/features.md`の「Home Teaser・Discoverページ」節を「Home Teaser」に統合し、削除の経緯を追記
+- 副次的に、複数ファイルに残っていた実体の無い`docs/discover.md`という古い参照（内容は既に`docs/features.md`「Discover」節へ統合済みだった）を、今回触れたファイルに限り`docs/features.md`参照へ修正
+- 検証: `cd backend && npm test`（Test Suites: 23 passed, Tests: 325 passed。削除前330件から5件減、想定通り）、`cd frontend && npm run lint && npm run build && npm test`（21件）すべて成功。`grep -rn "DiscoverSkeleton|useAllDiscoverSuggestions|fetchAllDiscoverSuggestions|getAllOriginDiscoveries|buildAllOriginDiscoveries|getAllDiscoveries" backend frontend/src`が0件であることを確認。claude-in-chrome MCPサーバーが接続断だったため、ブラウザでの目視確認の代わりにDocker Compose環境へcurlで直接アクセスし確認した: 使い捨てのテストユーザーを`POST /api/auth/register`で作成→ログイン→`GET /api/discover`が`{"data":{"teaser":null}}`(200)、`GET /api/discover/all`が`{"message":"Route not found"}`(404)、`GET /api/discover/nodes/origin:foo`が404(NOT_FOUND)であることを確認。確認後、テストユーザーはMongoDBから直接削除して後始末した
+
+未解決事項:
+
+- なし（このエントリの範囲では）
+
 ---
 
 ## 変更ファイル（現在の構成）
@@ -970,7 +990,7 @@ Statsページの3段構成＋Collectionセクション追加時に`cd backend &
 - 検索結果の属性カード一覧（`entities`）は現状recordCount順のみで、多数の属性がヒットしたときの上限や、さらに絞り込む手段は未実装
 - エンティティ詳細ページの関連属性は種別ごと最大5件まで。件数が多い属性（例: フレーバーが10種類以上共起する）を全部見る手段は未実装
 - Statsページは全期間の記録から計算しており、期間フィルター（直近3か月/今年など）は未実装（`docs/stats.md`の設計通り、Insightと同じく「記録全体のふりかえり」を示すための意図的な仕様だが、記録件数が増えた場合は要検討）
-- Discoverの提案（`docs/discover.md`）の「この産地を記録してみる」リンクは`/records/new`への単純な遷移で、産地の事前入力はしていない（`RecordForm`にプリフィル機構が無いため）
+- Discoverの提案（`docs/features.md`「Discover」）の「この産地を記録してみる」リンクは`/records/new`への単純な遷移で、産地の事前入力はしていない（`RecordForm`にプリフィル機構が無いため）
 - CQI参照データ（`backend/data/cqiDatabase.json`）は目安値であり、実際のCQIデータベースの正確な値を再現したものではない（開発環境に外部データセットを取得するネットワークアクセスが無いため。ファイル内コメントに明記済み）
 - `frontend/src/App.css`に、MLB時代のホーム画面（Team/Favorites/Recommendationsセクション、`player-list-carousel`等）向けの未参照CSSが別のブロックとしてもう1箇所残っている（2026-08に`.home-banner`等460行分は削除済みだが、`.home-player-section`等の同名クラスの別定義がまだ残存。`docs/mlb-legacy-inventory.md`参照）。JSXから一切参照されていないことは確認済みで、削除候補（同ブロック内で使われている旧`ctp-mauve`/`ctp-teal`/`ctp-maroon`/`ctp-peach`/`ctp-sky`/`ctp-pink`も、カラーテーマ刷新時にリネームせず残した。このブロックごと削除すれば一緒に消える）
 - `frontend/src/components/PageHeader.jsx`は、当初Records/RecordDetail等で再利用する想定だったが、現在どのページからもimportされていない死んだコンポーネントとして残っている（`docs/mlb-legacy-inventory.md`参照）。削除候補
