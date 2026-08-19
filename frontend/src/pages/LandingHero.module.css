@@ -1,8 +1,11 @@
 /* linear.app本家のヒーローを参考にした構成:
-   大きな見出し一文だけ+単語ごとのブラー→フェードイン演出、
-   背景にはごく微かなノイズテクスチャ(製品画面のスクリーンショットは使わない
-   — Landingは未ログインの訪問者向けなので、特定の選手データはまだ見せない)。
-   CTAは「Get Started」1つだけに絞る。 */
+   大きな見出し一文だけ+単語ごとのブラー→フェードイン演出
+   （製品画面のスクリーンショットは使わない — Landingは未ログインの
+   訪問者向けなので、特定の選手データはまだ見せない）。
+   CTAは「Get Started」1つだけに絞る。
+   2026-08、背景のノイズテクスチャ(.grain)は、その範囲だけページ背景より
+   わずかに明るく見えてしまい「箱」のような境界線ができるとユーザーから
+   指摘があったため削除した。 */
 
 /* ナビ上部のGet Startedボタン。.home-link はアプリ全体(9ファイル)で使う
    共通CTAクラスのため、その緑グラデーションは変更せず、Landingページの
@@ -42,14 +45,6 @@ a.navCta:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
-}
-
-.grain {
-  position: absolute;
-  inset: 0;
-  opacity: 0.05;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   pointer-events: none;
 }
 
@@ -202,7 +197,7 @@ a.navCta:hover {
    （How it works / Your Knowledge Graph / Why Coffee App?）で使い回す */
 .section {
   width: 100%;
-  max-width: 760px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 0 24px 100px;
   text-align: center;

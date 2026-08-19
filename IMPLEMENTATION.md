@@ -1162,6 +1162,17 @@ Space Monoへの統一（上記エントリ）で、font-weightによる階層�
 
 ---
 
+### 2026-08-20: Landingページのフィードバック対応（余白・Hero背景）
+
+上記の再設計直後、ユーザーから実機を見たフィードバックが2件あった。
+
+1. **左右の空白が気になる**: `.landing-nav` / `.landing-body`（`App.css`）が`max-width: 860px`に固定されていたのが原因。デスクトップの余白問題（2026-08-19のエントリ参照）と同種の問題がLandingにも残っていた。860px→1100pxへ拡大。各セクションの`.section`（`LandingHero.module.css`）も760px→960pxへあわせて拡大した
+2. **Hero先頭が背景色と同じに見えない**: Hero内の装飾ノイズテクスチャ（`.grain`、`feTurbulence`によるSVG、opacity 0.05）が、その矩形の範囲だけページ背景よりわずかに明るく見え、「箱」のような境界線を作ってしまっていた。`getComputedStyle`で`.hero`自体の`background-color`は`transparent`（ページ背景と同じ）であることを確認したうえで、視覚的な差の原因が`.grain`だと特定し、`.grain`のdiv・CSS定義ごと削除した
+
+**検証**: `cd frontend && npm run lint && npm run test && npm run build`すべて成功。claude-in-chromeでHero先頭の境界線が消え背景と一体化したこと、左右の余白が減ったこと、他セクション（How it works以降）のレイアウトが崩れていないことを目視確認。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
