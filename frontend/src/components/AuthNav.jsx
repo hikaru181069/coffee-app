@@ -14,11 +14,16 @@ import LanguageSwitcher from "./LanguageSwitcher";
  * 2026-08、元はLandingPage.jsx内に直書きされていたマークアップを、
  * Login/Registerページの背景装飾グラフ追加とあわせて共通化した。
  *
- * minimal: Login/Register自身では「ログイン」「はじめましょう」の
- * リンクが冗長（Loginページで「ログイン」を押しても何も起きず、
- * 「はじめましょう」もカード下部の切り替えリンクと同じ行き先）だった
- * ため、ロゴ+言語切り替えだけに絞る。Landingは訪問者がまだどちらへ
- * 進むか決めていないため、両方のリンクを引き続き出す（デフォルト）。
+ * minimal: Login/Register自身では「ログイン」リンクが冗長（Loginページで
+ * 「ログイン」を押しても何も起きない）なため、ロゴ+言語切り替えだけに絞る。
+ *
+ * Landing（デフォルト）は「ログイン」のみ表示し、「はじめましょう」は
+ * 出さない。2026-08、ユーザーから「ボタンが多い」という指摘を受けて
+ * 見直したところ、ナビの「はじめましょう」はナビ直下のHeroセクションに
+ * ある同じ「はじめましょう」CTA（スクロール不要で常に見えている）と
+ * 完全に重複していた。一方「ログイン」はページ内で唯一のログイン導線
+ * （Hero・How it works・末尾CTAはいずれも「はじめましょう」のみ）
+ * のため、これは残す。
  */
 function AuthNav({ minimal = false }) {
   const { t } = useTranslation();
@@ -32,14 +37,7 @@ function AuthNav({ minimal = false }) {
       <div className="landing-nav-actions">
         <LanguageSwitcher />
         {!minimal && (
-          <>
-            {/* .home-link secondary: 隣の「はじめましょう」（.home-link単体、
-                塗りつぶしピル）と同じpadding・角丸のアウトライン版。以前は
-                枠も背景も無いただのテキストリンク（.landing-nav-login）で、
-                隣のボタンと形・サイズがバラバラだった */}
-            <Link to="/login" className="home-link secondary">{t("nav.login")}</Link>
-            <Link to="/register" className="home-link">{t("auth.getStarted")}</Link>
-          </>
+          <Link to="/login" className="home-link secondary">{t("nav.login")}</Link>
         )}
       </div>
     </nav>

@@ -1238,6 +1238,16 @@ Landingの`<nav className="landing-nav">`直書きだった中身（ロゴ、`La
 
 ---
 
+### 2026-08-21: Landingのナビから「はじめましょう」も削除（ボタン数をさらに削減）
+
+上記の見た目統一の直後、ユーザーから重ねて「landing pageのnavbarも同様にボタンが多いです。少なくするべきです」という指摘があった。
+
+Landingページ全体を見返すと、Heroセクション（ナビのすぐ下、スクロール不要で常に見える位置）に既に大きな「はじめましょう」CTAがあり、ナビの「はじめましょう」はこれと完全に重複していた（How it works・Your Knowledge Graph・Why Coffee App?・末尾CTAのどのセクションにも「ログイン」への導線は無く、ナビの「ログイン」だけが唯一のログイン導線だったのとは非対称）。そのため、ナビからは「はじめましょう」のみを削除し、「ログイン」は残した。`AuthNav.jsx`の`minimal=false`（Landing用）は現在ロゴ+言語切替+ログインの3要素のみ。`auth.getStarted`翻訳キーはHero・末尾CTA・Registerページのkickerで引き続き使用中のためそのまま残した。`docs/design.md`のLanding節も更新。
+
+**検証**: `cd frontend && npm run lint && npm run test && npm run build`すべて成功。claude-in-chromeでLandingのナビが「言語切替+ログイン」のみになっていること、Hero以下のセクションに回帰が無いこと、Login/Registerページ（`minimal`のまま）に影響が無いことを確認。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
