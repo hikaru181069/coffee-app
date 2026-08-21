@@ -2413,28 +2413,13 @@ input {
    .landing-pageと同じ構造（flex-direction: column + align-items: center。
    AuthNav = .landing-nav側のmax-width: 1100pxをここで中央寄せする）。
    overflow: hiddenは付けない（.landing-pageも付けていない。付けると
-   AuthNavのposition: stickyが効かなくなる。装飾グラフのdrift量は
-   ごくわずかで、はみ出しを気にする必要が無い） */
+   AuthNavのposition: stickyが効かなくなる） */
 .auth-page {
   position: relative;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-/* Login/Register背景の装飾グラフ用ラッパー。.auth-page全体（AuthNavの
-   裏側も含む）に敷く。LandingHero.module.cssの.heroGraphと同じ理由で
-   z-indexは使わない（DOM順で.auth-page-contentより下に描画される。
-   z-index:autoの要素はDOM順で重なるため）。
-   GraphIllustration.jsx（variant="ambient"）を中に置く。 */
-.auth-page-graph {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
 }
 
 /* AuthNavの下に残る縦方向の余白いっぱいを使って.auth-cardを中央寄せする。
@@ -2454,7 +2439,11 @@ input {
 .auth-card {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  /* 以前は420pxで、フォーム項目数（2〜3個）だけを基準に狭く決めていた。
+     ログインは単機能画面のため広げすぎると入力欄が間延びするが、
+     このアプリの他要素（大きめのSpace Mono・太いピルボタン）との
+     釣り合いを考え、適度に広げた */
+  max-width: 520px;
   padding: 40px 36px;
   /* 00-design-principles.md 6.4の角丸3段階のうち、主要コンテナに使う
      rounded-2xl（16px）にそろえる（以前は20pxという中間値だった） */
