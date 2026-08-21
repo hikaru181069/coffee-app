@@ -1173,6 +1173,30 @@ Space Monoへの統一（上記エントリ）で、font-weightによる階層�
 
 ---
 
+### 2026-08-21: Login/Registerページの設計
+
+Landingページに続き、Login/Registerページを設計した。ユーザーに「バグ修正のみ／ビジュアルを作り込む／具体的な変更点がある」の3択を提示し、「ビジュアルを作り込む」を選んだ。
+
+調査の結果、`docs/design.md`のScreens一覧にLogin/Registerの記載も無く（Landingと同じ欠落パターン）、実装にも複数の問題が見つかった。
+
+**1. Login/Registerが未ログイン者に壊れたナビリンクを見せていた**: `App.jsx`は`/landing`のときだけ通常のNavbar（Home/Records/Graph/Stats）を隠していたが、`/login`・`/register`では隠していなかった。未ログイン者がこれらのリンクを押すと`ProtectedRoute`に弾かれて`/landing`へ戻されるだけの壊れた導線になっていた。`App.jsx`の判定を`isLanding`から`PUBLIC_PATHS`（`/landing`・`/login`・`/register`の配列）へ拡張し、3ページとも通常のNavbar/BottomTabBarを出さないようにした。
+
+Landingの`<nav className="landing-nav">`直書きだった中身（ロゴ、`LanguageSwitcher`、Loginリンク、Get Startedリンク）を`frontend/src/components/AuthNav.jsx`として切り出し、Landing/Login/Registerの3ページで共通利用する形にした。切り出しと同時に、`LandingHero.module.css`の`a.navCta`（`.home-link`が配色刷新で既に同じ見た目になっており死んでいたルール。コメントも刷新前の「緑グラデーション」時代のまま残っていた）を削除した。
+
+**2. 装飾グラフをLogin/Registerの背景にも**: `LandingGraphIllustration.jsx`を`GraphIllustration.jsx`へリネームし、グラフ関連CSS（`.graphIllustration`等6クラス+`node-pulse`/`graph-drift`のkeyframes）を`LandingHero.module.css`から独立した`GraphIllustration.module.css`へ切り出した（Landing専用のスタイルファイルに、Landing以外のページが依存する状態を解消するため）。Login/Registerの`.auth-page`に、Heroと同じ`variant="ambient"`の装飾グラフを背景としてごく薄く配置した。
+
+実装中、`.auth-page`がデフォルトの`flex-direction: row`だったため、AuthNavとカードが横並びになってしまう問題に気づき、`.landing-page`と同じ`flex-direction: column; align-items: center;`構造へ変更（`.auth-page-content`という新しいラッパーで、カードの中央寄せロジックをAuthNavの下の領域に限定した）。また、Heroにならって`.auth-page`に`overflow: hidden`を付けたところ、`AuthNav`の`position: sticky`が効かなくなることに気づき、`.landing-page`が元々`overflow: hidden`を使っていないことを確認したうえで削除した（装飾グラフの`graph-drift`によるはみ出しはごくわずかで、クリップの必要が無いと判断）。
+
+**3. `.auth-card`がdesign tokensを使っていなかった**: `border: 1px solid rgba(137, 180, 250, 0.12)`（配色刷新前の青系の値の名残）を`var(--color-line)`へ、独自のbox-shadowを`var(--shadow-panel)`（カードがページ上で唯一のフォーカス要素というモーダル的な性質のため、`00-design-principles.md` 6.5の「モーダル・ボトムシート」用途に合致すると判断）へ、`border-radius: 20px`（角丸3段階のどれにも該当しない中間値）を`1rem`（16px、`rounded-2xl`と同値）へ、それぞれ変更した。
+
+**4. `.auth-form label`のCSSバグ**: `display: grid; gap: 7px;`という指定が、`Email`ラベルと`REQUIRED`バッジの横並び（FormFieldのTailwind `flex`クラス）を改行させてしまっていた（`getComputedStyle`で`display: grid`を確認）。調査の結果、このルールはFormField導入前の旧DOM構造（`<label>Email<input/></label>`のようにlabelがinputごと囲んでいた形）向けのスタイルで、現在のFormFieldはlabelとinputが兄弟要素になっているため、丸ごと不要になっていたと判明。`@layer`で囲むのではなく、ルールそのものを削除した（今回のセッションで発見した中では珍しく「レイヤーの外にある」こと自体は問題の一部でしかなく、根本原因はDOM構造の変化に追従していなかったことだった）。
+
+**ドキュメント**: `docs/design.md`のScreens一覧にLogin/Register節を追加した。
+
+**検証**: `cd frontend && npm run lint && npm run test && npm run build`すべて成功。claude-in-chromeで、①AuthNav表示（Home/Records/Graph/Statsのリンクが消えていること）、②背景の装飾グラフ、③空欄のまま送信するとREQUIREDバッジがラベルと同じ行に収まりつつ赤枠エラーが出ること、④日本語/英語両方の表示、をLogin/Register両方で確認。`getComputedStyle`で`.auth-card`の`border`（`rgb(64, 64, 64)`=`--color-line`）・`box-shadow`（`--shadow-panel`の値と一致）・`border-radius`（16px）、`label`の`display`（`flex`）、AuthNavの`position`（`sticky`、`overflow:hidden`削除後も機能）を確認。Landingページに回帰が無いこと（AuthNav切り出し後も見た目が変わらないこと、`GraphIllustration`リネーム後も表示されること）も確認。`navCta`・`LandingGraphIllustration`という古い名前への参照がコード中に残っていないこともgrepで確認済み。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。

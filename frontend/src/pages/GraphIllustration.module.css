@@ -1,0 +1,69 @@
+/* 装飾グラフイラスト（GraphIllustration.jsx）。
+   ノードはfeatures/graph/utils/nodeVisuals.jsのcolorClass（text-*）を
+   currentColorで受けるだけで、新しい色は増やさない。
+   2026-08、Landing専用だったが、Login/Registerの背景装飾にも使うように
+   なったため、LandingHero.module.cssから切り出して独立させた。 */
+.graphIllustration {
+  display: block;
+  overflow: visible;
+}
+
+.graphEdge {
+  stroke: var(--color-line);
+  stroke-width: 1.5;
+}
+
+.graphNode {
+  animation: node-pulse 3.2s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes node-pulse {
+  0%, 100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* Hero・auth-page背景用: 大きく・薄く・全体がゆっくり漂う */
+.graphAmbient {
+  width: min(90vw, 640px);
+  height: auto;
+  opacity: 0.16;
+  animation: graph-drift 24s ease-in-out infinite alternate;
+}
+
+@keyframes graph-drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(-2%, 1.5%) scale(1.03);
+  }
+}
+
+/* Your Knowledge Graphセクション用: くっきり見せる */
+.graphFeature {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .graphNode {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .graphAmbient {
+    animation: none !important;
+    transform: none !important;
+  }
+}

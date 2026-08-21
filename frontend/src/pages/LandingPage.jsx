@@ -3,9 +3,8 @@ import { Link, Navigate } from "react-router-dom";
 import { ArrowRight, Coffee, Share2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getAuthToken } from "../utils/authStorage";
-import CoffeeLogo from "../components/CoffeeLogo";
-import LanguageSwitcher from "../components/LanguageSwitcher";
-import LandingGraphIllustration from "./LandingGraphIllustration";
+import AuthNav from "../components/AuthNav";
+import GraphIllustration from "./GraphIllustration";
 import heroStyles from "./LandingHero.module.css";
 
 // Record → Connect → Discover の3ステップをそのまま説明カードにする
@@ -44,29 +43,18 @@ function LandingPage() {
   return (
     <div className="landing-page">
 
-      {/* ミニナビ */}
-      <nav className="landing-nav">
-        <span className="flex items-center gap-2 text-text">
-          <CoffeeLogo size={22} />
-          <span className="text-base font-black tracking-tight">Coffee App</span>
-        </span>
-        <div className="landing-nav-actions">
-          <LanguageSwitcher />
-          <Link to="/login" className="landing-nav-login">{t("nav.login")}</Link>
-          <Link to="/register" className={`home-link ${heroStyles.navCta}`}>{t("auth.getStarted")}</Link>
-        </div>
-      </nav>
+      <AuthNav />
 
       <div className="landing-body">
 
         {/* ヒーロー: 大きな見出し一文+単語ごとのブラー→フェードイン演出。
             背景には装飾的な知識グラフ（実データではなく固定サンプル、
-            LandingGraphIllustration参照）をごく薄く・ゆっくり漂わせる。
+            GraphIllustration参照）をごく薄く・ゆっくり漂わせる。
             訪問者はまだアプリを使ったことがないため、特定の記録データは
             見せない。CTAはGet Started 1つのみ。 */}
         <section className={heroStyles.hero}>
           <div className={heroStyles.heroGraph}>
-            <LandingGraphIllustration variant="ambient" />
+            <GraphIllustration variant="ambient" />
           </div>
           <p className={heroStyles.kicker}>{t("landing.kicker")}</p>
           <h1 className={heroStyles.title}>
@@ -121,7 +109,7 @@ function LandingPage() {
         <section className={heroStyles.section}>
           <p className={heroStyles.sectionEyebrow}>{t("landing.graph.heading")}</p>
           <div className={heroStyles.graphSection}>
-            <LandingGraphIllustration variant="feature" />
+            <GraphIllustration variant="feature" />
             <p className={heroStyles.graphCaption}>{t("landing.graph.caption")}</p>
           </div>
         </section>

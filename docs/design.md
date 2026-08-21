@@ -49,6 +49,18 @@ MVPの主ナビゲーション:
 
 Record / Connect / Discoverは言語を問わず共通のブランド語として扱い、翻訳しない。
 
+### Login / Register
+
+未ログインの訪問者が認証情報を入力する、`/login`・`/register`の公開ページ。Main Navigationの対象外（Landingと同様、通常のNavbarではなくAuthNav [ロゴ、言語切り替え、Login、Get Started] を表示する。認証必須のページへのリンクを未ログイン者に見せないため）。
+
+構成:
+
+- AuthNav（Landingと共通）
+- 背景にごく薄い装飾的な知識グラフ（Landingと同じイラスト、Hero背景と同じ演出）
+- 中央寄せのカード（ロゴ、見出し、フォーム、切り替えリンク）
+
+LoginとRegisterは同じCSS（`.auth-page` / `.auth-card` / `.auth-form`）を共有する。
+
 ### Home
 
 目的:

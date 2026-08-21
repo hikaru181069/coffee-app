@@ -2352,13 +2352,15 @@ input {
   text-align: left;
 }
 
-.auth-form label {
-  display: grid;
-  gap: 7px;
-  font-weight: 700;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-}
+/* .auth-form labelは以前存在した（Email<input/>を1つのlabelで
+   囲む）旧DOM構造向けのスタイルだった。LoginPage/RegisterPageが
+   FormField（features/coffee-records/components/FormField.jsx）を
+   使う構成へ変わり、label要素はinputと兄弟関係になった。この状態で
+   display: gridが（Tailwindのflexユーティリティに@layerの外側から
+   勝つ形で）残っていたため、labelとREQUIREDバッジが横並びにならず
+   改行される不具合になっていた。FormField側が既にラベルの見た目
+   （text-sm font-medium text-text）を持つため、このルールごと削除した
+   （2026-08）。 */
 
 /* App.css: input { ... color/background-color/border ... }（250行目）は
    レイヤー無しの要素セレクタのため、詳細度に関係なくcontrolClass()の
@@ -2407,8 +2409,42 @@ input {
   color: var(--color-primary);
 }
 
+/* AuthNav（sticky上部ナビ）+ 中央寄せのカードを縦に積む。
+   .landing-pageと同じ構造（flex-direction: column + align-items: center。
+   AuthNav = .landing-nav側のmax-width: 1100pxをここで中央寄せする）。
+   overflow: hiddenは付けない（.landing-pageも付けていない。付けると
+   AuthNavのposition: stickyが効かなくなる。装飾グラフのdrift量は
+   ごくわずかで、はみ出しを気にする必要が無い） */
 .auth-page {
+  position: relative;
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Login/Register背景の装飾グラフ用ラッパー。.auth-page全体（AuthNavの
+   裏側も含む）に敷く。LandingHero.module.cssの.heroGraphと同じ理由で
+   z-indexは使わない（DOM順で.auth-page-contentより下に描画される。
+   z-index:autoの要素はDOM順で重なるため）。
+   GraphIllustration.jsx（variant="ambient"）を中に置く。 */
+.auth-page-graph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* AuthNavの下に残る縦方向の余白いっぱいを使って.auth-cardを中央寄せする。
+   width: 100%は必須（親.auth-pageのalign-items: centerにより、明示的な
+   幅が無いflexアイテムは内容サイズへ縮んでしまい、この要素自身の
+   justify-content: centerが機能しなくなるため） */
+.auth-page-content {
+  position: relative;
+  width: 100%;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2416,13 +2452,22 @@ input {
 }
 
 .auth-card {
+  position: relative;
   width: 100%;
   max-width: 420px;
   padding: 40px 36px;
-  border-radius: 20px;
+  /* 00-design-principles.md 6.4の角丸3段階のうち、主要コンテナに使う
+     rounded-2xl（16px）にそろえる（以前は20pxという中間値だった） */
+  border-radius: 1rem;
   background: var(--color-raised);
-  border: 1px solid rgba(137, 180, 250, 0.12);
-  box-shadow: 0 8px 32px rgba(17, 17, 27, 0.35);
+  /* 以前はrgba(137, 180, 250, 0.12)という配色刷新前の青系の値が
+     残っていた。--color-lineへ統一 */
+  border: 1px solid var(--color-line);
+  /* カードがページ上で唯一のフォーカス要素というモーダル的な性質のため、
+     カード全般用のshadow-elevatedではなく、モーダル・ボトムシート用の
+     shadow-panel（00-design-principles.md 6.5）を使う。背景に装飾グラフを
+     置くこともあり、強めの影で前後関係を明確にする */
+  box-shadow: var(--shadow-panel);
   text-align: center;
 }
 
