@@ -40,7 +40,7 @@ MVPの主ナビゲーション:
 
 構成例:
 
-- ミニナビ（ロゴ、言語切り替え、Login、Get Started）
+- ミニナビ（ロゴ、言語切り替え、Login）。Get StartedはナビのすぐScroll先のHeroに既にあるため重複させない
 - Hero（見出し、Get Started CTA、装飾的な知識グラフのイラスト）
 - How it works（Record → Connect → Discoverの3ステップ説明）
 - Your Knowledge Graph（知識グラフの視覚的なイメージ。実データではなく固定サンプル）
