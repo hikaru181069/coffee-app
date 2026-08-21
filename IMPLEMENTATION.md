@@ -1224,6 +1224,20 @@ Landingの`<nav className="landing-nav">`直書きだった中身（ロゴ、`La
 
 ---
 
+### 2026-08-21: Landingのナビ（AuthNavのフル版）も同じ問題を修正
+
+上記のLogin/Register修正の直後、ユーザーから「landing pageのnavbarも同様です」という指摘があった。Landingは訪問者がまだどちらへ進むか決めていないため「ログイン」「はじめましょう」の両方を残す必要があり、Login/Registerのように削除する対象ではないが、この2つの見た目がバラバラだった点は同じ問題だった。
+
+実機で確認したところ、「ログイン」は枠も背景も無いただのテキストリンク（`.landing-nav-login`）、「はじめましょう」は`.home-link`（`rounded-full`の塗りつぶしピル、`padding: 13px 20px`、影付き）で、高さも角丸も全く異なっていた。
+
+このアプリには`.home-link.secondary`という、まさにこの用途（`.home-link`と完全に同じpadding/角丸で、色だけアウトライン版にする修飾クラス）向けのCSSが既に存在していたが、どこからも使われておらず、しかも配色刷新前の`rgba(137, 180, 250, ...)`という青系の値が残ったままの死んだコードだった（このセッションで繰り返し見つけてきた「配色刷新前の値が残る」バグの同型）。これを`--color-line` / `--color-text-secondary` / `--color-text`ベースへ修正して復活させ、AuthNavの「ログイン」リンクに`className="home-link secondary"`を適用した。`.home-link`本体のpadding/border-radius/フォントをそのまま継承するため、「はじめましょう」と完全に同じ高さ・角丸になる。
+
+もう使われなくなった`.landing-nav-login` / `.landing-nav-login:hover`は削除した。
+
+**検証**: `cd frontend && npm run lint && npm run test && npm run build`すべて成功。claude-in-chromeでLandingの「ログイン」「はじめましょう」が同じ高さ・角丸のピルボタンになっていること、ホバー時に枠線・文字色が明るくなること、Login/Registerページ（`minimal`のまま）に回帰が無いことを確認。`home-link.secondary`がAuthNav以外で使われていないこともgrepで確認済み。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。

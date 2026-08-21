@@ -825,18 +825,6 @@ input {
   gap: 12px;
 }
 
-.landing-nav-login {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  transition: color 150ms;
-}
-
-.landing-nav-login:hover {
-  color: var(--color-text);
-}
-
 .landing-body {
   display: flex;
   flex-direction: column;
@@ -2296,19 +2284,24 @@ input {
   transition-duration: 80ms;
 }
 
+/* 以前はrgba(137, 180, 250, ...)という配色刷新前の青系の値が残る
+   未使用のdead CSSだった。AuthNav（components/AuthNav.jsx）の
+   「ログイン」リンクを、隣の「はじめましょう」（.home-link単体、
+   塗りつぶしピル）と高さ・角丸を完全にそろえたアウトライン版
+   ピルボタンにするために復活・修正した（padding等は.home-link
+   本体のものをそのまま継承するため、ここでは色だけ上書きする） */
 .home-link.secondary {
   color: var(--color-text-secondary);
-  background: rgba(137, 180, 250, 0.06);
-  border: 1px solid rgba(137, 180, 250, 0.2);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--color-line) 60%, transparent);
   box-shadow: none;
 }
 
 .home-link.secondary:hover {
-  color: var(--color-primary);
-  background: rgba(137, 180, 250, 0.12);
-  border-color: rgba(137, 180, 250, 0.5);
-  box-shadow: 0 4px 14px rgba(137, 180, 250, 0.12);
-  transform: translateY(-1px);
+  color: var(--color-text);
+  background: transparent;
+  border-color: var(--color-line);
+  box-shadow: none;
 }
 
 .home-link.danger {

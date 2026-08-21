@@ -33,7 +33,11 @@ function AuthNav({ minimal = false }) {
         <LanguageSwitcher />
         {!minimal && (
           <>
-            <Link to="/login" className="landing-nav-login">{t("nav.login")}</Link>
+            {/* .home-link secondary: 隣の「はじめましょう」（.home-link単体、
+                塗りつぶしピル）と同じpadding・角丸のアウトライン版。以前は
+                枠も背景も無いただのテキストリンク（.landing-nav-login）で、
+                隣のボタンと形・サイズがバラバラだった */}
+            <Link to="/login" className="home-link secondary">{t("nav.login")}</Link>
             <Link to="/register" className="home-link">{t("auth.getStarted")}</Link>
           </>
         )}
