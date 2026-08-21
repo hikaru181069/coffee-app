@@ -1197,6 +1197,33 @@ Landingの`<nav className="landing-nav">`直書きだった中身（ロゴ、`La
 
 ---
 
+### 2026-08-21: Loginページを作り直し（装飾グラフ削除・幅拡大・AuthNav簡素化）
+
+前日に設計・実装したLogin/Register（上記エントリ）を実機で見たユーザーから「全体を作り直したい」というフィードバックがあり、掘り下げたところ次の2点だった。
+
+1. **装飾グラフは不要**
+2. **幅が狭い**
+
+2点目について、このセッションを通してRecords・Stats・RecordDetail・Landingのナビでも同種の指摘を受けていたため、ユーザーから「なぜ狭く作る傾向があるのか」と問われ、率直に振り返った: 「ログインカードは380〜450px」という業界の定番パターンを、このアプリ自身の見た目（大きめのSpace Mono・太いピルボタン）や`docs/product.md`の方向性と照らし合わせずに踏襲してしまっていた、`docs/product.md`の「静けさ」を「狭さ」と混同していた、移植元mlb-appの古いレイアウトの影響、の3点。
+
+**構造は変えず幅と要素を見直した**（2カラム分割等の大きな構造変更は、フォーム自体が2〜3項目しかなく空間が持て余される懸念から不採用と判断し、ユーザーにも確認済み）:
+
+- `LoginPage.jsx` / `RegisterPage.jsx`から`GraphIllustration`の使用と`<div className="auth-page-graph">`を削除。`App.css`の`.auth-page-graph`ルールも削除（Landingページは今も`GraphIllustration`を使うため、コンポーネント自体は残した）
+- `.auth-card`の`max-width`を420px→520pxへ拡大
+
+**AuthNavの追加指摘**: ユーザーから続けて「navbarもボタンが多くて気になります。しかも形もサイズもバラバラです」という指摘があり、実機で確認したところ、AuthNav内に「言語切り替え（`rounded-lg`の枠付きトグル）」「ログインリンク（枠も背景も無いテキストリンク）」「はじめましょうボタン（`rounded-full`の塗りつぶしピル+影）」という3種類の異なる見た目が並んでいたことを確認した。加えて、Recordsページの「All/Home/Cafe」フィルターが`rounded-full`を使っている（`RecordFilters.jsx`）ことを確認し、`LanguageSwitcher`の`rounded-lg`がこのアプリ自身の慣習からも外れていると判明した。
+
+さらに、Login/Registerページ自身でAuthNavに「ログイン」「はじめましょう」の両方を出すのは冗長（Loginページ上部の「ログイン」リンクは押しても何も起きず、「はじめましょう」もカード下部の「アカウントをお持ちでないですか？新規登録」と同じ行き先）と気づき、ユーザーに選択肢を提示したところ、「Login/Registerではロゴ+言語切替だけにする」案が選ばれた。
+
+- `components/AuthNav.jsx`に`minimal`propを追加。Landing（デフォルト）はロゴ+言語切替+Login+Get Startedのフルナビのまま、Login/Registerは`<AuthNav minimal />`でロゴ+言語切替のみに絞った
+- `components/LanguageSwitcher.jsx`の`rounded-lg`を`rounded-full`へ修正（Recordsページのフィルターチップと同じ慣習にそろえた）
+
+**ドキュメント**: `docs/design.md`のLogin/Register節を、装飾グラフ削除・AuthNav簡素化に合わせて更新。`GraphIllustration.jsx`冒頭のコメントも「Landing専用に戻した」旨へ更新。
+
+**検証**: `cd frontend && npm run lint && npm run test && npm run build`すべて成功。claude-in-chromeで、①Login/Registerの装飾グラフが消えていること、②AuthNavがロゴ+言語切替のみになっていること、③言語切替がピル型（`rounded-full`）になっていること、④カード幅が広がっていること、をLogin/Register両方で確認。Landingページのフルナビ・Hero背景グラフに回帰が無いことも確認。`GraphIllustration`・`auth-page-graph`への参照がLogin/Register側に残っていないこともgrepで確認済み。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。

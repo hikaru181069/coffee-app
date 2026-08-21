@@ -19,7 +19,7 @@ function LanguageSwitcher({ className = "" }) {
     <div
       role="group"
       aria-label="Language / 表示言語"
-      className={`inline-flex overflow-hidden rounded-lg border border-surface-3 text-xs font-semibold ${className}`}
+      className={`inline-flex overflow-hidden rounded-full border border-surface-3 text-xs font-semibold ${className}`}
     >
       {LANGUAGES.map(({ code, label }) => {
         const isActive = i18n.language === code;

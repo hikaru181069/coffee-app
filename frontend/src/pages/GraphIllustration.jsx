@@ -8,9 +8,9 @@ import styles from "./GraphIllustration.module.css";
  * GraphPreview（features/graph/components/GraphPreview.jsx）は使えない
  * （useGraph()が認証必須のAPIを叩く構造のため）。そのため固定座標の
  * サンプルノードだけを描く、DB/API非依存の純粋な装飾コンポーネントとして
- * 別に用意する。Landing・Login・Registerの3ページで共有する
- * （2026-08、当初はLanding専用だったが、認証フロー全体で世界観を
- * つなげるためLogin/Registerの背景にも使うようになった）。
+ * 別に用意する。Landingページ（Hero背景+Your Knowledge Graphセクション）
+ * でのみ使う（2026-08、一時期Login/Registerの背景にも使っていたが、
+ * 単機能画面には不要とユーザーの判断で削除し、Landing専用に戻した）。
  *
  * ノード2件（record）が、共有する属性ノード（origin・roastLevel）を介して
  * つながっている構図にした。単なる星型ではなく「記録どうしが属性を

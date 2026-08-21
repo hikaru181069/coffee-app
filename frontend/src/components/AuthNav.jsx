@@ -13,8 +13,14 @@ import LanguageSwitcher from "./LanguageSwitcher";
  *
  * 2026-08、元はLandingPage.jsx内に直書きされていたマークアップを、
  * Login/Registerページの背景装飾グラフ追加とあわせて共通化した。
+ *
+ * minimal: Login/Register自身では「ログイン」「はじめましょう」の
+ * リンクが冗長（Loginページで「ログイン」を押しても何も起きず、
+ * 「はじめましょう」もカード下部の切り替えリンクと同じ行き先）だった
+ * ため、ロゴ+言語切り替えだけに絞る。Landingは訪問者がまだどちらへ
+ * 進むか決めていないため、両方のリンクを引き続き出す（デフォルト）。
  */
-function AuthNav() {
+function AuthNav({ minimal = false }) {
   const { t } = useTranslation();
 
   return (
@@ -25,8 +31,12 @@ function AuthNav() {
       </Link>
       <div className="landing-nav-actions">
         <LanguageSwitcher />
-        <Link to="/login" className="landing-nav-login">{t("nav.login")}</Link>
-        <Link to="/register" className="home-link">{t("auth.getStarted")}</Link>
+        {!minimal && (
+          <>
+            <Link to="/login" className="landing-nav-login">{t("nav.login")}</Link>
+            <Link to="/register" className="home-link">{t("auth.getStarted")}</Link>
+          </>
+        )}
       </div>
     </nav>
   );

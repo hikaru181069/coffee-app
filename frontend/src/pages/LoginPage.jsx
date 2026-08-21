@@ -4,7 +4,6 @@ import { CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import AuthNav from "../components/AuthNav";
 import CoffeeLogo from "../components/CoffeeLogo";
-import GraphIllustration from "./GraphIllustration";
 import FormField from "../features/coffee-records/components/FormField";
 import { controlClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { validateLoginForm, hasErrors } from "../utils/authFormValidation";
@@ -89,10 +88,7 @@ function LoginPage() {
 
   return (
     <div className="auth-page">
-      <AuthNav />
-      <div className="auth-page-graph">
-        <GraphIllustration variant="ambient" />
-      </div>
+      <AuthNav minimal />
       <div className="auth-page-content">
         <section className="auth-card">
           <div className="auth-brand">
