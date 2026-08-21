@@ -86,17 +86,24 @@ function AnimatedRoutes() {
   );
 }
 
+// 未ログイン向けの3ページ。通常のNavbar（Home/Records/Graph/Stats）は
+// 認証必須のページへのリンクのため、ここでは出さず、各ページ自身が
+// 軽量なAuthNav（components/AuthNav.jsx）を表示する
+// （2026-08、以前は/landingのみ対象だったが、Login/Registerでも同じ
+// 理由で通常のNavbarを出すべきではないことが分かり対象を広げた）。
+const PUBLIC_PATHS = ["/landing", "/login", "/register"];
+
 function App() {
   const location = useLocation();
-  const isLanding = location.pathname === "/landing";
+  const isPublicPage = PUBLIC_PATHS.includes(location.pathname);
 
   return (
     <ToastProvider>
-      {!isLanding && <Navbar />}
-      <main className={isLanding ? "" : "pt-14 pb-16 md:pb-0"}>
+      {!isPublicPage && <Navbar />}
+      <main className={isPublicPage ? "" : "pt-14 pb-16 md:pb-0"}>
         <AnimatedRoutes />
       </main>
-      {!isLanding && <BottomTabBar />}
+      {!isPublicPage && <BottomTabBar />}
     </ToastProvider>
   );
 }

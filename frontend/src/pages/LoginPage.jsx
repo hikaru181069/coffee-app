@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import AuthNav from "../components/AuthNav";
 import CoffeeLogo from "../components/CoffeeLogo";
+import GraphIllustration from "./GraphIllustration";
 import FormField from "../features/coffee-records/components/FormField";
 import { controlClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { validateLoginForm, hasErrors } from "../utils/authFormValidation";
@@ -87,56 +89,62 @@ function LoginPage() {
 
   return (
     <div className="auth-page">
-      <section className="auth-card">
-        <div className="auth-brand">
-          <CoffeeLogo size={32} />
-        </div>
-        <p className="auth-card-kicker">{t("auth.welcomeBack")}</p>
-        <h1>{t("auth.loginHeading")}</h1>
-        <p className="auth-card-desc">
-          {t("auth.login.desc")}
-        </p>
+      <AuthNav />
+      <div className="auth-page-graph">
+        <GraphIllustration variant="ambient" />
+      </div>
+      <div className="auth-page-content">
+        <section className="auth-card">
+          <div className="auth-brand">
+            <CoffeeLogo size={32} />
+          </div>
+          <p className="auth-card-kicker">{t("auth.welcomeBack")}</p>
+          <h1>{t("auth.loginHeading")}</h1>
+          <p className="auth-card-desc">
+            {t("auth.login.desc")}
+          </p>
 
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          <FormField id="email" label={t("profile.email")} required error={errors.email}>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              value={values.email}
-              onChange={(event) => setValue("email", event.target.value)}
-              aria-invalid={Boolean(errors.email)}
-              aria-describedby={errors.email ? "email-error" : undefined}
-              className={controlClass(Boolean(errors.email))}
-            />
-          </FormField>
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
+            <FormField id="email" label={t("profile.email")} required error={errors.email}>
+              <input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                value={values.email}
+                onChange={(event) => setValue("email", event.target.value)}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                className={controlClass(Boolean(errors.email))}
+              />
+            </FormField>
 
-          <FormField id="password" label={t("auth.password")} required error={errors.password}>
-            <input
-              id="password"
-              type="password"
-              name="password"
-              value={values.password}
-              onChange={(event) => setValue("password", event.target.value)}
-              aria-invalid={Boolean(errors.password)}
-              aria-describedby={errors.password ? "password-error" : undefined}
-              className={controlClass(Boolean(errors.password))}
-            />
-          </FormField>
+            <FormField id="password" label={t("auth.password")} required error={errors.password}>
+              <input
+                id="password"
+                type="password"
+                name="password"
+                value={values.password}
+                onChange={(event) => setValue("password", event.target.value)}
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={errors.password ? "password-error" : undefined}
+                className={controlClass(Boolean(errors.password))}
+              />
+            </FormField>
 
-          {submitError && <p className="error-message" style={{ margin: 0 }}>{submitError}</p>}
+            {submitError && <p className="error-message" style={{ margin: 0 }}>{submitError}</p>}
 
-          <button className={primaryButtonClass} type="submit" disabled={submitting}>
-            {submitting ? t("auth.loginCtaPending") : t("auth.loginCta")}
-          </button>
-        </form>
+            <button className={primaryButtonClass} type="submit" disabled={submitting}>
+              {submitting ? t("auth.loginCtaPending") : t("auth.loginCta")}
+            </button>
+          </form>
 
-        <p className="auth-switch">
-          {t("auth.noAccount")}{" "}
-          <Link to="/register">{t("nav.register")} →</Link>
-        </p>
-      </section>
+          <p className="auth-switch">
+            {t("auth.noAccount")}{" "}
+            <Link to="/register">{t("nav.register")} →</Link>
+          </p>
+        </section>
+      </div>
     </div>
   );
 }

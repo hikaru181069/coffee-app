@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
+import AuthNav from "../components/AuthNav";
 import CoffeeLogo from "../components/CoffeeLogo";
+import GraphIllustration from "./GraphIllustration";
 import FormField from "../features/coffee-records/components/FormField";
 import { controlClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { validateRegisterForm, hasErrors } from "../utils/authFormValidation";
@@ -55,70 +57,76 @@ function RegisterPage() {
 
   return (
     <div className="auth-page">
-      <section className="auth-card">
-        <div className="auth-brand">
-          <CoffeeLogo size={32} />
-        </div>
-        <p className="auth-card-kicker">{t("auth.getStarted")}</p>
-        <h1>{t("auth.registerHeading")}</h1>
-        <p className="auth-card-desc">
-          {t("auth.register.desc")}
-        </p>
+      <AuthNav />
+      <div className="auth-page-graph">
+        <GraphIllustration variant="ambient" />
+      </div>
+      <div className="auth-page-content">
+        <section className="auth-card">
+          <div className="auth-brand">
+            <CoffeeLogo size={32} />
+          </div>
+          <p className="auth-card-kicker">{t("auth.getStarted")}</p>
+          <h1>{t("auth.registerHeading")}</h1>
+          <p className="auth-card-desc">
+            {t("auth.register.desc")}
+          </p>
 
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          <FormField id="name" label={t("profile.name")} required error={errors.name}>
-            <input
-              id="name"
-              type="text"
-              name="name"
-              value={values.name}
-              onChange={(event) => setValue("name", event.target.value)}
-              placeholder={t("auth.namePlaceholder")}
-              aria-invalid={Boolean(errors.name)}
-              aria-describedby={errors.name ? "name-error" : undefined}
-              className={controlClass(Boolean(errors.name))}
-            />
-          </FormField>
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
+            <FormField id="name" label={t("profile.name")} required error={errors.name}>
+              <input
+                id="name"
+                type="text"
+                name="name"
+                value={values.name}
+                onChange={(event) => setValue("name", event.target.value)}
+                placeholder={t("auth.namePlaceholder")}
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? "name-error" : undefined}
+                className={controlClass(Boolean(errors.name))}
+              />
+            </FormField>
 
-          <FormField id="email" label={t("profile.email")} required error={errors.email}>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              value={values.email}
-              onChange={(event) => setValue("email", event.target.value)}
-              placeholder="you@example.com"
-              aria-invalid={Boolean(errors.email)}
-              aria-describedby={errors.email ? "email-error" : undefined}
-              className={controlClass(Boolean(errors.email))}
-            />
-          </FormField>
+            <FormField id="email" label={t("profile.email")} required error={errors.email}>
+              <input
+                id="email"
+                type="email"
+                name="email"
+                value={values.email}
+                onChange={(event) => setValue("email", event.target.value)}
+                placeholder="you@example.com"
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                className={controlClass(Boolean(errors.email))}
+              />
+            </FormField>
 
-          <FormField id="password" label={t("auth.password")} required error={errors.password}>
-            <input
-              id="password"
-              type="password"
-              name="password"
-              value={values.password}
-              onChange={(event) => setValue("password", event.target.value)}
-              aria-invalid={Boolean(errors.password)}
-              aria-describedby={errors.password ? "password-error" : undefined}
-              className={controlClass(Boolean(errors.password))}
-            />
-          </FormField>
+            <FormField id="password" label={t("auth.password")} required error={errors.password}>
+              <input
+                id="password"
+                type="password"
+                name="password"
+                value={values.password}
+                onChange={(event) => setValue("password", event.target.value)}
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={errors.password ? "password-error" : undefined}
+                className={controlClass(Boolean(errors.password))}
+              />
+            </FormField>
 
-          {submitError && <p className="error-message" style={{ margin: 0 }}>{submitError}</p>}
+            {submitError && <p className="error-message" style={{ margin: 0 }}>{submitError}</p>}
 
-          <button className={primaryButtonClass} type="submit" disabled={submitting}>
-            {submitting ? t("auth.registerCtaPending") : t("auth.registerCta")}
-          </button>
-        </form>
+            <button className={primaryButtonClass} type="submit" disabled={submitting}>
+              {submitting ? t("auth.registerCtaPending") : t("auth.registerCta")}
+            </button>
+          </form>
 
-        <p className="auth-switch">
-          {t("auth.hasAccount")}{" "}
-          <Link to="/login">{t("nav.login")} →</Link>
-        </p>
-      </section>
+          <p className="auth-switch">
+            {t("auth.hasAccount")}{" "}
+            <Link to="/login">{t("nav.login")} →</Link>
+          </p>
+        </section>
+      </div>
     </div>
   );
 }

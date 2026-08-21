@@ -7,22 +7,6 @@
    わずかに明るく見えてしまい「箱」のような境界線ができるとユーザーから
    指摘があったため削除した。 */
 
-/* ナビ上部のGet Startedボタン。.home-link はアプリ全体(9ファイル)で使う
-   共通CTAクラスのため、その緑グラデーションは変更せず、Landingページの
-   このボタンだけ単色インディゴで上書きする(a.navCtaで.home-linkより
-   詳細度を上げる。PlayerCard.module.cssのa.glassCardと同じ手法)。 */
-a.navCta {
-  background: var(--color-inverse);
-  color: var(--color-on-inverse);
-  box-shadow: none;
-}
-
-a.navCta:hover {
-  background: var(--color-inverse);
-  opacity: 0.9;
-  box-shadow: none;
-}
-
 .hero {
   position: relative;
   display: flex;
@@ -33,12 +17,12 @@ a.navCta:hover {
   overflow: hidden;
 }
 
-/* Hero背景の装飾グラフ。.grainと同じ理由でz-indexは使わない
-   （.heroとその子要素はposition:relative/absoluteが混在するが、
-   z-index:autoの要素はDOM順で重なるため、.heroGraphを.grainと同じく
+/* Hero背景の装飾グラフ（GraphIllustration.jsx、GraphIllustration.module.css参照）。
+   z-indexは使わない（.heroとその子要素はposition:relative/absoluteが
+   混在するが、z-index:autoの要素はDOM順で重なるため、.heroGraphを
    最初の子として置くだけでkicker/title/ctaより下に描画される）。
    テキストの後ろに置き、操作対象ではないためpointer-events: noneと
-   aria-hidden（LandingGraphIllustration側）で完全に無視させる。 */
+   aria-hidden（GraphIllustration側）で完全に無視させる。 */
 .heroGraph {
   position: absolute;
   inset: 0;
@@ -122,73 +106,10 @@ a.navCta:hover {
 
 @media (prefers-reduced-motion: reduce) {
   .word,
-  .cta,
-  .graphNode {
+  .cta {
     animation: none !important;
     opacity: 1 !important;
     filter: none !important;
-    transform: none !important;
-  }
-}
-
-/* 装飾グラフイラスト（LandingGraphIllustration.jsx）。
-   ノードはfeature/graph/utils/nodeVisuals.jsのcolorClass（text-*）を
-   currentColorで受けるだけで、新しい色は増やさない。 */
-.graphIllustration {
-  display: block;
-  overflow: visible;
-}
-
-.graphEdge {
-  stroke: var(--color-line);
-  stroke-width: 1.5;
-}
-
-.graphNode {
-  animation: node-pulse 3.2s ease-in-out infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-
-@keyframes node-pulse {
-  0%, 100% {
-    opacity: 0.75;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
-}
-
-/* Hero背景用: 大きく・薄く・全体がゆっくり漂う */
-.graphAmbient {
-  width: min(90vw, 640px);
-  height: auto;
-  opacity: 0.16;
-  animation: graph-drift 24s ease-in-out infinite alternate;
-}
-
-@keyframes graph-drift {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(-2%, 1.5%) scale(1.03);
-  }
-}
-
-/* Your Knowledge Graphセクション用: くっきり見せる */
-.graphFeature {
-  width: 100%;
-  max-width: 420px;
-  height: auto;
-  opacity: 0.9;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .graphAmbient {
-    animation: none !important;
     transform: none !important;
   }
 }
