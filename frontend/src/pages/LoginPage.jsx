@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import AuthNav from "../components/AuthNav";
 import CoffeeLogo from "../components/CoffeeLogo";
 import FormField from "../features/coffee-records/components/FormField";
-import { controlClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
+import { controlClass, dangerButtonClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { validateLoginForm, hasErrors } from "../utils/authFormValidation";
 import {
   clearAuthData,
@@ -67,20 +67,32 @@ function LoginPage() {
     }
   };
 
+  // 既にログイン済みのユーザーが手動で/loginへアクセスした場合。
+  // 2026-08、以前はhome-page/home-empty-state等（HomePage.jsxの旧実装が
+  // 使っていたクラスで、現在のHomePage.jsxはもう使っていない）のまま
+  // 放置されていた。入れ子のCSS Grid/Flexが原因で意図せず子要素が
+  // 縦に極端に引き伸ばされる不具合になっていたため、Login本体と同じ
+  // .auth-page/.auth-cardへ作り直した（AuthNavは出さない。ログイン
+  // 済みの状態でAuthNavの「ログイン」リンクを見せても意味が無いため）。
   if (token) {
     return (
-      <div className="home-page px-6 py-16">
-        <div className="home-empty-state">
-          <span className="empty-state-icon"><CheckCircle size={36} strokeWidth={1.5} /></span>
-          <p className="empty-state-title">
-            {t("auth.alreadyLoggedInAs", { name: userName || "user" })}
-          </p>
-          <div className="home-actions">
-            <Link className="home-link" to="/">{t("auth.goToHome")}</Link>
-            <button className="home-link danger" type="button" onClick={handleLogout}>
-              {t("nav.logout")}
-            </button>
-          </div>
+      <div className="auth-page">
+        <div className="auth-page-content">
+          <section className="auth-card">
+            <div className="auth-brand">
+              <CoffeeLogo size={32} />
+            </div>
+            <CheckCircle size={36} strokeWidth={1.5} className="mx-auto mb-4 text-text-tertiary" />
+            <p className="auth-card-desc">
+              {t("auth.alreadyLoggedInAs", { name: userName || "user" })}
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link className={primaryButtonClass} to="/">{t("auth.goToHome")}</Link>
+              <button className={dangerButtonClass} type="button" onClick={handleLogout}>
+                {t("nav.logout")}
+              </button>
+            </div>
+          </section>
         </div>
       </div>
     );

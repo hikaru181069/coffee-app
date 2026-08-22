@@ -755,14 +755,6 @@ input {
   }
 }
 
-.home-page {
-  min-height: 80vh;
-  display: grid;
-  gap: 34px;
-  justify-items: center;
-  padding: 0px 48px 24px;
-}
-
 /* [Phase 14] Footer
    fantinel.dev 参考: 技術スタック・クレジット表示。
    以前は全ページ下部の固定フッターだったが、ProfilePage末尾へ移した
@@ -1762,36 +1754,6 @@ input {
   }
 }
 
-.home-onboarding-callout,
-.home-empty-state {
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-  padding: 18px;
-  border: 1px solid rgba(249, 226, 175, 0.36);
-  border-radius: 18px;
-  background:
-    linear-gradient(135deg, rgba(249, 226, 175, 0.1), transparent),
-    rgba(49, 50, 68, 0.42);
-}
-
-.home-onboarding-callout strong {
-  color: var(--color-warn);
-}
-
-.home-onboarding-callout p,
-.home-empty-state p {
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.home-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  justify-content: center;
-}
-
 .home-search-form {
   display: grid;
   gap: 12px;
@@ -2009,34 +1971,6 @@ input {
 }
 
 /* Empty state */
-.home-empty-state {
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-  padding: 32px 18px;
-  border: 1px solid rgba(249, 226, 175, 0.36);
-  border-radius: 18px;
-  background:
-    linear-gradient(135deg, rgba(249, 226, 175, 0.06), transparent),
-    rgba(49, 50, 68, 0.42);
-}
-
-.empty-state-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-line);
-  width: 40px;
-  height: 40px;
-}
-
-.empty-state-title {
-  color: var(--color-text-secondary);
-  font-weight: 700;
-  font-size: 16px;
-  margin: 0;
-}
-
 .empty-state-desc {
   color: var(--color-text-tertiary);
   font-size: 14px;
@@ -2302,19 +2236,6 @@ input {
   background: transparent;
   border-color: var(--color-line);
   box-shadow: none;
-}
-
-.home-link.danger {
-  color: var(--color-on-inverse);
-  background: var(--color-danger);
-  box-shadow: var(--shadow-elevated);
-  border: 0;
-}
-
-.home-link.danger:hover {
-  background: color-mix(in srgb, var(--color-danger) 85%, transparent);
-  box-shadow: var(--shadow-panel);
-  transform: translateY(-1px);
 }
 
 .add-player-link {
