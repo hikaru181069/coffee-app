@@ -1248,6 +1248,22 @@ Landingページ全体を見返すと、Heroセクション（ナビのすぐ下
 
 ---
 
+### 2026-08-22: ログイン済み状態で`/login`を開いた画面の崩れを修正
+
+ユーザーがスクリーンショット付きで「ログイン確認の画面（ログイン済み状態で`/login`を開いたときの画面）の表示が崩れている」と報告した。実機は、カードと2つのボタン（Homeへ/ログアウト）が異常に縦長に引き伸ばされ、ボタン内テキストも上端に寄る、明らかな崩れだった。
+
+原因は`LoginPage.jsx`の`if (token) {...}`分岐（ログイン済みユーザーが`/login`へ直接アクセスしたときの表示）だけが、これまでのLogin/Register作り直し作業で一度も触れられておらず、`HomePage.jsx`の旧実装が使っていた`.home-page`（`display: grid; min-height: 80vh;`）・`.home-empty-state`・`.home-actions`・`.home-link`のままだったこと。現在の`HomePage.jsx`はこれらのクラスをもう使っておらず、`grep`で確認したところ`LoginPage.jsx`のこの1箇所だけが最後の利用者だった。
+
+**根本原因（CSSの入れ子Grid/Flexのstretch）**: `.home-page`（`display: grid`、子1つ）→`.home-empty-state`（同じく`display: grid`）→`.home-actions`（`display: flex`）という3重の入れ子で、いずれも`align-items`/`align-content`を明示していなかったため、CSS Gridのデフォルト値（`normal`、実質`stretch`相当）が連鎖し、`.home-page`の`min-height: 80vh`が子→孫→曾孫まで伝播して、最終的に`.home-actions`内の`.home-link`ボタンまで異常な高さに引き伸ばされていた。これまでのセッションで見つけてきた「レイヤー外のCSSが`@layer`のutilityクラスに勝つ」バグとは異なる、初めて見つけた種類のCSSバグ。
+
+**修正**: この分岐を、Login本体・Register・「ログイン済みです」以外の状態と同じ`.auth-page`/`.auth-page-content`/`.auth-card`（`auth-brand`のCoffeeLogo込み）へ作り直した。ボタンも`.home-link`/`.home-link.danger`（生CSS）から`primaryButtonClass`/`dangerButtonClass`（`formStyles.js`、Tailwind、他のLogin/Register/RecordForm等と同じ共通クラス）へ置き換えた。AuthNavはあえて出さない（ログイン済みの状態でAuthNavの「ログイン」リンクを見せても意味が無いため）。
+
+**ついでに行った片付け**: この修正で完全に未使用になった`.home-page`・`.home-onboarding-callout`（`.home-empty-state`と共有していた1つ目の定義）・`.home-empty-state`（2つ目の定義）・`.home-actions`（base）・`.empty-state-icon`・`.empty-state-title`・`.home-link.danger`を`App.css`から削除した（いずれも自分の今回の編集で使用箇所が無くなったもののみ。`docs/mlb-legacy-inventory.md`に記載済みの、別途対応予定の大きなMLB系未参照CSSブロック（`@media`内の`.app`/`.home-actions`等）は今回のスコープ外として触れていない）。CSSバンドルサイズが174.56KB→173.38KBへ縮小したことをビルドログで確認。
+
+**検証**: `cd frontend && npm run lint && npm run test && npm run build`すべて成功。claude-in-chromeでログイン→`/login`へ直接アクセスし、カードが他のLogin/Registerカードと同じ高さ・見た目になっていること、「Homeへ」ボタンでHomeへ遷移すること、「ログアウト」ボタンで実際にログアウトし通常のLoginフォームへ戻ることを実機確認。Landing・Login・Register（いずれも未ログイン状態）に回帰が無いことも確認。
+
+---
+
 ## 変更ファイル（現在の構成）
 
 MVP完成（2026-07-31）時点のスナップショット。Post-MVPで追加・変更したファイルは上記の各エントリを参照。
