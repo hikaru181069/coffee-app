@@ -152,7 +152,8 @@
     "connectionsHeading": "つながり",
     "breadcrumbAriaLabel": "パンくずリスト",
     "moreActionsLabel": "その他の操作",
-    "connectionsFlavorOverflow": "ほかに{{count}}件のフレーバー"
+    "connectionsFlavorOverflow": "ほかに{{count}}件のフレーバー",
+    "tasteHeading": "味覚グラフ"
   },
   "recordForm": {
     "title": "タイトル",
@@ -178,6 +179,13 @@
     "multiSelectHint": "複数選べます",
     "roasterName": "焙煎者・ロースター",
     "roasterNamePlaceholder": "例: Onibus Coffee",
+    "tasteHeading": "味覚グラフ",
+    "tasteSweetness": "甘み",
+    "tasteBitterness": "苦み",
+    "tasteAcidity": "酸味",
+    "tasteBody": "コク",
+    "tasteAroma": "香り",
+    "tasteAftertaste": "後味",
     "checkInput": "入力内容を確認してください。"
   },
   "profile": {
@@ -219,7 +227,8 @@
       "process": "精製方法",
       "roastLevel": "焙煎度",
       "flavor": "フレーバー",
-      "cafe": "カフェ"
+      "cafe": "カフェ",
+      "keyword": "キーワード"
     }
   },
   "insights": {

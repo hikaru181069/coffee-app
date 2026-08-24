@@ -63,6 +63,11 @@ const ICON_PATHS = {
     },
     { tag: "path", d: "M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05" },
   ],
+  // Quote（keyword）
+  quote: [
+    { tag: "path", d: "M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" },
+    { tag: "path", d: "M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" },
+  ],
 };
 
 const TYPE_TO_ICON_KEY = {
@@ -74,6 +79,7 @@ const TYPE_TO_ICON_KEY = {
   roastLevel: "flame",
   flavor: "sparkles",
   cafe: "store",
+  keyword: "quote",
 };
 
 const buildSvgMarkup = (iconKey, color) => {

@@ -12,7 +12,7 @@ import {
   secondaryButtonClass,
   cardClass,
 } from "./formStyles";
-import { RECORD_TYPES } from "../utils/recordFormat";
+import { RECORD_TYPES, TASTE_AXES } from "../utils/recordFormat";
 import { getErrorMessage } from "../../../utils/errorMessage";
 
 /**
@@ -57,7 +57,14 @@ function RecordForm({
 
   // 何か問題があるとき、閉じている詳細セクションの中にエラーがあると
   // ユーザーが気づけないので開いて見せる
-  const detailFields = ["farmName", "roasterName", "originId", "processId", "roastLevelId"];
+  const detailFields = [
+    "farmName",
+    "roasterName",
+    "originId",
+    "processId",
+    "roastLevelId",
+    ...TASTE_AXES.map((axis) => axis.field),
+  ];
   const hasHiddenError = detailFields.some((field) => errors[field]);
   const showDetails = isDetailsOpen || hasHiddenError;
 
@@ -290,6 +297,25 @@ function RecordForm({
                 className={controlClass(errors.roasterName)}
               />
             </FormField>
+
+            {/* 味覚グラフ（6軸）。既存のratingと同じRatingInputを再利用する */}
+            <div className="border-t border-line/60 pt-5">
+              <span className="block text-sm font-semibold text-text">
+                {t("recordForm.tasteHeading")}
+              </span>
+              <div className="mt-4 flex flex-col gap-5">
+                {TASTE_AXES.map(({ field, labelKey }) => (
+                  <FormField key={field} id={field} label={t(labelKey)} error={errors[field]}>
+                    <RatingInput
+                      id={field}
+                      value={values[field]}
+                      onChange={(next) => setValue(field, next)}
+                      disabled={isSubmitting}
+                    />
+                  </FormField>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </section>

@@ -85,6 +85,34 @@ describe("rating", () => {
   });
 });
 
+describe.each([
+  "tasteSweetness",
+  "tasteBitterness",
+  "tasteAcidity",
+  "tasteBody",
+  "tasteAroma",
+  "tasteAftertaste",
+])("%s（味覚グラフの6軸）", (field) => {
+  test("既定値は null（未評価と星1を区別するため）", () => {
+    expect(buildRecord()[field]).toBeNull();
+  });
+
+  test("1〜5の整数を受け入れる", async () => {
+    for (const value of [1, 2, 3, 4, 5]) {
+      expect(await errorFields(buildRecord({ [field]: value }))).toEqual([]);
+    }
+  });
+
+  test("範囲外は拒否する", async () => {
+    expect(await errorFields(buildRecord({ [field]: 0 }))).toContain(field);
+    expect(await errorFields(buildRecord({ [field]: 6 }))).toContain(field);
+  });
+
+  test("小数は拒否する", async () => {
+    expect(await errorFields(buildRecord({ [field]: 3.5 }))).toContain(field);
+  });
+});
+
 describe("文字列項目", () => {
   test("titleの前後の空白を取り除く", () => {
     expect(buildRecord({ title: "  Kenya AA  " }).title).toBe("Kenya AA");

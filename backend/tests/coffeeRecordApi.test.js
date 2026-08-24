@@ -86,6 +86,23 @@ describe("POST /api/coffee-records", () => {
     expect(res.body.data.id).toBeDefined();
   });
 
+  test("味覚グラフの6軸を指定して作成できる", async () => {
+    const res = await request(app)
+      .post(ENDPOINT)
+      .set("Authorization", alice.authHeader)
+      .send(buildRecordPayload({ tasteSweetness: 4, tasteAcidity: 2 }));
+
+    expect(res.status).toBe(201);
+    expect(res.body.data).toMatchObject({
+      tasteSweetness: 4,
+      tasteBitterness: null,
+      tasteAcidity: 2,
+      tasteBody: null,
+      tasteAroma: null,
+      tasteAftertaste: null,
+    });
+  });
+
   test("必須項目が足りなければ400と項目別の理由を返す", async () => {
     const res = await request(app)
       .post(ENDPOINT)
@@ -578,8 +595,13 @@ describe("作成 → 詳細 → 更新 → 削除", () => {
     const updated = await request(app)
       .patch(`${ENDPOINT}/${id}`)
       .set("Authorization", alice.authHeader)
-      .send({ title: "Kenya AA (再訪)", rating: 5 });
-    expect(updated.body.data).toMatchObject({ title: "Kenya AA (再訪)", rating: 5 });
+      .send({ title: "Kenya AA (再訪)", rating: 5, tasteAroma: 4, tasteAftertaste: 3 });
+    expect(updated.body.data).toMatchObject({
+      title: "Kenya AA (再訪)",
+      rating: 5,
+      tasteAroma: 4,
+      tasteAftertaste: 3,
+    });
 
     const removed = await request(app)
       .delete(`${ENDPOINT}/${id}`)

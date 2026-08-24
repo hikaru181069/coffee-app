@@ -8,8 +8,10 @@ import {
   roastLevelNodeId,
   flavorNodeId,
   cafeNodeId,
+  keywordNodeId,
   edgeId,
 } from "./nodeId.js";
+import { extractKeywords } from "./noteKeywordExtractor.js";
 
 /**
  * 知識グラフを組み立てる純粋関数。
@@ -25,7 +27,9 @@ import {
  *   1. 認証済みuserIdでCoffeeRecordを取得        … graphService の担当
  *   2. マスターデータをpopulateまたは集約         … repository の担当
  *   3. CoffeeRecordノードを生成                  … ここ
- *   4. 属性ノードを重複排除して生成               … ここ
+ *   4. 属性ノードを重複排除して生成               … ここ（notesを固定辞書と
+ *      部分文字列一致で照合したkeywordも同じ手順でノード化する。
+ *      backend/core/graph/noteKeywordExtractor.js参照）
  *   5. recordと属性のedgeを生成                  … ここ
  *   6. recordCountなどのmetadataを集計            … ここ
  *   7. frontend向け形式で返す                     … ここ
@@ -40,6 +44,7 @@ export const ATTRIBUTE_NODE_TYPES = [
   "roastLevel",
   "flavor",
   "cafe",
+  "keyword",
 ];
 
 /**
@@ -48,8 +53,14 @@ export const ATTRIBUTE_NODE_TYPES = [
  * record → 属性 の対応が7種類あり、単数（origin/process/roastLevel/
  * farm/cafe）と複数（variety/flavor）が混ざっている。ここで一度
  * リストへ均すことで、buildGraph 側のループが1種類の書き方で済む。
+ *
+ * @param {object} record
+ * @param {Map<string, {id: string, name: string}>} [flavorsByNormalizedName]
+ *   notesのキーワードをflavorへ統合するためのFlavorマスター索引
+ *   （normalizeName(flavor.name) → {id, name}）。未指定ならkeywordは
+ *   すべてkeywordノードのままになる（後方互換のため任意引数にしている）。
  */
-const collectAttributeRefs = (record) => {
+const collectAttributeRefs = (record, flavorsByNormalizedName) => {
   const refs = [];
 
   if (record.origin) {
@@ -128,7 +139,54 @@ const collectAttributeRefs = (record) => {
     });
   }
 
-  return refs;
+  // notesは自由記述だが、固定辞書との部分文字列一致で味覚キーワードを
+  // 検出する（noteKeywordExtractor.js）。flavorと違いマスターデータを
+  // 持たず、読み取り時に都度導出する点がfarm/cafeとも異なる
+  // （farm/cafeはユーザーが直接入力した項目名そのもの。keywordは
+  // ユーザーが選択・入力していない、自動検出された属性）。
+  //
+  // ただしflavorAliasを持つ語（例:「チョコレートのような」）が実在の
+  // Flavorマスターと一致する場合は、新しいkeywordノードを作らず、
+  // 既存のflavorノードへ統合する（tasteKeywords.jsonの_comment参照。
+  // ユーザーが「Chocolate（手動選択したflavor）」と「チョコレートの
+  // ような（notesの自由記述）」が別ノードに分かれるのは冗長だと
+  // 指摘したための対応）。一致しなければ従来どおりkeywordノードにする。
+  for (const { keyword, flavorAlias } of extractKeywords(record.notes)) {
+    const matchedFlavor = flavorAlias
+      ? flavorsByNormalizedName?.get(normalizeName(flavorAlias))
+      : null;
+
+    if (matchedFlavor) {
+      refs.push({
+        type: "flavor",
+        id: flavorNodeId(matchedFlavor.id),
+        label: matchedFlavor.name,
+        metadata: { flavorId: matchedFlavor.id },
+        edgeType: "FLAVOR",
+      });
+    } else {
+      const normalized = normalizeName(keyword);
+      refs.push({
+        type: "keyword",
+        id: keywordNodeId(normalized),
+        label: keyword,
+        metadata: { keyword },
+        edgeType: "KEYWORD",
+      });
+    }
+  }
+
+  // 同じ記録が「Chocolate」をflavorとして明示選択し、かつnotesにも
+  // 「チョコレートのような」と書いていた場合、上のロジックにより
+  // 同じflavorノードへのrefが2つ生まれうる。buildGraph側のrecordCount
+  // 集計は「そのrefを何回処理したか」を数えるため、ここで重複を
+  // 取り除いておかないと同じ記録が2回とカウントされてしまう。
+  const seenIds = new Set();
+  return refs.filter((ref) => {
+    if (seenIds.has(ref.id)) return false;
+    seenIds.add(ref.id);
+    return true;
+  });
 };
 
 /**
@@ -142,9 +200,13 @@ const collectAttributeRefs = (record) => {
  *   recordノードは常に含める。record自体を除外すると、属性ノードだけが
  *   浮いた意味のないグラフになるため（docs/knowledge-graph.md の Filters
  *   はnodeTypesを「属性の絞り込み」として説明している）。
+ * @param {Map<string, {id: string, name: string}>} [options.flavorsByNormalizedName]
+ *   notesのキーワード（flavorAlias付き）をflavorノードへ統合するための
+ *   Flavorマスター索引。graphService.jsがmasterDataRepositoryから取得して
+ *   渡す。未指定なら統合せず、該当キーワードもkeywordノードのままになる。
  * @returns {{ nodes: Array, edges: Array, summary: object }}
  */
-export const buildGraph = (records, { nodeTypes } = {}) => {
+export const buildGraph = (records, { nodeTypes, flavorsByNormalizedName } = {}) => {
   const allowedTypes =
     Array.isArray(nodeTypes) && nodeTypes.length > 0 ? new Set(nodeTypes) : null;
 
@@ -169,7 +231,7 @@ export const buildGraph = (records, { nodeTypes } = {}) => {
       },
     });
 
-    for (const ref of collectAttributeRefs(record)) {
+    for (const ref of collectAttributeRefs(record, flavorsByNormalizedName)) {
       if (allowedTypes && !allowedTypes.has(ref.type)) continue;
 
       // 既に同じ属性ノードがあれば recordCount を増やすだけ。

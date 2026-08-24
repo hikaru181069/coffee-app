@@ -5,7 +5,7 @@ import {
   hasErrors,
   toApiPayload,
 } from "../validation/recordFormValidation";
-import { toDateTimeLocalValue } from "../utils/recordFormat";
+import { TASTE_AXES, toDateTimeLocalValue } from "../utils/recordFormat";
 
 /**
  * 記録フォームの状態を管理する。
@@ -32,6 +32,7 @@ const emptyValues = () => ({
   processId: "",
   roastLevelId: "",
   flavorIds: [],
+  ...Object.fromEntries(TASTE_AXES.map((axis) => [axis.field, ""])),
 });
 
 /**
@@ -55,6 +56,14 @@ const toFormValues = (record) => ({
   processId: record.process?.id ?? "",
   roastLevelId: record.roastLevel?.id ?? "",
   flavorIds: (record.flavors ?? []).map((flavor) => flavor.id),
+  ...Object.fromEntries(
+    TASTE_AXES.map((axis) => [
+      axis.field,
+      record[axis.field] === null || record[axis.field] === undefined
+        ? ""
+        : String(record[axis.field]),
+    ]),
+  ),
 });
 
 /**

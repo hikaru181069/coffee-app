@@ -155,7 +155,8 @@
     "connectionsHeading": "Connections",
     "breadcrumbAriaLabel": "Breadcrumb",
     "moreActionsLabel": "More actions",
-    "connectionsFlavorOverflow": "+{{count}} more flavors"
+    "connectionsFlavorOverflow": "+{{count}} more flavors",
+    "tasteHeading": "Taste Profile"
   },
   "recordForm": {
     "title": "Title",
@@ -181,6 +182,13 @@
     "multiSelectHint": "You can select multiple",
     "roasterName": "Roaster",
     "roasterNamePlaceholder": "e.g. Onibus Coffee",
+    "tasteHeading": "Taste Profile",
+    "tasteSweetness": "Sweetness",
+    "tasteBitterness": "Bitterness",
+    "tasteAcidity": "Acidity",
+    "tasteBody": "Body",
+    "tasteAroma": "Aroma",
+    "tasteAftertaste": "Aftertaste",
     "checkInput": "Please check your input."
   },
   "profile": {
@@ -223,7 +231,8 @@
       "process": "Process",
       "roastLevel": "Roast Level",
       "flavor": "Flavor",
-      "cafe": "Café"
+      "cafe": "Café",
+      "keyword": "Keyword"
     }
   },
   "insights": {

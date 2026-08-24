@@ -1,4 +1,4 @@
-import { Coffee, Droplets, Flame, Globe, Leaf, Sparkles, Sprout, Store } from "lucide-react";
+import { Coffee, Droplets, Flame, Globe, Leaf, Quote, Sparkles, Sprout, Store } from "lucide-react";
 import { getCanvasColor } from "./canvasColors";
 
 /**
@@ -6,7 +6,8 @@ import { getCanvasColor } from "./canvasColors";
  *
  * docs/design.md の「Graph Visual Semantics」に対応する:
  *   record: card/circle, origin: globe, farm: leaf, variety: seed,
- *   process: droplets, roastLevel: flame, flavor: sparkle, cafe: store
+ *   process: droplets, roastLevel: flame, flavor: sparkle, cafe: store,
+ *   keyword: quote
  *
  * 色だけで種別を区別しない（docs/design.md の UI Rules）ため、
  * 種別ごとに異なるアイコンも必ず割り当てる。GraphLegend と
@@ -18,8 +19,8 @@ import { getCanvasColor } from "./canvasColors";
  *
  * 色の設計（prompts/design/00-design-principles.md 6.1参照）:
  * recordとorigin/roastLevelはモスの濃淡3段階（record=`accent-moss`）、
- * 残り5種（farm/variety/process/flavor/cafe）はモスと彩度を揃えた
- * ミュートな別色相5色。アイコンで種別を区別できているため、色は
+ * 残り6種（farm/variety/process/flavor/cafe/keyword）はモスと彩度を
+ * 揃えたミュートな別色相6色。アイコンで種別を区別できているため、色は
  * 識別性より階層表現（主役=モス、属性=ミュートな色）に使っている。
  * 2026-08、配色をmobbin.com準拠へ刷新した際、`primary`が
  * フォーカスリング専用の青へ変わったため、recordノードは独立した
@@ -106,6 +107,15 @@ export const NODE_VISUALS = {
       return getCanvasColor("--color-accent-mist");
     },
   },
+  keyword: {
+    icon: Quote,
+    labelKey: "graph.nodeTypes.keyword",
+    colorClass: "text-accent-teal",
+    ringClass: "ring-accent-teal/50",
+    get canvasColor() {
+      return getCanvasColor("--color-accent-teal");
+    },
+  },
 };
 
 /** 属性ノードの種別一覧（凡例・フィルターの並び順に使う。recordは含めない） */
@@ -117,6 +127,7 @@ export const ATTRIBUTE_NODE_TYPES = [
   "roastLevel",
   "flavor",
   "cafe",
+  "keyword",
 ];
 
 export const getNodeVisual = (type) => NODE_VISUALS[type] ?? NODE_VISUALS.record;

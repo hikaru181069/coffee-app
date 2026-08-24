@@ -14,7 +14,7 @@
  * フォームの状態管理から切り離してある。
  */
 
-import { fromDateTimeLocalValue } from "../utils/recordFormat";
+import { TASTE_AXES, fromDateTimeLocalValue } from "../utils/recordFormat";
 
 const MAX_LENGTH = {
   title: 120,
@@ -63,6 +63,17 @@ export const validateRecordForm = (values = {}, t) => {
     }
   }
 
+  // 味覚グラフの6軸も rating と同じく「未評価」を許す
+  for (const { field } of TASTE_AXES) {
+    const value = values[field];
+    if (value === "" || value === null || value === undefined) continue;
+
+    const score = Number(value);
+    if (!Number.isInteger(score) || score < 1 || score > 5) {
+      errors[field] = t("validation.ratingRange");
+    }
+  }
+
   for (const field of ["notes", "cafeName", "roasterName", "farmName"]) {
     const value = (values[field] ?? "").trim();
     if (value.length > MAX_LENGTH[field]) {
@@ -106,4 +117,13 @@ export const toApiPayload = (values) => ({
   processId: values.processId || null,
   roastLevelId: values.roastLevelId || null,
   flavorIds: values.flavorIds ?? [],
+
+  ...Object.fromEntries(
+    TASTE_AXES.map(({ field }) => [
+      field,
+      values[field] === "" || values[field] === null || values[field] === undefined
+        ? null
+        : Number(values[field]),
+    ]),
+  ),
 });

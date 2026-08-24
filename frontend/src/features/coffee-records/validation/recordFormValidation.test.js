@@ -7,6 +7,7 @@
 import { describe, expect, test } from "vitest";
 
 import { hasErrors, toApiPayload, validateRecordForm } from "./recordFormValidation";
+import { TASTE_AXES } from "../utils/recordFormat";
 
 // 実際の翻訳文言は問わず、どのフィールドにエラーが出たかだけを確認するため、
 // キーをそのまま返す最小限のモック
@@ -74,6 +75,22 @@ describe("validateRecordForm", () => {
     const errors = validateRecordForm(buildValues({ notes: "a".repeat(2001) }), t);
     expect(errors.notes).toBe("validation.maxLength");
   });
+
+  describe.each(TASTE_AXES)("味覚グラフ: $field", ({ field }) => {
+    test("未評価（空文字）ならエラーにしない", () => {
+      const errors = validateRecordForm(buildValues({ [field]: "" }), t);
+      expect(errors[field]).toBeUndefined();
+    });
+
+    test("範囲外（0や6）ならエラー", () => {
+      expect(validateRecordForm(buildValues({ [field]: "0" }), t)[field]).toBe(
+        "validation.ratingRange",
+      );
+      expect(validateRecordForm(buildValues({ [field]: "6" }), t)[field]).toBe(
+        "validation.ratingRange",
+      );
+    });
+  });
 });
 
 describe("toApiPayload", () => {
@@ -113,5 +130,22 @@ describe("toApiPayload", () => {
     expect(payload.originId).toBeNull();
     expect(payload.processId).toBeNull();
     expect(payload.roastLevelId).toBeNull();
+  });
+
+  test("味覚グラフの6軸は数値へ変換し、空文字はnullにする", () => {
+    const payload = toApiPayload(
+      buildValues({
+        tasteSweetness: "4",
+        tasteBitterness: "",
+        tasteAcidity: "2",
+        tasteBody: "",
+        tasteAroma: "",
+        tasteAftertaste: "",
+      }),
+    );
+
+    expect(payload.tasteSweetness).toBe(4);
+    expect(payload.tasteBitterness).toBeNull();
+    expect(payload.tasteAcidity).toBe(2);
   });
 });

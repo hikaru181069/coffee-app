@@ -40,6 +40,16 @@ const MULTI_REF_FIELDS = ["varietyIds", "flavorIds"];
 /** 自由入力の文字列フィールド（任意） */
 const OPTIONAL_TEXT_FIELDS = ["notes", "cafeName", "roasterName", "farmName"];
 
+/** 味覚グラフ用の6軸評価フィールド（任意、1〜5の整数） */
+const TASTE_FIELDS = [
+  "tasteSweetness",
+  "tasteBitterness",
+  "tasteAcidity",
+  "tasteBody",
+  "tasteAroma",
+  "tasteAftertaste",
+];
+
 const isMissing = (value) => value === undefined || value === null || value === "";
 
 // ── 個別の検証 ──────────────────────────────────────────────────
@@ -80,6 +90,17 @@ const validateRating = (value, details) => {
 
   if (!Number.isInteger(value) || value < 1 || value > 5) {
     details.push({ field: "rating", message: "評価は1〜5の整数で指定してください" });
+  }
+};
+
+const validateTasteScore = (field, value, details) => {
+  // 未評価を許可する。null / undefined / "" は「評価なし」として扱う
+  // （validateRatingと同じ理由。ratingが単一の総合評価なのに対し、
+  // これは6軸それぞれの評価）
+  if (isMissing(value)) return;
+
+  if (!Number.isInteger(value) || value < 1 || value > 5) {
+    details.push({ field, message: "1〜5の整数で指定してください" });
   }
 };
 
@@ -145,6 +166,9 @@ export const validateCreateCoffeeRecord = (body = {}) => {
   for (const field of OPTIONAL_TEXT_FIELDS) {
     validateOptionalText(field, body[field], details);
   }
+  for (const field of TASTE_FIELDS) {
+    validateTasteScore(field, body[field], details);
+  }
   for (const field of SINGLE_REF_FIELDS) {
     validateSingleRef(field, body[field], details);
   }
@@ -185,6 +209,9 @@ export const validateUpdateCoffeeRecord = (body = {}) => {
   for (const field of OPTIONAL_TEXT_FIELDS) {
     if (field in body) validateOptionalText(field, body[field], details);
   }
+  for (const field of TASTE_FIELDS) {
+    if (field in body) validateTasteScore(field, body[field], details);
+  }
   for (const field of SINGLE_REF_FIELDS) {
     if (field in body) validateSingleRef(field, body[field], details);
   }
@@ -208,6 +235,7 @@ export const pickCoffeeRecordFields = (body = {}) => {
     "recordType",
     "rating",
     ...OPTIONAL_TEXT_FIELDS,
+    ...TASTE_FIELDS,
     ...SINGLE_REF_FIELDS,
     ...MULTI_REF_FIELDS,
   ];

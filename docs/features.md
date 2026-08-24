@@ -43,6 +43,16 @@ docs/mvp.mdのOut of Scopeには「AI推薦」「自然言語による味覚分�
 自由記述からの味覚分析や、次の一杯を推薦する機能は引き続き将来機能
 （product-principles.md「MVP Before Intelligence」）。
 
+### Graphとの境界
+
+知識グラフ（Knowledge Graph参照）は、notesから固定辞書でキーワードを
+抽出しノード化する（keywordノード）。これはInsightの「notesを読まない」
+方針と矛盾しない: Graphのキーワード抽出は部分文字列一致による
+ノード生成であり、Insightのような「意味づけされた一文」の生成・
+統計的傾向の提示は行わない。両者は別の目的（Graphは探索、Insightは
+意味の提示）を持つため、notesの扱いが異なっていてよい
+（docs/product.md「MVP Before Intelligence」参照）。
+
 ### Source of Truth
 
 MongoDBのCoffeeRecordとマスターデータを正とする。Insight専用の
@@ -241,7 +251,8 @@ Insightが「意味づけされた一文」を返すのに対し、Statsはこ�
 ### ルールベースであり、AI/自然言語処理ではない
 
 Insightと同じ理由で、構造化データの集計（カウント・平均・グルーピング）
-だけで組み立てる。自由記述の`notes`は読まない。
+だけで組み立てる。自由記述の`notes`は読まない（知識グラフのkeywordノード
+とは別の関心事であり、Statsの集計対象を広げる予定はない）。
 
 ### Source of Truth
 

@@ -34,5 +34,13 @@ export const farmNodeId = (normalizedFarmName) => `farm:${normalizedFarmName}`;
  */
 export const cafeNodeId = (normalizedCafeName) => `cafe:${normalizedCafeName}`;
 
+/**
+ * keywordもfarm/cafeと同じ理由（別コレクションを持たない自由記述由来）で、
+ * 正規化した文字列をIDにする。ただしkeywordはnoteKeywordExtractor.jsが
+ * 返す辞書のcanonical形がそのまま入るため、揺れの正規化というよりは
+ * 「同じcanonicalなら同じID」を保証する目的が主。
+ */
+export const keywordNodeId = (normalizedKeyword) => `keyword:${normalizedKeyword}`;
+
 /** 2ノード間のエッジIDを組み立てる（同じ組み合わせのエッジが重複しないようにする） */
 export const edgeId = (sourceNodeId, targetNodeId) => `${sourceNodeId}-${targetNodeId}`;

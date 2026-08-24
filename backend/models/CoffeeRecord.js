@@ -60,6 +60,72 @@ const coffeeRecordSchema = new mongoose.Schema(
         message: "rating must be an integer between 1 and 5",
       },
     },
+    // 6軸の味覚評価（味覚グラフ用）。ratingと同じ理由で既定値はnull
+    // （未評価と「星1」を区別する）。notesとは独立した手動入力で、
+    // backend/core/graph/noteKeywordExtractor.jsのcategoryとは呼び名を
+    // 揃えているだけで機構的な連携は無い（docs/domain-model.md参照）。
+    // 知識グラフのノードにはならないため、下の「コーヒーの要素」
+    // セクションには含めない。
+    tasteSweetness: {
+      type: Number,
+      default: null,
+      min: 1,
+      max: 5,
+      validate: {
+        validator: (value) => value === null || Number.isInteger(value),
+        message: "tasteSweetness must be an integer between 1 and 5",
+      },
+    },
+    tasteBitterness: {
+      type: Number,
+      default: null,
+      min: 1,
+      max: 5,
+      validate: {
+        validator: (value) => value === null || Number.isInteger(value),
+        message: "tasteBitterness must be an integer between 1 and 5",
+      },
+    },
+    tasteAcidity: {
+      type: Number,
+      default: null,
+      min: 1,
+      max: 5,
+      validate: {
+        validator: (value) => value === null || Number.isInteger(value),
+        message: "tasteAcidity must be an integer between 1 and 5",
+      },
+    },
+    tasteBody: {
+      type: Number,
+      default: null,
+      min: 1,
+      max: 5,
+      validate: {
+        validator: (value) => value === null || Number.isInteger(value),
+        message: "tasteBody must be an integer between 1 and 5",
+      },
+    },
+    tasteAroma: {
+      type: Number,
+      default: null,
+      min: 1,
+      max: 5,
+      validate: {
+        validator: (value) => value === null || Number.isInteger(value),
+        message: "tasteAroma must be an integer between 1 and 5",
+      },
+    },
+    tasteAftertaste: {
+      type: Number,
+      default: null,
+      min: 1,
+      max: 5,
+      validate: {
+        validator: (value) => value === null || Number.isInteger(value),
+        message: "tasteAftertaste must be an integer between 1 and 5",
+      },
+    },
     notes: {
       type: String,
       default: "",

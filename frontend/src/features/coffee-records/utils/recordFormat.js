@@ -15,6 +15,22 @@ export const RECORD_TYPES = [
   { value: "cafe", labelKey: "recordForm.cafe" },
 ];
 
+/**
+ * 味覚グラフ（6軸レーダーチャート）の軸一覧。フォームの状態管理・
+ * バリデーション・TasteRadarChartの3箇所で共有する単一の情報源。
+ * 各軸は backend/models/CoffeeRecord.js の同名フィールド（1〜5、任意）
+ * に対応する。backend/data/tasteKeywords.json のcategoryと呼び名を
+ * 揃えているが、notesからは独立した手動入力（docs/domain-model.md参照）。
+ */
+export const TASTE_AXES = [
+  { field: "tasteSweetness", labelKey: "recordForm.tasteSweetness" },
+  { field: "tasteBitterness", labelKey: "recordForm.tasteBitterness" },
+  { field: "tasteAcidity", labelKey: "recordForm.tasteAcidity" },
+  { field: "tasteBody", labelKey: "recordForm.tasteBody" },
+  { field: "tasteAroma", labelKey: "recordForm.tasteAroma" },
+  { field: "tasteAftertaste", labelKey: "recordForm.tasteAftertaste" },
+];
+
 export const recordTypeLabel = (value, t) => {
   const labelKey = RECORD_TYPES.find((type) => type.value === value)?.labelKey;
   return labelKey ? t(labelKey) : value;

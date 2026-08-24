@@ -88,6 +88,32 @@ describe("validateCreateCoffeeRecord", () => {
     });
   });
 
+  describe.each([
+    "tasteSweetness",
+    "tasteBitterness",
+    "tasteAcidity",
+    "tasteBody",
+    "tasteAroma",
+    "tasteAftertaste",
+  ])("%s（味覚グラフの6軸）", (field) => {
+    test("未指定・null は許可する（未評価）", () => {
+      expect(validateCreateCoffeeRecord(validBody()).valid).toBe(true);
+      expect(validateCreateCoffeeRecord(validBody({ [field]: null })).valid).toBe(true);
+    });
+
+    test("1〜5の整数を許可する", () => {
+      for (const value of [1, 3, 5]) {
+        expect(validateCreateCoffeeRecord(validBody({ [field]: value })).valid).toBe(true);
+      }
+    });
+
+    test("範囲外・小数・文字列は拒否する", () => {
+      for (const value of [0, 6, 3.5, "5"]) {
+        expect(validateCreateCoffeeRecord(validBody({ [field]: value })).valid).toBe(false);
+      }
+    });
+  });
+
   describe("マスターデータへの参照", () => {
     test("正しいObjectId文字列を受け入れる", () => {
       const body = validBody({
@@ -170,10 +196,16 @@ describe("validateUpdateCoffeeRecord", () => {
   test("null を明示的に送って選択を外せる", () => {
     expect(validateUpdateCoffeeRecord({ originId: null }).valid).toBe(true);
     expect(validateUpdateCoffeeRecord({ rating: null }).valid).toBe(true);
+    expect(validateUpdateCoffeeRecord({ tasteSweetness: null }).valid).toBe(true);
   });
 
   test("不正なIDは拒否する", () => {
     expect(validateUpdateCoffeeRecord({ processId: "abc" }).valid).toBe(false);
+  });
+
+  test("味覚グラフの6軸は送られてきたものだけを検証する", () => {
+    expect(validateUpdateCoffeeRecord({ tasteAcidity: 4 }).valid).toBe(true);
+    expect(validateUpdateCoffeeRecord({ tasteAcidity: 9 }).valid).toBe(false);
   });
 });
 
@@ -212,5 +244,25 @@ describe("pickCoffeeRecordFields", () => {
     const result = pickCoffeeRecordFields({ rating: 3 });
 
     expect(result).toEqual({ rating: 3 });
+  });
+
+  test("味覚グラフの6軸も書き込んでよい項目に含まれる", () => {
+    const result = pickCoffeeRecordFields({
+      tasteSweetness: 4,
+      tasteBitterness: 2,
+      tasteAcidity: 3,
+      tasteBody: 5,
+      tasteAroma: 4,
+      tasteAftertaste: 3,
+    });
+
+    expect(result).toEqual({
+      tasteSweetness: 4,
+      tasteBitterness: 2,
+      tasteAcidity: 3,
+      tasteBody: 5,
+      tasteAroma: 4,
+      tasteAftertaste: 3,
+    });
   });
 });

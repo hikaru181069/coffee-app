@@ -14,7 +14,9 @@ import {
   collectCoffeeDetails,
   formatConsumedAt,
   recordTypeLabel,
+  TASTE_AXES,
 } from "../features/coffee-records/utils/recordFormat";
+import TasteRadarChart from "../features/coffee-records/components/TasteRadarChart";
 import RecordConnectionsDiagram from "../features/graph/components/RecordConnectionsDiagram";
 import { contentContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
@@ -103,6 +105,9 @@ function RecordDetailPage() {
   // Connectionsは知識グラフのノードに対応する4種別のみ（Property Gridとは違い
   // farmName/variety/roasterNameはグラフのノードではないため含めない）
   const hasConnections = Boolean(record.origin || record.process || record.roastLevel || flavors.length > 0);
+  const hasTasteRatings = TASTE_AXES.some(
+    (axis) => record[axis.field] !== null && record[axis.field] !== undefined,
+  );
 
   return (
     <div className={contentContainerClass}>
@@ -162,7 +167,7 @@ function RecordDetailPage() {
         )}
       </header>
 
-      {hasCoffeeInfo || record.notes || hasConnections ? (
+      {hasCoffeeInfo || hasTasteRatings || record.notes || hasConnections ? (
         <div className="mt-6 divide-y divide-surface-2">
           {/* ── Coffee Information（Property Grid） ─── */}
           {hasCoffeeInfo && (
@@ -191,6 +196,16 @@ function RecordDetailPage() {
                   </div>
                 )}
               </dl>
+            </section>
+          )}
+
+          {/* ── 味覚グラフ ────────────────────────────── */}
+          {hasTasteRatings && (
+            <section className="py-6 first:pt-0">
+              <h2 className="text-sm font-semibold text-text">{t("records.tasteHeading")}</h2>
+              <div className="mt-4">
+                <TasteRadarChart record={record} />
+              </div>
             </section>
           )}
 

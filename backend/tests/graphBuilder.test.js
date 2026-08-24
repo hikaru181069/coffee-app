@@ -152,6 +152,147 @@ describe("ノードの重複排除", () => {
   });
 });
 
+describe("keywordノード", () => {
+  test("notesに辞書語を含む記録はkeywordノードを1つ生成する", () => {
+    const graph = buildGraph([buildRecord({ id: "a", notes: "とても甘いコーヒーでした" })]);
+
+    const keywordNodes = graph.nodes.filter((node) => node.type === "keyword");
+    expect(keywordNodes).toHaveLength(1);
+    expect(keywordNodes[0]).toMatchObject({
+      id: "keyword:甘い",
+      label: "甘い",
+      metadata: { keyword: "甘い", recordCount: 1 },
+    });
+  });
+
+  test("同じキーワードを含む記録2件は1つのノードに統合される", () => {
+    const graph = buildGraph([
+      buildRecord({ id: "a", notes: "甘いコーヒー" }),
+      buildRecord({ id: "b", notes: "今日も甘い味だった" }),
+    ]);
+
+    const keywordNodes = graph.nodes.filter((node) => node.type === "keyword");
+    expect(keywordNodes).toHaveLength(1);
+    expect(keywordNodes[0].metadata.recordCount).toBe(2);
+  });
+
+  test("否定された辞書語を含む記録はkeywordノード/エッジを生成しない", () => {
+    const graph = buildGraph([buildRecord({ id: "a", notes: "フルーティーじゃない味だった" })]);
+
+    const keywordNodes = graph.nodes.filter((node) => node.type === "keyword");
+    expect(keywordNodes).toHaveLength(0);
+    expect(graph.edges.filter((edge) => edge.type === "KEYWORD")).toHaveLength(0);
+  });
+
+  test("複数の異なるキーワードを含む記録は複数のkeywordノードとKEYWORDエッジを生成する", () => {
+    const graph = buildGraph([buildRecord({ id: "a", notes: "甘い味で、すっきりした後味" })]);
+
+    const keywordNodes = graph.nodes.filter((node) => node.type === "keyword");
+    expect(keywordNodes.map((node) => node.label).sort()).toEqual(["すっきり", "甘い"]);
+
+    const keywordEdges = graph.edges.filter((edge) => edge.type === "KEYWORD");
+    expect(keywordEdges).toHaveLength(2);
+  });
+
+  test("notesに辞書語が含まれなければkeywordノードは生成されない", () => {
+    const graph = buildGraph([buildRecord({ id: "a", notes: "普通の記録でした" })]);
+
+    expect(graph.nodes.filter((node) => node.type === "keyword")).toHaveLength(0);
+  });
+
+  test("nodeTypes: ['keyword']フィルターでkeyword（+record）のみに絞り込める", () => {
+    const graph = buildGraph(
+      [
+        buildRecord({
+          id: "a",
+          notes: "甘いコーヒー",
+          origin: { id: "o1", name: "Ethiopia" },
+        }),
+      ],
+      { nodeTypes: ["keyword"] },
+    );
+
+    const types = new Set(graph.nodes.map((node) => node.type));
+    expect(types).toEqual(new Set(["record", "keyword"]));
+  });
+});
+
+describe("keywordとflavorの統合（flavorAlias）", () => {
+  const chocolateFlavor = { id: "flavor-choc-1", name: "Chocolate" };
+  const flavorsByNormalizedName = new Map([["chocolate", chocolateFlavor]]);
+
+  test("flavorAliasがFlavorマスターと一致すればkeywordではなくflavorノードになる", () => {
+    const graph = buildGraph(
+      [buildRecord({ id: "a", notes: "チョコレートのような風味だった" })],
+      { flavorsByNormalizedName },
+    );
+
+    expect(graph.nodes.filter((node) => node.type === "keyword")).toHaveLength(0);
+
+    const flavorNodes = graph.nodes.filter((node) => node.type === "flavor");
+    expect(flavorNodes).toHaveLength(1);
+    expect(flavorNodes[0]).toMatchObject({
+      id: "flavor:flavor-choc-1",
+      label: "Chocolate",
+      metadata: { flavorId: "flavor-choc-1", recordCount: 1 },
+    });
+
+    const flavorEdges = graph.edges.filter((edge) => edge.type === "FLAVOR");
+    expect(flavorEdges).toHaveLength(1);
+  });
+
+  test("Flavorマスター索引を渡さなければ従来どおりkeywordノードのままになる（後方互換）", () => {
+    const graph = buildGraph([buildRecord({ id: "a", notes: "チョコレートのような風味だった" })]);
+
+    expect(graph.nodes.filter((node) => node.type === "flavor")).toHaveLength(0);
+    expect(graph.nodes.filter((node) => node.type === "keyword")).toHaveLength(1);
+  });
+
+  test("マスターに存在しないflavorAliasはkeywordノードへフォールバックする", () => {
+    const graph = buildGraph(
+      [buildRecord({ id: "a", notes: "チョコレートのような風味だった" })],
+      { flavorsByNormalizedName: new Map() },
+    );
+
+    expect(graph.nodes.filter((node) => node.type === "flavor")).toHaveLength(0);
+    expect(graph.nodes.filter((node) => node.type === "keyword")).toHaveLength(1);
+  });
+
+  test("明示的なflavor選択とnotesのflavorAliasが同じ記録にあっても記録は1回しかカウントしない", () => {
+    const graph = buildGraph(
+      [
+        buildRecord({
+          id: "a",
+          flavors: [chocolateFlavor],
+          notes: "チョコレートのような風味だった",
+        }),
+      ],
+      { flavorsByNormalizedName },
+    );
+
+    const flavorNodes = graph.nodes.filter((node) => node.type === "flavor");
+    expect(flavorNodes).toHaveLength(1);
+    expect(flavorNodes[0].metadata.recordCount).toBe(1);
+
+    const flavorEdges = graph.edges.filter((edge) => edge.type === "FLAVOR");
+    expect(flavorEdges).toHaveLength(1);
+  });
+
+  test("一方は明示選択・もう一方はnotesのみの記録2件は同じflavorノードへ統合される", () => {
+    const graph = buildGraph(
+      [
+        buildRecord({ id: "a", flavors: [chocolateFlavor] }),
+        buildRecord({ id: "b", notes: "チョコレートのような風味だった" }),
+      ],
+      { flavorsByNormalizedName },
+    );
+
+    const flavorNodes = graph.nodes.filter((node) => node.type === "flavor");
+    expect(flavorNodes).toHaveLength(1);
+    expect(flavorNodes[0].metadata.recordCount).toBe(2);
+  });
+});
+
 describe("エッジの生成", () => {
   test("recordごとに正しいedgeが生成される（docs/knowledge-graph.md Tests）", () => {
     const graph = buildGraph([

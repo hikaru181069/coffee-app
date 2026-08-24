@@ -1,4 +1,5 @@
 import * as coffeeRecordRepository from "../../repositories/coffeeRecordRepository.js";
+import * as masterDataRepository from "../../repositories/masterDataRepository.js";
 import { serializeCoffeeRecords } from "./coffeeRecordSerializer.js";
 import { buildGraph, findRecordIdsConnectedToNode } from "../../core/graph/graphBuilder.js";
 import { buildEntityDetail } from "../../core/graph/entityDetailBuilder.js";
@@ -13,6 +14,21 @@ import { notFoundError } from "../../utils/AppError.js";
  */
 
 const NOTES_EXCERPT_LENGTH = 60;
+
+/**
+ * notesのキーワード（flavorAlias付き）をflavorノードへ統合するための
+ * Flavorマスター索引を作る（graphBuilder.jsのcollectAttributeRefs参照）。
+ *
+ * findMany("flavors")はlean docsを返すため、保存時に生成済みの
+ * normalizedNameをそのままキーに使える（graphBuilder.js側で
+ * normalizeName()を再計算するのと同じ正規化なので、一致条件がずれない）。
+ */
+const loadFlavorsByNormalizedName = async () => {
+  const flavors = await masterDataRepository.findMany("flavors");
+  return new Map(
+    flavors.map((flavor) => [flavor.normalizedName, { id: String(flavor._id), name: flavor.name }]),
+  );
+};
 
 /** notesの短い抜粋を作る。関連記録一覧でどんな記録か思い出す手がかりにする */
 const excerptNotes = (notes) => {
@@ -30,10 +46,13 @@ const excerptNotes = (notes) => {
  *   { recordFilter, nodeTypes }
  */
 export const buildGraphForUser = async (userId, { recordFilter, nodeTypes }) => {
-  const records = await coffeeRecordRepository.findAllForUser(userId, recordFilter);
+  const [records, flavorsByNormalizedName] = await Promise.all([
+    coffeeRecordRepository.findAllForUser(userId, recordFilter),
+    loadFlavorsByNormalizedName(),
+  ]);
   const serialized = serializeCoffeeRecords(records);
 
-  return buildGraph(serialized, { nodeTypes });
+  return buildGraph(serialized, { nodeTypes, flavorsByNormalizedName });
 };
 
 /**
@@ -49,10 +68,13 @@ export const buildGraphForUser = async (userId, { recordFilter, nodeTypes }) => 
  * 属性種別を絞ると本来あるはずのエッジまで消えてしまうため。
  */
 export const getRelatedRecords = async (userId, nodeId, { recordFilter } = {}) => {
-  const records = await coffeeRecordRepository.findAllForUser(userId, recordFilter);
+  const [records, flavorsByNormalizedName] = await Promise.all([
+    coffeeRecordRepository.findAllForUser(userId, recordFilter),
+    loadFlavorsByNormalizedName(),
+  ]);
   const serialized = serializeCoffeeRecords(records);
 
-  const graph = buildGraph(serialized);
+  const graph = buildGraph(serialized, { flavorsByNormalizedName });
 
   const nodeExists = graph.nodes.some((node) => node.id === nodeId);
   if (!nodeExists) {
@@ -85,9 +107,12 @@ export const getRelatedRecords = async (userId, nodeId, { recordFilter } = {}) =
  * フレーバー・カフェのどの種別でも同じ関数で扱える。
  */
 export const getNodeDetail = async (userId, nodeId) => {
-  const records = await coffeeRecordRepository.findAllForUser(userId);
+  const [records, flavorsByNormalizedName] = await Promise.all([
+    coffeeRecordRepository.findAllForUser(userId),
+    loadFlavorsByNormalizedName(),
+  ]);
   const serialized = serializeCoffeeRecords(records);
-  const graph = buildGraph(serialized);
+  const graph = buildGraph(serialized, { flavorsByNormalizedName });
 
   const detail = buildEntityDetail(graph, serialized, nodeId);
   if (!detail) {

@@ -105,11 +105,13 @@ Coffee Detailsとして段階的に見せる項目:
 - flavors
 - cafeName
 - roasterName
+- 味覚グラフ（甘み・苦み・酸味・コク・香り・後味、それぞれ1〜5、任意）
 
 ### Record Detail
 
 - 基本情報
 - Coffee Details
+- 味覚グラフ
 - Notes
 - 関連ノード
 - Edit / Delete
@@ -167,5 +169,6 @@ Coffee Detailsとして段階的に見せる項目:
 - roastLevel: flame
 - flavor: sparkle
 - cafe: store
+- keyword: quote
 
 具体的なアイコンライブラリは既存依存関係を確認して決定してください。

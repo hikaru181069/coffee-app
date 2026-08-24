@@ -1,0 +1,61 @@
+{
+  "_comment": [
+    "notesの自由記述から抽出する、味覚・風味を表す固定辞書。",
+    "docs/knowledge-graph.md「Graph Generation」参照。ルールベースの部分文字列一致であり、",
+    "形態素解析・AI/NLPは使わない（docs/product.md「MVP Before Intelligence」）。",
+    "canonicalは、グラフのkeywordノードのID/ラベルに使う代表表記。同じ語の表記ゆれを",
+    "1ノードへ集約する目的というより、辞書に登録した文字列そのものがラベルになる",
+    "（farm/cafeのようなユーザー自由入力の正規化とは性質が異なる）。",
+    "2文字以上のフレーズを使っているエントリ（例:「コクがある」「香り高い」）があるのは、",
+    "短い断片だと無関係な文脈にも部分一致してしまう誤検出リスクを下げるため",
+    "（例:「コク」単体より「コクがある」の方が偽陽性が少ない）。",
+    "1度読み込んだら終わりの静的ファイル（backend/core/graph/noteKeywordExtractor.jsが",
+    "起動後に一度だけ読み込み、メモリにキャッシュする。backend/services/coffee/",
+    "discoverService.jsのloadCqiDatasetと同じload-once-cacheパターン）。",
+    "flavorAliasは任意項目。backend/seeds/data/flavors.jsのFlavorマスター名と",
+    "意味的に完全一致する語だけに付けている（例:「チョコレートのような」→",
+    "「Chocolate」）。一致すればkeywordノードではなく既存のflavorノードへ",
+    "統合される（backend/core/graph/graphBuilder.js参照）。「甘い」「フルーティー」",
+    "のような、対応する単一のFlavorが存在しない一般語には意図的に付けていない",
+    "（複数候補から1つを恣意的に選ぶと誤った統合になるため）。"
+  ],
+  "entries": [
+    { "canonical": "甘い", "category": "sweetness" },
+    { "canonical": "甘み", "category": "sweetness" },
+    { "canonical": "まろやか", "category": "sweetness" },
+
+    { "canonical": "苦い", "category": "bitterness" },
+    { "canonical": "苦み", "category": "bitterness" },
+    { "canonical": "香ばしい", "category": "bitterness" },
+
+    { "canonical": "酸っぱい", "category": "acidity" },
+    { "canonical": "酸味", "category": "acidity" },
+    { "canonical": "キレがある", "category": "acidity" },
+
+    { "canonical": "コクがある", "category": "body" },
+    { "canonical": "コク", "category": "body" },
+    { "canonical": "とろみ", "category": "body" },
+    { "canonical": "軽い", "category": "body" },
+    { "canonical": "重い", "category": "body" },
+
+    { "canonical": "香り高い", "category": "aroma" },
+    { "canonical": "フローラル", "category": "aroma", "flavorAlias": "Floral" },
+    { "canonical": "フルーティー", "category": "aroma" },
+    { "canonical": "ナッツのような", "category": "aroma", "flavorAlias": "Nutty" },
+    { "canonical": "チョコレートのような", "category": "aroma", "flavorAlias": "Chocolate" },
+    { "canonical": "スパイシー", "category": "aroma", "flavorAlias": "Spice" },
+
+    { "canonical": "すっきり", "category": "aftertaste" },
+    { "canonical": "後味がいい", "category": "aftertaste" },
+    { "canonical": "余韻", "category": "aftertaste" },
+
+    { "canonical": "美味しい", "category": "general" },
+    { "canonical": "バランスがいい", "category": "general" },
+    { "canonical": "飲みやすい", "category": "general" },
+    { "canonical": "クリーミー", "category": "general", "flavorAlias": "Creamy" },
+    { "canonical": "えぐみ", "category": "general" },
+    { "canonical": "渋い", "category": "general" },
+    { "canonical": "薄い", "category": "general" },
+    { "canonical": "焦げた", "category": "general" }
+  ]
+}
