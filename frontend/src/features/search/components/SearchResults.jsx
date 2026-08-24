@@ -45,7 +45,7 @@ function SearchResults({ query, entities, records, isLoading, error }) {
       {records.length > 0 && (
         <section>
           <h2 className="mb-3 text-sm font-semibold text-text">{t("search.recordsHeading")}</h2>
-          <ul className="flex flex-col gap-3">
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {records.map((record, index) => (
               <RecordCard key={record.id} record={record} index={index} />
             ))}

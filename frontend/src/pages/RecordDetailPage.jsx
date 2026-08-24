@@ -29,13 +29,20 @@ import { getErrorMessage } from "../utils/errorMessage";
  *   基本情報 / Coffee Details / Notes / Edit / Delete
  *
  * 2026-08、カードを積み重ねる構成から、Breadcrumb→Header→（Property Grid
- * →Tasting Note→Connections、Dividerで区切る）→Actionsという1本の
- * 縦の流れへ再設計した。Connectionsセクションは、この記録を中心に、
+ * →Tasting Note→味覚グラフ/Connections、Dividerで区切る）→Actionsという
+ * 1本の縦の流れへ再設計した。Connectionsセクションは、この記録を中心に、
  * 直接つながる知識グラフのノード（origin/process/roastLevel/flavor）を
  * 1-hopのハブ&スポーク図で見せる（`features/graph/components/
  * RecordConnectionsDiagram.jsx`）。「Graphで見る」はボタンから
  * テキストリンクへ変え、Connectionsセクションへ移した
  * （遷移先・?focus=の仕組みは変更していない）。
+ *
+ * 2026-08、レイアウトのレビューを受け、Tasting Noteを味覚グラフより前
+ * （Coffee Informationの直後）へ移動した。メモはコーヒー自体の情報に近く、
+ * 味覚グラフ・Connectionsはどちらも記録本体への補助的な図解（形も近い
+ * 正方形）という性質のため、後者2つをlg以上で横並びにして縦の高さを
+ * 圧縮した。Recordsの一覧とは違い記録詳細は1件分の決まった量のため、
+ * 「スクロール無しで収まる」ことを目指せる、という判断による。
  *
  * docs/design.md にある「関連ノード」（詳細画面に直接、関連する記録の
  * 一覧を埋め込む案）は今回も実装していない。Graph画面・エンティティ詳細
@@ -199,16 +206,6 @@ function RecordDetailPage() {
             </section>
           )}
 
-          {/* ── 味覚グラフ ────────────────────────────── */}
-          {hasTasteRatings && (
-            <section className="py-6 first:pt-0">
-              <h2 className="text-sm font-semibold text-text">{t("records.tasteHeading")}</h2>
-              <div className="mt-4">
-                <TasteRadarChart record={record} />
-              </div>
-            </section>
-          )}
-
           {/* ── Tasting Note ─────────────────────────── */}
           {record.notes && (
             <section className="py-6 first:pt-0">
@@ -220,22 +217,42 @@ function RecordDetailPage() {
             </section>
           )}
 
-          {/* ── Connections ───────────────────────────── */}
-          {hasConnections && (
+          {/* ── 味覚グラフ / Connections ─────────────────
+              どちらも記録本体に対する補助的な図解で、形も近い正方形の
+              ため、両方あるときはlg以上で横並びにして縦の高さを圧縮する
+              （docsとの相談: 詳細画面は記録1件分の量が決まっているため、
+              Recordsの一覧と違い「スクロール無しで収まる」ことを狙える）。
+              片方しか無いときはgridを掛けず単一カラムのまま伸ばす */}
+          {(hasTasteRatings || hasConnections) && (
             <section className="py-6 first:pt-0">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-text">{t("records.connectionsHeading")}</h2>
-                <Link
-                  to={`/graph?focus=record:${record.id}`}
-                  className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
-                >
-                  <Share2 size={12} aria-hidden="true" />
-                  <span className="underline underline-offset-2">{t("common.viewOnGraph")}</span>
-                </Link>
-              </div>
+              <div className={hasTasteRatings && hasConnections ? "grid gap-8 lg:grid-cols-2" : ""}>
+                {hasTasteRatings && (
+                  <div>
+                    <h2 className="text-sm font-semibold text-text">{t("records.tasteHeading")}</h2>
+                    <div className="mt-4">
+                      <TasteRadarChart record={record} />
+                    </div>
+                  </div>
+                )}
 
-              <div className="mt-4">
-                <RecordConnectionsDiagram record={record} />
+                {hasConnections && (
+                  <div>
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-sm font-semibold text-text">{t("records.connectionsHeading")}</h2>
+                      <Link
+                        to={`/graph?focus=record:${record.id}`}
+                        className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
+                      >
+                        <Share2 size={12} aria-hidden="true" />
+                        <span className="underline underline-offset-2">{t("common.viewOnGraph")}</span>
+                      </Link>
+                    </div>
+
+                    <div className="mt-4">
+                      <RecordConnectionsDiagram record={record} />
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
           )}

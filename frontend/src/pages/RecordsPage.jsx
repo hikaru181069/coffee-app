@@ -89,7 +89,7 @@ function RecordsPage() {
     }
 
     return (
-      <ul className="flex flex-col gap-3">
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {records.map((record, index) => (
           <RecordCard key={record.id} record={record} index={index} />
         ))}
@@ -103,9 +103,13 @@ function RecordsPage() {
         <div>
           <h1 className="text-xl font-bold text-text">{t("records.heading")}</h1>
           <p className="mt-1 text-sm text-text-tertiary">
-            {pagination && pagination.total > 0
-              ? t("records.countLabel", { count: pagination.total })
-              : t("records.subtitleEmpty")}
+            {isSearching
+              ? t("records.searchResultCountLabel", {
+                  count: search.entities.length + search.records.length,
+                })
+              : pagination && pagination.total > 0
+                ? t("records.countLabel", { count: pagination.total })
+                : t("records.subtitleEmpty")}
           </p>
         </div>
 

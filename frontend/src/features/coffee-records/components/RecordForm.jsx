@@ -161,6 +161,9 @@ function RecordForm({
             aria-invalid={Boolean(errors.notes)}
             className={textareaClass(errors.notes)}
           />
+          <p className="mt-1 text-right text-xs text-text-tertiary">
+            {values.notes.length} / 2000
+          </p>
         </FormField>
       </section>
 
@@ -195,6 +198,10 @@ function RecordForm({
                 {t("recordForm.masterDataError")}
               </p>
             )}
+
+            <span className="block text-sm font-semibold text-text">
+              {t("recordForm.originFlavorHeading")}
+            </span>
 
             <FormField id="originId" label={t("recordForm.origin")} error={errors.originId}>
               <select
