@@ -48,11 +48,21 @@ export const validateRegister = (body = {}) => {
 export const validateLogin = (body = {}) => {
   const details = [];
 
+  // email/passwordがオブジェクトのまま素通りすると、authController.jsの
+  // User.findOne({ email }) がそのままMongoの演算子として解釈してしまう
+  // （例: { "$regex": "^a" } でメールアドレスの登録有無を推測できる、
+  // NoSQLインジェクション）。validateRegisterは型チェックしているのに
+  // こちらは漏れていたため、型チェックを追加する。
   if (isMissing(body.email)) {
     details.push({ field: "email", message: "Email is required" });
+  } else if (typeof body.email !== "string") {
+    details.push({ field: "email", message: "Email must be a string" });
   }
+
   if (isMissing(body.password)) {
     details.push({ field: "password", message: "Password is required" });
+  } else if (typeof body.password !== "string") {
+    details.push({ field: "password", message: "Password must be a string" });
   }
 
   return { valid: details.length === 0, details };

@@ -124,4 +124,17 @@ describe("POST /api/auth/login", () => {
     expect(res.status).toBe(400);
     expect(res.body.details.some((detail) => detail.field === "password")).toBe(true);
   });
+
+  test("emailにMongo演算子オブジェクトを送ってもNoSQLインジェクションにならず400", async () => {
+    // { $ne: null } 等が User.findOne({ email }) へ素通りすると、
+    // メールアドレスの登録有無を推測できてしまう（enumeration）。
+    // 200（ログイン成功）にも500（Mongooseのキャストエラー漏れ）にも
+    // ならず、validateLoginの型チェックで400になることを確認する。
+    const res = await request(app)
+      .post(LOGIN)
+      .send({ email: { $ne: null }, password: "password123" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.details.some((detail) => detail.field === "email")).toBe(true);
+  });
 });
