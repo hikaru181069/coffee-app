@@ -19,6 +19,7 @@ import insightRoutes from "./routes/insightRoutes.js";
 import discoverRoutes from "./routes/discoverRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
+import diagnosisRoutes from "./routes/diagnosisRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -51,6 +52,7 @@ app.use("/api/insights", insightRoutes);
 app.use("/api/discover", discoverRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/diagnosis", diagnosisRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 

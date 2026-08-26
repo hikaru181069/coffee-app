@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, Compass } from "lucide-react";
+import { Sparkles, Compass, Coffee } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useInsights } from "../../insights/hooks/useInsights";
@@ -34,6 +34,12 @@ import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
  * （読み込み中・エラー含む）ときはカード自体を表示しない
  * （GraphPreview.jsxと同じ「静かな道具」の方針）。
  *
+ * 2026-08、記録から「コーヒータイプ」を判定するコーヒー診断
+ * （docs/features.md「Coffee Diagnosis」）への導線を3行目として追加した。
+ * 他の2行と違い、データの有無に関わらず常時表示する静的なリンクにしている
+ * （診断専用の3つ目のfetchをこのカードに追加しないため。データが無い
+ * 場合の案内は/diagnosisページ自身のArchetypeCard空状態が担当する）。
+ *
  * 2026-08、一時期はDiscover行のリンク先を専用の一覧ページ（`/discover`）
  * にしていたが、実データで検証したところ条件を満たす産地グループは
  * デモデータでもせいぜい2件程度で、「複数産地を横断して比較する」という
@@ -52,8 +58,6 @@ function DiscoverCard() {
   const insightText =
     !insightsLoading && !insightsError && insights.length > 0 ? describeInsight(insights[0], t) : null;
   const hasTeaser = !teaserLoading && !teaserError && Boolean(teaser);
-
-  if (!insightText && !hasTeaser) return null;
 
   return (
     <div className="flex h-full flex-col gap-4 rounded-2xl border border-surface-2 bg-raised p-6 shadow-elevated">
@@ -81,6 +85,14 @@ function DiscoverCard() {
             </p>
           </Link>
         )}
+
+        <Link
+          to="/diagnosis"
+          className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
+        >
+          <Coffee size={22} aria-hidden="true" className="flex-shrink-0 text-text-secondary" />
+          <p className="text-base text-text">{t("discover.diagnosisLink")}</p>
+        </Link>
       </div>
     </div>
   );

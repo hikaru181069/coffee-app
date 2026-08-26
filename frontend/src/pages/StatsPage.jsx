@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { useStats } from "../features/stats/hooks/useStats";
@@ -9,6 +10,7 @@ import TopRankingList from "../features/stats/components/TopRankingList";
 import StatsSkeleton from "../features/stats/components/StatsSkeleton";
 import StatsEmptyState from "../features/stats/components/StatsEmptyState";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
+import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { wideContainerClass } from "../styles/pageContainer";
 
 const RANKING_TYPES = ["origin", "variety", "process", "flavor", "cafe"];
@@ -77,9 +79,14 @@ function StatsPage() {
 
   return (
     <div className={wideContainerClass}>
-      <header className="mb-6">
-        <h1 className="text-xl font-bold text-text">{t("stats.heading")}</h1>
-        <p className="mt-1 text-sm text-text-tertiary">{t("stats.subtitle")}</p>
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-text">{t("stats.heading")}</h1>
+          <p className="mt-1 text-sm text-text-tertiary">{t("stats.subtitle")}</p>
+        </div>
+        <Link to="/diagnosis" className={secondaryButtonClass}>
+          {t("stats.viewDiagnosisLink")}
+        </Link>
       </header>
 
       <div className="flex flex-col divide-y divide-surface-2">

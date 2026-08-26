@@ -49,3 +49,10 @@ record、産地、農園、品種、精製方法、焙煎度、フレーバー�
 なお、上記「Optional」の6軸の味覚評価（手動入力のレーダーチャート用）は
 知識グラフのノードにはならない。記録1件に閉じた数値データであり、
 複数記録をまたいだ関係性を持たないため。
+
+## Coffee Diagnosis での利用
+
+`RoastLevel.order`（浅煎り〜深煎りの5段階の順序）と`Flavor.category`
+（フレーバーの大分類）は、これまでInsight/Stats/Discoverのどの機能からも
+使われていなかったが、Coffee Diagnosis機能（docs/features.md参照）が
+記録から「コーヒータイプ」を判定する際の入力として初めて利用する。

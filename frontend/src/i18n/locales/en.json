@@ -254,7 +254,8 @@
     "similarProcessOrigin": "You often choose {{originLabel}} with {{processLabel}} processing ({{count}} records). {{suggestedLabel}} also scores well with {{processLabel}} processing, but you haven't tried it yet.",
     "recordCta": "Record this origin",
     "sourceNote": "Based on reference data from the Coffee Quality Institute.",
-    "teaserLink": "You haven't tried {{suggestedLabel}} coffee yet"
+    "teaserLink": "You haven't tried {{suggestedLabel}} coffee yet",
+    "diagnosisLink": "View your coffee diagnosis"
   },
   "search": {
     "placeholder": "Search origins, varieties, flavors, cafés, processes, or coffee names",
@@ -302,6 +303,51 @@
       "farmCount": "Farms",
       "cafeCount": "Cafés",
       "flavorCount": "Flavors"
+    },
+    "viewDiagnosisLink": "View your full diagnosis"
+  },
+  "diagnosis": {
+    "heading": "Coffee Diagnosis",
+    "subtitle": "A summary of your \"coffee type\" and insights, built from your records.",
+    "archetypeHeading": "Your coffee type",
+    "insightsHeading": "Insights",
+    "insightsEmpty": "Insights will appear here as you record more coffee.",
+    "overviewHeading": "Your records at a glance",
+    "archetype": {
+      "empty": "Keep recording, and we'll be able to diagnose your coffee type.",
+      "sampleSize": "Based on {{count}} records",
+      "lightFruity": {
+        "title": "Light Roast, Fruity",
+        "description": "You lean toward light roasts with bright acidity, paired with fruity flavor notes."
+      },
+      "lightFloral": {
+        "title": "Light Roast, Floral",
+        "description": "You lean toward light roasts with delicate aroma, paired with floral flavor notes."
+      },
+      "darkNutty": {
+        "title": "Dark Roast, Nutty",
+        "description": "You lean toward bold, full-bodied dark roasts, paired with nutty flavor notes."
+      },
+      "darkSweet": {
+        "title": "Dark Roast, Sweet",
+        "description": "You lean toward dark roasts with rich bitterness, paired with sweet flavor notes."
+      },
+      "mediumSpicy": {
+        "title": "Medium Roast, Spicy",
+        "description": "You lean toward balanced medium roasts, paired with spicy flavor notes."
+      },
+      "light": {
+        "title": "Light Roast Drinker",
+        "description": "You lean toward light roasts with bright acidity and aroma."
+      },
+      "dark": {
+        "title": "Dark Roast Drinker",
+        "description": "You lean toward dark roasts with bold body and bitterness."
+      },
+      "medium": {
+        "title": "Medium Roast Drinker",
+        "description": "You lean toward medium roasts, balanced between acidity and bitterness."
+      }
     }
   },
   "validation": {

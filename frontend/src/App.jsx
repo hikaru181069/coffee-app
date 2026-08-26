@@ -17,6 +17,7 @@ import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
 import EntityDetailPage from "./pages/EntityDetailPage";
 import StatsPage from "./pages/StatsPage";
+import DiagnosisPage from "./pages/DiagnosisPage";
 import NotFoundPage from "./pages/NotFoundPage";
 // GraphPageはreact-force-graph-2d（canvas描画・物理演算）を含み、
 // 他の画面より明確に重い。このルートを開かないユーザーにその分を
@@ -74,6 +75,12 @@ function AnimatedRoutes() {
           />
 
           <Route path="/stats" element={<StatsPage />} />
+
+          {/* 記録から判定する「コーヒータイプ」診断。常設ナビには含めない
+              （Navbar.jsx・BottomTabBar.jsxのタブ数を増やさない方針。
+              docs/design.md「Main Navigation」参照）。Home画面のDiscoverCard・
+              Statsページからのリンク経由でのみ到達する */}
+          <Route path="/diagnosis" element={<DiagnosisPage />} />
 
           <Route path="/profile" element={<ProfilePage />} />
 

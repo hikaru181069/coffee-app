@@ -12,6 +12,7 @@ MVP完成後に追加した個別機能の仕様。もともとは機能ごと�
 - **Entity Detail**: 1つのノードについて、それに関連する統計・記録を見せる
 - **Stats**: 全記録の生の集計値・ランキングを見せる
 - **Discover**: 外部データ（CQI）を使用し、まだ試していない産地を提案する
+- **Coffee Diagnosis**: 記録から「コーヒータイプ」を判定し、Insight・Statsの要約とあわせて1画面で見せる
 
 ---
 
@@ -404,3 +405,86 @@ Entity Detailページ（`/entities/:nodeId`）へ遷移する。そこには
 ならず、「複数産地を横断して比較する」という専用ページ固有の価値が
 ほとんど発揮されないと判断し削除した。Home Teaser・Entity Detail埋め込みの
 2箇所でDiscover機能としては十分と判断した（IMPLEMENTATION.md参照）。
+
+---
+
+## Coffee Diagnosis
+
+### Purpose
+
+Insight・Stats・Discoverはいずれも「記録データから何が読み取れるか」を
+別々の画面（Home画面の一文、Statsページの集計、Entity Detailの提案）に
+分けて見せる機能だった。Coffee Diagnosisは、新しい発見ロジックを増やす
+のではなく、既存のInsight（全種別）とStatsの要約を「コーヒータイプ」の
+判定とあわせて1画面に束ねる機能。
+
+「コーヒータイプ」は、他社のコーヒーアプリにあるような初回クイズ形式の
+診断ではなく、記録が増えるほど内容が更新される、記録から導出した診断に
+している（プロダクトの中心体験 Record → Connect → Discover、
+docs/product.md参照。初回に好みを申告させるクイズは、記録することで
+初めて気づきが生まれるという中心体験と逆行するため採用しなかった）。
+
+### ルールベースであり、AI/自然言語処理ではない
+
+Insight・Statsと同じ理由で、notesなどの自由記述は一切読まない。
+`roastLevel.order`（浅煎り〜深煎りの5段階の順序）と`flavors[].category`
+（フレーバーの大分類。docs/domain-model.md参照）という、これまでの
+Insight/Stats/Discoverのどこからも使われていなかった構造化データを、
+条件分岐と閾値判定だけで組み合わせる。機械学習・自然言語処理は使わない
+（docs/product.md「MVP Before Intelligence」）。
+
+### 判定ルール
+
+焙煎度をlight（浅煎り・浅煎り寄り）/medium（中煎り）/dark（深煎り・
+深煎り寄り）の3段階にバケット分けし、最も多く登場するバケットを求める
+（該当する記録が3件未満、または同率首位のときは判定しない。
+insightBuilder.jsの「同率首位のときは断定しない」方針を踏襲）。
+
+フレーバーのcategoryも同様に集計するが、こちらは3件未満・同率首位でも
+診断全体を諦めず、「categoryは問わない」として焙煎度だけの一般則へ
+フォールバックする（categoryは焙煎度ほど判定の根拠として強くないと
+判断したため）。
+
+| 焙煎度バケット | フレーバーcategory | タイプ |
+| --- | --- | --- |
+| light | fruity | lightFruity |
+| light | floral | lightFloral |
+| dark | nutty | darkNutty |
+| dark | sweet | darkSweet |
+| medium | spicy | mediumSpicy |
+| light | （問わない） | light |
+| dark | （問わない） | dark |
+| medium | （問わない） | medium |
+
+具体的な計算は`backend/core/diagnosis/diagnosisBuilder.js`を参照。
+
+### Source of Truth
+
+MongoDBのCoffeeRecordとマスターデータ（RoastLevel・Flavor）を正とする。
+Diagnosis専用のコレクションは持たず、APIレスポンスとして都度導出する。
+Insight・Statsの計算結果もそれぞれの既存service
+（`insightService.js`・`statsService.js`）をそのまま呼び出して束ねるだけで、
+別ロジックを新たに作らない（`backend/services/coffee/diagnosisService.js`）。
+
+### Response Shape
+
+```json
+GET /api/diagnosis
+
+{
+  "data": {
+    "archetype": { "type": "lightFruity", "sampleSize": 8 },
+    "insights": [ /* GET /api/insights と同じ形の配列（全件） */ ],
+    "stats": { /* GET /api/stats と同じ形 */ }
+  }
+}
+```
+
+判定に足る記録が無ければ`archetype: null`。`insights`は空配列、`stats`は
+記録0件時の形になり得る。
+
+### 表示
+
+`/diagnosis`。Home画面のDiscoverカード・Statsページからのリンクで到達する。
+主ナビ（Home/Records/Graph/Stats）には追加しない（docs/design.md
+「Main Navigation」参照。ナビ項目を増やさない既存方針を踏襲）。

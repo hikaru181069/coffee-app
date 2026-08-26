@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D from "react-force-graph-2d";
-import { forceCollide } from "d3-force";
+import { forceCollide, forceX, forceY } from "d3-force";
 
 import { getNodeVisual } from "../utils/nodeVisuals";
 import { getNodeIconImage } from "../utils/canvasIcons";
 import { getCanvasColor } from "../utils/canvasColors";
+import {
+  recordRadius,
+  attributeHalfWidth,
+  attributeHalfHeight,
+  nodeCollideRadius,
+} from "../utils/graphNodeSizing";
+import { findNodeAtGraphPoint } from "../utils/graphHitTest";
+import { buildForceGraphData } from "../utils/graphAdapter";
 
 /**
  * 知識グラフの描画本体。
@@ -19,12 +27,24 @@ import { getCanvasColor } from "../utils/canvasColors";
  * 物理演算が収束した後もホバー・ズーム・パンは重い再レンダーを介さず
  * 滑らかに動く。
  *
+ * ノードサイズ計算・クリックの当たり判定・{nodes,links}への変換は、
+ * 2026-08の「Graph画面の作り込み」で features/graph/utils/ の
+ * graphNodeSizing.js・graphHitTest.js・graphAdapter.js へ切り出した
+ * （CLAUDE.md「1ファイルへ複数の責務を集中させないでください」。
+ * DB/HTTP/canvasに依存しない純粋関数なので、初めてユニットテストも
+ * 追加した）。このファイルは物理演算の適用・カメラ追従・イベント配線・
+ * canvas描画（drawNode/paintNodePointerAreaはcanvas contextに強く依存する
+ * ためここに残す）のオーケストレーションに専念する。
+ *
  * FORCE_PARAMSは元々adapters/forceLayout.js（Phase 5時点、削除済み）と
  * 同じ値（linkDistance: 90, chargeStrength: -220, collideRadius: 58）を
  * 使っていたが、react-force-graph-2d（内部ではd3-force-3dを使用）では
  * 同じ値でも収束後のレイアウトが明らかに詰まって見えたため、
- * chargeStrengthだけ強めに調整している。原因はまだ特定できていない
- * （d3-force-3dとd3-forceで内部実装が違う可能性がある）。
+ * chargeStrengthだけ強めに調整していた（原因はまだ特定できていない。
+ * d3-force-3dとd3-forceで内部実装が違う可能性がある）。2026-08、
+ * collideRadiusを全ノード一律の固定値からノードごとの実サイズ＋ラベル分の
+ * 余白に連動する関数（graphNodeSizing.jsのnodeCollideRadius）に変更した
+ * ことで、chargeStrengthも穏やかな値に調整し直した。
  *
  * 既知の不具合と対処（force-graph.mjs本体を読んで原因を特定した）:
  *
@@ -41,69 +61,71 @@ import { getCanvasColor } from "../utils/canvasColors";
  *    → ライブラリ側のクリック判定に頼らず、pointerdown/pointerupの座標を
  *      自前で比較し、閾値以内ならscreen2GraphCoordsで求めたグラフ座標に
  *      対してdrawNodeと同じ当たり判定（円・角丸矩形）を自前で行う
- *      （下記 findNodeAtClientPoint）。
+ *      （findNodeAtClientPoint、当たり判定本体はgraphHitTest.js参照）。
+ *      2026-08、クリック判定が不安定という指摘を受け、閾値
+ *      （CLICK_TOLERANCE_PX）を緩和し、当たり判定自体にも視覚サイズより
+ *      少し広いヒットパディングを追加した。
  *
  * 2. width/heightを明示的に渡すとズーム・ドラッグが効かなくなる
  *    width/heightのonChangeはadjustCanvasSizeを呼び、その中で
  *    zoom.translateBy(...)を実行する。これはd3-zoomの'zoom'ハンドラを
  *    発火させ、上記1と同じ理由でisPointerDragging=trueを立てる。
- *    ResizeObserverでsizeを継続更新していると、この再発火が操作中にも
- *    起こり得てズーム・ドラッグを壊す。
- *    → sizeは「初回の非ゼロ計測値で固定し、以後ResizeObserverが発火しても
- *      更新しない」方式にする。ウィンドウの動的リサイズには追従しなくなるが、
- *      安定した操作性を優先する（下記のuseEffect参照）。
+ *    2026-08、これを理由にcanvasサイズを初回計測値のまま恒久的に固定して
+ *    いたが、リサイズに一切追従しないのは副作用が大きいと判断し見直した。
+ *    クリック判定は既にisPointerDraggingへ依存しない自前実装（上記1）に
+ *    なっているため、ResizeObserverの発火をデバウンスした上でsizeを
+ *    更新できるようにし、サイズ変更直後にfitCameraで視点のずれを補正する
+ *    方式にした（下記のuseEffect参照）。純粋なズーム・パン操作への影響は
+ *    実機で確認する。
  *
- * 3. 収束中に一瞬だけノードが巨大化して見える
- *    収束の途中経過でズーム倍率を再計算するたびに、chargeStrengthが強い
- *    （-800）ため開始直後はノード同士がまだ中心付近に固まっており、
- *    小さいbounding boxに合わせて一瞬だけ大きくズームインし、それが
- *    「ノードが巨大化する」フラッシュとして見える。
- *    → カメラを合わせる処理（下記fitCamera）に短いアニメーション時間を
- *      持たせ、瞬間移動ではなくなめらかな追従にした。
- *
- * 4. onEngineTick / onEngineStopが一度も発火しない
+ * 3. onEngineTick / onEngineStopが一度も発火しない
  *    当初はカメラ追従をこの2つのコールバック（毎tick呼ばれる想定）で
  *    駆動していたが、実際にはbounding box（getGraphBbox）を見るとノードは
  *    確かに力学シミュレーションで広がっているにもかかわらず、
  *    onEngineTick/onEngineStopのどちらも一度も呼ばれないことをカウンタを
  *    仕込んで確認した。react-force-graph-2d（react-kapsule経由）と
  *    force-graph本体のプロパティ連携（linkKapsule／linkProp）を読んでも
- *    明確な原因までは特定できなかった。
+ *    明確な原因までは特定できなかった（2026-08、react-force-graph-2d/
+ *    force-graphとも公開されている最新バージョンで確認済みだが解消して
+ *    いない）。
  *    → ライブラリのtickコールバックに依存せず、グラフデータが変わる
  *      （＝新しく開いた）たびに自前のrequestAnimationFrameループを
  *      一定時間（FOLLOW_DURATION_MS）走らせ、その間毎フレームfitCameraを
  *      呼んでカメラを追従させる方式に置き換えた（下記のuseEffect参照）。
+ *
+ * なお、「収束中に一瞬ノードが巨大化して見える」という2026-08の報告は、
+ * 当初はここでのカメラ追従（fitCameraのbounding boxがまだ小さいうちに
+ * ズームが寄りすぎるフラッシュ）が原因と考え、アニメーション時間を
+ * 持たせる対処をしていた。しかし実際にはこれとは別の不具合で、
+ * 「グラフ画面を開いたまま他のタブ・アプリへ切り替えて放置すると発生し、
+ * リロードすると直る」という条件だったと判明した（ユーザーへの
+ * ヒアリングで判明）。force-graph.mjs本体を読み直したところ、
+ * canvasの内部解像度（devicePixelRatio依存）がwidth/heightのprop変化時
+ * にしか再計算されない一方、毎フレームの再描画はその時点の
+ * devicePixelRatioを読み直すため、バックグラウンドのタブでOS/ブラウザの
+ * 挙動によりdevicePixelRatioがずれるとノードが実際より大きく描かれる、
+ * という仕組みだと特定した。発生条件が特殊でリロードという回避策も
+ * あるため、ユーザーと相談のうえ今回は修正を見送り、IMPLEMENTATION.mdへ
+ * 既知の問題として記録するにとどめている（旧来の「カメラのフラッシュ」
+ * という診断は誤りだったため、対応するズームクランプ等の対処は行わない）。
  */
 const FORCE_PARAMS = {
-  linkDistance: 90,
-  chargeStrength: -800,
-  collideRadius: 58,
+  linkDistance: 100,
+  chargeStrength: -450,
 };
 
-const RECORD_BASE_RADIUS = 16;
-const RECORD_DEGREE_CAP = 8;
-const RECORD_DEGREE_SCALE = 1.2;
-
-// ラベルを下へ出す前は「テキストを内側に収める」ためワイドな
-// ピル形状が必要だったが、アイコン+件数バッジだけになったので
-// レコードノードに近いコンパクトなチップへ縮小した
-const ATTRIBUTE_BASE_HALF_WIDTH = 15;
-const ATTRIBUTE_HALF_HEIGHT = 15;
-const ATTRIBUTE_DEGREE_CAP = 8;
-const ATTRIBUTE_DEGREE_SCALE = 1.2;
-
-// 選択中（?focus=やクリック）のノードは、枠線の色・太さだけでなく
-// 形そのものも拡大する。密集したグラフの中でも「今フォーカスしている
-// ノードはどれか」が一目で分かるようにするため
-const SELECTED_SCALE = 1.35;
-
-const CLICK_TOLERANCE_PX = 6;
+const CLICK_TOLERANCE_PX = 8;
 
 // ラベルはチップの下に出す（Obsidianのグラフを参考に、チップ内へ
 // 詰め込んで過度に省略されるのを避ける）。省略が必要になる場面
 // 自体を減らすため、チップの幅より大きく余裕を持たせる
 const LABEL_MAX_WIDTH = 100;
 const LABEL_GAP = 4;
+
+// カメラの自動フィットを止める「クールダウン」時間。ユーザーが操作した
+// 瞬間から一定時間はフィットをスキップするが、恒久的には止めない
+// （下記のuseEffect参照。以前はここが恒久ラッチだった）
+const REFIT_COOLDOWN_MS = 600;
 
 // canvasはTailwindクラスもCSSカスタムプロパティも直接解釈できないため、
 // index.cssの@themeが生成する--color-*から動的に解決する
@@ -125,16 +147,6 @@ const CTP = {
     return getCanvasColor("--color-rating");
   },
 };
-
-const recordRadius = (node, isSelected = false) => {
-  const base = RECORD_BASE_RADIUS + Math.min(node.degree, RECORD_DEGREE_CAP) * RECORD_DEGREE_SCALE;
-  return isSelected ? base * SELECTED_SCALE : base;
-};
-const attributeHalfWidth = (node, isSelected = false) => {
-  const base = ATTRIBUTE_BASE_HALF_WIDTH + Math.min(node.degree, ATTRIBUTE_DEGREE_CAP) * ATTRIBUTE_DEGREE_SCALE;
-  return isSelected ? base * SELECTED_SCALE : base;
-};
-const attributeHalfHeight = (isSelected = false) => (isSelected ? ATTRIBUTE_HALF_HEIGHT * SELECTED_SCALE : ATTRIBUTE_HALF_HEIGHT);
 
 /** linkのsource/targetは、シミュレーション開始後は文字列IDからノード本体への参照へ差し替わる */
 const linkEndpointId = (endpoint) => (typeof endpoint === "object" ? endpoint.id : endpoint);
@@ -256,7 +268,9 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjac
  * onNodeClick等の当たり判定用。drawNodeと同じ形をベタ塗りするだけ。
  * 選択中ノードは表示上も拡大しているので、当たり判定もそれに合わせる
  * （見た目だけ大きくして、クリック領域が元のサイズのままだと
- * 「拡大された部分をクリックしても反応しない」ズレが生まれるため）
+ * 「拡大された部分をクリックしても反応しない」ズレが生まれるため）。
+ * 実際のクリック判定はfindNodeAtGraphPoint（graphHitTest.js）が自前で
+ * 行っており、こちらはforce-graph自身が使う内部の当たり判定キャンバス用
  */
 function paintNodePointerArea(node, color, ctx, isSelected) {
   ctx.fillStyle = color;
@@ -278,14 +292,6 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
   const containerRef = useRef(null);
   const fgRef = useRef(null);
   const isDraggingRef = useRef(false);
-  // 開いた瞬間の追従アニメーション中（下記のrequestAnimationFrameループ）に
-  // ユーザーがズーム・パン・ドラッグのいずれかに触れたら、以後は二度と
-  // カメラを自動フィットしない。ループが動き続けている間にユーザーが
-  // ズーム・パンを試みても、次のフレームでカメラが戻され「何も反応しない」
-  // ように見えてしまう不具合を踏んだ。
-  // ノードドラッグはisDraggingRefで個別に保護されていたが、背景パンは
-  // 保護が無かった（d3-zoom側のドラッグ処理でありisDraggingRefの対象外）
-  const userInteractedRef = useRef(false);
   // 自前のrequestAnimationFrameループ（下記fitCamera呼び出し箇所参照）が
   // 毎フレーム最新のselectedNodeIdを参照できるようにするためのref。
   // ループを開始するuseEffectの依存配列には入れていない（selectedNodeId
@@ -297,72 +303,7 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [hoveredNodeId, setHoveredNodeId] = useState(null);
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return undefined;
-
-    // 初回の非ゼロ計測値で固定する。ResizeObserverが以後も発火し続けて
-    // width/heightをforce-graphへ渡し直すと、ズーム・ドラッグが効かなく
-    // なる不具合を踏んだ（ファイル冒頭のコメント参照）
-    const updateSize = () => {
-      setSize((prev) => {
-        if (prev.width > 0 && prev.height > 0) return prev;
-        const next = { width: el.clientWidth, height: el.clientHeight };
-        return next.width > 0 && next.height > 0 ? next : prev;
-      });
-    };
-    updateSize();
-
-    const observer = new ResizeObserver(updateSize);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return undefined;
-
-    // wheel/pointerdownはここでは観測するだけ（preventDefault等はしない）。
-    // force-graph自身のズーム・パン・ドラッグ処理はそのまま動かしつつ、
-    // 「ユーザーが触れた」事実だけを記録する。
-    //
-    // captureフェーズで登録するのが必須: d3-zoom自身のwheel/mousedown
-    // ハンドラ（canvas要素に直接登録されている）は内部で
-    // event.stopImmediatePropagation()を呼ぶため、bubbleフェーズで
-    // 親要素（このコンテナ）に登録したリスナーには一切イベントが
-    // 届かない。captureフェーズはDOMツリーを上から下へ辿る際に先に
-    // 発火するため、canvas側の後続のstopPropagationの影響を受けない
-    // （実際に踏んだ不具合: wheelでのズームが「初回だけ効かず、
-    // 待てば効く」ように見えた原因）
-    const markInteracted = () => {
-      userInteractedRef.current = true;
-    };
-    el.addEventListener("wheel", markInteracted, { passive: true, capture: true });
-    el.addEventListener("pointerdown", markInteracted, { capture: true });
-    return () => {
-      el.removeEventListener("wheel", markInteracted, { capture: true });
-      el.removeEventListener("pointerdown", markInteracted, { capture: true });
-    };
-  }, []);
-
-  const { nodes, links } = useMemo(() => {
-    const degrees = new Map();
-    graph.edges.forEach((edge) => {
-      degrees.set(edge.source, (degrees.get(edge.source) ?? 0) + 1);
-      degrees.set(edge.target, (degrees.get(edge.target) ?? 0) + 1);
-    });
-
-    return {
-      nodes: graph.nodes.map((node) => ({
-        id: node.id,
-        type: node.type,
-        label: node.label,
-        metadata: node.metadata,
-        degree: degrees.get(node.id) ?? 0,
-      })),
-      links: graph.edges.map((edge) => ({ source: edge.source, target: edge.target })),
-    };
-  }, [graph]);
+  const { nodes, links } = useMemo(() => buildForceGraphData(graph), [graph]);
 
   // ホバー中のノードの直接のつながりだけを目立たせるための隣接表
   const adjacency = useMemo(() => {
@@ -376,17 +317,14 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     return map;
   }, [links]);
 
+  // fitCameraはリサイズ用のuseEffect（依存配列が[]で、マウント時に一度だけ
+  // 作られるクロージャ）からも呼ばれるため、隣接表はrefから読む。
+  // useMemoの結果を直接クロージャで捕まえると、グラフデータが変わって
+  // adjacencyが更新されたあともリサイズ側は古い隣接表を見続けてしまう
+  const adjacencyRef = useRef(adjacency);
   useEffect(() => {
-    // 初回レンダーはsizeがまだ0のためForceGraph2D自体が描画されておらず
-    // fgRef.currentがnull。sizeも依存配列に入れて、canvasが実際に
-    // マウントされたあとにも改めて力を設定し直す
-    // （このガードだけだとnodes/linksが変わらない限り二度と実行されず、
-    // 独自のFORCE_PARAMSが一生適用されないまま、というバグを実際に踏んだ）
-    if (!fgRef.current) return;
-    fgRef.current.d3Force("link")?.distance(FORCE_PARAMS.linkDistance);
-    fgRef.current.d3Force("charge")?.strength(FORCE_PARAMS.chargeStrength);
-    fgRef.current.d3Force("collide", forceCollide(FORCE_PARAMS.collideRadius));
-  }, [nodes, links, size.width, size.height]);
+    adjacencyRef.current = adjacency;
+  }, [adjacency]);
 
   /**
    * 収束時にカメラをどこへ合わせるか。
@@ -408,7 +346,7 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
       fgRef.current?.zoomToFit(duration, padding);
       return;
     }
-    const neighborIds = adjacency.get(focusId);
+    const neighborIds = adjacencyRef.current.get(focusId);
     fgRef.current?.zoomToFit(
       duration,
       padding,
@@ -416,27 +354,119 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     );
   };
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+
+    let timeoutId;
+    // 表示エリアの実測値を取り、変わっていればsizeを更新してカメラの
+    // ずれを補正する。以前は初回計測値で恒久的に固定していたが（詳細は
+    // ファイル冒頭コメントの既知の不具合2参照）、クリック判定が
+    // isPointerDraggingに依存しない自前実装になったことで、リサイズに
+    // 追従しても安全になったと判断した
+    const applySize = () => {
+      const next = { width: el.clientWidth, height: el.clientHeight };
+      if (next.width > 0 && next.height > 0) {
+        setSize((prev) => (prev.width === next.width && prev.height === next.height ? prev : next));
+        fitCamera(200, selectedNodeIdRef.current ? 80 : 40, selectedNodeIdRef.current);
+      }
+    };
+    applySize();
+
+    // ウィンドウのドラッグリサイズ中に何度も発火してその都度サイズを
+    // 適用すると、内部でズーム位置の再計算が連続して走ってしまうため
+    // デバウンスする
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(applySize, 200);
+    });
+    observer.observe(el);
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    // 初回レンダーはsizeがまだ0のためForceGraph2D自体が描画されておらず
+    // fgRef.currentがnull。sizeも依存配列に入れて、canvasが実際に
+    // マウントされたあとにも改めて力を設定し直す
+    // （このガードだけだとnodes/linksが変わらない限り二度と実行されず、
+    // 独自のFORCE_PARAMSが一生適用されないまま、というバグを実際に踏んだ）
+    if (!fgRef.current) return;
+    fgRef.current.d3Force("link")?.distance(FORCE_PARAMS.linkDistance);
+    fgRef.current.d3Force("charge")?.strength(FORCE_PARAMS.chargeStrength);
+    fgRef.current.d3Force("collide", forceCollide(nodeCollideRadius));
+    // 他のノードと1本もつながっていない記録（例: 産地・精製方法・
+    // フレーバーを何も選んでいない記録）は、リンクによる引力を一切
+    // 受けないため、chargeStrengthの反発力だけで中心から際限なく
+    // 離れていってしまう。カメラの自動フィットは全ノードを画面に
+    // 収めようとするため、この1つの孤立ノードのせいでグラフ全体が
+    // 大きくズームアウトして見づらくなる不具合を実際に踏んだ。
+    // 中心(0,0)へ引き戻す力を加えることで、孤立ノードが離れすぎない
+    // ようにする。最初はstrength 0.3で試したが、開いてから収束するまでの
+    // 広がり方が、反発力とせめぎ合ってぎこちなく見える（実機フィードバック）
+    // ため、0.05まで弱めた
+    fgRef.current.d3Force("x", forceX(0).strength(0.05));
+    fgRef.current.d3Force("y", forceY(0).strength(0.05));
+  }, [nodes, links, size.width, size.height]);
+
+  // 開いた瞬間からユーザーが操作するまでの経過時間を見て、カメラの
+  // 自動フィットを一時的にスキップする「クールダウン」。以前は一度でも
+  // 操作すると以後永久にフィットしない恒久ラッチだったが、追従アニメ中に
+  // 一度ホイールを触っただけで、以後ずっと窮屈なレイアウトのまま固定
+  // されてしまうという指摘を受けた。最後の操作から一定時間経てば
+  // 自動フィットを再開するようにする
+  const lastInteractionAtRef = useRef(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+
+    // wheel/pointerdownはここでは観測するだけ（preventDefault等はしない）。
+    // force-graph自身のズーム・パン・ドラッグ処理はそのまま動かしつつ、
+    // 「ユーザーが最後に触れたのはいつか」だけを記録する。
+    //
+    // captureフェーズで登録するのが必須: d3-zoom自身のwheel/mousedown
+    // ハンドラ（canvas要素に直接登録されている）は内部で
+    // event.stopImmediatePropagation()を呼ぶため、bubbleフェーズで
+    // 親要素（このコンテナ）に登録したリスナーには一切イベントが
+    // 届かない。captureフェーズはDOMツリーを上から下へ辿る際に先に
+    // 発火するため、canvas側の後続のstopPropagationの影響を受けない
+    // （実際に踏んだ不具合: wheelでのズームが「初回だけ効かず、
+    // 待てば効く」ように見えた原因）
+    const markInteracted = () => {
+      lastInteractionAtRef.current = performance.now();
+    };
+    el.addEventListener("wheel", markInteracted, { passive: true, capture: true });
+    el.addEventListener("pointerdown", markInteracted, { capture: true });
+    return () => {
+      el.removeEventListener("wheel", markInteracted, { capture: true });
+      el.removeEventListener("pointerdown", markInteracted, { capture: true });
+    };
+  }, []);
+
   // グラフのデータそのものが変わったら（フィルター変更や新しく開いた直後など）、
   // 一定時間だけ自前でrequestAnimationFrameを回してfitCameraを毎フレーム
-  // 呼び続け、カメラを追従させる（ファイル冒頭の既知の不具合4参照。
+  // 呼び続け、カメラを追従させる（ファイル冒頭の既知の不具合3参照。
   // onEngineTick/onEngineStopが発火しないため代替した）。
   // FOLLOW_DURATION_MSはd3AlphaDecayの既定値（0.0228）から、alphaが
   // 実用上ほぼ0になるまでのおおよそのフレーム数を目安に、余裕を持たせて決めた。
   useEffect(() => {
-    userInteractedRef.current = false;
+    lastInteractionAtRef.current = 0;
 
     const FOLLOW_DURATION_MS = 2000;
     const startTime = performance.now();
     let rafId = null;
 
     const step = (now) => {
-      if (userInteractedRef.current) return;
-      if (!isDraggingRef.current) {
+      const cooledDown = now - lastInteractionAtRef.current > REFIT_COOLDOWN_MS;
+      if (cooledDown && !isDraggingRef.current) {
         fitCamera(80, 40, selectedNodeIdRef.current);
       }
       if (now - startTime < FOLLOW_DURATION_MS) {
         rafId = requestAnimationFrame(step);
-      } else if (!isDraggingRef.current) {
+      } else if (cooledDown && !isDraggingRef.current) {
         // フォーカスありのときは、少し狭めに絞った分だけ余白を広めにして
         // （padding 80）、対象ノードだけがぎりぎり収まって窮屈にならないようにする
         fitCamera(400, selectedNodeIdRef.current ? 80 : 40, selectedNodeIdRef.current);
@@ -446,7 +476,6 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     return () => {
       if (rafId != null) cancelAnimationFrame(rafId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, links]);
 
   const visualContext = { selectedNodeId, hoveredNodeId, adjacency, interactive };
@@ -458,31 +487,11 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
 
   // onNodeClick/onBackgroundClickが機能しないためのクリック代替実装。
   // pointerdown→pointerupの移動量が閾値以内なら「クリック」とみなし、
-  // screen2GraphCoordsで求めたグラフ座標にdrawNodeと同じ形（円・角丸矩形）の
-  // 当たり判定を自前で行う。ホバー状態（hoveredNodeId）には頼らない
-  // ——isPointerDragging誤検知（ファイル冒頭コメント参照）と同じ理由で、
-  // クリックの瞬間にホバーがnullへリセットされることがあるため
+  // screen2GraphCoordsで求めたグラフ座標に対する当たり判定をgraphHitTest.js
+  // （findNodeAtGraphPoint）へ委譲する。ホバー状態（hoveredNodeId）には
+  // 頼らない——isPointerDragging誤検知（ファイル冒頭コメント参照）と
+  // 同じ理由で、クリックの瞬間にホバーがnullへリセットされることがあるため
   const pointerDownRef = useRef(null);
-
-  const findNodeAtClientPoint = (clientX, clientY) => {
-    const canvas = containerRef.current?.querySelector("canvas");
-    if (!canvas || !fgRef.current) return null;
-    const rect = canvas.getBoundingClientRect();
-    const { x, y } = fgRef.current.screen2GraphCoords(clientX - rect.left, clientY - rect.top);
-    return (
-      nodes.find((node) => {
-        if (node.x == null || node.y == null) return false;
-        const isSelected = node.id === selectedNodeId;
-        if (node.type === "record") {
-          const dx = node.x - x;
-          const dy = node.y - y;
-          return Math.sqrt(dx * dx + dy * dy) <= recordRadius(node, isSelected);
-        }
-        const halfWidth = attributeHalfWidth(node, isSelected);
-        return Math.abs(node.x - x) <= halfWidth && Math.abs(node.y - y) <= attributeHalfHeight(isSelected);
-      }) ?? null
-    );
-  };
 
   const handlePointerDown = (event) => {
     if (!interactive) return;
@@ -495,7 +504,12 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     const dy = event.clientY - pointerDownRef.current.y;
     pointerDownRef.current = null;
     if (Math.sqrt(dx * dx + dy * dy) > CLICK_TOLERANCE_PX) return;
-    const node = findNodeAtClientPoint(event.clientX, event.clientY);
+
+    const canvas = containerRef.current?.querySelector("canvas");
+    if (!canvas || !fgRef.current) return;
+    const rect = canvas.getBoundingClientRect();
+    const { x, y } = fgRef.current.screen2GraphCoords(event.clientX - rect.left, event.clientY - rect.top);
+    const node = findNodeAtGraphPoint(nodes, x, y, selectedNodeId);
     onSelectNode(node ? { id: node.id, data: node } : null);
   };
 

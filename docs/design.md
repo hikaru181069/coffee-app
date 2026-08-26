@@ -26,6 +26,11 @@ MVPの主ナビゲーション:
 - Stats
 - Profile / Settings
 
+Diagnosisページ（`/diagnosis`）は上記に含めない。ナビ項目は4つ
+（Home/Records/Graph/Stats。Profileは別枠）と少なく保つ方針のため
+（`frontend/src/components/Navbar.jsx`参照）、Home画面・Statsページからの
+リンク経由でのみ到達する画面にしている（Entity Detailページと同じ扱い）。
+
 ## Screens
 
 ### Landing
@@ -136,6 +141,20 @@ Coffee Detailsとして段階的に見せる項目:
 - 家とカフェの比較
 - 産地・品種・精製方法・フレーバー・カフェの上位ランキング
   （エンティティ詳細ページへのリンク）
+
+### Diagnosis
+
+記録から判定した「コーヒータイプ」と、Insight・Statsの要約をまとめて見せる
+`/diagnosis`ページ（docs/features.md「Coffee Diagnosis」参照）。主ナビには
+含めない（Main Navigation参照）。Home画面のDiscoverカード・Statsページ
+からのリンクで到達する。
+
+構成:
+
+- コーヒータイプ（判定できない場合は空状態）
+- 気づき（Insightの全件）
+- 記録の全体像（Statsの要約: 記録数・平均評価・家とカフェ・産地/フレーバー
+  上位ランキング）
 
 ### Profile / Settings
 

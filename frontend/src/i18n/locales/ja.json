@@ -249,7 +249,8 @@
     "similarProcessOrigin": "{{originLabel}}を{{processLabel}}精製でよく選んでいますが（{{count}}件）、同じ{{processLabel}}精製で評価の高い{{suggestedLabel}}はまだ記録がありません。",
     "recordCta": "この産地を記録してみる",
     "sourceNote": "Coffee Quality Instituteの参考データをもとにした目安です。",
-    "teaserLink": "{{suggestedLabel}}産のコーヒー、まだ試していません"
+    "teaserLink": "{{suggestedLabel}}産のコーヒー、まだ試していません",
+    "diagnosisLink": "コーヒー診断を見る"
   },
   "search": {
     "placeholder": "産地・品種・フレーバー・カフェ・精製方法・コーヒー名で検索",
@@ -295,6 +296,51 @@
       "farmCount": "農園の種類",
       "cafeCount": "カフェの種類",
       "flavorCount": "フレーバーの種類"
+    },
+    "viewDiagnosisLink": "詳しい診断を見る"
+  },
+  "diagnosis": {
+    "heading": "コーヒー診断",
+    "subtitle": "記録から、あなたの「コーヒータイプ」と気づきをまとめました。",
+    "archetypeHeading": "コーヒータイプ",
+    "insightsHeading": "気づき",
+    "insightsEmpty": "記録が増えると、ここに気づきが表示されます。",
+    "overviewHeading": "記録の全体像",
+    "archetype": {
+      "empty": "記録が増えると、あなたの「コーヒータイプ」を診断できるようになります。",
+      "sampleSize": "{{count}}件の記録から診断",
+      "lightFruity": {
+        "title": "浅煎り × フルーティー派",
+        "description": "酸味や果実のような明るい香りを楽しむタイプです。浅煎りの豆と、フルーティーなフレーバーをよく選んでいます。"
+      },
+      "lightFloral": {
+        "title": "浅煎り × 華やか派",
+        "description": "花のような繊細な香りが特徴の浅煎りと、華やかなフレーバーをよく選んでいます。"
+      },
+      "darkNutty": {
+        "title": "深煎り × ナッツ派",
+        "description": "香ばしくコクのある深煎りと、ナッツ系のフレーバーをよく選んでいます。"
+      },
+      "darkSweet": {
+        "title": "深煎り × 甘み派",
+        "description": "深煎りのしっかりした苦みと、甘やかなフレーバーの組み合わせをよく選んでいます。"
+      },
+      "mediumSpicy": {
+        "title": "中煎り × スパイス派",
+        "description": "バランスの良い中煎りと、スパイスのようなアクセントのあるフレーバーをよく選んでいます。"
+      },
+      "light": {
+        "title": "浅煎り派",
+        "description": "酸味や香りが際立つ浅煎りのコーヒーをよく選んでいます。"
+      },
+      "dark": {
+        "title": "深煎り派",
+        "description": "コクと苦みのしっかりした深煎りのコーヒーをよく選んでいます。"
+      },
+      "medium": {
+        "title": "中煎り派",
+        "description": "酸味と苦みのバランスが良い中煎りのコーヒーをよく選んでいます。"
+      }
     }
   },
   "validation": {
