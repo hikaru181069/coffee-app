@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { Coffee, Droplets, MapPin, Star, Store } from "lucide-react";
+import { Coffee, Droplets, Star, Store } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { formatConsumedAtShort, hasCoffeeDetails, recordTypeLabel } from "../utils/recordFormat";
+import { getOriginAccentClass } from "../utils/originAccent";
 import { entityDetailPath } from "../../graph/utils/entityLink";
 import { useReveal } from "../../../hooks/useReveal";
 import { revealDelayClass } from "../../../utils/revealDelay";
@@ -19,9 +20,13 @@ const tagClass =
  * 情報が頭に入らない。詳しくは詳細画面で見る。
  *
  * 情報階層: コーヒー名を最も強く、日付/タイプなどのmetadataは弱く、
- * 産地/精製方法/フレーバーのタグは補助情報として下段に置く。
+ * 精製方法/フレーバーのタグは補助情報として下段に置く。産地だけは
+ * HomeRecordCard.jsxと同じアクセントバー＋国名をカード最上部に置き、
+ * 一覧とHomeで見た目を揃える（2026-08、一覧側にだけ産地のアクセント
+ * 表示が無いという指摘を受けて追加。下段のタグと重複させないよう、
+ * 産地は下段のタグ列からは外している）。
  *
- * カード全体は記録詳細（/records/:id）へ、タグはそれぞれエンティティ
+ * カード全体は記録詳細（/records/:id）へ、産地・タグはそれぞれエンティティ
  * 詳細（/entities/:nodeId）へと、Linkが二重になる。<a>の入れ子は不正な
  * DOMになり実際にクリックが誤動作する（Reactはparseではなく
  * document.createElementでDOMを組むため、ブラウザの構文修復が働かず
@@ -54,6 +59,21 @@ function RecordCard({ record, index = 0 }) {
         aria-label={record.title}
         className="absolute inset-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
+
+      {record.origin && (
+        <Link
+          to={entityDetailPath("origin", record.origin.id)}
+          className="relative mb-2 inline-flex items-center gap-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50"
+        >
+          <span
+            aria-hidden="true"
+            className={`h-3 w-0.5 rounded-full ${getOriginAccentClass(record.origin.name)}`}
+          />
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary transition-colors duration-150 hover:text-text">
+            {record.origin.name}
+          </span>
+        </Link>
+      )}
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -88,14 +108,8 @@ function RecordCard({ record, index = 0 }) {
         )}
       </div>
 
-      {(record.origin || record.process || flavors.length > 0) && (
+      {(record.process || flavors.length > 0) && (
         <div className="relative mt-4 flex flex-wrap items-center gap-1.5">
-          {record.origin && (
-            <Link to={entityDetailPath("origin", record.origin.id)} className={tagClass}>
-              <MapPin size={11} aria-hidden="true" />
-              {record.origin.name}
-            </Link>
-          )}
           {record.process && (
             <Link to={entityDetailPath("process", record.process.id)} className={tagClass}>
               <Droplets size={11} aria-hidden="true" />
