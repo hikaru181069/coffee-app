@@ -9,7 +9,7 @@ import { deleteCoffeeRecord } from "../features/coffee-records/api/coffeeRecordA
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import RecordDetailSkeleton from "../features/coffee-records/components/RecordDetailSkeleton";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
-import { primaryButtonClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
+import { cardClass, primaryButtonClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import {
   collectCoffeeDetails,
   formatConsumedAt,
@@ -18,6 +18,7 @@ import {
 } from "../features/coffee-records/utils/recordFormat";
 import TasteRadarChart from "../features/coffee-records/components/TasteRadarChart";
 import RecordConnectionsDiagram from "../features/graph/components/RecordConnectionsDiagram";
+import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
 import { contentContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
 import { getErrorMessage } from "../utils/errorMessage";
@@ -44,11 +45,48 @@ import { getErrorMessage } from "../utils/errorMessage";
  * 圧縮した。Recordsの一覧とは違い記録詳細は1件分の決まった量のため、
  * 「スクロール無しで収まる」ことを目指せる、という判断による。
  *
+ * 2026-08、「空白が多く見せ方が下手・寂しい」という指摘を受け、薄い
+ * divide-yの区切り線だけで並べていた3セクションを、Records一覧などと
+ * 同じ`cardClass`（枠線+背景+影のカード）で囲むよう変更した。あわせて
+ * 「文字が小さい」「アクセントを使うべき」という指摘に対し、値(dd)・
+ * メモ・見出しのフォントサイズを引き上げ、Coffee Informationの各項目に
+ * Graphの`nodeVisuals.js`と同じアイコン・色（産地=Globe/sky、農園=Leaf/teal、
+ * 品種=Sprout/yellow、精製方法=Droplets/sapphire、焙煎度=Flame/peach、
+ * フレーバー=Sparkles/pink）を添えた。新しい色は増やさず、Graph・
+ * Diagnosis・DiscoverCardで使っている色をこのページでも再利用している
+ * だけなので、アプリ全体の配色一貫性は崩れない。roasterNameは知識グラフの
+ * ノード種別に該当しないため、アイコン無しのまま。図（味覚グラフ・
+ * つながり図）の最大幅も、カード内で小さく浮いて見えないよう拡大した
+ * （つながり図・味覚グラフの軸ラベルなど、図の内部の微小な文字サイズは
+ * レイアウト計算がノード間の衝突回避を前提にしているため今回は対象外）。
+ *
+ * 2026-08、上記直後にユーザーから「広い画面でコーヒーの詳細カードを見ると
+ * 3カラムグリッドが短い値でも均等に3分割してしまい、項目同士が不自然に
+ * 離れて寂しい」という追加の指摘を受けた。`grid-cols-3`は列幅が内容量に
+ * 関わらず均等になってしまうため、`flex flex-wrap`（各項目が内容量に応じた
+ * 幅を持ち、詰めて並び、入りきらない分だけ折り返す）へ変更した。あわせて
+ * 各項目のアイコンを、12pxの添え字ではなく色付きの円形バッジ
+ * （`nodeVisuals.js`に新設した`bgTintClass`、15%不透明度の背景）へ格上げし、
+ * 「情報の塊」としての視覚的な重みを持たせた。「コーヒーの詳細は同じ
+ * カード内に収めた方がわかりやすい」という要望通り、複数カードへは
+ * 分割せず1枚のカード内でタイルを並べる構成のまま。roasterNameは知識
+ * グラフのノード種別に該当しないため、バッジは中立色（`bg-surface-2`+
+ * `text-text-tertiary`のStoreアイコン）にしている。
+ *
  * docs/design.md にある「関連ノード」（詳細画面に直接、関連する記録の
  * 一覧を埋め込む案）は今回も実装していない。Graph画面・エンティティ詳細
  * ページへ遷移すれば同じ情報を見られるため、重複した一覧をここにも
  * 持たせる優先度は低いと判断した。
  */
+/** collectCoffeeDetails()のkeyから、対応する知識グラフのノード種別へ。roasterNameはノードに無いため含めない */
+const DETAIL_NODE_TYPE = {
+  origin: "origin",
+  farmName: "farm",
+  varieties: "variety",
+  process: "process",
+  roastLevel: "roastLevel",
+};
+
 function RecordDetailPage() {
   const { t, i18n } = useTranslation();
   const { recordId } = useParams();
@@ -109,6 +147,8 @@ function RecordDetailPage() {
   const details = collectCoffeeDetails(record, t, i18n.language);
   const flavors = record.flavors ?? [];
   const hasCoffeeInfo = details.length > 0 || flavors.length > 0;
+  const flavorVisual = getNodeVisual("flavor");
+  const FlavorIcon = flavorVisual.icon;
   // Connectionsは知識グラフのノードに対応する4種別のみ（Property Gridとは違い
   // farmName/variety/roasterNameはグラフのノードではないため含めない）
   const hasConnections = Boolean(record.origin || record.process || record.roastLevel || flavors.length > 0);
@@ -175,31 +215,56 @@ function RecordDetailPage() {
       </header>
 
       {hasCoffeeInfo || hasTasteRatings || record.notes || hasConnections ? (
-        <div className="mt-6 divide-y divide-surface-2">
+        <div className="mt-6 flex flex-col gap-6">
           {/* ── Coffee Information（Property Grid） ─── */}
           {hasCoffeeInfo && (
-            <section className="py-6 first:pt-0">
-              <h2 className="text-sm font-semibold text-text">{t("records.detailsHeading")}</h2>
-              <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                {details.map((detail) => (
-                  <div key={detail.key}>
-                    <dt className="text-xs text-text-tertiary">{detail.label}</dt>
-                    <dd className="mt-0.5 text-sm text-text">{detail.value}</dd>
-                  </div>
-                ))}
+            <section className={cardClass}>
+              <h2 className="text-base font-semibold text-text">{t("records.detailsHeading")}</h2>
+              <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-6">
+                {details.map((detail) => {
+                  const nodeType = DETAIL_NODE_TYPE[detail.key];
+                  const visual = nodeType ? getNodeVisual(nodeType) : null;
+                  // roasterNameは知識グラフのノード種別に該当しないため、
+                  // アクセントカラーではなく中立色のバッジにする（Storeは
+                  // 既にrecordType表示で使っているアイコンを流用するだけで、
+                  // cafeノード=lavenderのような色の主張は持たせない）
+                  const Icon = visual?.icon ?? Store;
+                  const iconColorClass = visual?.colorClass ?? "text-text-tertiary";
+                  const badgeBgClass = visual?.bgTintClass ?? "bg-surface-2";
+                  return (
+                    <div key={detail.key} className="flex min-w-36 items-start gap-3">
+                      <span
+                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${badgeBgClass}`}
+                      >
+                        <Icon size={16} aria-hidden="true" className={iconColorClass} strokeWidth={1.75} />
+                      </span>
+                      <div className="min-w-0">
+                        <dt className="text-xs text-text-tertiary">{detail.label}</dt>
+                        <dd className="mt-0.5 text-base text-text">{detail.value}</dd>
+                      </div>
+                    </div>
+                  );
+                })}
                 {flavors.length > 0 && (
-                  <div>
-                    <dt className="text-xs text-text-tertiary">{t("records.flavorsHeading")}</dt>
-                    <dd className="mt-1.5 flex flex-wrap gap-1.5">
-                      {flavors.map((flavor) => (
-                        <span
-                          key={flavor.id}
-                          className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary"
-                        >
-                          {flavor.name}
-                        </span>
-                      ))}
-                    </dd>
+                  <div className="flex min-w-36 items-start gap-3">
+                    <span
+                      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${flavorVisual.bgTintClass}`}
+                    >
+                      <FlavorIcon size={16} aria-hidden="true" className={flavorVisual.colorClass} strokeWidth={1.75} />
+                    </span>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-text-tertiary">{t("records.flavorsHeading")}</dt>
+                      <dd className="mt-1 flex flex-wrap gap-1.5">
+                        {flavors.map((flavor) => (
+                          <span
+                            key={flavor.id}
+                            className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary"
+                          >
+                            {flavor.name}
+                          </span>
+                        ))}
+                      </dd>
+                    </div>
                   </div>
                 )}
               </dl>
@@ -208,10 +273,10 @@ function RecordDetailPage() {
 
           {/* ── Tasting Note ─────────────────────────── */}
           {record.notes && (
-            <section className="py-6 first:pt-0">
-              <h2 className="text-sm font-semibold text-text">{t("records.notesHeading")}</h2>
+            <section className={cardClass}>
+              <h2 className="text-base font-semibold text-text">{t("records.notesHeading")}</h2>
               {/* whitespace-pre-wrap: 入力時の改行を表示にも反映する */}
-              <p className="mt-3 whitespace-pre-wrap text-sm italic leading-relaxed text-text-secondary">
+              <p className="mt-3 whitespace-pre-wrap text-base italic leading-relaxed text-text-secondary">
                 {record.notes}
               </p>
             </section>
@@ -224,11 +289,11 @@ function RecordDetailPage() {
               Recordsの一覧と違い「スクロール無しで収まる」ことを狙える）。
               片方しか無いときはgridを掛けず単一カラムのまま伸ばす */}
           {(hasTasteRatings || hasConnections) && (
-            <section className="py-6 first:pt-0">
+            <section className={cardClass}>
               <div className={hasTasteRatings && hasConnections ? "grid gap-8 lg:grid-cols-2" : ""}>
                 {hasTasteRatings && (
                   <div>
-                    <h2 className="text-sm font-semibold text-text">{t("records.tasteHeading")}</h2>
+                    <h2 className="text-base font-semibold text-text">{t("records.tasteHeading")}</h2>
                     <div className="mt-4">
                       <TasteRadarChart record={record} />
                     </div>
@@ -238,7 +303,7 @@ function RecordDetailPage() {
                 {hasConnections && (
                   <div>
                     <div className="flex items-center justify-between gap-3">
-                      <h2 className="text-sm font-semibold text-text">{t("records.connectionsHeading")}</h2>
+                      <h2 className="text-base font-semibold text-text">{t("records.connectionsHeading")}</h2>
                       <Link
                         to={`/graph?focus=record:${record.id}`}
                         className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"

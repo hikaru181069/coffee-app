@@ -37,12 +37,21 @@ import { getCanvasColor } from "./canvasColors";
  * index.cssの@themeが生成する--color-*から動的に解決する
  * （utils/canvasColors.js参照。以前はhexを手打ちして@theme側と手動
  * 同期する必要があったが、その技術的負債を解消した）。
+ *
+ * bgTintClassは、2026-08にRecordDetailPage.jsxの「コーヒーの詳細」を
+ * アイコンバッジ付きのタイル表示へ変更した際に追加した、薄い塗り
+ * （15%不透明度）の背景色クラス。`colorClass`から`.replace("text-","bg-")`
+ * で動的に導出せず、ここへ literal な文字列として持たせているのは、
+ * Tailwindのビルドがソースコード中に実際に書かれたクラス名の文字列だけを
+ * 検出するため（実行時に文字列結合で作った"bg-accent-sky/15"はビルドの
+ * スキャン対象にならずCSSが生成されない）。
  */
 export const NODE_VISUALS = {
   record: {
     icon: Coffee,
     labelKey: "graph.nodeTypes.record",
     colorClass: "text-accent-moss",
+    bgTintClass: "bg-accent-moss/15",
     ringClass: "ring-accent-moss/50",
     get canvasColor() {
       return getCanvasColor("--color-accent-moss");
@@ -52,6 +61,7 @@ export const NODE_VISUALS = {
     icon: Globe,
     labelKey: "graph.nodeTypes.origin",
     colorClass: "text-accent-sky",
+    bgTintClass: "bg-accent-sky/15",
     ringClass: "ring-accent-sky/50",
     get canvasColor() {
       return getCanvasColor("--color-accent-sky");
@@ -61,6 +71,7 @@ export const NODE_VISUALS = {
     icon: Leaf,
     labelKey: "graph.nodeTypes.farm",
     colorClass: "text-accent-teal",
+    bgTintClass: "bg-accent-teal/15",
     ringClass: "ring-accent-teal/50",
     get canvasColor() {
       return getCanvasColor("--color-accent-teal");
@@ -70,6 +81,7 @@ export const NODE_VISUALS = {
     icon: Sprout,
     labelKey: "graph.nodeTypes.variety",
     colorClass: "text-accent-yellow",
+    bgTintClass: "bg-accent-yellow/15",
     ringClass: "ring-accent-yellow/50",
     get canvasColor() {
       return getCanvasColor("--color-accent-yellow");
@@ -79,6 +91,7 @@ export const NODE_VISUALS = {
     icon: Droplets,
     labelKey: "graph.nodeTypes.process",
     colorClass: "text-accent-sapphire",
+    bgTintClass: "bg-accent-sapphire/15",
     ringClass: "ring-accent-sapphire/50",
     get canvasColor() {
       return getCanvasColor("--color-accent-sapphire");
@@ -88,6 +101,7 @@ export const NODE_VISUALS = {
     icon: Flame,
     labelKey: "graph.nodeTypes.roastLevel",
     colorClass: "text-accent-peach",
+    bgTintClass: "bg-accent-peach/15",
     ringClass: "ring-accent-peach/50",
     get canvasColor() {
       return getCanvasColor("--color-accent-peach");
@@ -97,6 +111,7 @@ export const NODE_VISUALS = {
     icon: Sparkles,
     labelKey: "graph.nodeTypes.flavor",
     colorClass: "text-accent-pink",
+    bgTintClass: "bg-accent-pink/15",
     ringClass: "ring-accent-pink/50",
     get canvasColor() {
       return getCanvasColor("--color-accent-pink");
@@ -106,6 +121,7 @@ export const NODE_VISUALS = {
     icon: Store,
     labelKey: "graph.nodeTypes.cafe",
     colorClass: "text-accent-lavender",
+    bgTintClass: "bg-accent-lavender/15",
     ringClass: "ring-accent-lavender/50",
     get canvasColor() {
       return getCanvasColor("--color-accent-lavender");
@@ -115,6 +131,7 @@ export const NODE_VISUALS = {
     icon: Quote,
     labelKey: "graph.nodeTypes.keyword",
     colorClass: "text-accent-mauve",
+    bgTintClass: "bg-accent-mauve/15",
     ringClass: "ring-accent-mauve/50",
     get canvasColor() {
       return getCanvasColor("--color-accent-mauve");

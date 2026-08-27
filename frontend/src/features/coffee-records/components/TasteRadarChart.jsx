@@ -30,7 +30,7 @@ function TasteRadarChart({ record }) {
 
   return (
     <div>
-      <div className="relative mx-auto aspect-square w-full max-w-xs">
+      <div className="relative mx-auto aspect-square w-full max-w-sm">
         <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden="true">
           {/* 目盛り（1〜5の同心六角形） */}
           {layout.ringPolygons.map((points, index) => (
@@ -90,7 +90,7 @@ function TasteRadarChart({ record }) {
  */
 function TasteRadarValues({ axes, t }) {
   return (
-    <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+    <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-base sm:grid-cols-3">
       {axes.map((axis) => (
         <div key={axis.field} className="flex items-center justify-between gap-2">
           <dt className="text-text-secondary">{t(axis.labelKey)}</dt>

@@ -32,7 +32,7 @@ function RecordConnectionsDiagram({ record }) {
 
   return (
     <div>
-      <div className="relative mx-auto aspect-square w-full max-w-sm">
+      <div className="relative mx-auto aspect-square w-full max-w-md">
         <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden="true">
           {layout.edges.map((edge, index) => (
             <line
