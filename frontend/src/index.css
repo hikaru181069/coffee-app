@@ -125,7 +125,14 @@ select {
    輪っかのように見える形にする。塗りの一色反転（白背景）よりも
    周囲のカードと馴染みつつ、Graphのノードと同じ色（nodeVisuals.jsと
    同じ並び順）の枠線でこのCTAだけを特別に見せる、というユーザーとの
-   相談を経た意匠のため専用クラスとして残す */
+   相談を経た意匠のため専用クラスとして残す。
+   2026-08、「ホバーでグラデーションが流れるようにしたい」という
+   要望を受けた。常時ループするシマーは「静かな道具」路線には
+   広告的で合わないと判断し、ホバーの間だけ一度グラデーション位置が
+   滑らかに移動する（ホバーを外すと逆再生で戻る）方式にした。
+   グラデーション側のbackground-sizeを実際の幅より大きく（250%）
+   取り、background-positionをtransitionでずらすだけで実現できるため、
+   @keyframesによる無限ループは使っていない */
 @layer components {
   .home-cta-gradient-border {
     border: 1.5px solid transparent;
@@ -143,7 +150,20 @@ select {
         var(--color-accent-lavender),
         var(--color-accent-mauve)
       );
+    background-size: 100% 100%, 250% 100%;
+    background-position: 0 0, 0% 0;
     background-origin: border-box;
     background-clip: padding-box, border-box;
+    transition: background-position 500ms var(--ease-decel);
+  }
+
+  .home-cta-gradient-border:hover {
+    background-position: 0 0, 100% 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-cta-gradient-border {
+      transition: none;
+    }
   }
 }
