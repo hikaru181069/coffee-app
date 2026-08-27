@@ -18,6 +18,7 @@ export const varieties = [
   { name: "Mundo Novo" },
   { name: "Villa Sarchi" },
   { name: "Pink Bourbon" },
+  { name: "Red Bourbon" },
   { name: "Castillo" },
   { name: "Ruiru 11" },
   { name: "Batian" },

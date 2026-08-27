@@ -17,6 +17,10 @@ export const flavors = [
   { name: "Strawberry", category: "fruity" },
   { name: "Blueberry", category: "fruity" },
   { name: "Stone Fruit", category: "fruity" },
+  { name: "Cherry", category: "fruity" },
+  { name: "Peach", category: "fruity" },
+  { name: "Mango", category: "fruity" },
+  { name: "Raisin", category: "fruity" },
   { name: "Apple", category: "fruity" },
   { name: "Grape", category: "fruity" },
   { name: "Tropical Fruit", category: "fruity" },
@@ -24,8 +28,10 @@ export const flavors = [
   // 甘さ系
   { name: "Chocolate", category: "sweet" },
   { name: "Dark Chocolate", category: "sweet" },
+  { name: "Milk Chocolate", category: "sweet" },
   { name: "Caramel", category: "sweet" },
   { name: "Brown Sugar", category: "sweet" },
+  { name: "Maple Syrup", category: "sweet" },
   { name: "Honey", category: "sweet" },
   { name: "Vanilla", category: "sweet" },
 
@@ -33,16 +39,20 @@ export const flavors = [
   { name: "Nutty", category: "nutty" },
   { name: "Almond", category: "nutty" },
   { name: "Hazelnut", category: "nutty" },
+  { name: "Walnut", category: "nutty" },
+  { name: "Peanut", category: "nutty" },
 
   // 花・香草系
   { name: "Floral", category: "floral" },
   { name: "Jasmine", category: "floral" },
+  { name: "Rose", category: "floral" },
   { name: "Black Tea", category: "floral" },
   { name: "Herbal", category: "floral" },
 
   // 香辛料系
   { name: "Spice", category: "spicy" },
   { name: "Cinnamon", category: "spicy" },
+  { name: "Clove", category: "spicy" },
 
   // その他
   { name: "Winey", category: "other" },
@@ -50,4 +60,6 @@ export const flavors = [
   { name: "Juicy", category: "other" },
   { name: "Smoky", category: "other" },
   { name: "Earthy", category: "other" },
+  { name: "Malty", category: "other" },
+  { name: "Tobacco", category: "other" },
 ];
