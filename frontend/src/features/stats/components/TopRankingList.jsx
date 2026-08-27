@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
+import { computeRanks } from "../utils/rankings";
 import { useReveal } from "../../../hooks/useReveal";
 import { revealDelayClass } from "../../../utils/revealDelay";
 
@@ -18,6 +19,7 @@ function TopRankingList({ type, items, t }) {
 
   const visual = getNodeVisual(type);
   const Icon = visual.icon;
+  const ranks = computeRanks(items);
 
   return (
     <div>
@@ -27,7 +29,7 @@ function TopRankingList({ type, items, t }) {
       </div>
       <ul className="flex flex-col gap-0.5">
         {items.map((item, index) => (
-          <RankingRow key={item.id} item={item} rank={index + 1} index={index} />
+          <RankingRow key={item.id} item={item} rank={ranks[index]} index={index} />
         ))}
       </ul>
     </div>
