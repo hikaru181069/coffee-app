@@ -219,6 +219,9 @@
   "graph": {
     "subtitle": "Explore the connections between your recorded origins and flavors.",
     "filterAriaLabel": "Graph filters",
+    "nodeSearchPlaceholder": "Search origins, farms, varieties, flavors, and more",
+    "nodeSearchAriaLabel": "Search nodes",
+    "nodeSearchNoResults": "No nodes match \"{{query}}\"",
     "nodeTypeFilterHeading": "Show node types",
     "legendHeading": "Legend",
     "ratingUnfiltered": "No filter",

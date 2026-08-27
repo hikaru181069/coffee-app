@@ -160,14 +160,20 @@ const truncateToWidth = (ctx, text, maxWidth) => {
   return `${result}…`;
 };
 
-const isNodeDimmed = (node, { interactive, hoveredNodeId, adjacency }) =>
-  Boolean(interactive && hoveredNodeId && node.id !== hoveredNodeId && !adjacency.get(hoveredNodeId)?.has(node.id));
+// ホバー中のノードだけでなく、選択中のノード（クリック・GraphNodeSearchの
+// どちらでも）でも同じ「関連ノード以外を薄くする」見せ方をする。
+// ホバーは一時的な注目、選択は持続する注目という違いはあるが、
+// 「関連を目立たせる」という目的自体は同じため、ホバー中はホバー対象を
+// 優先しつつ（マウスが離れれば選択中ノードの強調へ戻る）、どちらも
+// 同じfocusIdとして扱う
+const isNodeDimmed = (node, { interactive, focusId, adjacency }) =>
+  Boolean(interactive && focusId && node.id !== focusId && !adjacency.get(focusId)?.has(node.id));
 
-function drawNode(node, ctx, globalScale, { selectedNodeId, hoveredNodeId, adjacency, interactive }) {
+function drawNode(node, ctx, globalScale, { selectedNodeId, focusId, adjacency, interactive }) {
   const visual = getNodeVisual(node.type);
   const isRecord = node.type === "record";
   const selected = node.id === selectedNodeId;
-  const dimmed = isNodeDimmed(node, { interactive, hoveredNodeId, adjacency });
+  const dimmed = isNodeDimmed(node, { interactive, focusId, adjacency });
 
   ctx.save();
   ctx.globalAlpha = dimmed ? 0.25 : 1;
@@ -288,7 +294,7 @@ function paintNodePointerArea(node, color, ctx, isSelected) {
   }
 }
 
-function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }) {
+function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, interactive = true }) {
   const containerRef = useRef(null);
   const fgRef = useRef(null);
   const isDraggingRef = useRef(false);
@@ -411,6 +417,16 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     fgRef.current.d3Force("y", forceY(0).strength(0.05));
   }, [nodes, links, size.width, size.height]);
 
+  // GraphNodeSearchでの選択など、クリック以外の経緯でノードが指定された
+  // ときは、収束後で下の追従ループが既に止まっていても明示的にカメラを
+  // 合わせる。canvas上のクリック選択（handlePointerUp）はこれまで通り
+  // カメラを動かさない（既存の見た目を変えないため、focusRequestが
+  // 発行されたときだけ反応する）
+  useEffect(() => {
+    if (!focusRequest) return;
+    fitCamera(400, 80, focusRequest.nodeId);
+  }, [focusRequest]);
+
   // 開いた瞬間からユーザーが操作するまでの経過時間を見て、カメラの
   // 自動フィットを一時的にスキップする「クールダウン」。以前は一度でも
   // 操作すると以後永久にフィットしない恒久ラッチだったが、追従アニメ中に
@@ -478,7 +494,12 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
     };
   }, [nodes, links]);
 
-  const visualContext = { selectedNodeId, hoveredNodeId, adjacency, interactive };
+  // ホバー中はホバー対象を優先し（マウスが離れれば選択中ノードの強調へ
+  // 戻る）、ホバーが無ければ選択中ノードを「関連ノード以外を薄くする」
+  // 対象にする。検索で選んだノードも枠線の強調だけでなく、クリック・
+  // ホバーと同じ見せ方（関連ノードのフォーカス）にする、という指摘への対応
+  const focusNodeId = hoveredNodeId ?? selectedNodeId;
+  const visualContext = { selectedNodeId, focusId: focusNodeId, adjacency, interactive };
   // { nodes, links } をJSX内で直接書くと、hoverなど無関係な再描画のたびに
   // 新しいオブジェクト参照になり、ライブラリがグラフデータそのものが
   // 変わったと誤解してシミュレーションを最初からやり直してしまう
@@ -530,10 +551,10 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, interactive = true }
           nodeCanvasObject={(node, ctx, globalScale) => drawNode(node, ctx, globalScale, visualContext)}
           nodePointerAreaPaint={(node, color, ctx) => paintNodePointerArea(node, color, ctx, node.id === selectedNodeId)}
           linkColor={(link) => {
-            const touchesHovered =
-              hoveredNodeId &&
-              (linkEndpointId(link.source) === hoveredNodeId || linkEndpointId(link.target) === hoveredNodeId);
-            const dimmed = interactive && hoveredNodeId && !touchesHovered;
+            const touchesFocused =
+              focusNodeId &&
+              (linkEndpointId(link.source) === focusNodeId || linkEndpointId(link.target) === focusNodeId);
+            const dimmed = interactive && focusNodeId && !touchesFocused;
             return dimmed ? "rgba(62, 62, 68, 0.25)" : "rgba(62, 62, 68, 0.9)";
           }}
           linkWidth={1}

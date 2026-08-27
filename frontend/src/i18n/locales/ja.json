@@ -215,6 +215,9 @@
   "graph": {
     "subtitle": "記録した産地やフレーバーのつながりを探索できます。",
     "filterAriaLabel": "グラフの絞り込み",
+    "nodeSearchPlaceholder": "産地・農園・品種・フレーバーなどを検索",
+    "nodeSearchAriaLabel": "ノードを検索",
+    "nodeSearchNoResults": "「{{query}}」に一致するノードが見つかりません",
     "nodeTypeFilterHeading": "表示するノード",
     "legendHeading": "凡例",
     "ratingUnfiltered": "絞らない",

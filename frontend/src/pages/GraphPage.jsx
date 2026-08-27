@@ -8,6 +8,7 @@ import { useNodeDetail } from "../features/graph/hooks/useNodeDetail";
 import GraphCanvas from "../features/graph/components/GraphCanvas";
 import GraphFilters from "../features/graph/components/GraphFilters";
 import GraphLegend from "../features/graph/components/GraphLegend";
+import GraphNodeSearch from "../features/graph/components/GraphNodeSearch";
 import NodeDetailPanel from "../features/graph/components/NodeDetailPanel";
 import {
   GraphEmptyState,
@@ -39,6 +40,11 @@ function GraphPage() {
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [selectedNode, setSelectedNode] = useState(null);
+  // GraphNodeSearchで選んだ時だけカメラを明示的に動かすための合図。
+  // 新しいオブジェクト参照を渡すたびGraphCanvas側のuseEffectが発火する
+  // （同じノードを続けて選んでも毎回反応させたいため、nodeIdの値ではなく
+  // 参照の変化で判定する）
+  const [focusRequest, setFocusRequest] = useState(null);
 
   const { graph, isLoading, error, reload } = useGraph(filters);
   const { detail, isLoading: isDetailLoading, error: detailError } = useNodeDetail(
@@ -55,6 +61,11 @@ function GraphPage() {
   );
 
   const clearFilters = useCallback(() => setFilters(DEFAULT_FILTERS), []);
+
+  const handleSearchSelect = useCallback((node) => {
+    setSelectedNode(node);
+    setFocusRequest({ nodeId: node.id });
+  }, []);
 
   /**
    * RecordDetailPageの「Graphで見る」から ?focus=record:xxx で開かれた場合、
@@ -107,6 +118,7 @@ function GraphPage() {
           graph={graph}
           selectedNodeId={selectedNode?.id}
           onSelectNode={setSelectedNode}
+          focusRequest={focusRequest}
         />
         <NodeDetailPanel
           node={selectedNode}
@@ -127,6 +139,10 @@ function GraphPage() {
           {t("graph.subtitle")}
         </p>
       </header>
+
+      {graph && graph.summary.recordCount > 0 && (
+        <GraphNodeSearch graph={graph} onSelectNode={handleSearchSelect} />
+      )}
 
       <GraphFilters filters={filters} onChange={setFilters} />
       <GraphLegend />
