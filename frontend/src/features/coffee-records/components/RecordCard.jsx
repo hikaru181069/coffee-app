@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Coffee, Droplets, MapPin, Star, Store } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { formatConsumedAtShort, recordTypeLabel } from "../utils/recordFormat";
+import { formatConsumedAtShort, hasCoffeeDetails, recordTypeLabel } from "../utils/recordFormat";
 import { entityDetailPath } from "../../graph/utils/entityLink";
 import { useReveal } from "../../../hooks/useReveal";
 import { revealDelayClass } from "../../../utils/revealDelay";
@@ -112,6 +112,10 @@ function RecordCard({ record, index = 0 }) {
             <span className="text-[11px] text-text-tertiary">+{flavors.length - 3}</span>
           )}
         </div>
+      )}
+
+      {!hasCoffeeDetails(record) && (
+        <p className="mt-2 text-xs text-text-tertiary">{t("records.detailEmptyHint")}</p>
       )}
     </li>
   );

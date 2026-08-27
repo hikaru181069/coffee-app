@@ -18,10 +18,14 @@ import { getCanvasColor } from "./canvasColors";
  * 形で翻訳する（DOM・i18nextに依存しない純粋関数のままにするため）。
  *
  * 色の設計（prompts/design/00-design-principles.md 6.1参照）:
- * recordとorigin/roastLevelはモスの濃淡3段階（record=`accent-moss`）、
- * 残り6種（farm/variety/process/flavor/cafe/keyword）はモスと彩度を
- * 揃えたミュートな別色相6色。アイコンで種別を区別できているため、色は
- * 識別性より階層表現（主役=モス、属性=ミュートな色）に使っている。
+ * 2026-08、実機レビューで「全属性が同程度にミュートで見分けづらい・
+ * 地味」という指摘を受け、Catppuccin Mochaの9色（record=`accent-moss`
+ * 含む）へ全面刷新した。以前は「色は識別性より階層表現（主役=モス、
+ * 属性=ミュートな色）に使う」という方針だったが、実際の値は主役も
+ * 含めて全属性が同程度に低彩度で、狙い通りに機能していなかった。
+ * 今はアイコンに加えて色でも種別を識別できるようにしている
+ * （色だけで状態を表現しないというdocs/design.mdの方針自体は、
+ * どの種別も引き続きアイコン・形の違いを併せ持つため変わらない）。
  * 2026-08、配色をmobbin.com準拠へ刷新した際、`primary`が
  * フォーカスリング専用の青へ変わったため、recordノードは独立した
  * `accent-moss`トークン（旧primaryと同じ値）へ切り離した。グラフの
@@ -47,73 +51,73 @@ export const NODE_VISUALS = {
   origin: {
     icon: Globe,
     labelKey: "graph.nodeTypes.origin",
-    colorClass: "text-accent-moss-light",
-    ringClass: "ring-accent-moss-light/50",
+    colorClass: "text-accent-sky",
+    ringClass: "ring-accent-sky/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-moss-light");
+      return getCanvasColor("--color-accent-sky");
     },
   },
   farm: {
     icon: Leaf,
     labelKey: "graph.nodeTypes.farm",
-    colorClass: "text-accent-clay",
-    ringClass: "ring-accent-clay/50",
+    colorClass: "text-accent-teal",
+    ringClass: "ring-accent-teal/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-clay");
+      return getCanvasColor("--color-accent-teal");
     },
   },
   variety: {
     icon: Sprout,
     labelKey: "graph.nodeTypes.variety",
-    colorClass: "text-accent-ochre",
-    ringClass: "ring-accent-ochre/50",
+    colorClass: "text-accent-yellow",
+    ringClass: "ring-accent-yellow/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-ochre");
+      return getCanvasColor("--color-accent-yellow");
     },
   },
   process: {
     icon: Droplets,
     labelKey: "graph.nodeTypes.process",
-    colorClass: "text-accent-slate",
-    ringClass: "ring-accent-slate/50",
+    colorClass: "text-accent-sapphire",
+    ringClass: "ring-accent-sapphire/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-slate");
+      return getCanvasColor("--color-accent-sapphire");
     },
   },
   roastLevel: {
     icon: Flame,
     labelKey: "graph.nodeTypes.roastLevel",
-    colorClass: "text-accent-moss-dark",
-    ringClass: "ring-accent-moss-dark/50",
+    colorClass: "text-accent-peach",
+    ringClass: "ring-accent-peach/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-moss-dark");
+      return getCanvasColor("--color-accent-peach");
     },
   },
   flavor: {
     icon: Sparkles,
     labelKey: "graph.nodeTypes.flavor",
-    colorClass: "text-accent-rose",
-    ringClass: "ring-accent-rose/50",
+    colorClass: "text-accent-pink",
+    ringClass: "ring-accent-pink/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-rose");
+      return getCanvasColor("--color-accent-pink");
     },
   },
   cafe: {
     icon: Store,
     labelKey: "graph.nodeTypes.cafe",
-    colorClass: "text-accent-mist",
-    ringClass: "ring-accent-mist/50",
+    colorClass: "text-accent-lavender",
+    ringClass: "ring-accent-lavender/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-mist");
+      return getCanvasColor("--color-accent-lavender");
     },
   },
   keyword: {
     icon: Quote,
     labelKey: "graph.nodeTypes.keyword",
-    colorClass: "text-accent-teal",
-    ringClass: "ring-accent-teal/50",
+    colorClass: "text-accent-mauve",
+    ringClass: "ring-accent-mauve/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-teal");
+      return getCanvasColor("--color-accent-mauve");
     },
   },
 };

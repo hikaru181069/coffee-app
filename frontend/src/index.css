@@ -45,21 +45,26 @@
   --color-rating: #ffdf52;
   --color-success: #aff976;
 
-  /* グラフノード・産地アクセント専用の差し色パレット（モス2段階+ミュートな6色）。
-     mobbin.com側に対応する概念が無いため今回のスコープ外、値は変更していない。
-     accent-mossのみ、primaryが青に変わったことで切り離すために新設した
-     （recordノードの見た目が変わらないよう、旧primaryの値をそのまま持つ）。
-     2026-08、keywordノード追加のためaccent-tealを新設（既存8色は暖色系・
-     紫系に寄っていたため、区別しやすい寒色を選んだ） */
-  --color-accent-moss: #7c8363;
-  --color-accent-moss-light: #a3ab86;
-  --color-accent-moss-dark: #545a42;
-  --color-accent-slate: #8a97a3;
-  --color-accent-clay: #ad8770;
-  --color-accent-ochre: #ada07a;
-  --color-accent-rose: #a3888f;
-  --color-accent-mist: #9089a3;
-  --color-accent-teal: #7a9d96;
+  /* グラフノード・産地アクセント専用の差し色パレット。
+     2026-08、実機レビューで「全属性が同程度にミュートで見分けづらい・
+     地味」という指摘を受け、Catppuccin Mocha（暗い背景向けの定番パレット。
+     このアプリが元々参考にしていた配色）の値へ全面刷新した。
+     以前のトークン名（clay/ochre/slate等）は色の見た目と対応しない
+     ハードコードされた識別名だったため、Catppuccinの色名にリネームして
+     名前と値を一致させた（accent-mossのみ、record用のGreen系のまま
+     名前を変えていない）。値の変更に伴い、参照元
+     （features/graph/utils/nodeVisuals.js、
+     features/coffee-records/utils/originAccent.js）のクラス名も
+     あわせて更新済み。 */
+  --color-accent-moss: #a6e3a1;
+  --color-accent-sky: #89dceb;
+  --color-accent-peach: #fab387;
+  --color-accent-teal: #94e2d5;
+  --color-accent-yellow: #f9e2af;
+  --color-accent-sapphire: #74c7ec;
+  --color-accent-pink: #f5c2e7;
+  --color-accent-lavender: #b4befe;
+  --color-accent-mauve: #cba6f7;
 
   /* 奥行き（影・すりガラス）。mobbin.comのCSS実測値
      （0 12px 80px rgba(0,0,0,0.16)相当）を、暗い背景でも見えるよう

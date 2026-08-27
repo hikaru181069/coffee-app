@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 
+import BackLink from "../components/BackLink";
 import { useDiagnosis } from "../features/diagnosis/hooks/useDiagnosis";
 import ArchetypeCard from "../features/diagnosis/components/ArchetypeCard";
 import InsightList from "../features/diagnosis/components/InsightList";
@@ -43,7 +44,10 @@ function DiagnosisPage() {
   if (isLoading) {
     return (
       <div className={wideContainerClass}>
-        <DiagnosisSkeleton />
+        <BackLink />
+        <div className="mt-3">
+          <DiagnosisSkeleton />
+        </div>
       </div>
     );
   }
@@ -51,7 +55,10 @@ function DiagnosisPage() {
   if (error) {
     return (
       <div className={wideContainerClass}>
-        <RecordsErrorState error={error} onRetry={reload} />
+        <BackLink />
+        <div className="mt-3">
+          <RecordsErrorState error={error} onRetry={reload} />
+        </div>
       </div>
     );
   }
@@ -63,7 +70,8 @@ function DiagnosisPage() {
   if (stats.overview.recordCount === 0) {
     return (
       <div className={wideContainerClass}>
-        <header className="mb-6">
+        <BackLink />
+        <header className="mt-3 mb-6">
           <h1 className="text-xl font-bold text-text">{t("diagnosis.heading")}</h1>
         </header>
         <StatsEmptyState />
@@ -73,7 +81,8 @@ function DiagnosisPage() {
 
   return (
     <div className={wideContainerClass}>
-      <header className="mb-6">
+      <BackLink />
+      <header className="mt-3 mb-6">
         <h1 className="text-xl font-bold text-text">{t("diagnosis.heading")}</h1>
         <p className="mt-1 text-sm text-text-tertiary">{t("diagnosis.subtitle")}</p>
       </header>

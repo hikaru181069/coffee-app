@@ -34,6 +34,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "backToList": "Back to list",
+    "back": "Back",
     "viewOnGraph": "View on Graph",
     "viewAll": "View all",
     "close": "Close",
@@ -218,6 +219,8 @@
   "graph": {
     "subtitle": "Explore the connections between your recorded origins and flavors.",
     "filterAriaLabel": "Graph filters",
+    "nodeTypeFilterHeading": "Show node types",
+    "legendHeading": "Legend",
     "ratingUnfiltered": "No filter",
     "emptyTitle": "No connections yet",
     "emptyDesc": "Record some coffee to see connections between origins and flavors appear here.",

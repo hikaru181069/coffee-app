@@ -16,6 +16,23 @@ import { RECORD_TYPES, TASTE_AXES } from "../utils/recordFormat";
 import { getErrorMessage } from "../../../utils/errorMessage";
 
 /**
+ * 「コーヒーの詳細」を初期状態で開くかどうかの判定。
+ *
+ * 新規作成（項目が全部空）では閉じたままにする（Record First）。
+ * 編集で、既に産地・フレーバー・味覚評価などが入力済みの記録を開いた
+ * ときは、内容が見えないまま隠れているとユーザーが気づけないため、
+ * 最初から開いた状態にする（2026-08、UI/UXレビューで指摘を受け対応）。
+ */
+const hasExistingCoffeeDetails = (values) => {
+  const singleValueFields = ["farmName", "roasterName", "originId", "processId", "roastLevelId"];
+  if (singleValueFields.some((field) => values[field])) return true;
+  if (values.varietyIds?.length > 0 || values.flavorIds?.length > 0) return true;
+  return TASTE_AXES.some(
+    (axis) => values[axis.field] !== null && values[axis.field] !== undefined && values[axis.field] !== "",
+  );
+};
+
+/**
  * 記録の入力フォーム。作成と編集で共用する。
  *
  * 構成は docs/design.md の「New / Edit Record」に沿う:
@@ -45,7 +62,7 @@ function RecordForm({
   submitLabel,
 }) {
   const { t } = useTranslation();
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(() => hasExistingCoffeeDetails(values));
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -310,7 +327,7 @@ function RecordForm({
               <span className="block text-sm font-semibold text-text">
                 {t("recordForm.tasteHeading")}
               </span>
-              <div className="mt-4 flex flex-col gap-5">
+              <div className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
                 {TASTE_AXES.map(({ field, labelKey }) => (
                   <FormField key={field} id={field} label={t(labelKey)} error={errors[field]}>
                     <RatingInput

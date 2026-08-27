@@ -40,6 +40,11 @@ import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
  * （診断専用の3つ目のfetchをこのカードに追加しないため。データが無い
  * 場合の案内は/diagnosisページ自身のArchetypeCard空状態が担当する）。
  *
+ * 2026-08、UI/UXレビューで「3行がテキストを読まないと区別できない」
+ * という指摘を受け、行ごとに別のアクセントカラーを割り当てた
+ * （Discover行のtext-successは既存のまま）。Diagnosis行は、記録から
+ * 診断が生まれるという一貫性のためrecordと同じ`accent-moss`にした。
+ *
  * 2026-08、一時期はDiscover行のリンク先を専用の一覧ページ（`/discover`）
  * にしていたが、実データで検証したところ条件を満たす産地グループは
  * デモデータでもせいぜい2件程度で、「複数産地を横断して比較する」という
@@ -69,7 +74,7 @@ function DiscoverCard() {
             to="/graph"
             className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
-            <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-text-secondary" />
+            <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-accent-sapphire" />
             <p className="text-base text-text">{insightText}</p>
           </Link>
         )}
@@ -90,7 +95,7 @@ function DiscoverCard() {
           to="/diagnosis"
           className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
         >
-          <Coffee size={22} aria-hidden="true" className="flex-shrink-0 text-text-secondary" />
+          <Coffee size={22} aria-hidden="true" className="flex-shrink-0 text-accent-moss" />
           <p className="text-base text-text">{t("discover.diagnosisLink")}</p>
         </Link>
       </div>

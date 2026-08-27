@@ -34,6 +34,7 @@
     "delete": "削除",
     "edit": "編集",
     "backToList": "一覧へ戻る",
+    "back": "戻る",
     "viewOnGraph": "グラフで見る",
     "viewAll": "すべて見る",
     "close": "閉じる",
@@ -214,6 +215,8 @@
   "graph": {
     "subtitle": "記録した産地やフレーバーのつながりを探索できます。",
     "filterAriaLabel": "グラフの絞り込み",
+    "nodeTypeFilterHeading": "表示するノード",
+    "legendHeading": "凡例",
     "ratingUnfiltered": "絞らない",
     "emptyTitle": "まだつながりがありません",
     "emptyDesc": "コーヒーを記録すると、産地やフレーバーのつながりがここに現れます。",

@@ -16,13 +16,13 @@
  */
 
 const ORIGIN_ACCENT_PALETTE = [
-  "bg-accent-moss-light",
-  "bg-accent-moss-dark",
-  "bg-accent-slate",
-  "bg-accent-clay",
-  "bg-accent-ochre",
-  "bg-accent-rose",
-  "bg-accent-mist",
+  "bg-accent-sky",
+  "bg-accent-peach",
+  "bg-accent-sapphire",
+  "bg-accent-teal",
+  "bg-accent-yellow",
+  "bg-accent-pink",
+  "bg-accent-lavender",
 ];
 
 /** 文字列から安定したハッシュ値を作る（DJB2） */

@@ -265,7 +265,7 @@ function RecordDetailPage() {
       )}
 
       {/* ── Actions ──────────────────────────────── */}
-      <div className="mt-6 flex flex-wrap items-center gap-2">
+      <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-surface-2 pt-6">
         <Link to={`/records/${record.id}/edit`} className={primaryButtonClass}>
           <Pencil size={15} aria-hidden="true" />
           {t("common.edit")}

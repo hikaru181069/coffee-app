@@ -77,31 +77,38 @@ function GraphFilters({ filters, onChange }) {
 
       {/* ノード種別フィルター。属性ノードの表示/非表示を切り替える。
           recordノードは常に表示するため対象に含めない（backend側の
-          仕様と同じ: core/graph/graphBuilder.js の options.nodeTypes）。 */}
-      <div className="flex flex-wrap gap-1.5">
-        {ATTRIBUTE_NODE_TYPES.map((type) => {
-          const visual = getNodeVisual(type);
-          const Icon = visual.icon;
-          const active = isNodeTypeActive(type);
+          仕様と同じ: core/graph/graphBuilder.js の options.nodeTypes）。
+          2026-08、この行のすぐ下にあるGraphLegend（操作できない凡例）と
+          見た目が似すぎて、どちらがクリックできるボタンか分かりにくい
+          という指摘を受け、小見出しを付けて「これは操作できる絞り込み」
+          だと明示した */}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-text-tertiary">{t("graph.nodeTypeFilterHeading")}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {ATTRIBUTE_NODE_TYPES.map((type) => {
+            const visual = getNodeVisual(type);
+            const Icon = visual.icon;
+            const active = isNodeTypeActive(type);
 
-          return (
-            <button
-              key={type}
-              type="button"
-              onClick={() => toggleNodeType(type)}
-              aria-pressed={active}
-              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors duration-150 ${
-                active
-                  ? "border-line bg-surface-2 text-text"
-                  : "border-line/40 text-text-tertiary hover:border-line/60"
-              }`}
-            >
-              {active && <Check size={11} aria-hidden="true" strokeWidth={2.5} />}
-              <Icon size={12} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
-              {t(visual.labelKey)}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => toggleNodeType(type)}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors duration-150 ${
+                  active
+                    ? "border-line bg-surface-2 text-text"
+                    : "border-line/40 text-text-tertiary hover:border-line/60"
+                }`}
+              >
+                {active && <Check size={11} aria-hidden="true" strokeWidth={2.5} />}
+                <Icon size={12} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
+                {t(visual.labelKey)}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
