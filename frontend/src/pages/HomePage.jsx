@@ -136,12 +136,12 @@ function HomePage() {
         )}
         <Link
           to="/records/new"
-          className={`flex items-center justify-center gap-2 rounded-xl border border-line/60 text-text-tertiary transition-colors duration-150 hover:border-line hover:text-text focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+          className={`home-cta-gradient-border flex items-center justify-center gap-2 rounded-xl text-text transition-[filter] duration-150 hover:brightness-125 focus:outline-none focus:ring-2 focus:ring-primary/50 ${
             isRepeatVisitor ? "py-3" : "flex-col py-10"
           }`}
         >
           <Plus size={isRepeatVisitor ? 18 : 24} aria-hidden="true" />
-          <span className="text-sm">{t("home.recordTodayCta")}</span>
+          <span className="text-sm font-semibold">{t("home.recordTodayCta")}</span>
         </Link>
       </section>
 

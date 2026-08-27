@@ -115,3 +115,35 @@ select {
     color: inherit;
   }
 }
+
+/* HomePage.jsxの「今日のコーヒーを記録する」CTA専用。単色の枠線は
+   Tailwindのborderユーティリティで足りるが、複数色のグラデーション
+   枠線はCSSだけでは1プロパティで表現できず、「二重背景+
+   background-clip」のトリックが必要になる。内側の背景（padding-box
+   まで）を通常の塗りつぶし色に、外側の背景（border-box全体）を
+   グラデーションにして、borderの太さ分だけグラデーションが
+   輪っかのように見える形にする。塗りの一色反転（白背景）よりも
+   周囲のカードと馴染みつつ、Graphのノードと同じ色（nodeVisuals.jsと
+   同じ並び順）の枠線でこのCTAだけを特別に見せる、というユーザーとの
+   相談を経た意匠のため専用クラスとして残す */
+@layer components {
+  .home-cta-gradient-border {
+    border: 1.5px solid transparent;
+    background-image:
+      linear-gradient(var(--color-surface-1), var(--color-surface-1)),
+      linear-gradient(
+        90deg,
+        var(--color-accent-moss),
+        var(--color-accent-sky),
+        var(--color-accent-teal),
+        var(--color-accent-yellow),
+        var(--color-accent-sapphire),
+        var(--color-accent-peach),
+        var(--color-accent-pink),
+        var(--color-accent-lavender),
+        var(--color-accent-mauve)
+      );
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+}
