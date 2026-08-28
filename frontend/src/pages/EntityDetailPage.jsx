@@ -112,8 +112,8 @@ function EntityDetailPage() {
       {detail.type === "origin" && <DiscoverSuggestions nodeId={detail.id} />}
 
       {relatedTypes.length > 0 && (
-        <section className="mb-6 flex flex-col gap-4">
-          <h2 className="text-sm font-semibold text-text">{t("entityDetail.relatedHeading")}</h2>
+        <section className="mb-6 flex flex-col gap-5">
+          <h2 className="text-base font-semibold text-text">{t("entityDetail.relatedHeading")}</h2>
           {relatedTypes.map((type) => (
             <RelatedAttributeGroup key={type} type={type} items={detail.relatedAttributes[type]} t={t} />
           ))}
@@ -163,22 +163,36 @@ function RelatedRecordRow({ record, index, language }) {
 /**
  * 関連する属性1種別分のグループ（例: フレーバー → Berry, Floral, Citrus）。
  * チップ自体をそのエンティティの詳細ページへのLinkにする。
+ *
+ * 2026-08、「小さくて見づらい。目玉のGraph機能につながる部分なので
+ * 目立たせる価値がある」という指摘を受けた。以前は`visual`（種別の
+ * アイコン・色）をグループ見出しの翻訳にしか使っておらず、肝心の
+ * チップ自体は無彩色のままだった。GraphFilters.jsxのノード種別ボタンと
+ * 同じ「アイコン＋色」をグループ見出しに追加し、チップ自体も文字・
+ * パディングを拡大してRecordCard.jsxのタグと同じホバー時の浮き上がりを
+ * 加えた。Graph画面のフィルター・凡例と同じ視覚言語を再利用することで、
+ * 新しい色を増やさずに「これはグラフのノードである」という一貫性を
+ * 伝える。
  */
 function RelatedAttributeGroup({ type, items, t }) {
   const visual = getNodeVisual(type);
+  const Icon = visual.icon;
 
   return (
     <div>
-      <p className="mb-2 text-xs text-text-tertiary">{t(visual.labelKey)}</p>
+      <div className="mb-2.5 flex items-center gap-1.5">
+        <Icon size={14} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
+        <p className="text-sm font-medium text-text-secondary">{t(visual.labelKey)}</p>
+      </div>
       <div className="flex flex-wrap gap-2">
         {items.map((item) => (
           <Link
             key={item.id}
             to={`/entities/${encodeURIComponent(item.id)}`}
-            className="inline-flex items-center gap-1 rounded-full bg-surface-1 px-3 py-1 text-xs text-text-secondary transition-colors duration-150 hover:bg-surface-2 hover:text-text"
+            className="inline-flex items-center gap-1.5 rounded-full border border-transparent bg-surface-1 px-3.5 py-1.5 text-sm text-text-secondary transition-all duration-150 hover:-translate-y-px hover:border-line/60 hover:bg-surface-2 hover:text-text"
           >
             {item.label}
-            <span className="font-mono text-text-tertiary">{item.count}</span>
+            <span className="font-mono text-xs text-text-tertiary">{item.count}</span>
           </Link>
         ))}
       </div>
@@ -223,7 +237,7 @@ function EntityDetailSkeleton() {
         <div className="skeleton-block h-4 w-24 rounded" />
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: 3 }, (_, index) => (
-            <div key={index} className="skeleton-block h-7 w-20 rounded-full" />
+            <div key={index} className="skeleton-block h-8 w-24 rounded-full" />
           ))}
         </div>
       </div>
