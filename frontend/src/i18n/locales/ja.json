@@ -36,6 +36,7 @@
     "backToList": "一覧へ戻る",
     "back": "戻る",
     "viewOnGraph": "グラフで見る",
+    "viewOnMap": "地図で見る",
     "viewAll": "すべて見る",
     "close": "閉じる",
     "unrated": "未評価",
@@ -256,7 +257,8 @@
     "recordCta": "この産地を記録してみる",
     "sourceNote": "Coffee Quality Instituteの参考データをもとにした目安です。",
     "teaserLink": "{{suggestedLabel}}産のコーヒー、まだ試していません",
-    "diagnosisLink": "コーヒー診断を見る"
+    "diagnosisLink": "コーヒー診断を見る",
+    "mapLink": "世界地図を見る"
   },
   "search": {
     "placeholder": "産地・品種・フレーバー・カフェ・精製方法・コーヒー名で検索",
@@ -275,6 +277,7 @@
     "avgRating": "平均評価",
     "lastConsumed": "最後に飲んだ日",
     "viewInGraph": "グラフで見る",
+    "viewOnMap": "地図で見る",
     "relatedHeading": "グラフ上の関連",
     "recordsHeading": "関連する記録"
   },

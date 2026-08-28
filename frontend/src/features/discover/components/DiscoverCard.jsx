@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, Compass, Coffee } from "lucide-react";
+import { Sparkles, Compass, Coffee, Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useInsights } from "../../insights/hooks/useInsights";
@@ -44,6 +44,12 @@ import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
  * という指摘を受け、行ごとに別のアクセントカラーを割り当てた
  * （Discover行のtext-successは既存のまま）。Diagnosis行は、記録から
  * 診断が生まれるという一貫性のためrecordと同じ`accent-moss`にした。
+ *
+ * 2026-08、World Map機能（docs/features.md「World Map」）の導線が
+ * Statsページの小さなテキストリンク1箇所しか無く弱いという指摘を受け、
+ * Diagnosis行と同じ扱い（データ取得なしの静的リンク）で4行目として
+ * 追加した。色はGraphのoriginノードと同じ`accent-sky`にし、産地の
+ * ノード種別との一貫性を持たせた。
  *
  * 2026-08、一時期はDiscover行のリンク先を専用の一覧ページ（`/discover`）
  * にしていたが、実データで検証したところ条件を満たす産地グループは
@@ -97,6 +103,14 @@ function DiscoverCard() {
         >
           <Coffee size={22} aria-hidden="true" className="flex-shrink-0 text-accent-moss" />
           <p className="text-base text-text">{t("discover.diagnosisLink")}</p>
+        </Link>
+
+        <Link
+          to="/map"
+          className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
+        >
+          <Globe size={22} aria-hidden="true" className="flex-shrink-0 text-accent-sky" />
+          <p className="text-base text-text">{t("discover.mapLink")}</p>
         </Link>
       </div>
     </div>

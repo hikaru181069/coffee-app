@@ -87,12 +87,20 @@ function EntityDetailPage() {
         />
       </section>
 
-      <Link
-        to={`/graph?focus=${encodeURIComponent(detail.id)}`}
-        className={`${secondaryButtonClass} mb-6`}
-      >
-        {t("entityDetail.viewInGraph")}
-      </Link>
+      <div className="mb-6 flex flex-wrap gap-2">
+        <Link to={`/graph?focus=${encodeURIComponent(detail.id)}`} className={secondaryButtonClass}>
+          {t("entityDetail.viewInGraph")}
+        </Link>
+        {/* 世界地図は産地専用の機能（docs/features.md「World Map」）のため、
+            産地ノードを見ているときだけ導線を出す。地図側にその国だけへ
+            フォーカスする仕組みは無く、地図全体を開くだけ（Graphの
+            ?focus=のような絞り込みは今回のスコープ外） */}
+        {detail.type === "origin" && (
+          <Link to="/map" className={secondaryButtonClass}>
+            {t("entityDetail.viewOnMap")}
+          </Link>
+        )}
+      </div>
 
       {detail.type === "origin" && <DiscoverSuggestions nodeId={detail.id} />}
 

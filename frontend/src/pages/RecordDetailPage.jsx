@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronRight, Coffee, MoreHorizontal, Pencil, Share2, Star, Store, Trash2 } from "lucide-react";
+import { ChevronRight, Coffee, Globe, MoreHorizontal, Pencil, Share2, Star, Store, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
@@ -304,13 +304,28 @@ function RecordDetailPage() {
                   <div>
                     <div className="flex items-center justify-between gap-3">
                       <h2 className="text-base font-semibold text-text">{t("records.connectionsHeading")}</h2>
-                      <Link
-                        to={`/graph?focus=record:${record.id}`}
-                        className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
-                      >
-                        <Share2 size={12} aria-hidden="true" />
-                        <span className="underline underline-offset-2">{t("common.viewOnGraph")}</span>
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <Link
+                          to={`/graph?focus=record:${record.id}`}
+                          className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
+                        >
+                          <Share2 size={12} aria-hidden="true" />
+                          <span className="underline underline-offset-2">{t("common.viewOnGraph")}</span>
+                        </Link>
+                        {/* 世界地図は産地専用の機能（docs/features.md「World Map」）
+                            のため、産地がある記録のときだけ導線を出す。EntityDetailPage.jsx
+                            の産地ページと同じ理由で、地図側にこの記録の産地だけへ
+                            フォーカスする仕組みは無く、地図全体を開くだけ */}
+                        {record.origin && (
+                          <Link
+                            to="/map"
+                            className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
+                          >
+                            <Globe size={12} aria-hidden="true" />
+                            <span className="underline underline-offset-2">{t("common.viewOnMap")}</span>
+                          </Link>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-4">

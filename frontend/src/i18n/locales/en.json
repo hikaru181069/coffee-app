@@ -36,6 +36,7 @@
     "backToList": "Back to list",
     "back": "Back",
     "viewOnGraph": "View on Graph",
+    "viewOnMap": "View on Map",
     "viewAll": "View all",
     "close": "Close",
     "unrated": "Unrated",
@@ -261,7 +262,8 @@
     "recordCta": "Record this origin",
     "sourceNote": "Based on reference data from the Coffee Quality Institute.",
     "teaserLink": "You haven't tried {{suggestedLabel}} coffee yet",
-    "diagnosisLink": "View your coffee diagnosis"
+    "diagnosisLink": "View your coffee diagnosis",
+    "mapLink": "View the world map"
   },
   "search": {
     "placeholder": "Search origins, varieties, flavors, cafés, processes, or coffee names",
@@ -281,6 +283,7 @@
     "avgRating": "Average rating",
     "lastConsumed": "Last had",
     "viewInGraph": "View in Graph",
+    "viewOnMap": "View on Map",
     "relatedHeading": "Related in the graph",
     "recordsHeading": "Related records"
   },
