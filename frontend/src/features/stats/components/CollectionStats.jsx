@@ -32,6 +32,7 @@ function CollectionStats({ collection, t }) {
         icon={origin.icon}
         iconColorClass={origin.colorClass}
         iconBgClass={origin.bgTintClass}
+        flat
       />
       <StatCard
         label={t("stats.collection.varietyCount")}
@@ -39,6 +40,7 @@ function CollectionStats({ collection, t }) {
         icon={variety.icon}
         iconColorClass={variety.colorClass}
         iconBgClass={variety.bgTintClass}
+        flat
       />
       <StatCard
         label={t("stats.collection.processCount")}
@@ -46,6 +48,7 @@ function CollectionStats({ collection, t }) {
         icon={process.icon}
         iconColorClass={process.colorClass}
         iconBgClass={process.bgTintClass}
+        flat
       />
       <StatCard
         label={t("stats.collection.farmCount")}
@@ -53,6 +56,7 @@ function CollectionStats({ collection, t }) {
         icon={farm.icon}
         iconColorClass={farm.colorClass}
         iconBgClass={farm.bgTintClass}
+        flat
       />
       <StatCard
         label={t("stats.collection.cafeCount")}
@@ -60,6 +64,7 @@ function CollectionStats({ collection, t }) {
         icon={cafe.icon}
         iconColorClass={cafe.colorClass}
         iconBgClass={cafe.bgTintClass}
+        flat
       />
       <StatCard
         label={t("stats.collection.flavorCount")}
@@ -67,6 +72,7 @@ function CollectionStats({ collection, t }) {
         icon={flavor.icon}
         iconColorClass={flavor.colorClass}
         iconBgClass={flavor.bgTintClass}
+        flat
       />
     </div>
   );

@@ -16,10 +16,20 @@
  * 中身の分だけ幅を取る」方式に変更した（呼び出し側のOverviewStats.jsx・
  * CollectionStats.jsx・EntityDetailPage.jsxを参照）。min-wは、極端に
  * 狭い幅で折り返して不格好にならないための下限。
+ *
+ * 2026-08、Statsページの3セクションを`cardClass`で統一したことで、
+ * `OverviewStats.jsx`・`CollectionStats.jsx`のStatCardは「cardClassの中の
+ * StatCard」というネスト構造になった。「flavorカードにまだ影がある」
+ * という指摘を受け、MonthlyTrendChart/RatingDistributionChartと同じ理由
+ * （ネストされた内側のカードに影は付けない）で、`flat`propを追加した。
+ * `flat`がtrueのときはshadow-elevatedを付けない。EntityDetailPage.jsx・
+ * WorldMapPage.jsxのStatCardは他のcardClassにネストされていない
+ * （ページ背景に直接置かれる最上位のカード）ため、`flat`は指定せず
+ * 影付きのままにする。
  */
-function StatCard({ label, value, icon: Icon, iconColorClass, iconBgClass }) {
+function StatCard({ label, value, icon: Icon, iconColorClass, iconBgClass, flat = false }) {
   return (
-    <div className="min-w-44 rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated">
+    <div className={`min-w-44 rounded-2xl border border-surface-2 bg-raised p-4 ${flat ? "" : "shadow-elevated"}`}>
       <div className="flex items-center gap-3">
         {Icon && (
           <span

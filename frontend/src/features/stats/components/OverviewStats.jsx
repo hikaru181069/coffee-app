@@ -30,6 +30,7 @@ function OverviewStats({ overview, daysSinceStart, t }) {
         icon={record.icon}
         iconColorClass={record.colorClass}
         iconBgClass={record.bgTintClass}
+        flat
       />
       <StatCard
         label={t("stats.overview.avgRating")}
@@ -37,6 +38,7 @@ function OverviewStats({ overview, daysSinceStart, t }) {
         icon={Star}
         iconColorClass="text-warn"
         iconBgClass="bg-warn/15"
+        flat
       />
       <StatCard
         label={t("stats.overview.daysSinceStart")}
@@ -44,6 +46,7 @@ function OverviewStats({ overview, daysSinceStart, t }) {
         icon={Calendar}
         iconColorClass="text-text-tertiary"
         iconBgClass="bg-surface-2"
+        flat
       />
     </div>
   );
