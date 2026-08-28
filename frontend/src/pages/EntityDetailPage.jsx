@@ -6,7 +6,7 @@ import { useEntityDetail } from "../features/graph/hooks/useEntityDetail";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
 import { formatConsumedAtShort } from "../features/coffee-records/utils/recordFormat";
 import { getErrorMessage } from "../utils/errorMessage";
-import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
+import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import DiscoverSuggestions from "../features/discover/components/DiscoverSuggestions";
 import BackLink from "../components/BackLink";
 import StatCard from "../components/StatCard";
@@ -112,17 +112,19 @@ function EntityDetailPage() {
       {detail.type === "origin" && <DiscoverSuggestions nodeId={detail.id} />}
 
       {relatedTypes.length > 0 && (
-        <section className="mb-6 flex flex-col gap-5">
+        <section className={`${cardClass} mb-6`}>
           <h2 className="text-base font-semibold text-text">{t("entityDetail.relatedHeading")}</h2>
-          {relatedTypes.map((type) => (
-            <RelatedAttributeGroup key={type} type={type} items={detail.relatedAttributes[type]} t={t} />
-          ))}
+          <div className="mt-5 flex flex-col gap-5">
+            {relatedTypes.map((type) => (
+              <RelatedAttributeGroup key={type} type={type} items={detail.relatedAttributes[type]} t={t} />
+            ))}
+          </div>
         </section>
       )}
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-text">{t("entityDetail.recordsHeading")}</h2>
-        <ul className="flex flex-col gap-2">
+      <section className={cardClass}>
+        <h2 className="text-base font-semibold text-text">{t("entityDetail.recordsHeading")}</h2>
+        <ul className="mt-4 flex flex-col gap-2">
           {detail.records.map((record, index) => (
             <RelatedRecordRow key={record.id} record={record} index={index} language={i18n.language} />
           ))}
@@ -233,20 +235,22 @@ function EntityDetailSkeleton() {
 
       <div className="skeleton-block mb-6 h-9 w-36 rounded-lg" />
 
-      <div className="mb-6 flex flex-col gap-4">
-        <div className="skeleton-block h-4 w-24 rounded" />
-        <div className="flex flex-wrap gap-2">
+      <div className={`${cardClass} mb-6`}>
+        <div className="skeleton-block h-4 w-32 rounded" />
+        <div className="mt-5 flex flex-wrap gap-2">
           {Array.from({ length: 3 }, (_, index) => (
             <div key={index} className="skeleton-block h-8 w-24 rounded-full" />
           ))}
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className={cardClass}>
         <div className="skeleton-block h-4 w-28 rounded" />
-        {Array.from({ length: 3 }, (_, index) => (
-          <div key={index} className="skeleton-block h-14 w-full rounded-lg" />
-        ))}
+        <div className="mt-4 flex flex-col gap-3">
+          {Array.from({ length: 3 }, (_, index) => (
+            <div key={index} className="skeleton-block h-14 w-full rounded-lg" />
+          ))}
+        </div>
       </div>
     </div>
   );
