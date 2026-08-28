@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useGraph } from "../features/graph/hooks/useGraph";
 import { GraphErrorState, GraphLoadingState } from "../features/graph/components/GraphStates";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
+import { getOriginAccentClass } from "../features/coffee-records/utils/originAccent";
 import { buildVisitedByNumericId } from "../features/map/utils/visitedOrigins";
 import WorldMap from "../features/map/components/WorldMap";
 import WorldMapLegend from "../features/map/components/WorldMapLegend";
@@ -43,6 +44,11 @@ const MAP_FILTERS = { nodeTypes: ["origin"], recordType: "", ratingMin: "" };
  * ブロックしない）。Discoverの産地提案とは役割が重複しないよう、
  * ここでは記録済みデータの集計のみに留める（docs/features.md「World Map」
  * 「Discover」参照）。
+ *
+ * 一覧の各チップには、地図の塗り色と同じ`getOriginAccentClass`（産地名
+ * からのハッシュで決まる固定パレット）の小さな点を添えている。地図上の
+ * 色と一覧の色が同じ産地なら常に一致するため、地図で見た色を手がかりに
+ * 一覧から該当の産地を探せる。
  */
 function WorldMapPage() {
   const { t } = useTranslation();
@@ -113,6 +119,10 @@ function WorldMapPage() {
                 to={`/entities/${encodeURIComponent(item.id)}`}
                 className="inline-flex items-center gap-1.5 rounded-full border border-transparent bg-surface-1 px-3.5 py-1.5 text-sm text-text-secondary transition-all duration-150 hover:-translate-y-px hover:border-line/60 hover:bg-surface-2 hover:text-text"
               >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 flex-shrink-0 rounded-full ${getOriginAccentClass(item.label)}`}
+                />
                 {item.label}
                 <span className="font-mono text-xs text-text-tertiary">{item.recordCount}</span>
               </Link>
