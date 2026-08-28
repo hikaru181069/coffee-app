@@ -23,6 +23,10 @@ import NotFoundPage from "./pages/NotFoundPage";
 // 他の画面より明確に重い。このルートを開かないユーザーにその分を
 // 読み込ませないよう、遅延読み込みにする。
 const GraphPage = lazy(() => import("./pages/GraphPage"));
+// WorldMapPageも同じ理由（world-atlasの地図データが740KB程度あり、
+// 常設ナビに無くStatsからのリンクでしか開かれないページのため）で
+// 遅延読み込みにする。
+const WorldMapPage = lazy(() => import("./pages/WorldMapPage"));
 
 // ページ遷移アニメーション。
 // location.key を React の key に渡すことで、ページが変わるたびにコンポーネントが
@@ -81,6 +85,22 @@ function AnimatedRoutes() {
               docs/design.md「Main Navigation」参照）。Home画面のDiscoverCard・
               Statsページからのリンク経由でのみ到達する */}
           <Route path="/diagnosis" element={<DiagnosisPage />} />
+
+          {/* 訪れた産地を世界地図上でハイライトする。Diagnosisと同じ理由で
+              常設ナビには含めない。Statsページの「Collection」セクションの
+              リンク経由でのみ到達する */}
+          <Route
+            path="/map"
+            element={
+              <Suspense
+                fallback={
+                  <p className="p-6 text-center text-sm text-text-tertiary">{t("common.loading")}</p>
+                }
+              >
+                <WorldMapPage />
+              </Suspense>
+            }
+          />
 
           <Route path="/profile" element={<ProfilePage />} />
 

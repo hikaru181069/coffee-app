@@ -13,6 +13,7 @@ MVP完成後に追加した個別機能の仕様。もともとは機能ごと�
 - **Stats**: 全記録の生の集計値・ランキングを見せる
 - **Discover**: 外部データ（CQI）を使用し、まだ試していない産地を提案する
 - **Coffee Diagnosis**: 記録から「コーヒータイプ」を判定し、Insight・Statsの要約とあわせて1画面で見せる
+- **World Map**: 自分が記録した産地を世界地図上でハイライトする
 
 ---
 
@@ -488,3 +489,51 @@ GET /api/diagnosis
 `/diagnosis`。Home画面のDiscoverカード・Statsページからのリンクで到達する。
 主ナビ（Home/Records/Graph/Stats）には追加しない（docs/design.md
 「Main Navigation」参照。ナビ項目を増やさない既存方針を踏襲）。
+
+---
+
+## World Map
+
+### Purpose
+
+「コーヒーは産地によってキャラクターが変わる」という考えから、産地に
+フォーカスした機能群の第一歩として追加した（2026-08）。自分が記録した
+産地を世界地図上でハイライトするだけの、単一の目的に絞った機能。
+Discover（CQIデータでの産地提案）やGraph（知識グラフとしての探索）とは
+役割を分け、重複させない。
+
+docs/mvp.mdでは「世界地図」はMVP当時のOut of Scopeだったが、MVP完了後の
+Post-MVP機能としてDiagnosis・Discover等と同じ扱いで追加した
+（docs/mvp.md冒頭の追記参照）。
+
+### Source of Truth
+
+MongoDBのCoffeeRecordとOriginマスターを正とする。World Map専用のAPIは
+持たず、既存の`GET /api/graph?nodeTypes=origin`をそのまま使う
+（docs/knowledge-graph.mdの「グラフは都度計算する」方針と同じで、
+世界地図専用のデータも持たない）。
+
+Originマスターの`countryCode`（ISO 3166-1 alpha-2。`backend/models/
+Origin.js`）を、地図データ（`world-atlas`のtopojson、ISO 3166-1
+numericでcountryを識別する）と突き合わせるための対応表
+（`frontend/src/features/map/utils/countryCodes.js`）を持つ。
+`countryCode`が無い産地や対応表に無い産地は、地図上でハイライトされない
+だけでエラーにはならない。
+
+### 国境データについて
+
+他のグラフ・図（TasteRadarChart、RecordConnectionsDiagram、
+GraphIllustration）は自前のSVGで描画しているが、国境の形状データだけは
+自作が現実的ではないため例外的に`world-atlas`（Natural Earthベースの
+topojson、50m解像度）を使う。React本体には依存しない`d3-geo`・
+`topojson-client`で投影・パス生成を行い、Reactコンポーネント自体は
+自前で書く（react-simple-mapsを検討したがReact 19のpeer dependency
+に対応しておらず導入できなかったため）。投影法はNatural Earth
+（`geoNaturalEarth1`、d3-geo本体に標準搭載）を使う。
+
+### 表示
+
+`/map`。Statsページの「Collection」セクションからのリンクで到達する。
+Diagnosisと同じ理由で主ナビには追加しない（docs/design.md「Main
+Navigation」参照）。訪問済みの産地だけクリック・キーボード操作可能で、
+そのエンティティ詳細ページ（`/entities/origin:xxx`）へ遷移する。

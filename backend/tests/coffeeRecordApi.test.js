@@ -161,7 +161,9 @@ describe("POST /api/coffee-records", () => {
       );
 
     expect(res.status).toBe(201);
-    expect(res.body.data.origin).toEqual({ id: String(origin._id), name: "Ethiopia" });
+    // countryCodeはseeds/data/origins.jsの実データ（世界地図機能向け、
+    // backend/repositories/coffeeRecordRepository.jsのpopulateで取得）
+    expect(res.body.data.origin).toEqual({ id: String(origin._id), name: "Ethiopia", countryCode: "ET" });
     expect(res.body.data.flavors[0].name).toBe("Citrus");
   });
 

@@ -20,13 +20,17 @@ import CoffeeRecord from "../models/CoffeeRecord.js";
  * IDだけ返すとフロントが5種類のマスターを別途取得して突き合わせる
  * ことになる。1回の問い合わせで名前まで解決する。
  *
- * 取得するのは _id と name（焙煎度は order も）だけに絞る。
- * 一覧で20件返すとマスターの結合も20件分走るため、
+ * 取得するのは _id と name（焙煎度は order、産地は countryCode も）だけに
+ * 絞る。一覧で20件返すとマスターの結合も20件分走るため、
  * 使わない項目まで運ばない。
+ *
+ * countryCodeは世界地図機能（2026-08）向け。coffeeRecordSerializer.jsの
+ * serializeRefはpopulate済みオブジェクトが持つフィールドしか転記できない
+ * ため、ここで選択し忘れると常にnullになる（実際に踏んだ不具合）。
  */
 const withMasterData = (query) =>
   query
-    .populate("originId", "name")
+    .populate("originId", "name countryCode")
     .populate("varietyIds", "name")
     .populate("processId", "name")
     .populate("roastLevelId", "name order")

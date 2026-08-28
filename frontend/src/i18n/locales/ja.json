@@ -303,7 +303,19 @@
       "cafeCount": "カフェの種類",
       "flavorCount": "フレーバーの種類"
     },
-    "viewDiagnosisLink": "詳しい診断を見る"
+    "viewDiagnosisLink": "詳しい診断を見る",
+    "viewMapLink": "世界地図で見る"
+  },
+  "map": {
+    "title": "世界地図",
+    "subtitle": "これまで記録した産地を、世界地図上でハイライトします。",
+    "ariaLabel": "訪れた産地の世界地図",
+    "countryAriaLabel": "{{name}}の詳細を見る",
+    "recordCount": "{{count}}件の記録",
+    "legendVisited": "訪れた産地",
+    "legendUnvisited": "まだ記録していない",
+    "emptyTitle": "まだ産地の記録がありません",
+    "emptyDesc": "コーヒーを記録して産地を選ぶと、ここに地図が育っていきます。"
   },
   "diagnosis": {
     "heading": "コーヒー診断",

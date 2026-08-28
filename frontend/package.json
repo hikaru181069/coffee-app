@@ -14,6 +14,7 @@
     "@animateicons/react": "^0.4.3",
     "@tailwindcss/vite": "^4.2.4",
     "d3-force": "^3.0.0",
+    "d3-geo": "^3.1.1",
     "i18next": "^26.3.6",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^1.17.0",
@@ -22,7 +23,9 @@
     "react-force-graph-2d": "^1.29.1",
     "react-i18next": "^17.0.11",
     "react-router-dom": "^7.14.2",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4.2.4",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

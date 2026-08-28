@@ -26,10 +26,11 @@ MVPの主ナビゲーション:
 - Stats
 - Profile / Settings
 
-Diagnosisページ（`/diagnosis`）は上記に含めない。ナビ項目は4つ
-（Home/Records/Graph/Stats。Profileは別枠）と少なく保つ方針のため
-（`frontend/src/components/Navbar.jsx`参照）、Home画面・Statsページからの
-リンク経由でのみ到達する画面にしている（Entity Detailページと同じ扱い）。
+Diagnosisページ（`/diagnosis`）・World Mapページ（`/map`）は上記に含めない。
+ナビ項目は4つ（Home/Records/Graph/Stats。Profileは別枠）と少なく保つ方針
+のため（`frontend/src/components/Navbar.jsx`参照）、Home画面・Statsページ
+からのリンク経由でのみ到達する画面にしている（Entity Detailページと同じ
+扱い）。
 
 ## Screens
 

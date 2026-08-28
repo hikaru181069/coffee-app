@@ -1,5 +1,12 @@
 # MVP Scope
 
+> **2026-08-28 追記**: MVPは完了済み（下記の Completion Criteria を満たした状態、2026-07-31時点）。
+> このファイルはMVP時点のスコープ決定を残すための historical な記録として保持している
+> （`docs/mlb-legacy-inventory.md`と同じ扱い）。Post-MVPで追加した機能（Insight/Search/
+> Entity Detail/Stats/Discover/Coffee Diagnosis/World Map等）は`docs/features.md`を、
+> 実装の経緯・テスト結果は`IMPLEMENTATION.md`を参照。「Out of Scope」はMVP当時の判断であり、
+> 恒久的な禁止事項ではない（実際、世界地図はPost-MVPの産地フォーカス機能として追加した）。
+
 ## Goal
 
 ユーザーがコーヒー体験を記録し、過去の記録との繋がりを知識グラフで探索できる状態を作る。中心体験 Record -> Connect -> Discover を最小限で実装する。（`product.md`のVisionより）

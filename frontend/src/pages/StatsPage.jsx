@@ -99,7 +99,15 @@ function StatsPage() {
         </section>
 
         <section className="py-6">
-          <h2 className="mb-4 text-sm font-semibold text-text">{t("stats.collectionHeading")}</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-text">{t("stats.collectionHeading")}</h2>
+            <Link
+              to="/map"
+              className="text-xs text-text-tertiary underline underline-offset-2 hover:text-text"
+            >
+              {t("stats.viewMapLink")}
+            </Link>
+          </div>
           <CollectionStats collection={stats.collection} t={t} />
         </section>
 

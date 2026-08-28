@@ -21,13 +21,21 @@ const toIdString = (value) => (value === null || value === undefined ? null : St
 /**
  * 単数の参照を変換する。
  * populate 済みなら { id, name }、未populateならID文字列、未選択なら null
+ *
+ * countryCode は Origin モデルにしか存在しないフィールド（models/Origin.js）。
+ * Variety/Process/RoastLevel/Flavor の populate 済みオブジェクトには
+ * そもそもこのプロパティが無い（undefined）ため、`!== undefined`の判定だけで
+ * 「Originのときだけ含める」を実現できる。世界地図機能（2026-08）で
+ * countryCodeをAPI応答まで届ける必要が生じたために追加した。
  */
 const serializeRef = (value) => {
   if (value === null || value === undefined) return null;
 
   // populate されると name を持つオブジェクトになる
   if (typeof value === "object" && value.name !== undefined) {
-    return { id: toIdString(value._id), name: value.name };
+    const ref = { id: toIdString(value._id), name: value.name };
+    if (value.countryCode !== undefined) ref.countryCode = value.countryCode;
+    return ref;
   }
 
   return toIdString(value);

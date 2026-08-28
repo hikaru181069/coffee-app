@@ -102,6 +102,22 @@ describe("ノードの重複排除", () => {
     expect(flavorNodes[0].metadata.recordCount).toBe(2);
   });
 
+  test("originのcountryCodeがnodeのmetadataへ渡る（世界地図機能用）", () => {
+    const graph = buildGraph([
+      buildRecord({ id: "a", origin: { id: "o1", name: "Ethiopia", countryCode: "ET" } }),
+    ]);
+
+    const originNode = graph.nodes.find((node) => node.type === "origin");
+    expect(originNode.metadata.countryCode).toBe("ET");
+  });
+
+  test("countryCodeが無いoriginはnullになる（未設定でもエラーにならない）", () => {
+    const graph = buildGraph([buildRecord({ id: "a", origin: { id: "o1", name: "Ethiopia" } })]);
+
+    const originNode = graph.nodes.find((node) => node.type === "origin");
+    expect(originNode.metadata.countryCode).toBeNull();
+  });
+
   test("異なる産地は別ノードになる", () => {
     const graph = buildGraph([
       buildRecord({ id: "a", origin: { id: "o1", name: "Ethiopia" } }),

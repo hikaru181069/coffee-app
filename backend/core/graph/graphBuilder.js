@@ -68,7 +68,10 @@ const collectAttributeRefs = (record, flavorsByNormalizedName) => {
       type: "origin",
       id: originNodeId(record.origin.id),
       label: record.origin.name,
-      metadata: { originId: record.origin.id },
+      // countryCodeは世界地図機能（2026-08）向け。coffeeRecordSerializer.js
+      // のserializeRefがOriginをpopulateしたときだけ返すフィールドなので、
+      // 元々countryCodeを持たない産地（未設定のOrigin）ではnullになる
+      metadata: { originId: record.origin.id, countryCode: record.origin.countryCode ?? null },
       edgeType: "ORIGIN",
     });
   }

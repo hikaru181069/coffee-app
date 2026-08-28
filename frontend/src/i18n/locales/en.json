@@ -310,7 +310,20 @@
       "cafeCount": "Cafés",
       "flavorCount": "Flavors"
     },
-    "viewDiagnosisLink": "View your full diagnosis"
+    "viewDiagnosisLink": "View your full diagnosis",
+    "viewMapLink": "View on world map"
+  },
+  "map": {
+    "title": "World Map",
+    "subtitle": "Highlights the origins you've recorded on a world map.",
+    "ariaLabel": "World map of visited origins",
+    "countryAriaLabel": "View details for {{name}}",
+    "recordCount_one": "{{count}} record",
+    "recordCount_other": "{{count}} records",
+    "legendVisited": "Visited origin",
+    "legendUnvisited": "Not recorded yet",
+    "emptyTitle": "No origins recorded yet",
+    "emptyDesc": "Record a coffee and choose its origin to grow the map here."
   },
   "diagnosis": {
     "heading": "Coffee Diagnosis",
