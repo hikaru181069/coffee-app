@@ -15,6 +15,13 @@
  * パレットから外している。
  */
 
+// bg-*版とfill-*版は同じ7色を指す並行配列（同じindexが同じ色になるよう
+// 順序を揃えている）。Tailwindはソースコードに実際に書かれた完全な
+// クラス名の文字列だけを見てCSSを生成するため、`` `fill-${name}` ``の
+// ようにJS側で文字列結合して作ると検出されずCSSが生成されない
+// （2026-08、世界地図機能でbgTintClassを追加したときと同じ理由）。
+// 2026-08、世界地図の国の塗り色にも同じ産地アクセントを使うために
+// fill-*版を追加した
 const ORIGIN_ACCENT_PALETTE = [
   "bg-accent-sky",
   "bg-accent-peach",
@@ -23,6 +30,16 @@ const ORIGIN_ACCENT_PALETTE = [
   "bg-accent-yellow",
   "bg-accent-pink",
   "bg-accent-lavender",
+];
+
+const ORIGIN_FILL_PALETTE = [
+  "fill-accent-sky",
+  "fill-accent-peach",
+  "fill-accent-sapphire",
+  "fill-accent-teal",
+  "fill-accent-yellow",
+  "fill-accent-pink",
+  "fill-accent-lavender",
 ];
 
 /** 文字列から安定したハッシュ値を作る（DJB2） */
@@ -34,9 +51,14 @@ const hashString = (value) => {
   return Math.abs(hash);
 };
 
-/** 産地名から、その産地専用のアクセントカラー（Tailwindのbg-*クラス）を返す */
-export const getOriginAccentClass = (originName) => {
-  if (!originName) return ORIGIN_ACCENT_PALETTE[0];
-  const index = hashString(originName) % ORIGIN_ACCENT_PALETTE.length;
-  return ORIGIN_ACCENT_PALETTE[index];
+/** 産地名から、ORIGIN_ACCENT_PALETTE/ORIGIN_FILL_PALETTE共通のインデックスを求める */
+const getOriginAccentIndex = (originName) => {
+  if (!originName) return 0;
+  return hashString(originName) % ORIGIN_ACCENT_PALETTE.length;
 };
+
+/** 産地名から、その産地専用のアクセントカラー（Tailwindのbg-*クラス）を返す */
+export const getOriginAccentClass = (originName) => ORIGIN_ACCENT_PALETTE[getOriginAccentIndex(originName)];
+
+/** 産地名から、その産地専用のアクセントカラー（Tailwindのfill-*クラス。SVG用）を返す */
+export const getOriginFillClass = (originName) => ORIGIN_FILL_PALETTE[getOriginAccentIndex(originName)];

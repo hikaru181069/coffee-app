@@ -312,7 +312,7 @@
     "ariaLabel": "訪れた産地の世界地図",
     "countryAriaLabel": "{{name}}の詳細を見る",
     "recordCount": "{{count}}件の記録",
-    "legendVisited": "訪れた産地",
+    "legendVisited": "訪れた産地（産地ごとに色分け）",
     "legendUnvisited": "まだ記録していない",
     "emptyTitle": "まだ産地の記録がありません",
     "emptyDesc": "コーヒーを記録して産地を選ぶと、ここに地図が育っていきます。"

@@ -320,7 +320,7 @@
     "countryAriaLabel": "View details for {{name}}",
     "recordCount_one": "{{count}} record",
     "recordCount_other": "{{count}} records",
-    "legendVisited": "Visited origin",
+    "legendVisited": "Visited origin (colored by origin)",
     "legendUnvisited": "Not recorded yet",
     "emptyTitle": "No origins recorded yet",
     "emptyDesc": "Record a coffee and choose its origin to grow the map here."

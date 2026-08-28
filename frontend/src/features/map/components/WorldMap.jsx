@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { geoNaturalEarth1, geoPath, geoGraticule10 } from "d3-geo";
 import { feature } from "topojson-client";
 import worldTopology from "world-atlas/countries-50m.json";
+import { getOriginFillClass } from "../../coffee-records/utils/originAccent";
 
 // d3-geoの他のグラフ・図（TasteRadarChart.jsx・RecordConnectionsDiagram.jsx）
 // と違い、国境の形状データは自作が現実的ではないため、world-atlas
@@ -27,6 +28,15 @@ const graticuleGeoJson = geoGraticule10();
  * 訪問済みの国だけクリック・キーボード操作可能にし、そのエンティティ
  * 詳細ページ（/entities/origin:xxx）へ遷移する（知識グラフをナビゲーション
  * にする既存方針。RecordCard・NodeDetailPanel等と同じ）。
+ *
+ * 塗り色は全産地で単一色にせず、Records・HomeのカードでもうRecordCard.jsx・
+ * HomeRecordCard.jsxが使っている産地ごとのアクセントカラー
+ * （originAccent.jsのgetOriginFillClass、産地名からのハッシュで決まる）を
+ * そのまま使う。同じ産地なら常にカードと地図で同じ色になる（2026-08、
+ * 「国のラベルカラーを地図にも適用したい」という要望を受けて対応）。
+ * ホバー時のフィードバックは、産地ごとに色が違うため単純な透明度変更が
+ * 使えず（Tailwindの動的クラス生成の制約でopacity付きバリアントを7色分
+ * 用意する必要が生じる）、色に依存しないstrokeWidthの変化だけにしている。
  *
  * ホバー時は、TasteRadarChart.jsxのラベルと同じ「投影後の座標を%へ変換して
  * absoluteで重ねる」手法でツールチップを出す（SVG内へ直接文字を置くより
@@ -89,9 +99,7 @@ function WorldMap({ visitedByNumericId }) {
               role="link"
               tabIndex={0}
               aria-label={t("map.countryAriaLabel", { name: visited.label })}
-              className={`cursor-pointer stroke-line/60 transition-colors duration-150 focus:outline-none ${
-                isHovered ? "fill-accent-sky/80" : "fill-accent-sky"
-              }`}
+              className={`cursor-pointer stroke-line/60 transition-colors duration-150 focus:outline-none ${getOriginFillClass(visited.label)}`}
               strokeWidth={isHovered ? 1 : 0.5}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex((current) => (current === index ? null : current))}
