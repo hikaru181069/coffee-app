@@ -317,6 +317,8 @@
     "recordCount": "{{count}}件の記録",
     "legendVisited": "訪れた産地（産地ごとに色分け）",
     "legendUnvisited": "まだ記録していない",
+    "visitedStat": "訪れた産地",
+    "visitedOriginsHeading": "訪れた産地一覧",
     "emptyTitle": "まだ産地の記録がありません",
     "emptyDesc": "コーヒーを記録して産地を選ぶと、ここに地図が育っていきます。"
   },

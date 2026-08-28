@@ -5,11 +5,14 @@ import { useTranslation } from "react-i18next";
 
 import { useGraph } from "../features/graph/hooks/useGraph";
 import { GraphErrorState, GraphLoadingState } from "../features/graph/components/GraphStates";
+import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
 import { buildVisitedByNumericId } from "../features/map/utils/visitedOrigins";
 import WorldMap from "../features/map/components/WorldMap";
 import WorldMapLegend from "../features/map/components/WorldMapLegend";
 import BackLink from "../components/BackLink";
-import { primaryButtonClass } from "../features/coffee-records/components/formStyles";
+import StatCard from "../components/StatCard";
+import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
+import { cardClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { contentContainerClass } from "../styles/pageContainer";
 
 const MAP_FILTERS = { nodeTypes: ["origin"], recordType: "", ratingMin: "" };
@@ -29,16 +32,39 @@ const MAP_FILTERS = { nodeTypes: ["origin"], recordType: "", ratingMin: "" };
  * 専用のAPIは持たず、既存のGET /api/graph?nodeTypes=originをそのまま
  * 使う（グラフは都度計算する、docs/knowledge-graph.mdの方針と同じで
  * 世界地図専用のデータも持たない）。
+ *
+ * 2026-08、「地図しか無く寂しい」という指摘を受け、(1)訪れた産地数の
+ * サマリー（StatCard、Stats/EntityDetailと同じ意匠）と(2)訪れた産地の
+ * 一覧（EntityDetailPage.jsxのRelatedAttributeGroupと同じチップ）を
+ * 追加した。産地の総数（分母）は記録済みデータからは分からないため、
+ * フォームの選択肢取得と同じuseMasterDataを再利用する。マスターデータの
+ * 取得は「失敗しても致命的ではない」設計（useMasterData.js参照）のため、
+ * 読み込み中・失敗時は分母を省き訪問数だけを表示する（地図本体の表示を
+ * ブロックしない）。Discoverの産地提案とは役割が重複しないよう、
+ * ここでは記録済みデータの集計のみに留める（docs/features.md「World Map」
+ * 「Discover」参照）。
  */
 function WorldMapPage() {
   const { t } = useTranslation();
   const { graph, isLoading, error, reload } = useGraph(MAP_FILTERS);
+  const { masterData, isLoading: isMasterDataLoading } = useMasterData();
+  const originVisual = getNodeVisual("origin");
 
   const visitedByNumericId = useMemo(() => {
     if (!graph) return new Map();
     const originNodes = graph.nodes.filter((node) => node.type === "origin");
     return buildVisitedByNumericId(originNodes);
   }, [graph]);
+
+  const visitedOrigins = useMemo(
+    () =>
+      Array.from(visitedByNumericId.values()).sort(
+        (a, b) => b.recordCount - a.recordCount || a.label.localeCompare(b.label),
+      ),
+    [visitedByNumericId],
+  );
+
+  const totalOriginCount = !isMasterDataLoading && masterData.origins.length > 0 ? masterData.origins.length : null;
 
   const renderBody = () => {
     if (isLoading) return <GraphLoadingState />;
@@ -60,11 +86,39 @@ function WorldMapPage() {
     }
 
     return (
-      <div className="rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated sm:p-6">
-        <WorldMap visitedByNumericId={visitedByNumericId} />
-        <div className="mt-4">
-          <WorldMapLegend />
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap gap-3">
+          <StatCard
+            label={t("map.visitedStat")}
+            value={totalOriginCount != null ? `${visitedByNumericId.size} / ${totalOriginCount}` : `${visitedByNumericId.size}`}
+            icon={originVisual.icon}
+            iconColorClass={originVisual.colorClass}
+            iconBgClass={originVisual.bgTintClass}
+          />
         </div>
+
+        <div className="rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated sm:p-6">
+          <WorldMap visitedByNumericId={visitedByNumericId} />
+          <div className="mt-4">
+            <WorldMapLegend />
+          </div>
+        </div>
+
+        <section className={cardClass}>
+          <h2 className="text-base font-semibold text-text">{t("map.visitedOriginsHeading")}</h2>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {visitedOrigins.map((item) => (
+              <Link
+                key={item.id}
+                to={`/entities/${encodeURIComponent(item.id)}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-transparent bg-surface-1 px-3.5 py-1.5 text-sm text-text-secondary transition-all duration-150 hover:-translate-y-px hover:border-line/60 hover:bg-surface-2 hover:text-text"
+              >
+                {item.label}
+                <span className="font-mono text-xs text-text-tertiary">{item.recordCount}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
       </div>
     );
   };

@@ -325,6 +325,8 @@
     "recordCount_other": "{{count}} records",
     "legendVisited": "Visited origin (colored by origin)",
     "legendUnvisited": "Not recorded yet",
+    "visitedStat": "Origins visited",
+    "visitedOriginsHeading": "Visited origins",
     "emptyTitle": "No origins recorded yet",
     "emptyDesc": "Record a coffee and choose its origin to grow the map here."
   },
