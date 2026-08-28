@@ -10,7 +10,7 @@ import TopRankingList from "../features/stats/components/TopRankingList";
 import StatsSkeleton from "../features/stats/components/StatsSkeleton";
 import StatsEmptyState from "../features/stats/components/StatsEmptyState";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
-import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
+import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { wideContainerClass } from "../styles/pageContainer";
 
 const RANKING_TYPES = ["origin", "variety", "process", "flavor", "cafe"];
@@ -37,12 +37,17 @@ const daysSince = (isoDate) => {
  * core/stats）から同じ集計パターンで導出している。
  *
  * 「記録したコーヒーから、自分の飲み方や味覚傾向を振り返る」というテーマを
- * 反映し、情報をフラットに並べるのではなく3つの問いに分けている
- * （RecordDetailPageのdivide-yによるセクション区切りと同じ思想）:
+ * 反映し、情報をフラットに並べるのではなく3つの問いに分けている:
  *   1. 記録のペース: どれだけ・どんな頻度で記録しているか
  *   2. Collection: 何種類の産地・品種・精製方法・農園・カフェ・
  *      フレーバーを試したか
  *   3. 味の傾向: 評価はどう分布し、何を繰り返し選んでいるか
+ *
+ * 2026-08、「rankingをカード化しないのはなぜか」という指摘を受けた。
+ * 元々この3セクションは`divide-y`の区切り線だけで並べていたが、これは
+ * RecordDetailPage.jsx・EntityDetailPage.jsxが`cardClass`へ移行する前の
+ * 古いパターンが残っていただけの移行漏れだった。両ページと同じ`cardClass`
+ * （枠線+背景+影のカード、`formStyles.js`）で3セクションを統一した。
  */
 function StatsPage() {
   const { t, i18n } = useTranslation();
@@ -89,18 +94,18 @@ function StatsPage() {
         </Link>
       </header>
 
-      <div className="flex flex-col divide-y divide-surface-2">
-        <section className="pb-6">
-          <h2 className="mb-4 text-sm font-semibold text-text">{t("stats.paceHeading")}</h2>
-          <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
+        <section className={cardClass}>
+          <h2 className="text-base font-semibold text-text">{t("stats.paceHeading")}</h2>
+          <div className="mt-5 flex flex-col gap-4">
             <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} t={t} />
             <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} t={t} />
           </div>
         </section>
 
-        <section className="py-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-text">{t("stats.collectionHeading")}</h2>
+        <section className={cardClass}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-text">{t("stats.collectionHeading")}</h2>
             <Link
               to="/map"
               className="text-xs text-text-tertiary underline underline-offset-2 hover:text-text"
@@ -108,12 +113,14 @@ function StatsPage() {
               {t("stats.viewMapLink")}
             </Link>
           </div>
-          <CollectionStats collection={stats.collection} t={t} />
+          <div className="mt-5">
+            <CollectionStats collection={stats.collection} t={t} />
+          </div>
         </section>
 
-        <section className="pt-6">
-          <h2 className="mb-4 text-sm font-semibold text-text">{t("stats.tasteHeading")}</h2>
-          <div className="flex flex-col gap-6">
+        <section className={cardClass}>
+          <h2 className="text-base font-semibold text-text">{t("stats.tasteHeading")}</h2>
+          <div className="mt-5 flex flex-col gap-6">
             <RatingDistributionChart distribution={stats.ratingDistribution} t={t} />
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {RANKING_TYPES.map((type) => (
