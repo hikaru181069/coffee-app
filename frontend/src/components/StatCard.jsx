@@ -1,5 +1,10 @@
 /**
- * ラベル+数値だけの最小単位のカード。OverviewStats/CollectionStatsで共有する。
+ * ラベル+数値だけの最小単位のカード。
+ *
+ * もともとStatsページ専用（features/stats/components/）に置いていたが、
+ * 2026-08、EntityDetailPage.jsxでも同じ形のカード（記録数・平均評価・
+ * 最後に飲んだ日）が必要になり、複数機能で共有するUIとして
+ * components/へ移した（CLAUDE.md「components: 複数機能で共有するUI」）。
  *
  * 2026-08、「カードの空白が気になる」という指摘を受けた。ラベルと数値
  * だけでは内容量が少なく、カードがgridで幅いっぱいに広がるほど余白が
@@ -9,8 +14,8 @@
  * 量自体は変わらず配置が変わるだけ）ではなく、RecordDetailPage.jsxの
  * Coffee Detailsで採用したのと同じ「grid の均等割りをやめ、flex-wrap で
  * 中身の分だけ幅を取る」方式に変更した（呼び出し側のOverviewStats.jsx・
- * CollectionStats.jsxを参照）。min-wは、極端に狭い幅で折り返して
- * 不格好にならないための下限。
+ * CollectionStats.jsx・EntityDetailPage.jsxを参照）。min-wは、極端に
+ * 狭い幅で折り返して不格好にならないための下限。
  */
 function StatCard({ label, value, icon: Icon, iconColorClass, iconBgClass }) {
   return (

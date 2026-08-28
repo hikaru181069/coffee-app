@@ -1,14 +1,15 @@
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Star } from "lucide-react";
+import { Calendar, Star } from "lucide-react";
 
 import { useEntityDetail } from "../features/graph/hooks/useEntityDetail";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
 import { formatConsumedAtShort } from "../features/coffee-records/utils/recordFormat";
 import { getErrorMessage } from "../utils/errorMessage";
-import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
+import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import DiscoverSuggestions from "../features/discover/components/DiscoverSuggestions";
 import BackLink from "../components/BackLink";
+import StatCard from "../components/StatCard";
 import { contentContainerClass } from "../styles/pageContainer";
 import { useReveal } from "../hooks/useReveal";
 import { revealDelayClass } from "../utils/revealDelay";
@@ -63,27 +64,33 @@ function EntityDetailPage() {
         <h1 className="mt-1 text-xl font-bold text-text">{detail.label}</h1>
       </header>
 
-      <section className="mb-6 grid grid-cols-3 gap-3">
+      {/* 2026-08、「ページが少し寂しい」という指摘を受け、Statsページの
+          StatCard.jsxと同じアイコンバッジ+flex-wrapのカードにした
+          （components/StatCard.jsxとして共有化。以前はこのページ専用の
+          ローカルなStatCardを持っていた）。記録数はこのエンティティ自身の
+          ノード種別アイコン・色（visual）を再利用し、平均評価・最後に
+          飲んだ日はStatsページのOverviewStats.jsxと同じ配色にした */}
+      <section className="mb-6 flex flex-wrap gap-3">
         <StatCard
           label={t("entityDetail.recordCount")}
           value={t("search.recordCount", { count: detail.recordCount })}
+          icon={Icon}
+          iconColorClass={visual.colorClass}
+          iconBgClass={visual.bgTintClass}
         />
         <StatCard
           label={t("entityDetail.avgRating")}
-          value={
-            detail.avgRating != null ? (
-              <span className="inline-flex items-center gap-1">
-                <Star size={14} aria-hidden="true" fill="currentColor" strokeWidth={0} className="text-warn" />
-                {detail.avgRating}
-              </span>
-            ) : (
-              "—"
-            )
-          }
+          value={detail.avgRating ?? "—"}
+          icon={Star}
+          iconColorClass="text-warn"
+          iconBgClass="bg-warn/15"
         />
         <StatCard
           label={t("entityDetail.lastConsumed")}
           value={detail.lastConsumedAt ? formatConsumedAtShort(detail.lastConsumedAt, i18n.language) : "—"}
+          icon={Calendar}
+          iconColorClass="text-text-tertiary"
+          iconBgClass="bg-surface-2"
         />
       </section>
 
@@ -153,16 +160,6 @@ function RelatedRecordRow({ record, index, language }) {
   );
 }
 
-/** 統計1件のカード（記録数・平均評価・最終記録日） */
-function StatCard({ label, value }) {
-  return (
-    <div className={cardClass}>
-      <p className="text-xs text-text-tertiary">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-text">{value}</p>
-    </div>
-  );
-}
-
 /**
  * 関連する属性1種別分のグループ（例: フレーバー → Berry, Floral, Citrus）。
  * チップ自体をそのエンティティの詳細ページへのLinkにする。
@@ -192,8 +189,10 @@ function RelatedAttributeGroup({ type, items, t }) {
 /**
  * 読み込み中のエンティティ詳細ページ。実際の構成
  * （header→統計カード3枚→グラフで見るボタン→関連属性チップ→関連記録一覧）
- * と同じ形の骨格を出す（StatCard/RelatedAttributeGroupと同じくページ
- * ローカルなヘルパー。entity-detail専用のfeatureディレクトリが無いため）。
+ * と同じ形の骨格を出す（RelatedAttributeGroupと同じくページローカルな
+ * ヘルパー。entity-detail専用のfeatureディレクトリが無いため）。
+ * 統計カードは共有のcomponents/StatCard.jsxを使うようになった
+ * （flex-wrap＋アイコンバッジ）ため、骨格もそれに合わせた形にしている。
  */
 function EntityDetailSkeleton() {
   const { t } = useTranslation();
@@ -204,11 +203,16 @@ function EntityDetailSkeleton() {
         <div className="skeleton-block h-6 w-40 rounded" />
       </div>
 
-      <div className="mb-6 grid grid-cols-3 gap-3">
+      <div className="mb-6 flex flex-wrap gap-3">
         {Array.from({ length: 3 }, (_, index) => (
-          <div key={index} className={cardClass}>
-            <div className="skeleton-block h-3 w-14 rounded" />
-            <div className="skeleton-block mt-2 h-4 w-10 rounded" />
+          <div key={index} className="min-w-44 rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated">
+            <div className="flex items-center gap-3">
+              <div className="skeleton-block h-9 w-9 flex-shrink-0 rounded-full" />
+              <div>
+                <div className="skeleton-block h-3 w-14 rounded" />
+                <div className="skeleton-block mt-2 h-4 w-10 rounded" />
+              </div>
+            </div>
           </div>
         ))}
       </div>

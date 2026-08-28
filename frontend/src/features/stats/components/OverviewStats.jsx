@@ -1,5 +1,5 @@
 import { Calendar, Star } from "lucide-react";
-import StatCard from "./StatCard";
+import StatCard from "../../../components/StatCard";
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 
 /**
