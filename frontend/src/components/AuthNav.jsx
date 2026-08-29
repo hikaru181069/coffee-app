@@ -32,7 +32,7 @@ function AuthNav({ minimal = false }) {
     <nav className="landing-nav">
       <Link to="/landing" className="flex items-center gap-2 text-text">
         <CoffeeLogo size={22} />
-        <span className="text-base font-black tracking-tight">Coffee App</span>
+        <span className="font-mono text-base font-black tracking-tight">Coffee App</span>
       </Link>
       <div className="landing-nav-actions">
         <LanguageSwitcher />

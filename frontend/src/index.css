@@ -11,10 +11,11 @@
    配色を完全無彩色（ニュートラルグレースケール）+ 反転ボタン + フォーカス
    専用の青、へ全面刷新した（それまでのモス系配色を置き換え）。 */
 @theme {
-  /* 2026-08、本文（:rootのfont-family）もSpace Monoへ統一したため、
-     このトークンと本文フォントは同じ値になった。それでも数値・日付・
-     件数など「事実としての値」であることを示す意図的なマーキングとして
-     font-monoクラスの付与自体は残している
+  /* 2026-08、一時的に本文（:rootのfont-family）もSpace Monoへ統一して
+     いたが、「フォントの使い分けで奥行きを出したい」という要望を受けて
+     プロポーショナル（Inter）×モノスペース（Space Mono）の対比へ戻した。
+     数値・日付・件数など「事実としての値」であることを示す意図的な
+     マーキングとしてfont-monoクラスを使う
      （prompts/design/00-design-principles.md 6.2 Typography） */
   --font-mono: "Space Mono", monospace;
 
@@ -78,7 +79,7 @@
 }
 
 :root {
-  font-family: "Space Mono", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Inter", "Space Mono", -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--color-text);
   --app-bg: var(--color-base);
   background-color: var(--app-bg);

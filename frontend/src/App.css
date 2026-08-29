@@ -1,5 +1,12 @@
 :root {
-  --app-font: "Space Mono", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  /* 2026-08、frontend/src/index.cssの:root font-familyと同じ値に揃える
+     こと（本文はInter、データ値はSpace Mono）。過去に一度、本文を
+     Space Monoへ統一した際にこちらの更新が漏れ、index.cssとApp.cssで
+     フォントの並び順が食い違う不具合を起こした（h1等App.css側の
+     var(--app-font)を参照する要素だけSpace Monoのままになっていた）。
+     2箇所に同じ値を持つこと自体が再発リスクのため、いずれ1箇所へ
+     統合したい（未解決事項参照）。 */
+  --app-font: "Inter", "Space Mono", -apple-system, BlinkMacSystemFont, sans-serif;
   --app-font-mono: "Space Mono", monospace;
 
   /* 2026-08、配色をLinear実測値からモス系の差し色へ刷新した際に、色トークンの
