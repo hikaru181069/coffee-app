@@ -13,7 +13,13 @@ import { getErrorMessage } from "../../../utils/errorMessage";
  * 区別できず、ユーザーは待つべきか操作すべきか判断できない。
  */
 
-/** 読み込み中。カードと同じ形の枠を出して、表示位置が飛ばないようにする */
+/**
+ * 読み込み中。カードと同じ形の枠を出して、表示位置が飛ばないようにする。
+ *
+ * 2026-08、`RecordCard.jsx`に追加された産地アクセントバー+産地名の行
+ * （`HomeRecordCardSkeleton.jsx`は追随済みだったが、こちらは更新が漏れて
+ * いた。ローディングスケルトンのレビューで発覚）を追加した。
+ */
 export function RecordListSkeleton({ count = 4 }) {
   const { t } = useTranslation();
   return (
@@ -23,7 +29,11 @@ export function RecordListSkeleton({ count = 4 }) {
           key={index}
           className="rounded-2xl border border-surface-2 bg-raised p-5 sm:p-6"
         >
-          <div className="skeleton-block h-4 w-1/2 rounded" />
+          <div className="flex items-center gap-2">
+            <div className="skeleton-block h-3 w-0.5 rounded-full" />
+            <div className="skeleton-block h-3 w-16 rounded" />
+          </div>
+          <div className="skeleton-block mt-2 h-4 w-1/2 rounded" />
           <div className="skeleton-block mt-2 h-3 w-1/3 rounded" />
           <div className="mt-4 flex gap-1.5">
             <div className="skeleton-block h-5 w-1/5 rounded-full" />
