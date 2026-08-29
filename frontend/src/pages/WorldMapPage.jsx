@@ -4,12 +4,13 @@ import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useGraph } from "../features/graph/hooks/useGraph";
-import { GraphErrorState, GraphLoadingState } from "../features/graph/components/GraphStates";
+import { GraphErrorState } from "../features/graph/components/GraphStates";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
 import { getOriginAccentClass } from "../features/coffee-records/utils/originAccent";
 import { buildVisitedByNumericId } from "../features/map/utils/visitedOrigins";
 import WorldMap from "../features/map/components/WorldMap";
 import WorldMapLegend from "../features/map/components/WorldMapLegend";
+import WorldMapSkeleton from "../features/map/components/WorldMapSkeleton";
 import BackLink from "../components/BackLink";
 import StatCard from "../components/StatCard";
 import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
@@ -49,6 +50,12 @@ const MAP_FILTERS = { nodeTypes: ["origin"], recordType: "", ratingMin: "" };
  * からのハッシュで決まる固定パレット）の小さな点を添えている。地図上の
  * 色と一覧の色が同じ産地なら常に一致するため、地図で見た色を手がかりに
  * 一覧から該当の産地を探せる。
+ *
+ * 2026-08、読み込み中の表示はGraph画面の`GraphLoadingState`（円+線を
+ * 模した知識グラフ専用の骨格）を流用していたが、地図・サマリー・産地
+ * 一覧という実際の構成と見た目が違いすぎるという指摘を受け、専用の
+ * `WorldMapSkeleton`を新設した。エラー表示（`GraphErrorState`）はグラフ
+ * 形状に依存しない汎用的な見た目のため、そのまま流用している。
  */
 function WorldMapPage() {
   const { t } = useTranslation();
@@ -73,7 +80,7 @@ function WorldMapPage() {
   const totalOriginCount = !isMasterDataLoading && masterData.origins.length > 0 ? masterData.origins.length : null;
 
   const renderBody = () => {
-    if (isLoading) return <GraphLoadingState />;
+    if (isLoading) return <WorldMapSkeleton />;
     if (error) return <GraphErrorState error={error} onRetry={reload} />;
 
     if (visitedByNumericId.size === 0) {
