@@ -5,6 +5,7 @@ import { forceCollide, forceX, forceY } from "d3-force";
 import { getNodeVisual } from "../utils/nodeVisuals";
 import { getNodeIconImage } from "../utils/canvasIcons";
 import { getCanvasColor } from "../utils/canvasColors";
+import { getOriginHex } from "../../coffee-records/utils/originAccent";
 import {
   recordRadius,
   attributeHalfWidth,
@@ -171,6 +172,10 @@ const isNodeDimmed = (node, { interactive, focusId, adjacency }) =>
 
 function drawNode(node, ctx, globalScale, { selectedNodeId, focusId, adjacency, interactive }) {
   const visual = getNodeVisual(node.type);
+  // 産地ノードだけは種別共通のaccent-skyではなく、産地ごとの個別色
+  // （originAccent.js。Records一覧・World Mapと同じ対応表）を使う。
+  // record・variety等の他の種別は今まで通りvisual.canvasColorのまま
+  const nodeColor = node.type === "origin" ? getOriginHex(node.label) : visual.canvasColor;
   const isRecord = node.type === "record";
   const selected = node.id === selectedNodeId;
   const dimmed = isNodeDimmed(node, { interactive, focusId, adjacency });
@@ -233,10 +238,10 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, focusId, adjacency, 
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
     ctx.lineWidth = borderWidth;
-    ctx.strokeStyle = selected ? visual.canvasColor : CTP.surface1;
+    ctx.strokeStyle = selected ? nodeColor : CTP.surface1;
     ctx.stroke();
 
-    const icon = getNodeIconImage(node.type, visual.canvasColor);
+    const icon = getNodeIconImage(node.type, nodeColor);
     const iconSize = Math.min(halfWidth, halfHeight) * 1.15;
     if (icon) ctx.drawImage(icon, node.x - iconSize / 2, node.y - iconSize / 2, iconSize, iconSize);
 

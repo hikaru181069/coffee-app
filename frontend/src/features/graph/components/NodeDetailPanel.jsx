@@ -3,6 +3,7 @@ import { Star, X } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../utils/nodeVisuals";
+import { getOriginTextClass } from "../../coffee-records/utils/originAccent";
 import { secondaryButtonClass } from "../../coffee-records/components/formStyles";
 import { formatConsumedAtShort } from "../../coffee-records/utils/recordFormat";
 import { getErrorMessage } from "../../../utils/errorMessage";
@@ -26,6 +27,9 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
 
   const visual = getNodeVisual(node.data.type);
   const Icon = visual.icon;
+  // 産地ノードだけは種別共通の色ではなく、産地ごとの個別色
+  // （originAccent.js。GraphCanvas.jsxのnodeColorと同じ考え方）を使う
+  const iconColorClass = node.data.type === "origin" ? getOriginTextClass(node.data.label) : visual.colorClass;
 
   return (
     <aside
@@ -34,7 +38,7 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Icon size={18} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
+          <Icon size={18} aria-hidden="true" className={iconColorClass} strokeWidth={1.75} />
           <div>
             <p className="text-xs text-text-tertiary">{t(visual.labelKey)}</p>
             <h2 className="text-sm font-semibold text-text">{node.data.label}</h2>
