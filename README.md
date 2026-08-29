@@ -1,7 +1,8 @@
 # Coffee App
 
 コーヒー体験を記録し、知識グラフとして育て、自分の味覚やコーヒーの知識を自然に発見できるアプリ。
-自社開発スタートアップの長期インターン応募のために作成した、学習用・ポートフォリオ用のWebアプリです。
+
+**[Live Demo](https://coffee-app-seven-alpha.vercel.app/)** — デモアカウントでログインすると、すぐに試せます（[Demo](#demo) 参照）。
 
 ---
 
@@ -34,17 +35,21 @@
 
 ## Screenshots
 
-| Home | Records |
-| --- | --- |
-| ![Home画面。最近の記録とDiscover・知識グラフへの導線](docs/screenshots/home.jpg) | ![Records画面。検索・フィルター付きの記録一覧](docs/screenshots/records.jpg) |
+| Home                                                                             | Records                                                                      |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| ![Home画面。最近の記録とDiscover・知識グラフへの導線](docs/screenshots/home.jpg) | ![Records画面。産地ごとのアクセントカラー付き記録一覧](docs/screenshots/records.jpg) |
 
-| Record Detail | Graph |
-| --- | --- |
-| ![記録詳細画面。産地・精製方法・フレーバーとのつながりを1-hopの図で表示](docs/screenshots/record-detail.jpg) | ![Graph画面。知識グラフ全体とノード選択時のサイドパネル](docs/screenshots/graph.jpg) |
+| Record Detail                                                                                                | Graph                                                                                |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| ![記録詳細画面。産地・精製方法・フレーバーとのつながりを1-hopの図で表示](docs/screenshots/record-detail.jpg) | ![Graph画面。産地ごとに色分けされたノードと知識グラフ全体](docs/screenshots/graph.jpg) |
 
-**Stats**
+| Stats                                                                                       | World Map                                                                              |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| ![Stats画面。記録のペース・Collection・味の傾向の3セクション構成](docs/screenshots/stats.jpg) | ![World Map画面。記録した産地を地域ごとの色分けで世界地図にハイライト](docs/screenshots/world-map.jpg) |
 
-![Stats画面。記録のペース・Collection・味の傾向の3セクション構成](docs/screenshots/stats.jpg)
+**Coffee Diagnosis**
+
+![Coffee Diagnosis画面。記録から判定したコーヒータイプとInsight・Statsの要約](docs/screenshots/diagnosis.jpg)
 
 ## Demo
 
@@ -84,6 +89,8 @@ Password: coffeedemo123
 - **Entity Detail** — 産地やフレーバーなど、知識グラフのノード1件について統計・関連する他の属性・関連記録をまとめて見せる専用ページ。関連属性のチップ自体もリンクになっており、産地→品種→フレーバーとページ間を渡り歩ける
 - **Stats** — これまでの記録を「記録のペース」「Collection（試した種類数）」「味の傾向」の3セクションで振り返るページ
 - **Discover** — CQI（Coffee Quality Institute）の参考データと知識グラフの隣接関係を使い、「よく選んでいる精製方法で、まだ試していない産地」を提案する
+- **Coffee Diagnosis** — 焙煎度・フレーバーの傾向から「コーヒータイプ」をルールベースで判定し、Insight・Statsの要約とあわせて1画面で見せる
+- **World Map** — 自分が記録した産地を世界地図上でハイライトする。産地ごとのアクセントカラー（地域でまとまった配色、20件重複なし）は知識グラフのノードやRecords一覧とも共通
 
 Out of Scope（MVPでは扱わない）: AI推薦、自然言語による味覚分析、SNS・フォロー、カフェ口コミ、EC連携、画像認識。詳細は [`docs/mvp.md`](docs/mvp.md) を参照してください。
 
@@ -131,16 +138,16 @@ coffee-app/
 
 ## Tech Stack
 
-| レイヤー | 技術 |
-| --- | --- |
-| Frontend | React 19 / Vite / React Router / Tailwind CSS |
-| 知識グラフ描画 | react-force-graph-2d（canvas描画 + d3-force） |
-| Backend | Node.js / Express 5（ES Modules） |
-| Database | MongoDB / Mongoose |
-| 計算サービス | Python / FastAPI |
-| 認証 | JWT / bcryptjs |
-| テスト・CI | Jest + Supertest / mongodb-memory-server / pytest / GitHub Actions |
-| 開発環境 | Docker Compose |
+| レイヤー       | 技術                                                               |
+| -------------- | ------------------------------------------------------------------ |
+| Frontend       | React 19 / Vite / React Router / Tailwind CSS                      |
+| 知識グラフ描画 | react-force-graph-2d（canvas描画 + d3-force）                      |
+| Backend        | Node.js / Express 5（ES Modules）                                  |
+| Database       | MongoDB / Mongoose                                                 |
+| 計算サービス   | Python / FastAPI                                                   |
+| 認証           | JWT / bcryptjs                                                     |
+| テスト・CI     | Jest + Supertest / mongodb-memory-server / pytest / GitHub Actions |
+| 開発環境       | Docker Compose                                                     |
 
 frontend・backend とも ES Modules を使用します。採用理由と落とし穴は [`docs/architecture.md`](docs/architecture.md#module-format) にまとめています。
 
@@ -169,11 +176,26 @@ frontend・backend とも ES Modules を使用します。採用理由と落と�
 ```json
 {
   "nodes": [
-    { "id": "record:abc", "type": "record", "label": "Ethiopia Natural", "metadata": { "recordId": "abc", "consumedAt": "...", "rating": 5 } },
-    { "id": "origin:xyz", "type": "origin", "label": "Ethiopia", "metadata": { "originId": "xyz", "recordCount": 3 } }
+    {
+      "id": "record:abc",
+      "type": "record",
+      "label": "Ethiopia Natural",
+      "metadata": { "recordId": "abc", "consumedAt": "...", "rating": 5 }
+    },
+    {
+      "id": "origin:xyz",
+      "type": "origin",
+      "label": "Ethiopia",
+      "metadata": { "originId": "xyz", "recordCount": 3 }
+    }
   ],
   "edges": [
-    { "id": "record:abc-origin:xyz", "source": "record:abc", "target": "origin:xyz", "type": "ORIGIN" }
+    {
+      "id": "record:abc-origin:xyz",
+      "source": "record:abc",
+      "target": "origin:xyz",
+      "type": "ORIGIN"
+    }
   ],
   "summary": { "recordCount": 10, "nodeCount": 24, "edgeCount": 37 }
 }
@@ -194,7 +216,7 @@ frontend・backend とも ES Modules を使用します。採用理由と落と�
 **必要なもの:** Docker Desktop
 
 ```bash
-git clone git@github.com:hikaru181069/coffee-app.git
+git clone https://github.com/hikaru181069/coffee-app.git
 cd coffee-app
 docker compose up -d --build
 ```
@@ -250,13 +272,13 @@ cd backend && npm run seed:demo     # デモユーザーとサンプル記録15�
 
 `backend/.env`（ひな形は [`backend/.env.example`](backend/.env.example)）:
 
-| 変数 | 説明 |
-| --- | --- |
-| `PORT` | Express が待ち受けるポート（既定 5001） |
-| `MONGO_URI` | MongoDB 接続文字列 |
-| `JWT_SECRET` | JWT の署名鍵。**コミットしないこと** |
-| `FRONTEND_URL` | CORS で許可するフロントエンドのURL |
-| `FASTAPI_URL` | FastAPI サービスのURL |
+| 変数           | 説明                                    |
+| -------------- | --------------------------------------- |
+| `PORT`         | Express が待ち受けるポート（既定 5001） |
+| `MONGO_URI`    | MongoDB 接続文字列                      |
+| `JWT_SECRET`   | JWT の署名鍵。**コミットしないこと**    |
+| `FRONTEND_URL` | CORS で許可するフロントエンドのURL      |
+| `FASTAPI_URL`  | FastAPI サービスのURL                   |
 
 frontend は `VITE_API_URL` で Express の URL を指定します（未指定時は `http://localhost:5001`）。
 
@@ -298,16 +320,16 @@ cd fastapi-service && ../.venv/bin/pytest    # pytest
 
 ## ドキュメント
 
-| ファイル | 内容 |
-| --- | --- |
-| [`docs/product.md`](docs/product.md) | プロダクトの目的・対象ユーザー・設計判断の原則 |
-| [`docs/mvp.md`](docs/mvp.md) | MVPのスコープと完了条件 |
-| [`docs/design.md`](docs/design.md) | 画面構成・UIルール |
-| [`docs/domain-model.md`](docs/domain-model.md) | CoffeeRecord とマスターデータ |
-| [`docs/database.md`](docs/database.md) | MongoDB スキーマ設計 |
-| [`docs/knowledge-graph.md`](docs/knowledge-graph.md) | 知識グラフの生成方針 |
-| [`docs/features.md`](docs/features.md) | Insights・Search・Entity Detail・Stats・Discoverの仕様 |
-| [`docs/architecture.md`](docs/architecture.md) | サービス責務・モジュール形式・エラー形式 |
-| [`docs/api.md`](docs/api.md) | APIエンドポイント設計 |
-| [`docs/implementation-plan.md`](docs/implementation-plan.md) | Phase 0〜6 の進め方 |
-| [`docs/mlb-legacy-inventory.md`](docs/mlb-legacy-inventory.md) | mlb-app由来コードの棚卸し記録（Phase 6で削除実施） |
+| ファイル                                                       | 内容                                                   |
+| -------------------------------------------------------------- | ------------------------------------------------------ |
+| [`docs/product.md`](docs/product.md)                           | プロダクトの目的・対象ユーザー・設計判断の原則         |
+| [`docs/mvp.md`](docs/mvp.md)                                   | MVPのスコープと完了条件                                |
+| [`docs/design.md`](docs/design.md)                             | 画面構成・UIルール                                     |
+| [`docs/domain-model.md`](docs/domain-model.md)                 | CoffeeRecord とマスターデータ                          |
+| [`docs/database.md`](docs/database.md)                         | MongoDB スキーマ設計                                   |
+| [`docs/knowledge-graph.md`](docs/knowledge-graph.md)           | 知識グラフの生成方針                                   |
+| [`docs/features.md`](docs/features.md)                         | Insights・Search・Entity Detail・Stats・Discoverの仕様 |
+| [`docs/architecture.md`](docs/architecture.md)                 | サービス責務・モジュール形式・エラー形式               |
+| [`docs/api.md`](docs/api.md)                                   | APIエンドポイント設計                                  |
+| [`docs/implementation-plan.md`](docs/implementation-plan.md)   | Phase 0〜6 の進め方                                    |
+| [`docs/mlb-legacy-inventory.md`](docs/mlb-legacy-inventory.md) | mlb-app由来コードの棚卸し記録（Phase 6で削除実施）     |
