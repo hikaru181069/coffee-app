@@ -17,6 +17,7 @@ import { RecordsErrorState } from "../features/coffee-records/components/RecordL
 import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { contentContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
+import BackLink from "../components/BackLink";
 
 /**
  * 記録の作成・編集画面。
@@ -144,12 +145,13 @@ function RecordFormPage() {
   return (
     <div className={contentContainerClass}>
       <header className="mb-5">
-        <Link
-          to={isEditing ? `/records/${recordId}` : "/records"}
-          className="text-sm text-text-tertiary underline underline-offset-2 hover:text-text"
-        >
-          ← {isEditing ? t("records.backToDetail") : t("common.backToList")}
-        </Link>
+        {/* 2026-08、EntityDetail/Diagnosis/WorldMap/RecordDetailと同じ
+            BackLink（navigate(-1)）へ統一した。編集中に離脱しようとした
+            場合はuseBlockerが引き続きこのクリックも検知して確認する
+            （BackLinkの実体もnavigate()を呼ぶだけなので、Cancelボタンと
+            同じ経路で確認ダイアログが機能する）。fallbackは、URL直接
+            アクセス等で戻れる履歴が無い場合の行き先（編集元の詳細/一覧） */}
+        <BackLink fallback={isEditing ? `/records/${recordId}` : "/records"} />
         <h1 className="mt-2 text-xl font-bold text-text">
           {isEditing ? t("records.editTitle") : t("records.newTitle")}
         </h1>

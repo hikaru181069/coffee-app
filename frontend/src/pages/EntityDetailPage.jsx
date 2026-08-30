@@ -1,6 +1,6 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Calendar, Star } from "lucide-react";
+import { Calendar, ChevronRight, Star } from "lucide-react";
 
 import { useEntityDetail } from "../features/graph/hooks/useEntityDetail";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
@@ -24,16 +24,42 @@ import { revealDelayClass } from "../utils/revealDelay";
  * 知識グラフをただの可視化ではなくナビゲーションにする機能:
  * 関連する属性（RelatedAttributeGroup）のチップ自体もこのページへの
  * Linkにしており、産地→品種→フレーバーとエンティティ間を渡り歩ける。
+ *
+ * 2026-08、この「渡り歩き」を繰り返すと、元の場所へ戻るのに単純な
+ * 「← Back」（navigate(-1)）を何度も押す必要があるという指摘を受けた。
+ * そこで、実際にたどってきたエンティティの経路を`location.state.trail`
+ * として次のページへ運び、パンくず風の`EntityTrail`で表示するように
+ * した。アプリの固定的な階層を示す一般的なパンくずとは違い、この
+ * セッションで実際にチップをたどった経路をそのまま積み上げるだけなので、
+ * 「複数の場所から来るページに固定パンくずを付けると実態と食い違う」
+ * という問題は起きない（検索結果・Stats・RecordDetailなど、チップ経由
+ * 以外からこのページへ来た場合はtrailが空のままなので、従来通り
+ * `<BackLink />`を表示する）。
+ *
+ * 2026-08、上記の直後に「パンくずの先頭タグを押すと`<BackLink />`に
+ * 戻るが、そこから『戻る』を押すとパンくず（直前にいたエンティティ）
+ * へ戻ってしまう」という指摘を受けた。原因は、チップ・パンくず経由の
+ * 遷移が`navigate()`の既定動作（履歴を積む＝push）だったため、渡り歩く
+ * たびにブラウザ履歴が積み上がり、`navigate(-1)`が「渡り歩く前の場所」
+ * ではなく「1つ前に見ていたエンティティ」に戻ってしまうこと。
+ * `RelatedAttributeGroup`・`EntityTrail`のLinkに`replace`を付け、渡り歩く
+ * 操作を常に履歴の置き換えにした。これにより渡り歩いた経路そのものは
+ * 1つの履歴エントリの中で更新され続け、`navigate(-1)`は常に「渡り歩き
+ * 全体を始める前にいたページ」（Stats・検索結果・RecordDetail等）へ
+ * 戻る。エンティティ間の移動自体はパンくず・チップのクリックで行うため、
+ * 履歴を積まなくても操作性は変わらない。
  */
 function EntityDetailPage() {
   const { nodeId } = useParams();
   const { t, i18n } = useTranslation();
+  const location = useLocation();
+  const trail = location.state?.trail ?? [];
   const { detail, isLoading, error } = useEntityDetail(nodeId);
 
   if (isLoading) {
     return (
       <div className={contentContainerClass}>
-        <EntityDetailSkeleton />
+        <EntityDetailSkeleton hasTrail={trail.length > 0} />
       </div>
     );
   }
@@ -52,10 +78,11 @@ function EntityDetailPage() {
   const visual = getNodeVisual(detail.type);
   const Icon = visual.icon;
   const relatedTypes = Object.keys(detail.relatedAttributes);
+  const nextTrail = [...trail, { id: detail.id, label: detail.label }];
 
   return (
     <div className={contentContainerClass}>
-      <BackLink />
+      {trail.length > 0 ? <EntityTrail trail={trail} current={detail.label} t={t} /> : <BackLink />}
       <header className="mt-3 mb-6">
         <div className="flex items-center gap-2">
           <Icon size={16} aria-hidden="true" className={visual.colorClass} />
@@ -128,7 +155,13 @@ function EntityDetailPage() {
           <h2 className="text-base font-semibold text-text">{t("entityDetail.relatedHeading")}</h2>
           <div className="mt-5 flex flex-col gap-5">
             {relatedTypes.map((type) => (
-              <RelatedAttributeGroup key={type} type={type} items={detail.relatedAttributes[type]} t={t} />
+              <RelatedAttributeGroup
+                key={type}
+                type={type}
+                items={detail.relatedAttributes[type]}
+                t={t}
+                trail={nextTrail}
+              />
             ))}
           </div>
         </section>
@@ -188,7 +221,7 @@ function RelatedRecordRow({ record, index, language }) {
  * 新しい色を増やさずに「これはグラフのノードである」という一貫性を
  * 伝える。
  */
-function RelatedAttributeGroup({ type, items, t }) {
+function RelatedAttributeGroup({ type, items, t, trail }) {
   const visual = getNodeVisual(type);
   const Icon = visual.icon;
 
@@ -203,6 +236,8 @@ function RelatedAttributeGroup({ type, items, t }) {
           <Link
             key={item.id}
             to={`/entities/${encodeURIComponent(item.id)}`}
+            state={{ trail }}
+            replace
             className="inline-flex items-center gap-1.5 rounded-full border border-transparent bg-surface-1 px-3.5 py-1.5 text-sm text-text-secondary transition-all duration-150 hover:-translate-y-px hover:border-line/60 hover:bg-surface-2 hover:text-text"
           >
             {item.label}
@@ -215,19 +250,58 @@ function RelatedAttributeGroup({ type, items, t }) {
 }
 
 /**
+ * 実際にたどってきたエンティティの経路を見せるパンくず。
+ * 過去の各エンティティはLink（クリックするとそこまでで打ち切った
+ * trailを持って戻る）、現在のエンティティ名だけプレーンテキスト。
+ */
+function EntityTrail({ trail, current, t }) {
+  return (
+    <nav aria-label={t("entityDetail.trailAriaLabel")} className="flex flex-wrap items-center gap-1.5 text-sm">
+      {trail.map((crumb, index) => (
+        <span key={crumb.id} className="flex items-center gap-1.5">
+          <Link
+            to={`/entities/${encodeURIComponent(crumb.id)}`}
+            state={{ trail: trail.slice(0, index) }}
+            replace
+            className="text-text-tertiary transition-colors duration-150 hover:text-text"
+          >
+            {crumb.label}
+          </Link>
+          <ChevronRight size={14} aria-hidden="true" className="flex-shrink-0 text-line" />
+        </span>
+      ))}
+      <span className="truncate text-text-secondary">{current}</span>
+    </nav>
+  );
+}
+
+/**
  * 読み込み中のエンティティ詳細ページ。実際の構成
  * （header→統計カード3枚→グラフで見るボタン→関連属性チップ→関連記録一覧）
  * と同じ形の骨格を出す（RelatedAttributeGroupと同じくページローカルな
  * ヘルパー。entity-detail専用のfeatureディレクトリが無いため）。
  * 統計カードは共有のcomponents/StatCard.jsxを使うようになった
  * （flex-wrap＋アイコンバッジ）ため、骨格もそれに合わせた形にしている。
+ *
+ * 2026-08、チップをたどって来た場合はパンくず（EntityTrail）が表示される。
+ * `location.state.trail`はデータ読み込み前から分かっているため、
+ * その有無だけこのスケルトンにも反映し、読み込み完了時に一番上の行の
+ * 形が変わってしまわないようにする。
  */
-function EntityDetailSkeleton() {
+function EntityDetailSkeleton({ hasTrail = false }) {
   const { t } = useTranslation();
   return (
     <div aria-busy="true" aria-label={t("common.loading")}>
       <div className="mb-6 flex flex-col gap-2">
-        <div className="skeleton-block h-3 w-16 rounded" />
+        {hasTrail ? (
+          <div className="flex items-center gap-1.5">
+            <div className="skeleton-block h-3 w-16 rounded" />
+            <div className="skeleton-block h-3 w-3 rounded-full" />
+            <div className="skeleton-block h-3 w-16 rounded" />
+          </div>
+        ) : (
+          <div className="skeleton-block h-3 w-16 rounded" />
+        )}
         <div className="skeleton-block h-6 w-40 rounded" />
       </div>
 

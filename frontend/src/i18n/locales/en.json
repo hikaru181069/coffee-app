@@ -140,7 +140,6 @@
     "noMatchDesc": "Try changing your filters.",
     "notFoundTitle": "Record not found",
     "notFoundDesc": "It may have been deleted, or the URL may be incorrect.",
-    "backToDetail": "Back to detail",
     "editTitle": "Edit Record",
     "newTitle": "Record a Coffee",
     "newSubtitle": "You can save with just a title and date. Add more details later.",
@@ -161,7 +160,6 @@
     "confirmDiscardConfirm": "Discard",
     "confirmDiscardCancel": "Keep editing",
     "connectionsHeading": "Connections",
-    "breadcrumbAriaLabel": "Breadcrumb",
     "moreActionsLabel": "More actions",
     "connectionsFlavorOverflow": "+{{count}} more flavors",
     "tasteHeading": "Taste Profile"
@@ -289,7 +287,8 @@
     "viewInGraph": "View in Graph",
     "viewOnMap": "View on Map",
     "relatedHeading": "Related in the graph",
-    "recordsHeading": "Related records"
+    "recordsHeading": "Related records",
+    "trailAriaLabel": "Breadcrumb"
   },
   "stats": {
     "heading": "Stats",

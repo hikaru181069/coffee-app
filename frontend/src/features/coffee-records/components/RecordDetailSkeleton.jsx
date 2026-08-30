@@ -3,7 +3,7 @@ import { cardClass } from "./formStyles";
 
 /**
  * 読み込み中の記録詳細ページ。RecordDetailPage.jsxの実際の構成
- * （Breadcrumb→Header→cardClassで囲んだCoffee Details/Tasting Note/
+ * （戻るリンク→Header→cardClassで囲んだCoffee Details/Tasting Note/
  * 味覚グラフ・Connections→編集/削除ボタン）と同じ形の骨格を出す。
  *
  * 2026-08、RecordDetailPage.jsxが`divide-y`区切りから`cardClass`

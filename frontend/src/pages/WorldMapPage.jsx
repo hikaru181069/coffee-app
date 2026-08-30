@@ -145,7 +145,10 @@ function WorldMapPage() {
 
   return (
     <div className={contentContainerClass}>
-      <BackLink />
+      {/* fallbackは、URL直接アクセス等で戻れる履歴が無い場合の行き先。
+          Statsページの「Collection」セクションからのリンクでのみ到達する
+          ため、Statsを自然な既定値にする */}
+      <BackLink fallback="/stats" />
       <header className="mt-3">
         <h1 className="text-xl font-bold text-text">{t("map.title")}</h1>
         <p className="mt-1 text-sm text-text-tertiary">{t("map.subtitle")}</p>

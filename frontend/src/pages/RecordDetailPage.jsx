@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronRight, Coffee, Globe, MoreHorizontal, Pencil, Share2, Star, Store, Trash2 } from "lucide-react";
+import { Coffee, Globe, MoreHorizontal, Pencil, Share2, Star, Store, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
 import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecord";
 import { deleteCoffeeRecord } from "../features/coffee-records/api/coffeeRecordApi";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
+import BackLink from "../components/BackLink";
 import RecordDetailSkeleton from "../features/coffee-records/components/RecordDetailSkeleton";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { cardClass, primaryButtonClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
@@ -157,17 +158,14 @@ function RecordDetailPage() {
 
   return (
     <div className={contentContainerClass}>
-      {/* ── Breadcrumb ───────────────────────────── */}
-      <nav aria-label={t("records.breadcrumbAriaLabel")} className="flex items-center gap-1.5 text-sm">
-        <Link
-          to="/records"
-          className="text-text-tertiary transition-colors duration-150 hover:text-text"
-        >
-          Records
-        </Link>
-        <ChevronRight size={14} aria-hidden="true" className="flex-shrink-0 text-line" />
-        <span className="truncate text-text-secondary">{record.title}</span>
-      </nav>
+      {/* ── Back ─────────────────────────────────── */}
+      {/* 2026-08、記録一覧・Home・検索結果・関連記録など複数の場所から
+          遷移してくるため、`/records`固定のパンくずでは実際の遷移元と
+          異なる場所へ戻ってしまっていた（記録詳細ページ全体の指摘を
+          受けて発覚）。EntityDetail/Diagnosis/WorldMapと同じBackLink
+          （navigate(-1)）へ統一した。fallbackは、URL直接アクセス等で
+          戻れる履歴が無い場合の行き先（記録一覧が自然な既定値） */}
+      <BackLink fallback="/records" />
 
       {/* ── Header ───────────────────────────────── */}
       <header className="mt-3 flex flex-wrap items-start justify-between gap-3">

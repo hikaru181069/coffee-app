@@ -136,7 +136,6 @@
     "noMatchDesc": "絞り込みを変えてみてください。",
     "notFoundTitle": "記録が見つかりません",
     "notFoundDesc": "削除されたか、URLが正しくない可能性があります。",
-    "backToDetail": "詳細へ戻る",
     "editTitle": "記録を編集",
     "newTitle": "コーヒーを記録する",
     "newSubtitle": "タイトルと日時だけでも保存できます。詳しい情報は後から足せます。",
@@ -157,7 +156,6 @@
     "confirmDiscardConfirm": "破棄する",
     "confirmDiscardCancel": "編集を続ける",
     "connectionsHeading": "つながり",
-    "breadcrumbAriaLabel": "パンくずリスト",
     "moreActionsLabel": "その他の操作",
     "connectionsFlavorOverflow": "ほかに{{count}}件のフレーバー",
     "tasteHeading": "味覚グラフ"
@@ -283,7 +281,8 @@
     "viewInGraph": "グラフで見る",
     "viewOnMap": "地図で見る",
     "relatedHeading": "グラフ上の関連",
-    "recordsHeading": "関連する記録"
+    "recordsHeading": "関連する記録",
+    "trailAriaLabel": "パンくずリスト"
   },
   "stats": {
     "heading": "統計",
