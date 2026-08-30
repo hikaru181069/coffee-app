@@ -20,8 +20,13 @@ import TasteRadarChart from "../../coffee-records/components/TasteRadarChart";
  * 品種、6軸の味覚評価の平均）をあわせて表示する
  * （backend/core/diagnosis/diagnosisBuilder.js参照）。補足情報は
  * データが無ければ（3件未満・同率首位）該当行ごと非表示にする。
+ *
+ * 2026-08、DiagnosisPage.jsxの3セクションを`cardClass`（枠線+背景+影の
+ * カード）へ統一した際、このカード自体がセクションの`cardClass`の中へ
+ * 二重に入れ子になった。StatCard.jsxの`flat`propと同じ理由で、
+ * ネストされた内側のカードには影を付けない。
  */
-function ArchetypeCard({ archetype, t }) {
+function ArchetypeCard({ archetype, t, flat = false }) {
   if (!archetype) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line/60 px-6 py-10 text-center">
@@ -34,7 +39,9 @@ function ArchetypeCard({ archetype, t }) {
   const hasTasteProfile = Object.values(archetype.tasteProfile).some((value) => value !== null);
 
   return (
-    <div className="flex flex-col items-center gap-2 rounded-2xl border border-surface-2 bg-raised p-6 text-center shadow-elevated">
+    <div
+      className={`flex flex-col items-center gap-2 rounded-2xl border border-surface-2 bg-raised p-6 text-center ${flat ? "" : "shadow-elevated"}`}
+    >
       <Coffee
         size={28}
         aria-hidden="true"
