@@ -83,8 +83,12 @@ function ConfirmDialog({
 
   if (!isOpen) return null;
 
+  // z-[60]: Navbar・BottomTabBar（App.css `.bottom-tab-bar`）がどちらもz-50のため、
+  // 同値だとDOM順で後に置かれるBottomTabBarに負け、モバイルの下寄せダイアログの
+  // 下側ボタンがタブバーの裏に隠れてしまう（2026-08、削除確認・保存忘れ確認の
+  // 両方で発生していたユーザー報告により発覚）
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-4 sm:items-center">
       <div
         ref={dialogRef}
         role="alertdialog"
