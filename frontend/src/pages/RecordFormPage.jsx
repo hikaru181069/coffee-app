@@ -1,5 +1,5 @@
-import { useCallback } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef } from "react";
+import { Link, useBlocker, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
@@ -12,6 +12,7 @@ import {
 } from "../features/coffee-records/api/coffeeRecordApi";
 import RecordForm from "../features/coffee-records/components/RecordForm";
 import RecordFormSkeleton from "../features/coffee-records/components/RecordFormSkeleton";
+import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { contentContainerClass } from "../styles/pageContainer";
@@ -27,6 +28,16 @@ import { useToast } from "../contexts/ToastContext";
  * ルートで区別する:
  *   /records/new              → recordId が undefined → 作成
  *   /records/:recordId/edit   → recordId あり         → 編集
+ *
+ * 2026-08、「保存を押し忘れて離脱してもなにも警告されない」という
+ * 指摘を受け、未保存の変更がある状態でこのページから離れようとしたら
+ * 確認するようにした（useRecordForm.jsのisDirty + useBlocker）。
+ * ヘッダーの「戻る」リンク・RecordForm.jsxのキャンセルボタンだけでなく、
+ * ナビバーの他リンクやブラウザの戻る/進むボタンも含め、アプリ内の
+ * ナビゲーションはすべてuseBlockerが一様に検知する（useBlockerは
+ * データルーターでしか動かないため、main.jsx/router.jsxを
+ * createBrowserRouterへ移行した）。タブを閉じる・リロードはアプリ内
+ * ナビゲーションではないため別途beforeunloadで対処する。
  */
 function RecordFormPage() {
   const { t } = useTranslation();
@@ -44,6 +55,12 @@ function RecordFormPage() {
     error: masterDataError,
   } = useMasterData();
 
+  // 保存直後の遷移まで確認ダイアログで止めないためのフラグ。
+  // useRecordForm.submit()内のawait onSubmit(...)が完了する前に
+  // handleSubmit内のnavigate()が実行されてしまうため、
+  // state更新では間に合わない（再レンダリングを待たないrefで持つ）
+  const justSavedRef = useRef(false);
+
   /**
    * フォームから呼ばれる送信処理。
    *
@@ -58,7 +75,9 @@ function RecordFormPage() {
 
       addToast(isEditing ? t("records.toastUpdated") : t("records.toastCreated"), "success");
 
-      // 保存後は詳細画面へ。一覧へ戻すと「保存されたか」を確認しづらい
+      // 保存後は詳細画面へ。一覧へ戻すと「保存されたか」を確認しづらい。
+      // navigate()より先にフラグを立て、直後のuseBlockerの判定に確実に間に合わせる
+      justSavedRef.current = true;
       navigate(`/records/${saved.id}`, { replace: true });
 
       return saved;
@@ -67,6 +86,28 @@ function RecordFormPage() {
   );
 
   const form = useRecordForm(record, handleSubmit);
+
+  const shouldBlockNavigation = useCallback(
+    ({ currentLocation, nextLocation }) =>
+      form.isDirty && !justSavedRef.current && currentLocation.pathname !== nextLocation.pathname,
+    [form.isDirty],
+  );
+  const blocker = useBlocker(shouldBlockNavigation);
+
+  // タブを閉じる・リロード・URL直接入力はアプリ内ナビゲーションではないため
+  // useBlockerでは検知できない。ブラウザ標準の確認ダイアログで対処する
+  // （文言はブラウザ依存でカスタマイズ不可）
+  useEffect(() => {
+    if (!form.isDirty || justSavedRef.current) return undefined;
+
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [form.isDirty]);
 
   // ── 編集対象の読み込みに関わる状態 ──────────────────
   if (isEditing && isRecordLoading) {
@@ -132,6 +173,16 @@ function RecordFormPage() {
         isMasterDataLoading={isMasterDataLoading}
         masterDataError={masterDataError}
         submitLabel={isEditing ? t("records.submitEdit") : t("records.submitCreate")}
+      />
+
+      <ConfirmDialog
+        isOpen={blocker.state === "blocked"}
+        title={t("records.confirmDiscardTitle")}
+        description={t("records.confirmDiscardDescription")}
+        confirmLabel={t("records.confirmDiscardConfirm")}
+        cancelLabel={t("records.confirmDiscardCancel")}
+        onConfirm={() => blocker.proceed?.()}
+        onCancel={() => blocker.reset?.()}
       />
     </div>
   );

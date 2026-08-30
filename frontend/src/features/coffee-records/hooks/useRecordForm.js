@@ -76,6 +76,9 @@ export const useRecordForm = (record, onSubmit) => {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 保存忘れ確認（RecordFormPage.jsxのuseBlocker）用の基準値。
+  // 記録の読み込み・保存のたびに更新し、valuesとの差分でisDirtyを求める
+  const [initialValues, setInitialValues] = useState(emptyValues);
 
   // 編集対象は後から届く（API取得の完了を待つ）ので、届いたら
   // フォームへ流し込む。
@@ -87,8 +90,16 @@ export const useRecordForm = (record, onSubmit) => {
   const [syncedRecord, setSyncedRecord] = useState(null);
   if (record && record !== syncedRecord) {
     setSyncedRecord(record);
-    setValues(toFormValues(record));
+    const initial = toFormValues(record);
+    setValues(initial);
+    setInitialValues(initial);
   }
+
+  // toFormValues/emptyValuesは常に同じキー順でプレーンな文字列・配列だけを
+  // 返すため、JSON.stringifyでの比較で十分。品種・フレーバーの選び直しで
+  // 配列の並び順だけが変わるケースは「実質同じ内容」でもdirty判定になるが、
+  // 過剰に警告する方向（安全側）のずれなので許容する
+  const isDirty = JSON.stringify(values) !== JSON.stringify(initialValues);
 
   /** 1つの欄を変更する。入力中はその欄のエラーだけ消す */
   const setValue = useCallback((field, value) => {
@@ -147,5 +158,5 @@ export const useRecordForm = (record, onSubmit) => {
     }
   }, [isSubmitting, values, onSubmit, t]);
 
-  return { values, errors, submitError, isSubmitting, setValue, toggleValue, submit };
+  return { values, errors, submitError, isSubmitting, isDirty, setValue, toggleValue, submit };
 };

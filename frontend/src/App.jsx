@@ -1,117 +1,8 @@
-import { lazy, Suspense } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { Outlet, useLocation } from "react-router-dom";
 import { ToastProvider } from "./contexts/ToastContext";
 import "./App.css";
 import Navbar from "./components/Navbar";
-import HomePage from "./pages/HomePage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
 import BottomTabBar from "./components/BottomTabBar";
-import ProfilePage from "./pages/ProfilePage";
-import LandingPage from "./pages/LandingPage";
-
-import RecordsPage from "./pages/RecordsPage";
-import RecordFormPage from "./pages/RecordFormPage";
-import RecordDetailPage from "./pages/RecordDetailPage";
-import EntityDetailPage from "./pages/EntityDetailPage";
-import StatsPage from "./pages/StatsPage";
-import DiagnosisPage from "./pages/DiagnosisPage";
-import NotFoundPage from "./pages/NotFoundPage";
-// GraphPageはreact-force-graph-2d（canvas描画・物理演算）を含み、
-// 他の画面より明確に重い。このルートを開かないユーザーにその分を
-// 読み込ませないよう、遅延読み込みにする。
-const GraphPage = lazy(() => import("./pages/GraphPage"));
-// WorldMapPageも同じ理由（world-atlasの地図データが740KB程度あり、
-// 常設ナビに無くStatsからのリンクでしか開かれないページのため）で
-// 遅延読み込みにする。
-const WorldMapPage = lazy(() => import("./pages/WorldMapPage"));
-
-// ページ遷移アニメーション。
-// location.key を React の key に渡すことで、ページが変わるたびにコンポーネントが
-// 再マウントされ、CSS アニメーション (page-transition) が毎回リセットされる。
-// Navbar は AnimatedRoutes の外にあるため、ナビ時にちらつかない。
-//
-// 注意: この仕組みは setSearchParams などURLを書き換える操作でも
-// location.key が変わり、意図せずページ全体を再マウントさせる
-// （features/graph/pages/GraphPage.jsx で実際に踏んだ）。
-// URLだけを書き換えたい場合は window.history.replaceState を使うこと。
-function AnimatedRoutes() {
-  const { t } = useTranslation();
-  const location = useLocation();
-  return (
-    <div key={location.key} className="page-transition">
-      <Routes>
-        {/* Public routes */}
-        <Route path="/landing" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<HomePage />} />
-
-          {/* 記録の一覧・作成・詳細・編集。
-              /records/new を /records/:recordId より先に置く。
-              後ろにすると "new" が recordId として解釈されてしまう */}
-          <Route path="/records" element={<RecordsPage />} />
-          <Route path="/records/new" element={<RecordFormPage />} />
-          <Route path="/records/:recordId" element={<RecordDetailPage />} />
-          <Route path="/records/:recordId/edit" element={<RecordFormPage />} />
-
-          {/* 知識グラフの属性ノード（産地・農園・品種・精製方法・焙煎度・
-              フレーバー・カフェ）1件の詳細ページ。nodeIdは"origin:507f..."
-              のようなstable ID（URLエンコードして渡す） */}
-          <Route path="/entities/:nodeId" element={<EntityDetailPage />} />
-
-          <Route
-            path="/graph"
-            element={
-              <Suspense
-                fallback={
-                  <p className="p-6 text-center text-sm text-text-tertiary">{t("common.loading")}</p>
-                }
-              >
-                <GraphPage />
-              </Suspense>
-            }
-          />
-
-          <Route path="/stats" element={<StatsPage />} />
-
-          {/* 記録から判定する「コーヒータイプ」診断。常設ナビには含めない
-              （Navbar.jsx・BottomTabBar.jsxのタブ数を増やさない方針。
-              docs/design.md「Main Navigation」参照）。Home画面のDiscoverCard・
-              Statsページからのリンク経由でのみ到達する */}
-          <Route path="/diagnosis" element={<DiagnosisPage />} />
-
-          {/* 訪れた産地を世界地図上でハイライトする。Diagnosisと同じ理由で
-              常設ナビには含めない。Statsページの「Collection」セクションの
-              リンク経由でのみ到達する */}
-          <Route
-            path="/map"
-            element={
-              <Suspense
-                fallback={
-                  <p className="p-6 text-center text-sm text-text-tertiary">{t("common.loading")}</p>
-                }
-              >
-                <WorldMapPage />
-              </Suspense>
-            }
-          />
-
-          <Route path="/profile" element={<ProfilePage />} />
-
-          {/* 存在しないURL。未ログインならProtectedRouteが先に/landingへ
-              リダイレクトするため、ここへ来るのはログイン済みユーザーのみ */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </div>
-  );
-}
 
 // 未ログイン向けの3ページ。通常のNavbar（Home/Records/Graph/Stats）は
 // 認証必須のページへのリンクのため、ここでは出さず、各ページ自身が
@@ -120,7 +11,22 @@ function AnimatedRoutes() {
 // 理由で通常のNavbarを出すべきではないことが分かり対象を広げた）。
 const PUBLIC_PATHS = ["/landing", "/login", "/register"];
 
-function App() {
+/**
+ * アプリ共通のシェル（Navbar・BottomTabBar・ページ遷移アニメーション）。
+ *
+ * ルート定義自体はrouter.jsxが持ち、このコンポーネントはそこから
+ * レイアウトのルート要素として使われる（`<Outlet />`が実際のページを
+ * 描画する）。
+ *
+ * 2026-08、`<BrowserRouter>`（宣言的モード）から`createBrowserRouter`
+ * （データルーターモード）へ移行した際、以前この1ファイル
+ * （旧App.jsx）が持っていた「ルート定義（AnimatedRoutes）」と
+ * 「共通シェル（App）」のうち、ルート定義側をrouter.jsxへ分離した。
+ * router（非コンポーネントの値）とコンポーネントを同じファイルから
+ * exportすると、Vite Fast Refreshが効かなくなる（eslint.config.jsの
+ * react-refresh/only-export-componentsにも反する）ため。
+ */
+function AppLayout() {
   const location = useLocation();
   const isPublicPage = PUBLIC_PATHS.includes(location.pathname);
 
@@ -128,11 +34,23 @@ function App() {
     <ToastProvider>
       {!isPublicPage && <Navbar />}
       <main className={isPublicPage ? "" : "pt-14 pb-16 md:pb-0"}>
-        <AnimatedRoutes />
+        {/* ページ遷移アニメーション。
+            location.key を React の key に渡すことで、ページが変わるたびに
+            コンポーネントが再マウントされ、CSS アニメーション
+            (page-transition) が毎回リセットされる。Navbar はこのdivの外に
+            あるため、ナビ時にちらつかない。
+
+            注意: この仕組みは setSearchParams などURLを書き換える操作でも
+            location.key が変わり、意図せずページ全体を再マウントさせる
+            （features/graph/pages/GraphPage.jsx で実際に踏んだ）。
+            URLだけを書き換えたい場合は window.history.replaceState を使うこと。 */}
+        <div key={location.key} className="page-transition">
+          <Outlet />
+        </div>
       </main>
       {!isPublicPage && <BottomTabBar />}
     </ToastProvider>
   );
 }
 
-export default App;
+export default AppLayout;
