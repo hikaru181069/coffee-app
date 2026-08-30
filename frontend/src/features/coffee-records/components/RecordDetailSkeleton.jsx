@@ -35,7 +35,10 @@ function RecordDetailSkeleton() {
                 <div className="skeleton-block h-9 w-9 flex-shrink-0 rounded-full" />
                 <div className="flex flex-col gap-1.5">
                   <div className="skeleton-block h-3 w-14 rounded" />
-                  <div className="skeleton-block h-4 w-20 rounded" />
+                  <div className="mt-0.5 flex flex-wrap gap-1.5">
+                    <div className="skeleton-block h-5 w-14 rounded-full" />
+                    <div className="skeleton-block h-5 w-10 rounded-full" />
+                  </div>
                 </div>
               </div>
             ))}

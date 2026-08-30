@@ -1,3 +1,5 @@
+import { normalizeName } from "../../utils/normalizeName.js";
+
 /**
  * CoffeeRecord を API 応答の形へ変換する。
  *
@@ -77,6 +79,12 @@ export const serializeCoffeeRecord = (record) => {
 
     origin: serializeRef(doc.originId),
     farmName: doc.farmName ?? "",
+    // 農園は知識グラフのノードIDを組み立てるためのキー（core/graph/nodeId.jsの
+    // farmNodeIdと同じ正規化）。farmNameはマスターデータを持たず_idが無いため、
+    // 他の参照（origin.id等）と違って正規化した名前そのものをIDに使う
+    // （docs/domain-model.md「Farm」）。フロントは`farm:${farmNodeId}`の形で
+    // /entities/へリンクする
+    farmNodeId: doc.farmName ? normalizeName(doc.farmName) : null,
     varieties: serializeRefs(doc.varietyIds),
     process: serializeRef(doc.processId),
     roastLevel: serializeRef(doc.roastLevelId),

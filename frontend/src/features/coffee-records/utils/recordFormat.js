@@ -118,32 +118,50 @@ export const formatMonthLabel = (monthString, language) => {
 /**
  * 記録が参照しているコーヒーの要素を、表示用の一覧にまとめる。
  *
- * 詳細画面とカードの両方で「設定されている項目だけ」を出したいので、
- * 空の項目を落とす処理をここに置く。
+ * 詳細画面で「設定されている項目だけ」をpillタグとして出したいので、
+ * 空の項目を落とす処理と、各項目を{id, name}の配列（itemsが1件なら
+ * 単一値、複数件なら複数値の項目）へそろえる処理をここに置く。
+ * idが取れる項目（産地・農園・品種・精製方法・焙煎度・フレーバー）は
+ * 呼び出し側（RecordDetailPage.jsx）でエンティティ詳細ページへの
+ * Linkにする。ロースター名だけは知識グラフのノードが無いためidが
+ * 常にnullになり、Linkにはしない。
+ *
+ * 2026-08、単一値は1行テキスト・複数値（品種）はカンマ区切りテキスト
+ * だった表現を、フレーバーと同じpillタグへ統一した際に、値を文字列で
+ * 持つ形からこの{id, name}配列の形へ書き換えた（フレーバーもこの関数へ
+ * 統合し、呼び出し側の特別扱いを無くした）。
  *
  * @param {object} record
  * @param {Function} t react-i18nextのt関数
- * @param {string} language 現在の表示言語（区切り文字の切替に使う）
  */
-export const collectCoffeeDetails = (record, t, language) => {
+export const collectCoffeeDetails = (record, t) => {
   if (!record) return [];
 
-  const listSeparator = language === "en" ? ", " : "、";
+  const toItems = (refs) => (refs ?? []).filter(Boolean).map((ref) => ({ id: ref.id, name: ref.name }));
 
   const details = [
-    { key: "origin", label: t("recordForm.origin"), value: record.origin?.name },
-    { key: "farmName", label: t("recordForm.farmName"), value: record.farmName },
+    { key: "origin", label: t("recordForm.origin"), items: toItems(record.origin ? [record.origin] : []) },
     {
-      key: "varieties",
-      label: t("recordForm.variety"),
-      value: record.varieties?.map((variety) => variety.name).join(listSeparator),
+      key: "farmName",
+      label: t("recordForm.farmName"),
+      items: record.farmName ? [{ id: record.farmNodeId ?? null, name: record.farmName }] : [],
     },
-    { key: "process", label: t("recordForm.process"), value: record.process?.name },
-    { key: "roastLevel", label: t("recordForm.roastLevel"), value: record.roastLevel?.name },
-    { key: "roasterName", label: t("recordForm.roasterName"), value: record.roasterName },
+    { key: "varieties", label: t("recordForm.variety"), items: toItems(record.varieties) },
+    { key: "process", label: t("recordForm.process"), items: toItems(record.process ? [record.process] : []) },
+    {
+      key: "roastLevel",
+      label: t("recordForm.roastLevel"),
+      items: toItems(record.roastLevel ? [record.roastLevel] : []),
+    },
+    {
+      key: "roasterName",
+      label: t("recordForm.roasterName"),
+      items: record.roasterName ? [{ id: null, name: record.roasterName }] : [],
+    },
+    { key: "flavors", label: t("records.flavorsHeading"), items: toItems(record.flavors) },
   ];
 
-  return details.filter((detail) => detail.value);
+  return details.filter((detail) => detail.items.length > 0);
 };
 
 /**

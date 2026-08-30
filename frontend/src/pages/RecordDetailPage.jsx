@@ -85,6 +85,7 @@ const DETAIL_NODE_TYPE = {
   varieties: "variety",
   process: "process",
   roastLevel: "roastLevel",
+  flavors: "flavor",
 };
 
 function RecordDetailPage() {
@@ -144,11 +145,9 @@ function RecordDetailPage() {
 
   if (!record) return null;
 
-  const details = collectCoffeeDetails(record, t, i18n.language);
+  const details = collectCoffeeDetails(record, t);
   const flavors = record.flavors ?? [];
-  const hasCoffeeInfo = details.length > 0 || flavors.length > 0;
-  const flavorVisual = getNodeVisual("flavor");
-  const FlavorIcon = flavorVisual.icon;
+  const hasCoffeeInfo = details.length > 0;
   // Connectionsは知識グラフのノードに対応する4種別のみ（Property Gridとは違い
   // farmName/variety/roasterNameはグラフのノードではないため含めない）
   const hasConnections = Boolean(record.origin || record.process || record.roastLevel || flavors.length > 0);
@@ -240,33 +239,30 @@ function RecordDetailPage() {
                       </span>
                       <div className="min-w-0">
                         <dt className="text-xs text-text-tertiary">{detail.label}</dt>
-                        <dd className="mt-0.5 text-base text-text">{detail.value}</dd>
+                        <dd className="mt-1 flex flex-wrap gap-1.5">
+                          {detail.items.map((item) =>
+                            nodeType && item.id ? (
+                              <Link
+                                key={item.id}
+                                to={`/entities/${encodeURIComponent(`${nodeType}:${item.id}`)}`}
+                                className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary transition-colors duration-150 hover:bg-surface-2 hover:text-text"
+                              >
+                                {item.name}
+                              </Link>
+                            ) : (
+                              <span
+                                key={item.name}
+                                className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary"
+                              >
+                                {item.name}
+                              </span>
+                            ),
+                          )}
+                        </dd>
                       </div>
                     </div>
                   );
                 })}
-                {flavors.length > 0 && (
-                  <div className="flex min-w-36 items-start gap-3">
-                    <span
-                      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${flavorVisual.bgTintClass}`}
-                    >
-                      <FlavorIcon size={16} aria-hidden="true" className={flavorVisual.colorClass} strokeWidth={1.75} />
-                    </span>
-                    <div className="min-w-0">
-                      <dt className="text-xs text-text-tertiary">{t("records.flavorsHeading")}</dt>
-                      <dd className="mt-1 flex flex-wrap gap-1.5">
-                        {flavors.map((flavor) => (
-                          <span
-                            key={flavor.id}
-                            className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary"
-                          >
-                            {flavor.name}
-                          </span>
-                        ))}
-                      </dd>
-                    </div>
-                  </div>
-                )}
               </dl>
             </section>
           )}
