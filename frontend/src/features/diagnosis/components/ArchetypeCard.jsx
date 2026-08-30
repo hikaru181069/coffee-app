@@ -1,6 +1,7 @@
 import { Coffee } from "lucide-react";
 
 import { getArchetypeColorClass } from "../utils/archetypeVisuals";
+import TasteRadarChart from "../../coffee-records/components/TasteRadarChart";
 
 /**
  * 診断された「コーヒータイプ」を見せるカード。
@@ -12,6 +13,13 @@ import { getArchetypeColorClass } from "../utils/archetypeVisuals";
  * タイプごとの色はGraph画面のノードカラーを再利用する
  * （utils/archetypeVisuals.js参照。診断はグラフの属性から導かれるため、
  * 色の語彙も共有し一貫性を持たせる）。
+ *
+ * 2026-08、診断の「強化」に対応した。焙煎度×フレーバーcategoryという
+ * 主軸の判定はそのままに、判定の根拠（焙煎度・フレーバーそれぞれの
+ * 一致件数）と、判定そのものには使っていない補足情報（よく選ぶ精製方法・
+ * 品種、6軸の味覚評価の平均）をあわせて表示する
+ * （backend/core/diagnosis/diagnosisBuilder.js参照）。補足情報は
+ * データが無ければ（3件未満・同率首位）該当行ごと非表示にする。
  */
 function ArchetypeCard({ archetype, t }) {
   if (!archetype) {
@@ -22,6 +30,8 @@ function ArchetypeCard({ archetype, t }) {
       </div>
     );
   }
+
+  const hasTasteProfile = Object.values(archetype.tasteProfile).some((value) => value !== null);
 
   return (
     <div className="flex flex-col items-center gap-2 rounded-2xl border border-surface-2 bg-raised p-6 text-center shadow-elevated">
@@ -37,9 +47,36 @@ function ArchetypeCard({ archetype, t }) {
       <p className="max-w-md text-sm text-text-secondary">
         {t(`diagnosis.archetype.${archetype.type}.description`)}
       </p>
-      <p className="mt-2 text-xs text-text-tertiary">
-        {t("diagnosis.archetype.sampleSize", { count: archetype.sampleSize })}
-      </p>
+
+      <div className="mt-2 flex flex-col items-center gap-1 text-xs text-text-tertiary">
+        <p>{t("diagnosis.archetype.sampleSizeRoast", { count: archetype.roastSampleSize })}</p>
+        {archetype.categorySampleSize !== null && (
+          <p>{t("diagnosis.archetype.sampleSizeCategory", { count: archetype.categorySampleSize })}</p>
+        )}
+        {archetype.dominantProcess && (
+          <p>
+            {t("diagnosis.archetype.dominantProcessLabel", {
+              label: archetype.dominantProcess.label,
+              count: archetype.dominantProcess.count,
+            })}
+          </p>
+        )}
+        {archetype.dominantVariety && (
+          <p>
+            {t("diagnosis.archetype.dominantVarietyLabel", {
+              label: archetype.dominantVariety.label,
+              count: archetype.dominantVariety.count,
+            })}
+          </p>
+        )}
+      </div>
+
+      {hasTasteProfile && (
+        <div className="mt-4 w-full max-w-xs">
+          <p className="text-xs font-semibold text-text-tertiary">{t("diagnosis.archetype.tasteProfileHeading")}</p>
+          <TasteRadarChart record={archetype.tasteProfile} />
+        </div>
+      )}
     </div>
   );
 }

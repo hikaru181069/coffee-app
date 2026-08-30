@@ -339,7 +339,11 @@
     "overviewHeading": "Your records at a glance",
     "archetype": {
       "empty": "Keep recording, and we'll be able to diagnose your coffee type.",
-      "sampleSize": "Based on {{count}} records",
+      "sampleSizeRoast": "Based on {{count}} records (roast level)",
+      "sampleSizeCategory": "{{count}} of them matched this flavor",
+      "dominantProcessLabel": "Favorite process: {{label}} ({{count}} records)",
+      "dominantVarietyLabel": "Favorite variety: {{label}} ({{count}} records)",
+      "tasteProfileHeading": "Average taste profile",
       "lightFruity": {
         "title": "Light Roast, Fruity",
         "description": "You lean toward light roasts with bright acidity, paired with fruity flavor notes."
@@ -347,6 +351,54 @@
       "lightFloral": {
         "title": "Light Roast, Floral",
         "description": "You lean toward light roasts with delicate aroma, paired with floral flavor notes."
+      },
+      "lightSweet": {
+        "title": "Light Roast, Sweet",
+        "description": "You lean toward light roasts with bright acidity, paired with sweet flavor notes like caramel or vanilla."
+      },
+      "lightNutty": {
+        "title": "Light Roast, Nutty",
+        "description": "You lean toward light roasts with bright acidity, paired with nutty flavor notes."
+      },
+      "lightSpicy": {
+        "title": "Light Roast, Spicy",
+        "description": "You lean toward light roasts with bright acidity, paired with spicy flavor notes."
+      },
+      "lightOther": {
+        "title": "Light Roast, Distinctive",
+        "description": "You lean toward light roasts with bright acidity, paired with distinctive notes like wine or juiciness."
+      },
+      "mediumFruity": {
+        "title": "Medium Roast, Fruity",
+        "description": "You lean toward balanced medium roasts, paired with fruity flavor notes."
+      },
+      "mediumFloral": {
+        "title": "Medium Roast, Floral",
+        "description": "You lean toward balanced medium roasts, paired with floral flavor notes."
+      },
+      "mediumNutty": {
+        "title": "Medium Roast, Nutty",
+        "description": "You lean toward balanced medium roasts, paired with nutty flavor notes."
+      },
+      "mediumSweet": {
+        "title": "Medium Roast, Sweet",
+        "description": "You lean toward balanced medium roasts, paired with sweet flavor notes."
+      },
+      "mediumSpicy": {
+        "title": "Medium Roast, Spicy",
+        "description": "You lean toward balanced medium roasts, paired with spicy flavor notes."
+      },
+      "mediumOther": {
+        "title": "Medium Roast, Distinctive",
+        "description": "You lean toward balanced medium roasts, paired with distinctive notes like wine or juiciness."
+      },
+      "darkFruity": {
+        "title": "Dark Roast, Fruity",
+        "description": "You lean toward bold, full-bodied dark roasts, paired with fruity flavor notes."
+      },
+      "darkFloral": {
+        "title": "Dark Roast, Floral",
+        "description": "You lean toward bold, full-bodied dark roasts, paired with floral flavor notes."
       },
       "darkNutty": {
         "title": "Dark Roast, Nutty",
@@ -356,9 +408,13 @@
         "title": "Dark Roast, Sweet",
         "description": "You lean toward dark roasts with rich bitterness, paired with sweet flavor notes."
       },
-      "mediumSpicy": {
-        "title": "Medium Roast, Spicy",
-        "description": "You lean toward balanced medium roasts, paired with spicy flavor notes."
+      "darkSpicy": {
+        "title": "Dark Roast, Spicy",
+        "description": "You lean toward bold, full-bodied dark roasts, paired with spicy flavor notes."
+      },
+      "darkOther": {
+        "title": "Dark Roast, Distinctive",
+        "description": "You lean toward bold, full-bodied dark roasts, paired with distinctive notes like wine or juiciness."
       },
       "light": {
         "title": "Light Roast Drinker",

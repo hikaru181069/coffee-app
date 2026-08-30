@@ -12,6 +12,8 @@ import request from "supertest";
 import app from "../app.js";
 import RoastLevel from "../models/RoastLevel.js";
 import Flavor from "../models/Flavor.js";
+import Process from "../models/Process.js";
+import Variety from "../models/Variety.js";
 import {
   connectTestDb,
   closeTestDb,
@@ -69,6 +71,42 @@ describe("GET /api/diagnosis", () => {
 
     const res = await request(app).get(DIAGNOSIS_ENDPOINT).set("Authorization", alice.authHeader);
 
-    expect(res.body.data.archetype).toEqual({ type: "lightFruity", sampleSize: 3 });
+    expect(res.body.data.archetype).toEqual({
+      type: "lightFruity",
+      roastSampleSize: 3,
+      categorySampleSize: 3,
+      dominantProcess: null,
+      dominantVariety: null,
+      tasteProfile: {
+        tasteSweetness: null,
+        tasteBitterness: null,
+        tasteAcidity: null,
+        tasteBody: null,
+        tasteAroma: null,
+        tasteAftertaste: null,
+      },
+    });
+  });
+
+  test("精製方法・品種が3件とも同じなら補足情報として返す", async () => {
+    await seedTestMasterData();
+    const light = await RoastLevel.findOne({ key: "light" });
+    const berry = await Flavor.findOne({ normalizedName: "berry" });
+    const natural = await Process.findOne({ normalizedName: "natural" });
+    const geisha = await Variety.findOne({ normalizedName: "geisha" });
+
+    for (let i = 0; i < 3; i += 1) {
+      await createRecordFor(alice.user._id, {
+        roastLevelId: light._id,
+        flavorIds: [berry._id],
+        processId: natural._id,
+        varietyIds: [geisha._id],
+      });
+    }
+
+    const res = await request(app).get(DIAGNOSIS_ENDPOINT).set("Authorization", alice.authHeader);
+
+    expect(res.body.data.archetype.dominantProcess).toEqual({ label: natural.name, count: 3 });
+    expect(res.body.data.archetype.dominantVariety).toEqual({ label: geisha.name, count: 3 });
   });
 });

@@ -26,11 +26,34 @@ const FLAVOR_CATEGORY_BY_ID = new Map([
   ["flavor-almond", "nutty"],
   ["flavor-caramel", "sweet"],
   ["flavor-cinnamon", "spicy"],
+  ["flavor-winey", "other"],
 ]);
 
-const buildRecord = ({ roastId, flavorIds = [] } = {}) => ({
+const NO_SUPPLEMENT = {
+  dominantProcess: null,
+  dominantVariety: null,
+  tasteProfile: {
+    tasteSweetness: null,
+    tasteBitterness: null,
+    tasteAcidity: null,
+    tasteBody: null,
+    tasteAroma: null,
+    tasteAftertaste: null,
+  },
+};
+
+const buildRecord = ({ roastId, flavorIds = [], process = null, varieties = [], taste = {} } = {}) => ({
   roastLevel: roastId ? { id: roastId, name: roastId } : null,
   flavors: flavorIds.map((id) => ({ id, name: id })),
+  process,
+  varieties,
+  tasteSweetness: null,
+  tasteBitterness: null,
+  tasteAcidity: null,
+  tasteBody: null,
+  tasteAroma: null,
+  tasteAftertaste: null,
+  ...taste,
 });
 
 const buildArchetypeFor = (records) => buildArchetype(records, ROAST_ORDER_BY_ID, FLAVOR_CATEGORY_BY_ID);
@@ -56,33 +79,39 @@ describe("焙煎度が閾値未満・同率首位のとき", () => {
 });
 
 describe("焙煎度だけの一般則（フレーバー不足・同率）", () => {
-  test("フレーバーが無ければ焙煎度だけの一般則になる", () => {
+  test("フレーバーが無ければ焙煎度だけの一般則になり、categorySampleSizeはnull", () => {
     const records = [
       buildRecord({ roastId: ROAST_LIGHT.id }),
       buildRecord({ roastId: ROAST_LIGHT.id }),
       buildRecord({ roastId: ROAST_MEDIUM_LIGHT.id }),
     ];
-    expect(buildArchetypeFor(records)).toEqual({ archetype: { type: "light", sampleSize: 3 } });
+    expect(buildArchetypeFor(records)).toEqual({
+      archetype: { type: "light", roastSampleSize: 3, categorySampleSize: null, ...NO_SUPPLEMENT },
+    });
   });
 
-  test("フレーバーのcategoryが同率首位でも診断全体はnullにならず一般則へフォールバックする", () => {
+  test("フレーバーのcategoryが件数不足でも診断全体はnullにならず一般則へフォールバックする", () => {
     const records = [
       buildRecord({ roastId: ROAST_DARK.id, flavorIds: ["flavor-almond"] }),
       buildRecord({ roastId: ROAST_DARK.id, flavorIds: ["flavor-caramel"] }),
       buildRecord({ roastId: ROAST_DARK.id, flavorIds: [] }),
     ];
-    expect(buildArchetypeFor(records)).toEqual({ archetype: { type: "dark", sampleSize: 3 } });
+    expect(buildArchetypeFor(records)).toEqual({
+      archetype: { type: "dark", roastSampleSize: 3, categorySampleSize: null, ...NO_SUPPLEMENT },
+    });
   });
 });
 
 describe("焙煎度×フレーバーの組み合わせルール", () => {
-  test("light×fruityはlightFruityになる（一般則より優先される）", () => {
+  test("light×fruityはlightFruityになり、categorySampleSizeが一致件数を反映する", () => {
     const records = [
       buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"] }),
       buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"] }),
       buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"] }),
     ];
-    expect(buildArchetypeFor(records)).toEqual({ archetype: { type: "lightFruity", sampleSize: 3 } });
+    expect(buildArchetypeFor(records)).toEqual({
+      archetype: { type: "lightFruity", roastSampleSize: 3, categorySampleSize: 3, ...NO_SUPPLEMENT },
+    });
   });
 
   test("light×floralはlightFloralになる", () => {
@@ -91,7 +120,9 @@ describe("焙煎度×フレーバーの組み合わせルール", () => {
       buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-jasmine"] }),
       buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-jasmine"] }),
     ];
-    expect(buildArchetypeFor(records)).toEqual({ archetype: { type: "lightFloral", sampleSize: 3 } });
+    expect(buildArchetypeFor(records)).toEqual({
+      archetype: { type: "lightFloral", roastSampleSize: 3, categorySampleSize: 3, ...NO_SUPPLEMENT },
+    });
   });
 
   test("dark×nuttyはdarkNuttyになる", () => {
@@ -100,7 +131,9 @@ describe("焙煎度×フレーバーの組み合わせルール", () => {
       buildRecord({ roastId: ROAST_DARK.id, flavorIds: ["flavor-almond"] }),
       buildRecord({ roastId: ROAST_DARK.id, flavorIds: ["flavor-almond"] }),
     ];
-    expect(buildArchetypeFor(records)).toEqual({ archetype: { type: "darkNutty", sampleSize: 3 } });
+    expect(buildArchetypeFor(records)).toEqual({
+      archetype: { type: "darkNutty", roastSampleSize: 3, categorySampleSize: 3, ...NO_SUPPLEMENT },
+    });
   });
 
   test("dark×sweetはdarkSweetになる", () => {
@@ -109,7 +142,9 @@ describe("焙煎度×フレーバーの組み合わせルール", () => {
       buildRecord({ roastId: ROAST_DARK.id, flavorIds: ["flavor-caramel"] }),
       buildRecord({ roastId: ROAST_DARK.id, flavorIds: ["flavor-caramel"] }),
     ];
-    expect(buildArchetypeFor(records)).toEqual({ archetype: { type: "darkSweet", sampleSize: 3 } });
+    expect(buildArchetypeFor(records)).toEqual({
+      archetype: { type: "darkSweet", roastSampleSize: 3, categorySampleSize: 3, ...NO_SUPPLEMENT },
+    });
   });
 
   test("medium×spicyはmediumSpicyになる", () => {
@@ -118,15 +153,105 @@ describe("焙煎度×フレーバーの組み合わせルール", () => {
       buildRecord({ roastId: ROAST_MEDIUM.id, flavorIds: ["flavor-cinnamon"] }),
       buildRecord({ roastId: ROAST_MEDIUM.id, flavorIds: ["flavor-cinnamon"] }),
     ];
-    expect(buildArchetypeFor(records)).toEqual({ archetype: { type: "mediumSpicy", sampleSize: 3 } });
+    expect(buildArchetypeFor(records)).toEqual({
+      archetype: { type: "mediumSpicy", roastSampleSize: 3, categorySampleSize: 3, ...NO_SUPPLEMENT },
+    });
   });
 
-  test("組み合わせに合致しないcategoryならmediumの一般則になる", () => {
+  test("2026-08に追加した組み合わせ: medium×fruityはmediumFruityになる", () => {
     const records = [
       buildRecord({ roastId: ROAST_MEDIUM.id, flavorIds: ["flavor-berry"] }),
       buildRecord({ roastId: ROAST_MEDIUM.id, flavorIds: ["flavor-berry"] }),
       buildRecord({ roastId: ROAST_MEDIUM.id, flavorIds: ["flavor-berry"] }),
     ];
-    expect(buildArchetypeFor(records)).toEqual({ archetype: { type: "medium", sampleSize: 3 } });
+    expect(buildArchetypeFor(records)).toEqual({
+      archetype: { type: "mediumFruity", roastSampleSize: 3, categorySampleSize: 3, ...NO_SUPPLEMENT },
+    });
+  });
+
+  test("2026-08に追加したotherカテゴリ: dark×otherはdarkOtherになる（以前はdarkの一般則に落ちていた）", () => {
+    const records = [
+      buildRecord({ roastId: ROAST_DARK.id, flavorIds: ["flavor-winey"] }),
+      buildRecord({ roastId: ROAST_DARK.id, flavorIds: ["flavor-winey"] }),
+      buildRecord({ roastId: ROAST_DARK.id, flavorIds: ["flavor-winey"] }),
+    ];
+    expect(buildArchetypeFor(records)).toEqual({
+      archetype: { type: "darkOther", roastSampleSize: 3, categorySampleSize: 3, ...NO_SUPPLEMENT },
+    });
+  });
+});
+
+describe("補足情報: 精製方法・品種", () => {
+  const LIGHT_FRUITY_RECORDS_WITH = (extra) => [
+    buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"], ...extra[0] }),
+    buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"], ...extra[1] }),
+    buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"], ...extra[2] }),
+  ];
+
+  test("精製方法が3件とも同じならdominantProcessが立つ", () => {
+    const natural = { id: "process-natural", name: "Natural" };
+    const records = LIGHT_FRUITY_RECORDS_WITH([{ process: natural }, { process: natural }, { process: natural }]);
+    expect(buildArchetypeFor(records).archetype.dominantProcess).toEqual({ label: "Natural", count: 3 });
+  });
+
+  test("精製方法が3件未満（1件だけ設定）ならdominantProcessはnull", () => {
+    const natural = { id: "process-natural", name: "Natural" };
+    const records = LIGHT_FRUITY_RECORDS_WITH([{ process: natural }, {}, {}]);
+    expect(buildArchetypeFor(records).archetype.dominantProcess).toBeNull();
+  });
+
+  test("精製方法が同率首位ならdominantProcessはnull", () => {
+    const natural = { id: "process-natural", name: "Natural" };
+    const washed = { id: "process-washed", name: "Washed" };
+    const records = [
+      ...LIGHT_FRUITY_RECORDS_WITH([{ process: natural }, { process: natural }, { process: washed }]),
+      buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"], process: washed }),
+    ];
+    expect(buildArchetypeFor(records).archetype.dominantProcess).toBeNull();
+  });
+
+  test("品種は配列を横断して集計する", () => {
+    const geisha = { id: "variety-geisha", name: "Geisha" };
+    const records = LIGHT_FRUITY_RECORDS_WITH([
+      { varieties: [geisha] },
+      { varieties: [geisha] },
+      { varieties: [geisha] },
+    ]);
+    expect(buildArchetypeFor(records).archetype.dominantVariety).toEqual({ label: "Geisha", count: 3 });
+  });
+});
+
+describe("補足情報: 平均テイストプロファイル", () => {
+  test("軸ごとに3件以上あれば平均を出す", () => {
+    const records = [
+      buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"], taste: { tasteSweetness: 4 } }),
+      buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"], taste: { tasteSweetness: 5 } }),
+      buildRecord({ roastId: ROAST_LIGHT.id, flavorIds: ["flavor-berry"], taste: { tasteSweetness: 3 } }),
+    ];
+    expect(buildArchetypeFor(records).archetype.tasteProfile.tasteSweetness).toBe(4);
+  });
+
+  test("軸ごとに3件未満ならその軸だけnull（他の軸には影響しない）", () => {
+    const records = [
+      buildRecord({
+        roastId: ROAST_LIGHT.id,
+        flavorIds: ["flavor-berry"],
+        taste: { tasteSweetness: 4, tasteAcidity: 5 },
+      }),
+      buildRecord({
+        roastId: ROAST_LIGHT.id,
+        flavorIds: ["flavor-berry"],
+        taste: { tasteSweetness: 5, tasteAcidity: 4 },
+      }),
+      buildRecord({
+        roastId: ROAST_LIGHT.id,
+        flavorIds: ["flavor-berry"],
+        taste: { tasteSweetness: 3, tasteAcidity: 3 },
+      }),
+    ];
+    const profile = buildArchetypeFor(records).archetype.tasteProfile;
+    expect(profile.tasteSweetness).toBe(4);
+    expect(profile.tasteAcidity).toBe(4);
+    expect(profile.tasteBitterness).toBeNull();
   });
 });

@@ -434,6 +434,10 @@ Insight/Stats/Discoverのどこからも使われていなかった構造化デ�
 条件分岐と閾値判定だけで組み合わせる。機械学習・自然言語処理は使わない
 （docs/product.md「MVP Before Intelligence」）。
 
+2026-08、診断を強化した際も同じ方針を継続した。精製方法・品種・6軸の
+味覚評価という追加の入力も、いずれも条件分岐と閾値判定・単純平均だけで
+扱っており、AI/NLPは使っていない。
+
 ### 判定ルール
 
 焙煎度をlight（浅煎り・浅煎り寄り）/medium（中煎り）/dark（深煎り・
@@ -446,24 +450,69 @@ insightBuilder.jsの「同率首位のときは断定しない」方針を踏襲
 フォールバックする（categoryは焙煎度ほど判定の根拠として強くないと
 判断したため）。
 
+2026-08、焙煎度3種×フレーバーcategory6種（fruity/floral/nutty/sweet/
+spicy/other）の組み合わせ全18種＋categoryが決まらない場合の一般則3種、
+計21種類へ拡張した（元は5種類の組み合わせのみ個別名を持ち、残り13通りは
+焙煎度だけの一般則に落ちていた）。
+
 | 焙煎度バケット | フレーバーcategory | タイプ |
 | --- | --- | --- |
 | light | fruity | lightFruity |
 | light | floral | lightFloral |
+| light | sweet | lightSweet |
+| light | nutty | lightNutty |
+| light | spicy | lightSpicy |
+| light | other | lightOther |
+| medium | fruity | mediumFruity |
+| medium | floral | mediumFloral |
+| medium | nutty | mediumNutty |
+| medium | sweet | mediumSweet |
+| medium | spicy | mediumSpicy |
+| medium | other | mediumOther |
+| dark | fruity | darkFruity |
+| dark | floral | darkFloral |
 | dark | nutty | darkNutty |
 | dark | sweet | darkSweet |
-| medium | spicy | mediumSpicy |
+| dark | spicy | darkSpicy |
+| dark | other | darkOther |
 | light | （問わない） | light |
 | dark | （問わない） | dark |
 | medium | （問わない） | medium |
 
 具体的な計算は`backend/core/diagnosis/diagnosisBuilder.js`を参照。
 
+### 補足情報（タイプ判定には使わない）
+
+タイプの判定軸（焙煎度×フレーバーcategory）に精製方法・品種をさらに
+掛け合わせると組み合わせ数が爆発するため、判定軸はそのままにし、
+以下の3つは「判定結果に付随する補足情報」として独立に算出する
+（`docs/domain-model.md`「Coffee Diagnosis での利用」参照）:
+
+- **よく選ぶ精製方法**: 全記録の`process`を集計し、3件未満・同率首位なら
+  非表示（Discoverの`findDominantProcess`と同じ考え方）
+- **よく選ぶ品種**: 全記録の`varieties`（配列）を横断して同様に集計
+- **平均テイストプロファイル**: 甘み・苦み・酸味・コク・香り・後味の6軸を、
+  軸ごとに値が入っている記録だけを対象に平均する。軸ごとに3件未満なら
+  その軸だけ非表示（他の軸には影響しない）。記録詳細ページの
+  `TasteRadarChart.jsx`をそのまま再利用して表示する
+
+これらはいずれも「3件未満・同率首位なら判定しない」という既存のルールを
+踏襲しており、タイプが決まらなかった場合（`archetype: null`）は補足情報も
+含めて何も計算しない。
+
+### サンプル件数の内訳
+
+`sampleSize`という1つの数値だけでは、「フレーバーが実際に何件一致したか」
+が焙煎度の件数に隠れてしまう問題があった（2026-08、焙煎度は12件でも
+フレーバーcategoryの一致は3件しかない、というケースが区別できなかった）。
+`roastSampleSize`（焙煎度の集計件数）と`categorySampleSize`
+（category確定時の一致件数、確定できなければnull）に分けて透明性を上げた。
+
 ### Source of Truth
 
-MongoDBのCoffeeRecordとマスターデータ（RoastLevel・Flavor）を正とする。
-Diagnosis専用のコレクションは持たず、APIレスポンスとして都度導出する。
-Insight・Statsの計算結果もそれぞれの既存service
+MongoDBのCoffeeRecordとマスターデータ（RoastLevel・Flavor・Process・
+Variety）を正とする。Diagnosis専用のコレクションは持たず、APIレスポンス
+として都度導出する。Insight・Statsの計算結果もそれぞれの既存service
 （`insightService.js`・`statsService.js`）をそのまま呼び出して束ねるだけで、
 別ロジックを新たに作らない（`backend/services/coffee/diagnosisService.js`）。
 
@@ -474,15 +523,28 @@ GET /api/diagnosis
 
 {
   "data": {
-    "archetype": { "type": "lightFruity", "sampleSize": 8 },
+    "archetype": {
+      "type": "lightFruity",
+      "roastSampleSize": 8,
+      "categorySampleSize": 5,
+      "dominantProcess": { "label": "Natural", "count": 4 },
+      "dominantVariety": { "label": "Geisha", "count": 3 },
+      "tasteProfile": {
+        "tasteSweetness": 3.7, "tasteBitterness": null, "tasteAcidity": 4.2,
+        "tasteBody": null, "tasteAroma": 4.0, "tasteAftertaste": null
+      }
+    },
     "insights": [ /* GET /api/insights と同じ形の配列（全件） */ ],
     "stats": { /* GET /api/stats と同じ形 */ }
   }
 }
 ```
 
-判定に足る記録が無ければ`archetype: null`。`insights`は空配列、`stats`は
-記録0件時の形になり得る。
+判定に足る記録が無ければ`archetype: null`（この場合、補足情報も含めて
+何も算出しない）。`dominantProcess`/`dominantVariety`は条件を満たさなければ
+`null`。`tasteProfile`の各軸は、閾値未満ならその軸だけ`null`（オブジェクト
+自体は常に6キーを持つ）。`insights`は空配列、`stats`は記録0件時の形に
+なり得る。
 
 ### 表示
 
