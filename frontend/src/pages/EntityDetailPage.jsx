@@ -70,28 +70,40 @@ function EntityDetailPage() {
           ローカルなStatCardを持っていた）。記録数はこのエンティティ自身の
           ノード種別アイコン・色（visual）を再利用し、平均評価・最後に
           飲んだ日はStatsページのOverviewStats.jsxと同じ配色にした */}
-      <section className="mb-6 flex flex-wrap gap-3">
-        <StatCard
-          label={t("entityDetail.recordCount")}
-          value={t("search.recordCount", { count: detail.recordCount })}
-          icon={Icon}
-          iconColorClass={visual.colorClass}
-          iconBgClass={visual.bgTintClass}
-        />
-        <StatCard
-          label={t("entityDetail.avgRating")}
-          value={detail.avgRating ?? "—"}
-          icon={Star}
-          iconColorClass="text-warn"
-          iconBgClass="bg-warn/15"
-        />
-        <StatCard
-          label={t("entityDetail.lastConsumed")}
-          value={detail.lastConsumedAt ? formatConsumedAtShort(detail.lastConsumedAt, i18n.language) : "—"}
-          icon={Calendar}
-          iconColorClass="text-text-tertiary"
-          iconBgClass="bg-surface-2"
-        />
+      {/* 2026-08、見出しの無いこの統計カード行だけ外枠が無く、他セクション
+          （関連する属性・関連する記録・Discover提案）とカード化の扱いが
+          揃っていないという指摘を受けた。「見出しの有無」で例外を作らず、
+          レポート系ページのコンテンツブロックは一律cardClassで囲む、
+          という単純なルールへ統一した（docs/design.md「UI Rules」
+          「カード化の使い分け」参照）。StatCardは他cardClassにネストされる
+          ため`flat`にする */}
+      <section className={`${cardClass} mb-6`}>
+        <div className="flex flex-wrap gap-3">
+          <StatCard
+            label={t("entityDetail.recordCount")}
+            value={t("search.recordCount", { count: detail.recordCount })}
+            icon={Icon}
+            iconColorClass={visual.colorClass}
+            iconBgClass={visual.bgTintClass}
+            flat
+          />
+          <StatCard
+            label={t("entityDetail.avgRating")}
+            value={detail.avgRating ?? "—"}
+            icon={Star}
+            iconColorClass="text-warn"
+            iconBgClass="bg-warn/15"
+            flat
+          />
+          <StatCard
+            label={t("entityDetail.lastConsumed")}
+            value={detail.lastConsumedAt ? formatConsumedAtShort(detail.lastConsumedAt, i18n.language) : "—"}
+            icon={Calendar}
+            iconColorClass="text-text-tertiary"
+            iconBgClass="bg-surface-2"
+            flat
+          />
+        </div>
       </section>
 
       <div className="mb-6 flex flex-wrap gap-2">
@@ -219,18 +231,20 @@ function EntityDetailSkeleton() {
         <div className="skeleton-block h-6 w-40 rounded" />
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-3">
-        {Array.from({ length: 3 }, (_, index) => (
-          <div key={index} className="min-w-44 rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated">
-            <div className="flex items-center gap-3">
-              <div className="skeleton-block h-9 w-9 flex-shrink-0 rounded-full" />
-              <div>
-                <div className="skeleton-block h-3 w-14 rounded" />
-                <div className="skeleton-block mt-2 h-4 w-10 rounded" />
+      <div className={`${cardClass} mb-6`}>
+        <div className="flex flex-wrap gap-3">
+          {Array.from({ length: 3 }, (_, index) => (
+            <div key={index} className="min-w-44 rounded-2xl border border-surface-2 bg-raised p-4">
+              <div className="flex items-center gap-3">
+                <div className="skeleton-block h-9 w-9 flex-shrink-0 rounded-full" />
+                <div>
+                  <div className="skeleton-block h-3 w-14 rounded" />
+                  <div className="skeleton-block mt-2 h-4 w-10 rounded" />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div className="skeleton-block mb-6 h-9 w-36 rounded-lg" />

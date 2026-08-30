@@ -184,11 +184,16 @@ Coffee Detailsとして段階的に見せる項目:
 
 - **レポート・詳細系ページ**（Stats、Diagnosis、RecordDetail、
   EntityDetailなど、1つのテーマについて複数の情報のまとまりを上から
-  読んでいくページ）: 見出しを持つセクションは見出しごと`cardClass`
-  （枠線+背景+影のカード、`frontend/src/features/coffee-records/
-  components/formStyles.js`）で囲む。セクション内にネストする要素
-  （StatCard・ArchetypeCard・HomeVsCafeCard・SuggestionCard等）は
-  `flat`propで影を消し、二重の影にしない。
+  読んでいくページ）: **見出しの有無に関わらず**、コンテンツの
+  まとまり（統計カードの行、地図のような単体ビジュアル、関連情報の
+  一覧など）はすべて`cardClass`（枠線+背景+影のカード、
+  `frontend/src/features/coffee-records/components/formStyles.js`）で
+  囲む。セクション内にネストする要素（StatCard・ArchetypeCard・
+  HomeVsCafeCard・SuggestionCard等）は`flat`propで影を消し、二重の
+  影にしない。ページ見出し（`<h1>`）に付随する小さなバッジ・ラベル
+  （RecordDetailの評価バッジ、EntityDetailの種別ラベルなど）や、
+  ボタン・リンクなどの操作要素はカード化の対象外（コンテンツではなく
+  ページヘッダー・操作の一部のため）。
 - **一覧・ダッシュボード系ページ**（Home、Recordsなど、複数の独立した
   項目を横断的に見せて次にどれを選ぶか決めるページ）: 見出しはプレーン
   テキストのままでよく、各項目自体を影付きのカードにする。ページ全体・
@@ -196,6 +201,15 @@ Coffee Detailsとして段階的に見せる項目:
 
 判断基準: そのページ（またはセクション）が「1つのテーマについての
 報告」なら前者、「選ぶための一覧」なら後者。
+
+2026-08、上記の前者パターンについて、「見出しの無いコンテンツ（統計
+カードの行、地図）はカード化しなくてよいのか」という指摘を受けた。
+見出しの有無で例外を作ると、地図のような単体ビジュアルとStatCardの
+行とで扱いが分かれてしまい（前者はカード化、後者は非カード化）、
+判断基準が視覚的な好みに依存してしまう。「見た目の統一感を取るか、
+ルールの単純さを取るか」ではなく「機械的に一律ルールにするか、
+情報の軽重を演出する複雑なルールにするか」という論点だと整理した
+うえで、後から見て判断に迷わない前者（一律`cardClass`化）を採用した。
 
 ## Graph Visual Semantics
 

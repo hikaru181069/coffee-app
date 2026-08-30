@@ -100,17 +100,20 @@ function WorldMapPage() {
 
     return (
       <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap gap-3">
-          <StatCard
-            label={t("map.visitedStat")}
-            value={totalOriginCount != null ? `${visitedByNumericId.size} / ${totalOriginCount}` : `${visitedByNumericId.size}`}
-            icon={originVisual.icon}
-            iconColorClass={originVisual.colorClass}
-            iconBgClass={originVisual.bgTintClass}
-          />
+        <div className={cardClass}>
+          <div className="flex flex-wrap gap-3">
+            <StatCard
+              label={t("map.visitedStat")}
+              value={totalOriginCount != null ? `${visitedByNumericId.size} / ${totalOriginCount}` : `${visitedByNumericId.size}`}
+              icon={originVisual.icon}
+              iconColorClass={originVisual.colorClass}
+              iconBgClass={originVisual.bgTintClass}
+              flat
+            />
+          </div>
         </div>
 
-        <div className="rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated sm:p-6">
+        <div className={cardClass}>
           <WorldMap visitedByNumericId={visitedByNumericId} />
           <div className="mt-4">
             <WorldMapLegend />
