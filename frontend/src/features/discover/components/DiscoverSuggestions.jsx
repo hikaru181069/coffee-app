@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { useOriginDiscovery } from "../hooks/useOriginDiscovery";
 import SuggestionCard from "./SuggestionCard";
+import { cardClass } from "../../coffee-records/components/formStyles";
 
 /**
  * Entity Detailページ（産地）専用の「まだ試していない産地」提案セクション。
@@ -23,6 +24,13 @@ import SuggestionCard from "./SuggestionCard";
  * 提案を出すだけで終わらせず、次の記録（/records/new）への導線にする。
  * 提案された産地はまだ自分のグラフにノードが無いため、Graph/Entity
  * Detailへは遷移できない（提案の性質上「まだ知らない産地」であるため）。
+ *
+ * 2026-08、EntityDetailPage.jsxの「関連する属性」「関連する記録」は
+ * `cardClass`で囲まれているのに、このセクションだけ見出しが背景に
+ * 浮いたプレーンな状態のままだった（ユーザー指摘。docs/design.md
+ * 「UI Rules」のカード化ルール参照）。レポート系ページの他セクションと
+ * 同じ`cardClass`で統一し、中の`SuggestionCard`は`flat`にして
+ * 二重の影にしないようにした。
  */
 function DiscoverSuggestions({ nodeId }) {
   const { t } = useTranslation();
@@ -31,19 +39,19 @@ function DiscoverSuggestions({ nodeId }) {
   if (isLoading || error || suggestions.length === 0) return null;
 
   return (
-    <section className="mb-6 flex flex-col gap-3">
-      <div className="flex items-center gap-2">
+    <section className={`${cardClass} mb-6`}>
+      <div className="mb-3 flex items-center gap-2">
         <Compass size={16} aria-hidden="true" className="text-success" />
         <h2 className="text-sm font-semibold text-text">{t("discover.heading")}</h2>
       </div>
 
       <ul className="flex flex-col gap-3">
         {suggestions.map((suggestion) => (
-          <SuggestionCard key={suggestion.suggestedOrigin.label} suggestion={suggestion} />
+          <SuggestionCard key={suggestion.suggestedOrigin.label} suggestion={suggestion} flat />
         ))}
       </ul>
 
-      <p className="text-xs text-text-tertiary">{t("discover.sourceNote")}</p>
+      <p className="mt-3 text-xs text-text-tertiary">{t("discover.sourceNote")}</p>
     </section>
   );
 }
