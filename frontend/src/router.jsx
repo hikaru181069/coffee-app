@@ -13,9 +13,6 @@ import LandingPage from "./pages/LandingPage";
 import RecordsPage from "./pages/RecordsPage";
 import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
-import EntityDetailPage from "./pages/EntityDetailPage";
-import StatsPage from "./pages/StatsPage";
-import DiagnosisPage from "./pages/DiagnosisPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 // GraphPageはreact-force-graph-2d（canvas描画・物理演算）を含み、
@@ -26,6 +23,18 @@ const GraphPage = lazy(() => import("./pages/GraphPage"));
 // 常設ナビに無くStatsからのリンクでしか開かれないページのため）で
 // 遅延読み込みにする。
 const WorldMapPage = lazy(() => import("./pages/WorldMapPage"));
+// 2026-08、メインバンドルが1.24MB(gzip 186KB)まで増えていた監査を受け、
+// GraphPage/WorldMapPageに続いて遅延読み込みにした。いずれもリンク経由
+// でしか開かれず（常設ナビに無い。docs/design.md「Main Navigation」）、
+// 初回に訪れるとは限らないページのため
+const EntityDetailPage = lazy(() => import("./pages/EntityDetailPage"));
+const DiagnosisPage = lazy(() => import("./pages/DiagnosisPage"));
+// StatsPageは常設ナビの項目だがGraphPageと同じ扱いにした。理由は
+// GraphPage/WorldMapPageと同じ判断基準（重さではなく「初回に必ず開くとは
+// 限らない」）に合わせたもので、record作成・編集（RecordFormPage）や
+// 一覧（RecordsPage）のような中心動線（docs/product.md「Record First」）
+// は対象外にしている
+const StatsPage = lazy(() => import("./pages/StatsPage"));
 
 /**
  * 遅延読み込み中（チャンクのダウンロード待ち）のフォールバック。
@@ -81,7 +90,14 @@ export const router = createBrowserRouter(
         {/* 知識グラフの属性ノード（産地・農園・品種・精製方法・焙煎度・
             フレーバー・カフェ）1件の詳細ページ。nodeIdは"origin:507f..."
             のようなstable ID（URLエンコードして渡す） */}
-        <Route path="/entities/:nodeId" element={<EntityDetailPage />} />
+        <Route
+          path="/entities/:nodeId"
+          element={
+            <Suspense fallback={<LazyPageFallback />}>
+              <EntityDetailPage />
+            </Suspense>
+          }
+        />
 
         <Route
           path="/graph"
@@ -92,13 +108,27 @@ export const router = createBrowserRouter(
           }
         />
 
-        <Route path="/stats" element={<StatsPage />} />
+        <Route
+          path="/stats"
+          element={
+            <Suspense fallback={<LazyPageFallback />}>
+              <StatsPage />
+            </Suspense>
+          }
+        />
 
         {/* 記録から判定する「コーヒータイプ」診断。常設ナビには含めない
             （Navbar.jsx・BottomTabBar.jsxのタブ数を増やさない方針。
             docs/design.md「Main Navigation」参照）。Home画面のDiscoverCard・
             Statsページからのリンク経由でのみ到達する */}
-        <Route path="/diagnosis" element={<DiagnosisPage />} />
+        <Route
+          path="/diagnosis"
+          element={
+            <Suspense fallback={<LazyPageFallback />}>
+              <DiagnosisPage />
+            </Suspense>
+          }
+        />
 
         {/* 訪れた産地を世界地図上でハイライトする。Diagnosisと同じ理由で
             常設ナビには含めない。Statsページの「Collection」セクションの
