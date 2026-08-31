@@ -127,9 +127,11 @@
     "subtitleEmpty": "飲んだコーヒーを記録しましょう",
     "paginationAriaLabel": "ページ送り",
     "filterAriaLabel": "絞り込み",
-    "allOrigins": "すべての産地",
-    "allFlavors": "すべてのフレーバー",
     "ratingUnfiltered": "評価で絞らない",
+    "advancedFilters": "詳細フィルター",
+    "advancedFiltersAriaLabel": "詳細フィルター",
+    "dateFrom": "開始日",
+    "dateTo": "終了日",
     "emptyTitle": "まだ記録がありません",
     "emptyDesc": "最初の1杯を記録すると、産地やフレーバーのつながりが見えはじめます。",
     "emptyCta": "最初の記録をつくる",
@@ -280,6 +282,7 @@
       "origin": "よく関連する産地：{{labels}}"
     },
     "entitiesHeading": "関連する項目",
+    "entitiesTruncatedNote": "一致する項目が他にもあります。絞り込んでください。",
     "recordsHeading": "記録名の一致",
     "noResults": "「{{query}}」に一致する結果が見つかりません"
   },
@@ -291,7 +294,8 @@
     "viewOnMap": "地図で見る",
     "relatedHeading": "グラフ上の関連",
     "recordsHeading": "関連する記録",
-    "trailAriaLabel": "パンくずリスト"
+    "trailAriaLabel": "パンくずリスト",
+    "showMoreRelated": "他{{count}}件を見る"
   },
   "stats": {
     "heading": "統計",

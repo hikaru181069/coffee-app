@@ -80,13 +80,13 @@ describe("validateGraphQuery", () => {
       expect(query.recordFilter.consumedAt.$lte).toBeInstanceOf(Date);
     });
 
-    test("originId/flavorIdは受け付けない（docs/api.md GET /graph のクエリに無いため）", () => {
-      const { query } = validateGraphQuery({ originId: "507f1f77bcf86cd799439011" });
+    test("originIds/flavorIdsは受け付けない（docs/api.md GET /graph のクエリに無いため）", () => {
+      const { query } = validateGraphQuery({ originIds: "507f1f77bcf86cd799439011" });
 
-      // 一覧APIのvalidatorと違い、originIdは無視され filter に含まれない。
+      // 一覧APIのvalidatorと違い、originIdsは無視され filter に含まれない。
       // 不正な値でもエラーにしない(そもそも見ていないフィールドのため)
       expect(query.recordFilter).not.toHaveProperty("originId");
-      expect(validateGraphQuery({ originId: "abc" }).valid).toBe(true);
+      expect(validateGraphQuery({ originIds: "abc" }).valid).toBe(true);
     });
   });
 

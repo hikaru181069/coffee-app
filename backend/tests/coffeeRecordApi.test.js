@@ -349,7 +349,7 @@ describe("GET /api/coffee-records", () => {
       expect(res.body.data[0].title).toBe("カフェで");
     });
 
-    test("originIdで絞り込める", async () => {
+    test("originIdsで絞り込める", async () => {
       await seedTestMasterData();
       const origin = await Origin.findOne({ normalizedName: "kenya" });
       await createRecordFor(alice.user._id, {
@@ -359,11 +359,42 @@ describe("GET /api/coffee-records", () => {
 
       const res = await request(app)
         .get(ENDPOINT)
-        .query({ originId: String(origin._id) })
+        .query({ originIds: String(origin._id) })
         .set("Authorization", alice.authHeader);
 
       expect(res.body.data).toHaveLength(1);
       expect(res.body.data[0].title).toBe("ケニア");
+    });
+
+    test("originIdsをカンマ区切りで複数指定すると、いずれかに一致する記録を返す（複数選択フィルター）", async () => {
+      await seedTestMasterData();
+      const kenya = await Origin.findOne({ normalizedName: "kenya" });
+      const ethiopia = await Origin.findOne({ normalizedName: "ethiopia" });
+      const panama = await Origin.findOne({ normalizedName: "panama" });
+      await createRecordFor(alice.user._id, { title: "ケニア", originId: kenya._id });
+      await createRecordFor(alice.user._id, { title: "エチオピア", originId: ethiopia._id });
+      await createRecordFor(alice.user._id, { title: "パナマ", originId: panama._id });
+
+      const res = await request(app)
+        .get(ENDPOINT)
+        .query({ originIds: `${kenya._id},${ethiopia._id}` })
+        .set("Authorization", alice.authHeader);
+
+      const titles = res.body.data.map((record) => record.title).sort();
+      expect(titles).toEqual(["エチオピア", "ケニア"]);
+    });
+
+    test("titleで部分一致検索できる", async () => {
+      await createRecordFor(alice.user._id, { title: "Ethiopia Yirgacheffe" });
+      await createRecordFor(alice.user._id, { title: "Kenya AA" });
+
+      const res = await request(app)
+        .get(ENDPOINT)
+        .query({ title: "ethiopia" })
+        .set("Authorization", alice.authHeader);
+
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].title).toBe("Ethiopia Yirgacheffe");
     });
 
     test("フィルターは他ユーザーの記録を含めない", async () => {

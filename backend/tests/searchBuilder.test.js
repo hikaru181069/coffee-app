@@ -34,16 +34,16 @@ const buildRecord = (overrides = {}) => ({
 describe("空・該当なし", () => {
   test("クエリが空文字なら何も返さない", () => {
     const records = [buildRecord({ origin: ORIGIN_ETHIOPIA })];
-    expect(buildSearchResults(records, "")).toEqual({ entities: [], records: [] });
+    expect(buildSearchResults(records, "")).toEqual({ entities: [], entitiesTruncated: false, records: [] });
   });
 
   test("記録が0件なら何も返さない", () => {
-    expect(buildSearchResults([], "ethiopia")).toEqual({ entities: [], records: [] });
+    expect(buildSearchResults([], "ethiopia")).toEqual({ entities: [], entitiesTruncated: false, records: [] });
   });
 
   test("一致するものが無ければ空配列を返す", () => {
     const records = [buildRecord({ origin: ORIGIN_ETHIOPIA })];
-    expect(buildSearchResults(records, "brazil")).toEqual({ entities: [], records: [] });
+    expect(buildSearchResults(records, "brazil")).toEqual({ entities: [], entitiesTruncated: false, records: [] });
   });
 });
 
@@ -127,5 +127,27 @@ describe("記録タイトルの検索", () => {
 
     expect(result.entities).toHaveLength(1);
     expect(result.records).toHaveLength(1);
+  });
+});
+
+describe("2026-08、属性一覧の上限（entitiesTruncated）", () => {
+  test("上限（20件）以下ならentitiesTruncatedはfalse", () => {
+    const flavors = Array.from({ length: 20 }, (_, i) => ({ id: `flavor-${i}`, name: `Coffee Flavor ${i}` }));
+    const records = flavors.map((flavor, i) => buildRecord({ id: `r-${i}`, flavors: [flavor] }));
+
+    const result = buildSearchResults(records, "coffee flavor");
+
+    expect(result.entities).toHaveLength(20);
+    expect(result.entitiesTruncated).toBe(false);
+  });
+
+  test("上限を超える場合は20件に切り詰め、entitiesTruncated: trueを返す", () => {
+    const flavors = Array.from({ length: 21 }, (_, i) => ({ id: `flavor-${i}`, name: `Coffee Flavor ${i}` }));
+    const records = flavors.map((flavor, i) => buildRecord({ id: `r-${i}`, flavors: [flavor] }));
+
+    const result = buildSearchResults(records, "coffee flavor");
+
+    expect(result.entities).toHaveLength(20);
+    expect(result.entitiesTruncated).toBe(true);
   });
 });

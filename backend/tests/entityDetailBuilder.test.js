@@ -140,6 +140,15 @@ describe("関連属性", () => {
 
     expect(detail.relatedAttributes).toEqual({});
   });
+
+  test("2026-08、種別ごと5件までの上限は撤廃済み。6件以上あってもすべて返す", () => {
+    const flavors = Array.from({ length: 6 }, (_, i) => ({ id: `flavor-${i}`, name: `Flavor${i}` }));
+    const records = [buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA, flavors })];
+    const graph = buildGraph(records);
+    const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");
+
+    expect(detail.relatedAttributes.flavor).toHaveLength(6);
+  });
 });
 
 describe("関連記録", () => {

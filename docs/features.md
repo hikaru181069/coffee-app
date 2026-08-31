@@ -143,10 +143,26 @@ MongoDBのCoffeeRecordとマスターデータを正とする。検索専用の
 
 具体的な計算は `backend/core/search/searchBuilder.js` を参照。
 
+属性一覧（`entities`）自体にも上限（20件）を設けている（2026-08、
+「多数の属性がヒットしたときの上限が無い」という指摘を受けて追加）。
+超過した場合は上位20件のみを`recordCount`降順で返し、
+`entitiesTruncated: true`を添える。
+
+### 検索ボックスとフィルターの併用
+
+2026-08、「検索ボックスとフィルターの併用ができない」という指摘を
+受けて対応した。RecordsPage.jsxのフィルター（recordFilterValidator.js。
+産地・品種・精製方法・焙煎度・フレーバーの複数選択、評価、期間）を
+`GET /api/search`にもそのまま渡せるようにし、アクティブなフィルターの
+範囲内（`coffeeRecordRepository.findAllForUser`が絞り込んだ記録）だけを
+対象に横断検索する。フィルターが無ければ従来通り自分の記録すべてが
+対象になる。titleフィルターは検索では使わない（検索クエリ自体が
+titleも見るため、二重に絞り込む必要が無い）。
+
 ### Response Shape
 
 ```json
-GET /api/search?q=ethiopia
+GET /api/search?q=ethiopia&originIds=507f...,507g...&ratingMin=4
 
 {
   "data": {
@@ -160,18 +176,22 @@ GET /api/search?q=ethiopia
         "relatedLabels": ["Berry", "Floral"]
       }
     ],
+    "entitiesTruncated": false,
     "records": [ { "id": "...", "title": "...", "...": "..." } ]
   }
 }
 ```
 
-`q`が未指定・空文字の場合は400エラーにせず空の結果を返す。
+`q`が未指定・空文字の場合は400エラーにせず空の結果を返す。フィルター
+パラメータが不正な場合（例: originIdsがObjectId形式でない）は400。
 
 ### 表示
 
-Records画面の検索ボックス。検索クエリが入力されている間は、通常の
-フィルター・一覧・ページ送りを検索結果表示へ丸ごと差し替える。
-属性の結果カードは`/entities/<nodeId>`へのLink。
+Records画面の検索ボックス。検索クエリが入力されている間は、一覧・
+ページ送りを検索結果表示へ丸ごと差し替えるが、フィルターUI自体は
+表示したままにする（上記「検索ボックスとフィルターの併用」参照）。
+属性の結果カードは`/entities/<nodeId>`へのLink。`entitiesTruncated`が
+trueの場合は、絞り込みを促す案内文を添える。
 
 ---
 
@@ -201,7 +221,10 @@ origin/farm/variety/process/roastLevel/flavor/cafeのどの種別でも同じ
 - 記録数
 - 平均評価（1件も無ければ非表示）
 - 最後に飲んだ日
-- グラフ上の関連（共起する他の種別の属性を種別ごと・登場回数順に最大5件）
+- グラフ上の関連（共起する他の種別の属性を種別ごと・登場回数順にすべて。
+  2026-08、以前は種別ごと最大5件までだったが、「全部見る手段が無い」
+  という指摘を受けて上限を撤廃した。フロントエンドは最初5件を表示し
+  「もっと見る」で展開する）
 - 関連記録の一覧（最終評価日が新しい順）
 
 ### Response Shape

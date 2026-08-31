@@ -17,6 +17,10 @@ import { buildGraph } from "../graph/graphBuilder.js";
  */
 
 const MAX_RELATED_LABELS = 3;
+// 2026-08、「多数の属性がヒットしたときの上限が無い」という指摘を受けて
+// 追加した。記録数が多いユーザーでも属性の種類数（産地・品種等）自体は
+// 有限だが、念のため一覧APIのMAX_LIMIT等と同じ考え方で上限を設ける
+const MAX_ENTITIES = 20;
 
 const matchesQuery = (label, normalizedQuery) => (label ?? "").toLowerCase().includes(normalizedQuery);
 
@@ -64,12 +68,12 @@ const findRelatedLabels = (graph, nodeMap, attributeNodeId, relatedType, limit) 
  */
 export const buildSearchResults = (records, query) => {
   const normalizedQuery = (query ?? "").trim().toLowerCase();
-  if (!normalizedQuery) return { entities: [], records: [] };
+  if (!normalizedQuery) return { entities: [], entitiesTruncated: false, records: [] };
 
   const graph = buildGraph(records);
   const nodeMap = buildNodeMap(graph);
 
-  const entities = graph.nodes
+  const matchedEntityNodes = graph.nodes
     .filter((node) => node.type !== "record" && matchesQuery(node.label, normalizedQuery))
     .map((node) => {
       // フレーバー自体がヒットしたときは「よく一緒に登場する産地」を、
@@ -86,7 +90,10 @@ export const buildSearchResults = (records, query) => {
     })
     .sort((a, b) => b.recordCount - a.recordCount);
 
+  const entities = matchedEntityNodes.slice(0, MAX_ENTITIES);
+  const isEntitiesTruncated = matchedEntityNodes.length > MAX_ENTITIES;
+
   const matchedRecords = records.filter((record) => matchesQuery(record.title, normalizedQuery));
 
-  return { entities, records: matchedRecords };
+  return { entities, entitiesTruncated: isEntitiesTruncated, records: matchedRecords };
 };

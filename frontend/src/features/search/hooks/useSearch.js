@@ -14,12 +14,21 @@ const DEBOUNCE_MS = 300;
  * react-hooks/set-state-in-effect に引っかかるため
  * （useGraph.js / useInsights.js と同じ、effect内でasync関数を定義して
  * 呼ぶパターンに揃えている）。
+ *
+ * 2026-08、検索ボックスとフィルターの併用に対応した。filters
+ * （RecordsPage.jsxのアクティブなフィルター）が変わったときも、
+ * クエリが変わったときと同様に再取得する。filtersはオブジェクトなので、
+ * useCoffeeRecords.jsと同じくJSON.stringifyしたものを依存値にする
+ * （毎レンダリングで別オブジェクト扱いされ無限に再取得するのを防ぐ）。
  */
-export const useSearch = (query) => {
+export const useSearch = (query, filters = {}) => {
   const [entities, setEntities] = useState([]);
+  const [entitiesTruncated, setEntitiesTruncated] = useState(false);
   const [records, setRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const filtersKey = JSON.stringify(filters);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -28,6 +37,7 @@ export const useSearch = (query) => {
     const load = async () => {
       if (!trimmed) {
         setEntities([]);
+        setEntitiesTruncated(false);
         setRecords([]);
         setIsLoading(false);
         setError(null);
@@ -37,8 +47,11 @@ export const useSearch = (query) => {
       setIsLoading(true);
       setError(null);
       try {
-        const result = await fetchSearchResults(trimmed, { signal: controller.signal });
+        const result = await fetchSearchResults(trimmed, JSON.parse(filtersKey), {
+          signal: controller.signal,
+        });
         setEntities(result.entities);
+        setEntitiesTruncated(result.entitiesTruncated);
         setRecords(result.records);
       } catch (caught) {
         if (caught.name === "AbortError") return;
@@ -54,7 +67,7 @@ export const useSearch = (query) => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query]);
+  }, [query, filtersKey]);
 
-  return { entities, records, isLoading, error };
+  return { entities, entitiesTruncated, records, isLoading, error };
 };

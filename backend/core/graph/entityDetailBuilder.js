@@ -15,7 +15,6 @@ import { ATTRIBUTE_NODE_TYPES } from "./graphBuilder.js";
  * 作らない）。
  */
 
-const MAX_RELATED_PER_TYPE = 5;
 const RECORD_PREFIX = "record:";
 
 const average = (numbers) => (numbers.length === 0 ? null : numbers.reduce((sum, n) => sum + n, 0) / numbers.length);
@@ -38,6 +37,13 @@ const findConnectedRecordNodeIds = (graph, attributeNodeId) => {
  *
  * 同じ種別同士（例: origin自身から見たorigin）は直接エッジが無く
  * 常に空になるため、selfTypeは結果から除外する。
+ *
+ * 2026-08、種別ごと最大5件までに切り詰めていたが、「全部見る手段が無い」
+ * という指摘を受けて撤廃した（docs/features.md「Entity Detail」参照）。
+ * 1ユーザーの記録から導出される属性の種類数は多くても数十件程度で
+ * （自分の記録に登場した産地・フレーバー等の実数が上限のため）、
+ * 返却件数が際限なく増える心配は無い。表示側の「最初は5件、もっと見るで
+ * 展開」はフロントエンド（EntityDetailPage.jsx）の責務にした。
  */
 const findRelatedAttributesByType = (graph, nodeMap, connectedRecordNodeIds, selfNodeId, selfType) => {
   const countsByType = new Map();
@@ -58,7 +64,7 @@ const findRelatedAttributesByType = (graph, nodeMap, connectedRecordNodeIds, sel
   for (const type of ATTRIBUTE_NODE_TYPES) {
     const counts = countsByType.get(type);
     if (!counts || counts.size === 0) continue;
-    result[type] = [...counts.values()].sort((a, b) => b.count - a.count).slice(0, MAX_RELATED_PER_TYPE);
+    result[type] = [...counts.values()].sort((a, b) => b.count - a.count);
   }
   return result;
 };

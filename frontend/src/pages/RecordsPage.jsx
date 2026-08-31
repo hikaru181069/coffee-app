@@ -32,19 +32,30 @@ import { useSearch } from "../features/search/hooks/useSearch";
  * 巨大なJSXをすべて置かない）。
  *
  * 2026-08、横断検索（docs/search.md）を追加した。検索クエリが入力されて
- * いる間は、通常のフィルター・一覧・ページ送りを検索結果表示へ丸ごと
- * 差し替える。検索結果（属性の集計カード＋記録タイトルの一致）は
- * 通常の絞り込み結果と見た目・意味が異なるため、同じ一覧に混ぜて
- * 出すと状態がわかりにくくなると判断した。
+ * いる間は、一覧・ページ送りを検索結果表示へ丸ごと差し替える。検索結果
+ * （属性の集計カード＋記録タイトルの一致）は通常の絞り込み結果と
+ * 見た目・意味が異なるため、同じ一覧に混ぜて出すと状態がわかりにくくなる
+ * と判断した。
+ *
+ * 2026-08、「検索ボックスとフィルターの併用ができない」という指摘を
+ * 受け、フィルターUIは検索中も表示したままにし、アクティブなフィルター
+ * （filters）を横断検索APIへもそのまま渡すよう変更した（以前は検索中は
+ * フィルターUI自体を隠し、フィルターの範囲を無視して全記録から検索
+ * していた）。
  */
 
 const DEFAULT_FILTERS = {
   page: 1,
   limit: 20,
   recordType: "",
-  originId: "",
-  flavorId: "",
+  originIds: [],
+  varietyIds: [],
+  processIds: [],
+  roastLevelIds: [],
+  flavorIds: [],
   ratingMin: "",
+  dateFrom: "",
+  dateTo: "",
 };
 
 function RecordsPage() {
@@ -55,14 +66,19 @@ function RecordsPage() {
 
   const { records, pagination, isLoading, error, reload } = useCoffeeRecords(filters);
   const { masterData } = useMasterData();
-  const search = useSearch(searchQuery);
+  const search = useSearch(searchQuery, filters);
 
   const hasActiveFilters = useMemo(
     () =>
       filters.recordType !== "" ||
-      filters.originId !== "" ||
-      filters.flavorId !== "" ||
-      filters.ratingMin !== "",
+      filters.originIds.length > 0 ||
+      filters.varietyIds.length > 0 ||
+      filters.processIds.length > 0 ||
+      filters.roastLevelIds.length > 0 ||
+      filters.flavorIds.length > 0 ||
+      filters.ratingMin !== "" ||
+      filters.dateFrom !== "" ||
+      filters.dateTo !== "",
     [filters],
   );
 
@@ -121,26 +137,26 @@ function RecordsPage() {
       </header>
 
       {/* Search + Filterを1つのbarにまとめ、「検索フォーム」の羅列ではなく
-          「Recordsをブラウズする道具」に見せる。検索中はfilter行を隠し、
-          検索欄だけを残す（絞り込みと横断検索は同時に使わない既存の設計）。 */}
+          「Recordsをブラウズする道具」に見せる。2026-08、検索ボックスと
+          フィルターを併用できるようにしたため、検索中もフィルターUIは
+          表示したままにする（アクティブなフィルターの範囲内で検索する）。 */}
       <div className="mb-6 flex flex-col gap-3 rounded-xl border border-surface-2 bg-raised/60 p-3 sm:p-4">
         <SearchBox value={searchQuery} onChange={setSearchQuery} />
 
-        {!isSearching && (
-          <RecordFilters
-            filters={filters}
-            onChange={setFilters}
-            onClear={clearFilters}
-            masterData={masterData}
-            hasActiveFilters={hasActiveFilters}
-          />
-        )}
+        <RecordFilters
+          filters={filters}
+          onChange={setFilters}
+          onClear={clearFilters}
+          masterData={masterData}
+          hasActiveFilters={hasActiveFilters}
+        />
       </div>
 
       {isSearching ? (
         <SearchResults
           query={searchQuery.trim()}
           entities={search.entities}
+          entitiesTruncated={search.entitiesTruncated}
           records={search.records}
           isLoading={search.isLoading}
           error={search.error}

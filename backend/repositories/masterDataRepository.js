@@ -3,6 +3,7 @@ import Variety from "../models/Variety.js";
 import Process from "../models/Process.js";
 import RoastLevel from "../models/RoastLevel.js";
 import Flavor from "../models/Flavor.js";
+import { escapeRegExp } from "../utils/escapeRegExp.js";
 
 /**
  * マスターデータ（産地・品種・精製方法・焙煎度・フレーバー）へのDB問い合わせ。
@@ -52,10 +53,7 @@ export const findMany = async (type, { search, limit } = {}) => {
 
   const filter = {};
   if (search && search.trim() !== "") {
-    // 正規表現の特殊文字をエスケープしてから部分一致にする。
-    // 未検証の入力をそのままクエリへ渡さないため（docs/architecture.md Security）。
-    const escaped = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    filter.name = { $regex: escaped, $options: "i" };
+    filter.name = { $regex: escapeRegExp(search.trim()), $options: "i" };
   }
 
   const query = model.find(filter).sort(defaultSort).lean();
