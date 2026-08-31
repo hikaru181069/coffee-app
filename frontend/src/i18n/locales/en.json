@@ -131,9 +131,11 @@
     "subtitleEmpty": "Start recording the coffee you drink",
     "paginationAriaLabel": "Pagination",
     "filterAriaLabel": "Filters",
-    "allOrigins": "All origins",
-    "allFlavors": "All flavors",
     "ratingUnfiltered": "Any rating",
+    "advancedFilters": "Advanced filters",
+    "advancedFiltersAriaLabel": "Advanced filters",
+    "dateFrom": "From",
+    "dateTo": "To",
     "emptyTitle": "No records yet",
     "emptyDesc": "Record your first cup to start seeing connections between origins and flavors.",
     "emptyCta": "Create your first record",
@@ -286,6 +288,7 @@
       "origin": "Often found in: {{labels}}"
     },
     "entitiesHeading": "Related",
+    "entitiesTruncatedNote": "There are more matches. Try narrowing your search.",
     "recordsHeading": "Matching records",
     "noResults": "No results for \"{{query}}\""
   },
@@ -297,7 +300,9 @@
     "viewOnMap": "View on Map",
     "relatedHeading": "Related in the graph",
     "recordsHeading": "Related records",
-    "trailAriaLabel": "Breadcrumb"
+    "trailAriaLabel": "Breadcrumb",
+    "showMoreRelated_one": "Show {{count}} more",
+    "showMoreRelated_other": "Show {{count}} more"
   },
   "stats": {
     "heading": "Stats",

@@ -13,7 +13,7 @@ import EntityResultCard from "./EntityResultCard";
  * 集計情報、記録は個別の記録カード（既存のRecordCard.jsxを再利用）と
  * 見た目の性質が異なるため。
  */
-function SearchResults({ query, entities, records, isLoading, error }) {
+function SearchResults({ query, entities, entitiesTruncated = false, records, isLoading, error }) {
   const { t } = useTranslation();
 
   if (isLoading) return <RecordListSkeleton count={3} />;
@@ -39,6 +39,13 @@ function SearchResults({ query, entities, records, isLoading, error }) {
               </li>
             ))}
           </ul>
+          {/* 2026-08、「多数の属性がヒットしたときの上限が無い」という
+              指摘を受け、backend（searchBuilder.js）が上限（20件）を
+              超えた場合にentitiesTruncated: trueを返すようにした。
+              一覧自体は切り詰め済みのものが届くため、ここでは案内文だけ出す */}
+          {entitiesTruncated && (
+            <p className="mt-3 text-xs text-text-tertiary">{t("search.entitiesTruncatedNote")}</p>
+          )}
         </section>
       )}
 

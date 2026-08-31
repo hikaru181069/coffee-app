@@ -78,15 +78,62 @@ describe("validateCoffeeRecordListQuery", () => {
       expect(validateCoffeeRecordListQuery({ recordType: "office" }).valid).toBe(false);
     });
 
-    test("originIdはObjectIdの形式を確認する", () => {
-      expect(validateCoffeeRecordListQuery({ originId: VALID_ID }).valid).toBe(true);
-      expect(validateCoffeeRecordListQuery({ originId: "abc" }).valid).toBe(false);
+    test("originIdsはObjectIdの形式を確認する", () => {
+      expect(validateCoffeeRecordListQuery({ originIds: VALID_ID }).valid).toBe(true);
+      expect(validateCoffeeRecordListQuery({ originIds: "abc" }).valid).toBe(false);
     });
 
-    test("flavorIdは配列フィールドへの「含む」条件になる", () => {
-      const { query } = validateCoffeeRecordListQuery({ flavorId: VALID_ID });
+    test("originIdsを1件だけ指定すると等価条件になる", () => {
+      const { query } = validateCoffeeRecordListQuery({ originIds: VALID_ID });
+
+      expect(query.filter).toEqual({ originId: VALID_ID });
+    });
+
+    test("originIdsをカンマ区切りで複数指定すると$in条件になる（複数選択フィルター）", () => {
+      const otherId = "507f1f77bcf86cd799439012";
+      const { query } = validateCoffeeRecordListQuery({ originIds: `${VALID_ID},${otherId}` });
+
+      expect(query.filter).toEqual({ originId: { $in: [VALID_ID, otherId] } });
+    });
+
+    test("flavorIdsは配列フィールドへの「いずれかを含む」条件になる", () => {
+      const { query } = validateCoffeeRecordListQuery({ flavorIds: VALID_ID });
 
       expect(query.filter).toEqual({ flavorIds: VALID_ID });
+    });
+
+    test("21件以上のIDは拒否する（$inの暴走防止）", () => {
+      const tooMany = Array.from({ length: 21 }, (_, i) => VALID_ID.slice(0, -2) + String(i).padStart(2, "0")).join(",");
+      const result = validateCoffeeRecordListQuery({ originIds: tooMany });
+
+      expect(result.valid).toBe(false);
+      expect(result.details[0].field).toBe("originIds");
+    });
+
+    test("processIds / roastLevelIds / varietyIdsも同じ形式で受け付ける", () => {
+      const { query } = validateCoffeeRecordListQuery({
+        processIds: VALID_ID,
+        roastLevelIds: VALID_ID,
+        varietyIds: VALID_ID,
+      });
+
+      expect(query.filter).toEqual({
+        processId: VALID_ID,
+        roastLevelId: VALID_ID,
+        varietyIds: VALID_ID,
+      });
+    });
+
+    test("titleは部分一致の正規表現条件になる", () => {
+      const { query } = validateCoffeeRecordListQuery({ title: "Ethiopia" });
+
+      expect(query.filter.title).toEqual({ $regex: "Ethiopia", $options: "i" });
+    });
+
+    test("titleの正規表現特殊文字はエスケープされる", () => {
+      const { query } = validateCoffeeRecordListQuery({ title: "a.b*c" });
+
+      expect(query.filter.title.$regex).toBe("a\\.b\\*c");
     });
 
     test("ratingMinは1〜5の整数で $gte になる", () => {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Calendar, ChevronRight, Star } from "lucide-react";
@@ -227,10 +228,21 @@ function RelatedRecordRow({ record, index, language }) {
  * 加えた。Graph画面のフィルター・凡例と同じ視覚言語を再利用することで、
  * 新しい色を増やさずに「これはグラフのノードである」という一貫性を
  * 伝える。
+ *
+ * 2026-08、バックエンド（entityDetailBuilder.js）の種別ごと5件上限を
+ * 撤廃したのにあわせ、フロントエンドでは最初の5件だけ表示し、それ以上
+ * あれば「もっと見る」ボタンで残りを展開する（追加のAPIリクエストは
+ * 発生しない。既に全件受け取っているため）。
  */
+const INITIAL_VISIBLE_RELATED_COUNT = 5;
+
 function RelatedAttributeGroup({ type, items, t, trail }) {
   const visual = getNodeVisual(type);
   const Icon = visual.icon;
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const visibleItems = isExpanded ? items : items.slice(0, INITIAL_VISIBLE_RELATED_COUNT);
+  const hiddenCount = items.length - visibleItems.length;
 
   return (
     <div>
@@ -239,7 +251,7 @@ function RelatedAttributeGroup({ type, items, t, trail }) {
         <p className="text-sm font-medium text-text-secondary">{t(visual.labelKey)}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <Link
             key={item.id}
             to={`/entities/${encodeURIComponent(item.id)}`}
@@ -251,6 +263,15 @@ function RelatedAttributeGroup({ type, items, t, trail }) {
             <span className="font-mono text-xs text-text-tertiary">{item.count}</span>
           </Link>
         ))}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-line/60 px-3.5 py-1.5 text-sm text-text-tertiary transition-colors duration-150 hover:border-line hover:text-text"
+          >
+            {t("entityDetail.showMoreRelated", { count: hiddenCount })}
+          </button>
+        )}
       </div>
     </div>
   );

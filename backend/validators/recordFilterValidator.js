@@ -1,17 +1,29 @@
 import { isObjectIdString } from "../utils/objectId.js";
+import { escapeRegExp } from "../utils/escapeRegExp.js";
 
 /**
- * CoffeeRecordの絞り込み条件（recordType・原産地・フレーバー・評価・期間）を
- * 検証し、Mongoの$filterへ変換する。
+ * CoffeeRecordの絞り込み条件（recordType・産地・農園参照・評価・期間・
+ * タイトル）を検証し、Mongoの$filterへ変換する。
  *
  * 一覧API（validators/coffeeRecordQueryValidator.js）と
- * グラフAPI（validators/graphQueryValidator.js）は、どちらも
- * 「どの記録を対象にするか」という同じ条件を検証する必要があるため、
- * ここへ共通化した。ページネーションやnodeTypesなど、各APIに固有の
- * 項目はそれぞれの呼び出し側で足す。
+ * グラフAPI（validators/graphQueryValidator.js）・横断検索API
+ * （services/coffee/searchService.js）は、どちらも「どの記録を対象に
+ * するか」という同じ条件を検証する必要があるため、ここへ共通化した。
+ * ページネーションやnodeTypesなど、各APIに固有の項目はそれぞれの
+ * 呼び出し側で足す。
+ *
+ * 2026-08、産地・品種・精製方法・焙煎度・フレーバーの複数選択
+ * （OR条件）に対応した。カンマ区切りのID列（例:
+ * `?originIds=<id1>,<id2>`）を受け取り、単一IDなら等価条件、
+ * 複数IDなら`$in`条件へ変換する。以前の単数形（originId/flavorId）から
+ * 複数形へ改名した（フィールド名にidsの意味を持たせるため）。
+ * この関数の呼び出し元は`RecordsPage.jsx`のみで、他ページからの
+ * 深いリンクにこのクエリ形式へ依存する箇所は無いことを確認済み。
  */
 
 const RECORD_TYPES = ["home", "cafe"];
+// 1リクエストで指定できるIDの上限。$inクエリが際限なく膨らむのを防ぐ
+const MAX_IDS_PER_FIELD = 20;
 
 const isMissing = (value) => value === undefined || value === null || value === "";
 
@@ -21,11 +33,40 @@ const toInteger = (value) => {
 };
 
 /**
+ * カンマ区切りのID列を検証し、配列へ変換する。
+ * 不正な値があれば details へ積んで null を返す。
+ */
+const parseIdList = (rawValue, fieldName, details) => {
+  const ids = String(rawValue)
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id !== "");
+
+  if (ids.length === 0) return null;
+
+  if (ids.length > MAX_IDS_PER_FIELD) {
+    details.push({ field: fieldName, message: `${fieldName}は${MAX_IDS_PER_FIELD}件までです` });
+    return null;
+  }
+
+  if (ids.some((id) => !isObjectIdString(id))) {
+    details.push({ field: fieldName, message: `${fieldName}の形式が正しくありません` });
+    return null;
+  }
+
+  return ids;
+};
+
+/** 単一IDなら等価条件、複数IDなら$in条件を返す（単一値の場合は素直にインデックスが効くようにする） */
+const idListToCondition = (ids) => (ids.length === 1 ? ids[0] : { $in: ids });
+
+/**
  * @param {object} rawQuery
  * @param {object} [options]
  * @param {boolean} [options.includeReferenceFilters=true]
- *   originId / flavorId を検証するか。docs/api.md の GET /graph の
- *   クエリにはこの2つが無いため、graphQueryValidator は false を渡す。
+ *   産地・品種・精製方法・焙煎度・フレーバーを検証するか。
+ *   docs/api.md の GET /graph のクエリにはこれらが無いため、
+ *   graphQueryValidator は false を渡す。
  * @returns {{ details: Array, filter: object }}
  */
 export const validateRecordFilterQuery = (
@@ -47,21 +88,21 @@ export const validateRecordFilterQuery = (
   }
 
   if (includeReferenceFilters) {
-    if (!isMissing(rawQuery.originId)) {
-      if (!isObjectIdString(rawQuery.originId)) {
-        details.push({ field: "originId", message: "originIdの形式が正しくありません" });
-      } else {
-        filter.originId = rawQuery.originId;
-      }
-    }
+    // originId/processId/roastLevelId は単一参照だが、複数指定時は$inで
+    // 「いずれかに一致」を表す。varietyIds/flavorIdsは元から配列フィールド
+    // なので、$in自体が「配列がいずれかを含む」を意味し扱いは同じになる
+    const referenceFields = [
+      ["originIds", "originId"],
+      ["processIds", "processId"],
+      ["roastLevelIds", "roastLevelId"],
+      ["varietyIds", "varietyIds"],
+      ["flavorIds", "flavorIds"],
+    ];
 
-    if (!isMissing(rawQuery.flavorId)) {
-      if (!isObjectIdString(rawQuery.flavorId)) {
-        details.push({ field: "flavorId", message: "flavorIdの形式が正しくありません" });
-      } else {
-        // flavorIds は配列なので、値を1つ指定すると「含む」条件になる
-        filter.flavorIds = rawQuery.flavorId;
-      }
+    for (const [queryField, filterField] of referenceFields) {
+      if (isMissing(rawQuery[queryField])) continue;
+      const ids = parseIdList(rawQuery[queryField], queryField, details);
+      if (ids) filter[filterField] = idListToCondition(ids);
     }
   }
 
@@ -105,6 +146,20 @@ export const validateRecordFilterQuery = (
 
   if (Object.keys(consumedAt).length > 0) {
     filter.consumedAt = consumedAt;
+  }
+
+  // 2026-08、検索ボックスとフィルターの併用向けに追加。記録一覧の
+  // フィルターとしても、横断検索（searchService.js）がアクティブな
+  // フィルターの範囲内で検索するためにも使う
+  if (!isMissing(rawQuery.title)) {
+    if (typeof rawQuery.title !== "string") {
+      details.push({ field: "title", message: "titleは文字列で指定してください" });
+    } else {
+      const trimmed = rawQuery.title.trim();
+      if (trimmed) {
+        filter.title = { $regex: escapeRegExp(trimmed), $options: "i" };
+      }
+    }
   }
 
   return { details, filter };

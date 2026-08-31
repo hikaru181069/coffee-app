@@ -51,7 +51,7 @@ describe("GET /api/search", () => {
     const res = await request(app).get(SEARCH_ENDPOINT).set("Authorization", alice.authHeader);
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ data: { entities: [], records: [] } });
+    expect(res.body).toEqual({ data: { entities: [], entitiesTruncated: false, records: [] } });
   });
 
   test("自分の記録だけから検索する（他ユーザーを含めない）", async () => {
@@ -121,6 +121,57 @@ describe("GET /api/search", () => {
       .set("Authorization", alice.authHeader);
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ data: { entities: [], records: [] } });
+    expect(res.body).toEqual({ data: { entities: [], entitiesTruncated: false, records: [] } });
+  });
+
+  describe("検索ボックスとフィルターの併用", () => {
+    test("recordType（home/cafe）でアクティブなフィルターの範囲内だけ検索する", async () => {
+      await seedTestMasterData();
+      const origin = await Origin.findOne({ normalizedName: "ethiopia" });
+      await createRecordFor(alice.user._id, {
+        title: "家のエチオピア",
+        recordType: "home",
+        originId: origin._id,
+      });
+      await createRecordFor(alice.user._id, {
+        title: "カフェのエチオピア",
+        recordType: "cafe",
+        originId: origin._id,
+      });
+
+      const res = await request(app)
+        .get(SEARCH_ENDPOINT)
+        .query({ q: "ethiopia", recordType: "home" })
+        .set("Authorization", alice.authHeader);
+
+      // homeでフィルターしているため、originのrecordCountは1件だけになる
+      expect(res.body.data.entities[0]).toMatchObject({ label: "Ethiopia", recordCount: 1 });
+    });
+
+    test("originIdsで絞り込んだ範囲内だけ記録タイトルを検索する", async () => {
+      await seedTestMasterData();
+      const ethiopia = await Origin.findOne({ normalizedName: "ethiopia" });
+      const kenya = await Origin.findOne({ normalizedName: "kenya" });
+      await createRecordFor(alice.user._id, { title: "朝のコーヒー", originId: ethiopia._id });
+      await createRecordFor(alice.user._id, { title: "朝のコーヒー2", originId: kenya._id });
+
+      const res = await request(app)
+        .get(SEARCH_ENDPOINT)
+        .query({ q: "朝の", originIds: String(ethiopia._id) })
+        .set("Authorization", alice.authHeader);
+
+      expect(res.body.data.records).toHaveLength(1);
+      expect(res.body.data.records[0].title).toBe("朝のコーヒー");
+    });
+
+    test("不正なフィルター値は400を返す", async () => {
+      const res = await request(app)
+        .get(SEARCH_ENDPOINT)
+        .query({ q: "ethiopia", originIds: "not-an-id" })
+        .set("Authorization", alice.authHeader);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
+    });
   });
 });
