@@ -263,6 +263,14 @@
     "diagnosisLink": "コーヒー診断を見る",
     "mapLink": "世界地図を見る"
   },
+  "similarRecords": {
+    "heading": "似た記録"
+  },
+  "originQuality": {
+    "heading": "品質スコア",
+    "sampleSize": "n={{count}}",
+    "sourceNote": "Coffee Quality Instituteの参考データをもとにした、精製方法別の目安です。"
+  },
   "search": {
     "placeholder": "産地・品種・フレーバー・カフェ・精製方法・コーヒー名で検索",
     "ariaLabel": "横断検索",
@@ -321,6 +329,12 @@
     "recordCount": "{{count}}件の記録",
     "legendVisited": "訪れた産地（産地ごとに色分け）",
     "legendUnvisited": "まだ記録していない",
+    "colorModeAriaLabel": "地図の色分け",
+    "colorModeVisited": "訪問状況",
+    "colorModeQuality": "品質スコア",
+    "qualityScore": "品質スコア {{score}}",
+    "legendQualityGradient": "品質スコア（低い→高い）",
+    "legendQualityUnavailable": "品質データなし",
     "visitedStat": "訪れた産地",
     "visitedOriginsHeading": "訪れた産地一覧",
     "emptyTitle": "まだ産地の記録がありません",

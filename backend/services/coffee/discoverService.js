@@ -1,10 +1,8 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-
 import * as coffeeRecordRepository from "../../repositories/coffeeRecordRepository.js";
 import { serializeCoffeeRecords } from "./coffeeRecordSerializer.js";
 import { buildOriginDiscovery, buildDiscoverTeaser } from "../../core/discover/discoverBuilder.js";
-import { notFoundError } from "../../utils/AppError.js";
+import { loadCqiDataset } from "../../data/cqiDataset.js";
+import { resolveOriginNameFromNodeId } from "./originLookup.js";
 
 /**
  * Discoverのユースケース。
@@ -17,22 +15,6 @@ import { notFoundError } from "../../utils/AppError.js";
  * 自分のCoffeeRecordから直接判定する（buildGraphを経由しない）。
  */
 
-const ORIGIN_NODE_PREFIX = "origin:";
-
-// CQIデータは一度読み込んだら終わりの静的ファイル（docs/features.md「Discover」）。
-// リクエストのたびにファイルI/Oが発生しないよう、モジュールスコープに
-// キャッシュする（プロセスの生存期間中は不変のため、TTLや再読み込みは
-// 持たない）
-let cachedCqiDataset = null;
-
-const loadCqiDataset = () => {
-  if (!cachedCqiDataset) {
-    const filePath = path.join(import.meta.dirname, "../../data/cqiDatabase.json");
-    cachedCqiDataset = JSON.parse(readFileSync(filePath, "utf-8"));
-  }
-  return cachedCqiDataset;
-};
-
 /**
  * 産地ノード1件について、まだ試していない産地の提案を返す
  * （GET /discover/nodes/:nodeId）。
@@ -41,25 +23,24 @@ const loadCqiDataset = () => {
  * Processingの1軸しか持たないため対象外とし、空の提案を返す（404には
  * しない。「対応していない種別」であって「存在しない」わけではないため）。
  * origin:のIDでも、自分の記録に無い産地IDなら404にする
- * （docs/entity-detail.mdの404方針と同じ: 存在の有無を漏らさない）。
+ * （docs/entity-detail.mdの404方針と同じ: 存在の有無を漏らさない。
+ * resolveOriginNameFromNodeIdが担う）。
  */
 export const getOriginDiscovery = async (userId, nodeId) => {
-  const records = await coffeeRecordRepository.findAllForUser(userId);
-  const serialized = serializeCoffeeRecords(records);
-
-  if (!nodeId.startsWith(ORIGIN_NODE_PREFIX)) {
+  // resolveOriginNameFromNodeIdの内部でも同じfindAllForUserを呼んでおり、
+  // ここで2回READが走る。記録数がデモ規模である前提（docs/database.md
+  // 「MVPレベルなら毎回計算しても時間的問題はない」）のもとで、
+  // nodeId解決ロジックをoriginQualityService.jsと共有する再利用性を優先した
+  const originName = await resolveOriginNameFromNodeId(userId, nodeId);
+  if (!originName) {
     return { suggestions: [] };
   }
 
-  const originId = nodeId.slice(ORIGIN_NODE_PREFIX.length);
-  const originRecord = serialized.find((record) => record.origin?.id === originId);
-  if (!originRecord) {
-    throw notFoundError("指定されたノードが見つかりません");
-  }
-
+  const records = await coffeeRecordRepository.findAllForUser(userId);
+  const serialized = serializeCoffeeRecords(records);
   const cqiDataset = loadCqiDataset();
 
-  return buildOriginDiscovery(serialized, cqiDataset, originRecord.origin.name);
+  return buildOriginDiscovery(serialized, cqiDataset, originName);
 };
 
 /**

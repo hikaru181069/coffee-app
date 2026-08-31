@@ -268,6 +268,14 @@
     "diagnosisLink": "View your coffee diagnosis",
     "mapLink": "View the world map"
   },
+  "similarRecords": {
+    "heading": "Similar records"
+  },
+  "originQuality": {
+    "heading": "Quality score",
+    "sampleSize": "n={{count}}",
+    "sourceNote": "A per-process estimate based on reference data from the Coffee Quality Institute."
+  },
   "search": {
     "placeholder": "Search origins, varieties, flavors, cafés, processes, or coffee names",
     "ariaLabel": "Cross-cutting search",
@@ -329,6 +337,12 @@
     "recordCount_other": "{{count}} records",
     "legendVisited": "Visited origin (colored by origin)",
     "legendUnvisited": "Not recorded yet",
+    "colorModeAriaLabel": "Map coloring",
+    "colorModeVisited": "Visited",
+    "colorModeQuality": "Quality score",
+    "qualityScore": "Quality score {{score}}",
+    "legendQualityGradient": "Quality score (low to high)",
+    "legendQualityUnavailable": "No quality data",
     "visitedStat": "Origins visited",
     "visitedOriginsHeading": "Visited origins",
     "emptyTitle": "No origins recorded yet",

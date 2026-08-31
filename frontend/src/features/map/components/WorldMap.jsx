@@ -5,6 +5,7 @@ import { geoNaturalEarth1, geoPath, geoGraticule10 } from "d3-geo";
 import { feature } from "topojson-client";
 import worldTopology from "world-atlas/countries-50m.json";
 import { getOriginFillClass } from "../../coffee-records/utils/originAccent";
+import { getQualityTierFillClass } from "../utils/qualityColor";
 
 // d3-geoの他のグラフ・図（TasteRadarChart.jsx・RecordConnectionsDiagram.jsx）
 // と違い、国境の形状データは自作が現実的ではないため、world-atlas
@@ -41,8 +42,17 @@ const graticuleGeoJson = geoGraticule10();
  * ホバー時は、TasteRadarChart.jsxのラベルと同じ「投影後の座標を%へ変換して
  * absoluteで重ねる」手法でツールチップを出す（SVG内へ直接文字を置くより
  * フォント・折り返しの制御がしやすいため）。
+ *
+ * 2026-08、産地フォーカス機能群の続きとして「品質スコアで色分け」モードを
+ * 追加した（docs/features.md「Origin Quality」参照）。colorModeが
+ * "quality"のときは、訪問済みかどうかに関わらずCQIデータのある産地
+ * （qualityByNumericId）すべてに品質スコアの濃淡（qualityColor.js、
+ * 産地アクセントカラーとは別の単色グラデーション）で色を付ける。ただし
+ * クリック・キーボード操作できるのは引き続き訪問済みの産地だけ
+ * （エンティティ詳細ページへ遷移できるのは自分の記録がある産地のみの
+ * ため）。塗り色とクリック可否の判定基準が分かれる点に注意。
  */
-function WorldMap({ visitedByNumericId }) {
+function WorldMap({ visitedByNumericId, colorMode = "visited", qualityByNumericId }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   // world-atlasのcountries-50m.jsonは、一部の国（海を挟んだ領土を持つ国等）
@@ -60,6 +70,8 @@ function WorldMap({ visitedByNumericId }) {
 
   const hoveredCountry = hoveredIndex !== null ? countriesGeoJson.features[hoveredIndex] : null;
   const hoveredVisited = hoveredCountry ? visitedByNumericId.get(hoveredCountry.id) : null;
+  const hoveredQuality =
+    hoveredCountry && colorMode === "quality" ? qualityByNumericId?.get(hoveredCountry.id) : null;
   const tooltipPoint = hoveredCountry ? path.centroid(hoveredCountry) : null;
 
   return (
@@ -77,14 +89,29 @@ function WorldMap({ visitedByNumericId }) {
         />
         {countriesGeoJson.features.map((country, index) => {
           const visited = visitedByNumericId.get(country.id);
+          const quality = colorMode === "quality" ? qualityByNumericId?.get(country.id) : null;
           const isHovered = hoveredIndex === index;
 
+          // 塗り色: colorModeが"quality"なら品質スコアの濃淡、"visited"なら
+          // 産地ごとのアクセントカラー。どちらも対象データが無ければ中立グレー
+          const fillClass =
+            colorMode === "quality"
+              ? quality
+                ? getQualityTierFillClass(quality.avgQualityScore)
+                : "fill-surface-2"
+              : visited
+                ? getOriginFillClass(visited.label)
+                : "fill-surface-2";
+
+          // クリック・キーボード操作できるかは塗り色モードに関わらず常に
+          // 「訪問済み（自分の記録がある）」で決まる。エンティティ詳細
+          // ページへ遷移できるのは自分の記録がある産地のみのため
           if (!visited) {
             return (
               <path
                 key={index}
                 d={path(country)}
-                className="fill-surface-2 stroke-line/60"
+                className={`${fillClass} stroke-line/60`}
                 strokeWidth={0.5}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex((current) => (current === index ? null : current))}
@@ -99,7 +126,7 @@ function WorldMap({ visitedByNumericId }) {
               role="link"
               tabIndex={0}
               aria-label={t("map.countryAriaLabel", { name: visited.label })}
-              className={`cursor-pointer stroke-line/60 transition-colors duration-150 focus:outline-none ${getOriginFillClass(visited.label)}`}
+              className={`cursor-pointer stroke-line/60 transition-colors duration-150 focus:outline-none ${fillClass}`}
               strokeWidth={isHovered ? 1 : 0.5}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex((current) => (current === index ? null : current))}
@@ -125,7 +152,14 @@ function WorldMap({ visitedByNumericId }) {
             top: `${(tooltipPoint[1] / HEIGHT) * 100 - 2}%`,
           }}
         >
-          {hoveredVisited ? (
+          {hoveredQuality ? (
+            <>
+              <span className="font-medium">{hoveredQuality.originName}</span>
+              <span className="ml-1.5 font-mono text-text-tertiary">
+                {t("map.qualityScore", { score: hoveredQuality.avgQualityScore.toFixed(1) })}
+              </span>
+            </>
+          ) : hoveredVisited ? (
             <>
               <span className="font-medium">{hoveredVisited.label}</span>
               <span className="ml-1.5 font-mono text-text-tertiary">

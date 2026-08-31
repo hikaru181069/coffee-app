@@ -69,9 +69,11 @@ matchup/news/player/position/recommendation/scout/similarPlayer/stats/team）
 どのページからも使われていない死んだコンポーネントとして残っていたため、
 2026-08のスケルトン表示改善時に削除した。
 
-`components/PageHeader.jsx`は再利用予定だったが、実際には
-どのページからも使われていない死んだコンポーネントとして残っている
-（IMPLEMENTATION.mdの未解決事項参照。削除候補）。
+`components/PageHeader.jsx`も再利用予定だったが、実際にはどのページからも
+使われていない死んだコンポーネントだったため、2026-08（案D「面接向け
+仕上げ」）に削除した。専用の`App.css`ブロック（`.page-header*` `.app-screen`
+`.screen-body` `.thr-wl` `.thr-sub` `.page-tab*`等、約145行）もこの
+コンポーネント以外から参照されていなかったためあわせて削除した。
 
 ### 削除済み（2026-08確認）
 
@@ -92,8 +94,21 @@ MLB系ページ約26件（`Archetype` `Compare` `Game` `League` `Matchup`
 サイズの縮小で確認済み）。さらに同じクラス名の**別の**未参照ブロック
 （`.home-player-section` `.home-team-section` `.home-favorites-section`
 `.home-recommendations-section`等、Team/Favorites/Recommendations
-セクション向けの古い定義）が別の行にも見つかっており、こちらは
-規模が大きいため今回は未対応（IMPLEMENTATION.mdの未解決事項に記載）。
+セクション向けの古い定義）が別の行にも見つかっていたが、2026-08時点では
+まだ未対応だった。
+
+2026-08（案D「面接向け仕上げ」）に、`App.css`（当時8,930行）の全クラス
+セレクタとJSX側の実際の使用箇所を機械的に突き合わせたところ、847個の
+トップレベルセレクタのうち801個が未使用の可能性があるという、想定を
+大きく超える規模の残存が判明した。ただし機械的な文字列照合には限界があり
+（例:`` `toast toast--${type}` ``のようなテンプレートリテラルで動的に
+組み立てるクラス名は、実際には使われていても未使用と誤検出される）、
+801件を確認無しに一括削除するのは安全ではないと判断し、今回は見送った。
+`PageHeader.jsx`削除に伴う`.page-header*`等（上記「再利用した」節参照、
+参照元が完全に1コンポーネントへ限定でき安全に判定できたもの）だけを
+削除するに留めている。`.home-player-section`等を含む残り約800件の未使用
+セレクタの整理は、個別に使用箇所を確認しながら進める専用タスクとして
+IMPLEMENTATION.mdの未解決事項に残す。
 
 ## fastapi-service
 
