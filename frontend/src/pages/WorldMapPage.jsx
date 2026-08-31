@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -8,14 +8,51 @@ import { GraphErrorState } from "../features/graph/components/GraphStates";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
 import { getOriginAccentClass } from "../features/coffee-records/utils/originAccent";
 import { buildVisitedByNumericId } from "../features/map/utils/visitedOrigins";
+import { buildQualityByNumericId } from "../features/map/utils/originQualityMap";
 import WorldMap from "../features/map/components/WorldMap";
 import WorldMapLegend from "../features/map/components/WorldMapLegend";
 import WorldMapSkeleton from "../features/map/components/WorldMapSkeleton";
 import BackLink from "../components/BackLink";
 import StatCard from "../components/StatCard";
 import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
+import { useAllOriginQuality } from "../features/originQuality/hooks/useAllOriginQuality";
 import { cardClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { contentContainerClass } from "../styles/pageContainer";
+
+/** 地図の色分けモード切り替え。LanguageSwitcher.jsxと同じ見た目の2択トグル */
+function ColorModeToggle({ mode, onChange, t }) {
+  const MODES = [
+    { value: "visited", labelKey: "map.colorModeVisited" },
+    { value: "quality", labelKey: "map.colorModeQuality" },
+  ];
+
+  return (
+    <div
+      role="group"
+      aria-label={t("map.colorModeAriaLabel")}
+      className="inline-flex overflow-hidden rounded-full border border-surface-3 text-xs font-semibold"
+    >
+      {MODES.map(({ value, labelKey }) => {
+        const isActive = mode === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onChange(value)}
+            aria-pressed={isActive}
+            className={`px-2.5 py-1.5 transition-colors duration-150 ${
+              isActive
+                ? "bg-inverse text-on-inverse"
+                : "text-text-secondary hover:bg-surface-1/60 hover:text-text"
+            }`}
+          >
+            {t(labelKey)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 const MAP_FILTERS = { nodeTypes: ["origin"], recordType: "", ratingMin: "" };
 
@@ -49,25 +86,39 @@ const MAP_FILTERS = { nodeTypes: ["origin"], recordType: "", ratingMin: "" };
  * 一覧の各チップには、地図の塗り色と同じ`getOriginAccentClass`（産地名
  * からのハッシュで決まる固定パレット）の小さな点を添えている。地図上の
  * 色と一覧の色が同じ産地なら常に一致するため、地図で見た色を手がかりに
- * 一覧から該当の産地を探せる。
+ * 一覧から該当の産地を探せる（この対応は「訪問状況」モードの話。下記の
+ * 「品質スコア」モードでは一覧側の色は変えない。単なる産地一覧として
+ * 一貫性を保つほうを優先した）。
  *
  * 2026-08、読み込み中の表示はGraph画面の`GraphLoadingState`（円+線を
  * 模した知識グラフ専用の骨格）を流用していたが、地図・サマリー・産地
  * 一覧という実際の構成と見た目が違いすぎるという指摘を受け、専用の
  * `WorldMapSkeleton`を新設した。エラー表示（`GraphErrorState`）はグラフ
  * 形状に依存しない汎用的な見た目のため、そのまま流用している。
+ *
+ * 2026-08、産地フォーカス機能群の続きとして「品質スコアで色分け」モードを
+ * 追加した（docs/features.md「Origin Quality」参照）。CQIデータは
+ * ログインユーザーの記録に依存しない静的データのため、`useAllOriginQuality`
+ * は`useGraph`の読み込み状態とは独立にマウント時へ1回だけ取得する
+ * （取得中・失敗時は品質スコアモードに切り替えても単に色が付かないだけで、
+ * 地図本体の表示（訪問状況モード）をブロックしない。useMasterDataと
+ * 同じ「失敗しても致命的ではない」設計）。
  */
 function WorldMapPage() {
   const { t } = useTranslation();
   const { graph, isLoading, error, reload } = useGraph(MAP_FILTERS);
   const { masterData, isLoading: isMasterDataLoading } = useMasterData();
+  const { origins: qualityOrigins } = useAllOriginQuality();
   const originVisual = getNodeVisual("origin");
+  const [colorMode, setColorMode] = useState("visited");
 
   const visitedByNumericId = useMemo(() => {
     if (!graph) return new Map();
     const originNodes = graph.nodes.filter((node) => node.type === "origin");
     return buildVisitedByNumericId(originNodes);
   }, [graph]);
+
+  const qualityByNumericId = useMemo(() => buildQualityByNumericId(qualityOrigins), [qualityOrigins]);
 
   const visitedOrigins = useMemo(
     () =>
@@ -114,9 +165,16 @@ function WorldMapPage() {
         </div>
 
         <div className={cardClass}>
-          <WorldMap visitedByNumericId={visitedByNumericId} />
+          <div className="mb-4 flex justify-end">
+            <ColorModeToggle mode={colorMode} onChange={setColorMode} t={t} />
+          </div>
+          <WorldMap
+            visitedByNumericId={visitedByNumericId}
+            colorMode={colorMode}
+            qualityByNumericId={qualityByNumericId}
+          />
           <div className="mt-4">
-            <WorldMapLegend />
+            <WorldMapLegend colorMode={colorMode} />
           </div>
         </div>
 
