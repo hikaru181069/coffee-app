@@ -22,6 +22,11 @@ import { dangerButtonClass, secondaryButtonClass } from "./formStyles";
  *     これが無いと、開いている間にTabで背景側の要素（隠れているだけで
  *     フォーカス自体は届く）へ移ってしまい、キーボード操作だけのユーザーが
  *     「今どこにいるか」を見失う
+ *   - 閉じたら、開く前にフォーカスがあった要素（「…」メニューの削除項目等）
+ *     へフォーカスを戻す。これが無いと、キーボード操作だけのユーザーは
+ *     ダイアログが消えた瞬間フォーカスが行方不明になり（既定ではbodyへ
+ *     戻るだけ）、また一覧の先頭からTabをやり直すことになる
+ *     （2026-08、監査で発覚）
  */
 function ConfirmDialog({
   isOpen,
@@ -38,10 +43,12 @@ function ConfirmDialog({
   const resolvedCancelLabel = cancelLabel ?? t("common.cancel");
   const dialogRef = useRef(null);
   const cancelButtonRef = useRef(null);
+  const triggerElementRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen) return undefined;
 
+    triggerElementRef.current = document.activeElement;
     cancelButtonRef.current?.focus();
 
     const handleKeyDown = (event) => {
@@ -78,6 +85,12 @@ function ConfirmDialog({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
+      // 開く前にフォーカスがあった要素がまだDOMにあれば、そこへ戻す
+      // （破壊的操作の成功後にページごと遷移した等でDOMから消えている
+      // 場合は、遷移先のフォーカス管理に任せて何もしない）
+      if (triggerElementRef.current && document.contains(triggerElementRef.current)) {
+        triggerElementRef.current.focus();
+      }
     };
   }, [isOpen, isProcessing, onCancel]);
 

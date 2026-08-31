@@ -6,6 +6,7 @@
  * するuserEventを使い、実装の詳細（handleKeyDownの中身）ではなく
  * 観測できる振る舞い（どの要素にフォーカスがあるか）で検証する。
  */
+import { useState } from "react";
 import { describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -90,5 +91,39 @@ describe("ConfirmDialog", () => {
 
     await user.click(screen.getByRole("button", { name: "削除する" }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  test("閉じると、開く前にフォーカスがあった要素へフォーカスが戻る", async () => {
+    const user = userEvent.setup();
+
+    // isOpenを外側で管理する小さなharness。「開く」ボタンにフォーカスした
+    // 状態でダイアログを開き、Escapeで閉じたときにそこへ戻ることを見る
+    function Harness() {
+      const [isOpen, setIsOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setIsOpen(true)}>
+            削除メニュー項目
+          </button>
+          <ConfirmDialog
+            isOpen={isOpen}
+            title="この記録を削除しますか？"
+            onConfirm={vi.fn()}
+            onCancel={() => setIsOpen(false)}
+          />
+        </>
+      );
+    }
+    render(<Harness />);
+
+    const trigger = screen.getByRole("button", { name: "削除メニュー項目" });
+    trigger.focus();
+    await user.click(trigger);
+
+    expect(screen.getByRole("button", { name: "キャンセル" })).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+
+    expect(trigger).toHaveFocus();
   });
 });
