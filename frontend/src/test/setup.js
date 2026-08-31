@@ -23,3 +23,16 @@ afterEach(cleanup);
 import i18n from "../i18n";
 
 i18n.changeLanguage("ja");
+
+// jsdomはIntersectionObserverを実装していない。hooks/useReveal.jsを使う
+// コンポーネント（RelatedRecordRow・SimilarRecords等のスクロールイン
+// 演出）をレンダーするとReferenceErrorになるため、最小限のダミー実装を
+// グローバルに用意する。発火（isIntersecting）はさせず、observe/
+// unobserve/disconnectを何もしないメソッドとして提供するだけでよい
+// （テストの関心事は演出のタイミングではなく表示内容のため）。
+class MockIntersectionObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+globalThis.IntersectionObserver = MockIntersectionObserver;

@@ -4,6 +4,7 @@ import { serializeCoffeeRecords } from "./coffeeRecordSerializer.js";
 import { buildGraph, findRecordIdsConnectedToNode } from "../../core/graph/graphBuilder.js";
 import { buildEntityDetail } from "../../core/graph/entityDetailBuilder.js";
 import { notFoundError } from "../../utils/AppError.js";
+import { excerptNotes } from "../../utils/textExcerpt.js";
 
 /**
  * 知識グラフのユースケース。
@@ -12,8 +13,6 @@ import { notFoundError } from "../../utils/AppError.js";
  * つなぐ役割。グラフ用のコレクションは持たず、CoffeeRecordとマスター
  * データから都度導出する（docs/database.md の Graph Persistence）。
  */
-
-const NOTES_EXCERPT_LENGTH = 60;
 
 /**
  * notesのキーワード（flavorAlias付き）をflavorノードへ統合するための
@@ -28,14 +27,6 @@ const loadFlavorsByNormalizedName = async () => {
   return new Map(
     flavors.map((flavor) => [flavor.normalizedName, { id: String(flavor._id), name: flavor.name }]),
   );
-};
-
-/** notesの短い抜粋を作る。関連記録一覧でどんな記録か思い出す手がかりにする */
-const excerptNotes = (notes) => {
-  if (!notes) return "";
-  return notes.length > NOTES_EXCERPT_LENGTH
-    ? `${notes.slice(0, NOTES_EXCERPT_LENGTH)}…`
-    : notes;
 };
 
 /**

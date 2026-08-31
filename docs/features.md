@@ -15,6 +15,7 @@ MVP完成後に追加した個別機能の仕様。もともとは機能ごと�
 - **Coffee Diagnosis**: 記録から「コーヒータイプ」を判定し、Insight・Statsの要約とあわせて1画面で見せる
 - **World Map**: 自分が記録した産地を世界地図上でハイライトする
 - **Origin Quality**: 外部データ（CQI）を使用し、産地自体の品質スコア（精製方法別）を見せる
+- **Similar Records**: 知識グラフの共起関係を使い、ある記録と属性を共有する他の記録を提示する
 
 ---
 
@@ -687,3 +688,84 @@ CQIデータ自体が目安値のため行わない）。認証は必須だが�
 
 `GET /api/origin-quality`（産地一覧・countryCode付き）はWorld Mapの
 「品質スコアで色分け」モード（下記「World Map」の「表示」参照）が使う。
+
+---
+
+## Similar Records
+
+### Purpose
+
+2026-08、「知識グラフの活用を深める」施策として追加した。産地・農園・
+品種・精製方法・焙煎度・フレーバー・カフェ・キーワードのうち、
+ある記録が持つ属性ノードを2つ以上共有する他の記録を、共有数の多い順に
+見せる。知識グラフの共起関係をそのまま使い、「次に何を試すか」
+（Discover）でも「1つの属性に関連する記録一覧」（Entity Detail）でも
+なく、「記録同士がどれだけ似ているか」という、これまでどの機能にも
+無かった問いに答える。docs/product.md の中心体験（Record → Connect →
+Discover）のうち、Connect（記録どうしのつながり）を最も直接的に
+可視化する機能という位置付け。
+
+### なぜAI推薦ではないか
+
+対象記録につながる属性ノードを1つずつたどり、同じ属性ノードにつながる
+他の記録を`backend/core/graph/graphBuilder.js`の`findRecordIdsConnectedToNode`
+（既存のグラフ照会関数）でそのまま数え上げるだけの集計。埋め込みベクトルや
+類似度計算ライブラリは使わず、条件分岐と閾値判定のみで完結する
+（docs/product.md「MVP Before Intelligence」）。
+
+### 閾値
+
+Insight/Discoverと同じ「偶然の一致を断定しない」考え方で、共有する属性が
+2つ未満（例: 同じ精製方法というだけ）の記録は候補にしない
+（`backend/core/similarRecords/similarRecordsBuilder.js`の`THRESHOLDS`）。
+候補は共有数の多い順、同数なら評価（rating）の高い順に並べ、最大5件まで。
+
+### Source of Truth
+
+MongoDBのCoffeeRecordとマスターデータを正とする。専用のコレクションは
+持たず、`core/graph/graphBuilder.js`が導出するグラフから都度導出する
+（Search・Entity Detailと同じくグラフを直接再利用する。Discoverが
+グラフに依存しない方針とは異なる。CQIのような外部データを持たず、
+グラフの構造だけで完結する機能のため）。
+
+### Response Shape
+
+```json
+GET /api/similar-records/507f...
+
+{
+  "data": {
+    "similarRecords": [
+      {
+        "id": "507f...",
+        "title": "Colombia Huila",
+        "consumedAt": "2026-07-05T00:00:00.000Z",
+        "rating": 3,
+        "notesExcerpt": "バランス型。悪くはないが強い印象は無い。",
+        "sharedCount": 4,
+        "sharedAttributes": [
+          { "type": "process", "label": "Washed" },
+          { "type": "roastLevel", "label": "Medium" },
+          { "type": "flavor", "label": "Nutty" },
+          { "type": "flavor", "label": "Caramel" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+対象の記録が自分のものでない・存在しない場合は404（`docs/entity-detail.md`
+の404方針と同じ: 存在の有無を漏らさない）。候補が無ければ空配列。
+
+### 表示
+
+`/records/:recordId`（記録詳細ページ）の「つながり」セクションの直後。
+`sharedAttributes`をチップで示し、共有数の数字だけでなく「なぜ似ているか」
+が一目で分かるようにしている（docs/product.md「Discovery Must Be
+Actionable」）。候補が無い・読み込み中・エラー時は何も表示しない
+（`DiscoverSuggestions`と同じ「静かな道具」の方針）。
+
+docs/design.mdにある「関連ノード」（1つの属性ノードに紐づく記録一覧を
+詳細画面に埋め込む案）とは異なる機能のため、重複にはあたらない
+（`frontend/src/pages/RecordDetailPage.jsx`のコメント参照）。

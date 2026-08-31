@@ -263,6 +263,9 @@
     "diagnosisLink": "コーヒー診断を見る",
     "mapLink": "世界地図を見る"
   },
+  "similarRecords": {
+    "heading": "似た記録"
+  },
   "originQuality": {
     "heading": "品質スコア",
     "sampleSize": "n={{count}}",

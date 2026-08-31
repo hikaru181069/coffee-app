@@ -19,6 +19,7 @@ import {
 } from "../features/coffee-records/utils/recordFormat";
 import TasteRadarChart from "../features/coffee-records/components/TasteRadarChart";
 import RecordConnectionsDiagram from "../features/graph/components/RecordConnectionsDiagram";
+import SimilarRecords from "../features/similarRecords/components/SimilarRecords";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
 import { contentContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
@@ -75,9 +76,16 @@ import { getErrorMessage } from "../utils/errorMessage";
  * `text-text-tertiary`のStoreアイコン）にしている。
  *
  * docs/design.md にある「関連ノード」（詳細画面に直接、関連する記録の
- * 一覧を埋め込む案）は今回も実装していない。Graph画面・エンティティ詳細
+ * 一覧を埋め込む案）はまだ実装していない。Graph画面・エンティティ詳細
  * ページへ遷移すれば同じ情報を見られるため、重複した一覧をここにも
  * 持たせる優先度は低いと判断した。
+ *
+ * 2026-08、案C（知識グラフの活用を深める）として「似た記録」
+ * （SimilarRecords、docs/features.md参照）を追加した。上記の「関連ノード」
+ * （1つの属性ノードに紐づく記録一覧）とは異なる情報で、こちらは
+ * 「この記録自体と2つ以上の属性を共有する他の記録」を返す、record同士の
+ * 類似度に基づくランキング。Graph・エンティティ詳細ページのどこにも
+ * 無い情報のため、重複にはあたらないと判断した。
  */
 /** collectCoffeeDetails()のkeyから、対応する知識グラフのノード種別へ。roasterNameはノードに無いため含めない */
 const DETAIL_NODE_TYPE = {
@@ -337,6 +345,15 @@ function RecordDetailPage() {
           {t("records.detailEmptyHint")}
         </p>
       )}
+
+      {/* ── Similar Records ──────────────────────────
+          DiscoverSuggestions.jsxと同じく、候補が無ければ何も描画しない
+          自己判定コンポーネントのため、hasCoffeeInfo等のゲートの外に置く
+          （それらがすべてfalseの記録でも、共有するキーワード等があれば
+          表示されうる）。余白はコンポーネント自身が実際に描画するときだけ
+          持つ（親側でmt-6を付けると、何も表示されない場合も空の余白だけが
+          残ってしまうため） */}
+      <SimilarRecords recordId={record.id} />
 
       {/* ── Actions ──────────────────────────────── */}
       <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-surface-2 pt-6">
