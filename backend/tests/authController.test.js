@@ -10,6 +10,7 @@
 
 import request from "supertest";
 import bcrypt from "bcryptjs";
+import { jest } from "@jest/globals";
 
 import app from "../app.js";
 import User from "../models/User.js";
@@ -65,6 +66,34 @@ describe("POST /api/auth/register", () => {
     expect(res.body.message).toBe("User already exists");
   });
 
+  test("大文字小文字が違うだけの同じメールアドレスも400（別アカウントにならない）", async () => {
+    await request(app).post(REGISTER).send({
+      name: "Alice",
+      email: "Alice@Example.com",
+      password: "password123",
+    });
+
+    const res = await request(app).post(REGISTER).send({
+      name: "Alice2",
+      email: "alice@example.com",
+      password: "password456",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("User already exists");
+  });
+
+  test("保存されるemailは小文字に正規化される", async () => {
+    const res = await request(app).post(REGISTER).send({
+      name: "Alice",
+      email: "Alice@Example.com",
+      password: "password123",
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.email).toBe("alice@example.com");
+  });
+
   test.each([
     ["nameが空", { name: "", email: "alice@example.com", password: "password123" }, "name"],
     ["emailが未指定", { name: "Alice", password: "password123" }, "email"],
@@ -108,6 +137,21 @@ describe("POST /api/auth/login", () => {
     expect(res.body.message).toBe("Invalid email or password");
   });
 
+  test("存在しないメールアドレスでも必ずbcrypt.compareを実行する（タイミングサイドチャネル対策）", async () => {
+    // ユーザーの有無で処理時間が変わらないようにするための修正。
+    // 実際の時間差ではなく「compareが呼ばれたか」で振る舞いを確認する
+    // （時間ベースのテストはCI環境の負荷でフレーキーになりやすいため）
+    const compareSpy = jest.spyOn(bcrypt, "compare");
+
+    await request(app).post(LOGIN).send({
+      email: "nobody@example.com",
+      password: "password123",
+    });
+
+    expect(compareSpy).toHaveBeenCalledTimes(1);
+    compareSpy.mockRestore();
+  });
+
   test("間違ったパスワードは401", async () => {
     const res = await request(app).post(LOGIN).send({
       email: "alice@example.com",
@@ -123,6 +167,16 @@ describe("POST /api/auth/login", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.details.some((detail) => detail.field === "password")).toBe(true);
+  });
+
+  test("登録時と大文字小文字が違うメールアドレスでもログインできる", async () => {
+    const res = await request(app).post(LOGIN).send({
+      email: "ALICE@EXAMPLE.COM",
+      password: "password123",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.email).toBe("alice@example.com");
   });
 
   test("emailにMongo演算子オブジェクトを送ってもNoSQLインジェクションにならず400", async () => {

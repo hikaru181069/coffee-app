@@ -1,5 +1,5 @@
 import express from "express";
-import rateLimit from "express-rate-limit";
+import { createBruteForceLimiter } from "../middleware/rateLimiter.js";
 import { registerUser, loginUser } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -12,16 +12,7 @@ const router = express.Router();
  * 使われうるため。数値は目安であり、実際に運用する場合は
  * ログイン失敗率などを見て調整する想定。
  */
-const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many attempts. Please try again later." },
-  // テストは同一IP（supertestのローカル呼び出し）から大量にリクエストするため、
-  // Jestが自動設定するNODE_ENV=testのときだけ制限を無効化する
-  skip: () => process.env.NODE_ENV === "test",
-});
+const authRateLimiter = createBruteForceLimiter("Too many attempts. Please try again later.");
 
 router.post("/register", authRateLimiter, registerUser);
 router.post("/login", authRateLimiter, loginUser);

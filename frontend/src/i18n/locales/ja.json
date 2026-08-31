@@ -2,6 +2,7 @@
   "nav": {
     "mainNavigation": "メインナビゲーション",
     "bottomNavigation": "下部ナビゲーション",
+    "toggleMenu": "メニューを開閉",
     "home": "ホーム",
     "records": "記録",
     "graph": "グラフ",
@@ -48,7 +49,7 @@
   "landing": {
     "kicker": "コーヒージャーナル & 知識グラフ",
     "hero": {
-      "title": "コーヒーを記録する。 あなたの好みを発見する。"
+      "title": "coffee-app"
     },
     "steps": {
       "record": {

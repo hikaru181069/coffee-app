@@ -3,6 +3,11 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import { validateRegister, validateLogin } from "../validators/authValidator.js";
 
+// ユーザーが存在しない場合でもbcrypt.compareを必ず1回実行するためのダミーハッシュ。
+// 実在するパスワードのハッシュ値ではない（"never-a-real-password"を
+// bcryptでハッシュ化しただけの固定値）。loginUser参照
+const DUMMY_PASSWORD_HASH = "$2b$10$qaNUWn1/W0VCMsV2y.nO..eh/Lbh31ub9zW2c85h6z0K/sN4Y2YCW";
+
 const createToken = (userId) => {
   return jwt.sign(
     {
@@ -31,7 +36,11 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: details[0].message, details });
     }
 
-    const { name, email, password } = req.body;
+    const { name, password } = req.body;
+    // 2026-08、User.jsのemail lowercase:trueはドキュメントの保存時にしか
+    // 適用されない（findOneのクエリ条件までは正規化されない）ため、
+    // 検索・作成どちらでも同じ正規化済みemailを使う必要がある
+    const email = req.body.email.trim().toLowerCase();
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -59,17 +68,19 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: details[0].message, details });
     }
 
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = req.body.email.trim().toLowerCase();
 
     const user = await User.findOne({ email });
 
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
+    // 2026-08、ユーザーが存在しない場合に即座に401を返していたため、
+    // 「存在する場合はbcrypt.compareの分だけ応答が遅い」というタイミング
+    // サイドチャネルで登録済みメールアドレスを推測できた。ユーザーの
+    // 有無に関わらず必ずbcrypt.compareを1回実行することで解消する
+    // （存在しない場合はDUMMY_PASSWORD_HASHと比較。どうせ一致しない）
+    const isPasswordMatch = await bcrypt.compare(password, user ? user.password : DUMMY_PASSWORD_HASH);
 
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordMatch) {
+    if (!user || !isPasswordMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 

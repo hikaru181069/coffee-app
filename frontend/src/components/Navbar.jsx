@@ -119,7 +119,9 @@ function Navbar() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          aria-label="Toggle menu"
+          aria-label={t("nav.toggleMenu")}
+          aria-expanded={open}
+          aria-controls="mobile-nav-drawer"
           className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 rounded-md text-text-secondary transition-colors hover:bg-surface-1/60"
         >
           <span
@@ -147,6 +149,7 @@ function Navbar() {
           - 閉じた状態: -translate-x-full (画面左外に隠れる)
           - 開いた状態: translate-x-0 (画面内に表示) */}
       <aside
+        id="mobile-nav-drawer"
         className={[
           "fixed left-0 top-0 z-50 h-full w-52 border-r border-surface-2/50 bg-raised md:hidden",
           "transition-transform duration-300 ease-in-out",

@@ -43,6 +43,13 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ message: "Both current and new password are required" });
     }
 
+    // 2026-08、型チェックが無く、オブジェクト等を送るとnewPassword.lengthが
+    // undefinedになりチェックをすり抜けたり、bcrypt.hashに非文字列が渡ったり
+    // していた（validateLogin.jsの型チェックと同じ考え方）
+    if (typeof currentPassword !== "string" || typeof newPassword !== "string") {
+      return res.status(400).json({ message: "Both current and new password must be strings" });
+    }
+
     if (newPassword.length < 6) {
       return res.status(400).json({ message: "New password must be at least 6 characters" });
     }

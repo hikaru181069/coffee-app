@@ -11,6 +11,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      // 2026-08、大文字小文字違い（Alice@example.com / alice@example.com）が
+      // 別アカウントとして登録できてしまっていたため追加。ただしこの
+      // setterはドキュメントの保存時にしか適用されない（find系クエリの
+      // 条件までは正規化されない）ため、authController.jsのfindOne呼び出し側でも
+      // 同様にtrim().toLowerCase()している
+      lowercase: true,
+      trim: true,
     },
     password: {
       type: String,

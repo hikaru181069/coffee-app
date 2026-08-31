@@ -112,4 +112,15 @@ describe("GET /api/search", () => {
 
     expect(res.body.data.entities[0]).toMatchObject({ type: "cafe", label: "Blue Bottle Coffee" });
   });
+
+  test("qを2回指定した配列クエリでも500にならず空の結果を返す", async () => {
+    // ?q=a&q=b はExpressでreq.query.qが配列になり、以前は
+    // searchBuilder.jsの.trim()呼び出しでTypeErrorになっていた
+    const res = await request(app)
+      .get(`${SEARCH_ENDPOINT}?q=a&q=b`)
+      .set("Authorization", alice.authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ data: { entities: [], records: [] } });
+  });
 });

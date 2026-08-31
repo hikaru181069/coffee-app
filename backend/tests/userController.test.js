@@ -118,6 +118,17 @@ describe("PATCH /api/users/me/password", () => {
 
     expect(res.status).toBe(400);
   });
+
+  test("newPasswordが文字列でなければ400（オブジェクトを送っても落ちない）", async () => {
+    const { authHeader } = await registerUser();
+
+    const res = await request(app)
+      .patch(`${ME}/password`)
+      .set("Authorization", authHeader)
+      .send({ currentPassword: "password123", newPassword: { $ne: null } });
+
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("DELETE /api/users/me", () => {

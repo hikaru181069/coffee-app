@@ -2,6 +2,7 @@
   "nav": {
     "mainNavigation": "Main navigation",
     "bottomNavigation": "Bottom navigation",
+    "toggleMenu": "Toggle menu",
     "home": "Home",
     "records": "Records",
     "graph": "Graph",
@@ -48,7 +49,7 @@
   "landing": {
     "kicker": "Coffee Journal & Knowledge Graph",
     "hero": {
-      "title": "Record your coffee. Discover your taste."
+      "title": "coffee-app"
     },
     "steps": {
       "record": {
