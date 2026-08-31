@@ -14,6 +14,7 @@ MVP完成後に追加した個別機能の仕様。もともとは機能ごと�
 - **Discover**: 外部データ（CQI）を使用し、まだ試していない産地を提案する
 - **Coffee Diagnosis**: 記録から「コーヒータイプ」を判定し、Insight・Statsの要約とあわせて1画面で見せる
 - **World Map**: 自分が記録した産地を世界地図上でハイライトする
+- **Origin Quality**: 外部データ（CQI）を使用し、産地自体の品質スコア（精製方法別）を見せる
 
 ---
 
@@ -609,3 +610,72 @@ Navigation」参照）。訪問済みの産地だけクリック・キーボー�
 分母だけを省く（`useMasterData.js`の「失敗しても致命的ではない」
 方針を踏襲）。産地の提案（Discover）とは役割が重複しないよう、ここでは
 記録済みデータの集計のみを表示する。
+
+---
+
+## Origin Quality
+
+### Purpose
+
+2026-08、World Mapに続く「産地にフォーカスした機能群」の一手として追加した。
+Discoverが「次に何を試すべきか」という提案を作るのに対し、Origin Qualityは
+「この産地自体の特徴（品質スコア）は何か」という描写的な情報を返すだけで、
+他産地への提案・比較は一切行わない。Insight（意味づけ）とStats（生の集計）の
+関係と同じく、Discoverとは別の問いに答える独立した機能
+（`features/discover/`とは別の`features/originQuality/`）。
+
+### なぜAI推薦ではないか
+
+Discoverと同じ理由（`docs/features.md`「Discover」参照）。CQI参照データ
+（`backend/data/cqiDatabase.json`）から、産地名・精製方法でエントリを
+検索・平均するだけで、機械学習・自然言語処理は使わない。
+
+### Source of Truth
+
+CQI参照データ（静的ファイル）とOriginマスターデータ（`countryCode`の
+突き合わせ用）を正とする。ログインユーザーのCoffeeRecordには依存しない
+（産地自体が持つ、ユーザーに依存しない情報のため）。ただし、
+`GET /origin-quality/nodes/:nodeId`は「自分の記録に存在する産地ノードか」
+の確認にCoffeeRecordを使う（`docs/entity-detail.md`の404方針と同じ。
+`backend/services/coffee/originLookup.js`が`discoverService.js`と共有する）。
+
+### Response Shape
+
+```json
+GET /api/origin-quality/nodes/origin%3A507f...
+
+{
+  "data": {
+    "originLabel": "Ethiopia",
+    "scores": [
+      { "processLabel": "Natural", "avgQualityScore": 86.4, "sampleSize": 210 },
+      { "processLabel": "Washed", "avgQualityScore": 85.1, "sampleSize": 260 }
+    ]
+  }
+}
+```
+
+`origin:`以外のプレフィックスは404にせず`{ originLabel: null, scores: [] }`。
+`origin:`で自分の記録に無い産地IDは404。CQIデータに無い産地（20産地に
+含まれない）は空配列。
+
+```json
+GET /api/origin-quality
+
+{ "data": { "origins": [{ "originName": "Panama", "avgQualityScore": 86.37, "countryCode": "PA" }] } }
+```
+
+産地ごとに精製方法をまたいだ単純平均を1件返す（サンプル数による重み付けは
+CQIデータ自体が目安値のため行わない）。認証は必須だが、ログインユーザーの
+記録には依存しない（CQIデータとOriginマスターだけで決まる）。
+
+### 表示
+
+`/entities/origin:xxx`（Entity Detailページ、産地ノードのみ）。
+`DiscoverSuggestions`と同じ位置に並べ、「描写（Origin Quality）→提案
+（Discover）」の順で表示する。条件を満たすデータが無い・読み込み中・
+エラー時は何も表示しない（`DiscoverSuggestions`と同じ「静かな道具」の方針）。
+
+`GET /api/origin-quality`（産地一覧・countryCode付き）はWorld Mapの
+色分け表示（産地にフォーカスした機能群の次の一手）向けに用意した
+エンドポイントで、2026-08時点ではまだUIから使っていない。

@@ -263,6 +263,11 @@
     "diagnosisLink": "コーヒー診断を見る",
     "mapLink": "世界地図を見る"
   },
+  "originQuality": {
+    "heading": "品質スコア",
+    "sampleSize": "n={{count}}",
+    "sourceNote": "Coffee Quality Instituteの参考データをもとにした、精製方法別の目安です。"
+  },
   "search": {
     "placeholder": "産地・品種・フレーバー・カフェ・精製方法・コーヒー名で検索",
     "ariaLabel": "横断検索",
