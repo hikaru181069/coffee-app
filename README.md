@@ -91,6 +91,8 @@ Password: coffeedemo123
 - **Discover** — CQI（Coffee Quality Institute）の参考データと知識グラフの隣接関係を使い、「よく選んでいる精製方法で、まだ試していない産地」を提案する
 - **Coffee Diagnosis** — 焙煎度・フレーバーの傾向から「コーヒータイプ」をルールベースで判定し、Insight・Statsの要約とあわせて1画面で見せる
 - **World Map** — 自分が記録した産地を世界地図上でハイライトする。産地ごとのアクセントカラー（地域でまとまった配色、20件重複なし）は知識グラフのノードやRecords一覧とも共通
+- **Origin Quality** — CQIの参考データから、産地自体の品質スコア（精製方法別）を提示する。Discoverと違い他産地への提案・比較は行わない、描写に特化した機能
+- **Similar Records** — 知識グラフの共起関係を使い、ある記録と2つ以上の属性（産地・精製方法・フレーバーなど）を共有する他の記録を、共有数の多い順に提示する
 
 Out of Scope（MVPでは扱わない）: AI推薦、自然言語による味覚分析、SNS・フォロー、カフェ口コミ、EC連携、画像認識。詳細は [`docs/mvp.md`](docs/mvp.md) を参照してください。
 
@@ -146,7 +148,7 @@ coffee-app/
 | Database       | MongoDB / Mongoose                                                 |
 | 計算サービス   | Python / FastAPI                                                   |
 | 認証           | JWT / bcryptjs                                                     |
-| テスト・CI     | Jest + Supertest / mongodb-memory-server / pytest / GitHub Actions |
+| テスト・CI     | Jest + Supertest / mongodb-memory-server（backend）、Vitest + React Testing Library（frontend）、pytest、GitHub Actions |
 | 開発環境       | Docker Compose                                                     |
 
 frontend・backend とも ES Modules を使用します。採用理由と落とし穴は [`docs/architecture.md`](docs/architecture.md#module-format) にまとめています。
@@ -286,6 +288,7 @@ frontend は `VITE_API_URL` で Express の URL を指定します（未指定�
 
 ```bash
 cd backend && npm test          # Jest + Supertest + mongodb-memory-server
+cd frontend && npm run test     # Vitest + React Testing Library
 cd frontend && npm run lint     # ESLint
 cd frontend && npm run build    # ビルド確認
 cd fastapi-service && ../.venv/bin/pytest    # pytest
@@ -312,7 +315,6 @@ cd fastapi-service && ../.venv/bin/pytest    # pytest
 
 - AI推薦・自然言語による味覚分析（`docs/mvp.md` のOut of Scope）
 - 記録詳細画面への「関連ノード」の直接埋め込み（現在はGraph画面への遷移のみ）
-- 知識グラフの期間フィルター（`dateFrom`/`dateTo`）のUI化。APIには実装済み
 - FastAPIサービスの活用（将来の味覚分析・類似度計算）
 - TypeScript化・CSS Modulesへの移行
 
