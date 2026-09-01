@@ -179,6 +179,40 @@ const coffeeRecordSchema = new mongoose.Schema(
       default: [],
       set: dedupeIds,
     },
+
+    // ── 抽出の詳細（記録編集フォームではなく、記録詳細ページの独立
+    // カードでのみ編集する。docs/domain-model.md参照）───────────────
+    // 6軸の味覚評価と同じ理由（記録1件に閉じた数値データ）で
+    // 知識グラフのノードにはしない。既定値はnullで「未記録」を表す
+    doseWeight: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+    waterWeight: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+    brewTimeSeconds: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+    // 注湯記録: 経過時間ごとの累計湯量（例: 0:45で150gまで注いだ）。
+    // 実際のドリップレシピの書き方に合わせて「累計」で持たせる。
+    // _id: false … 保存のたびに配列ごと置き換える運用のため、
+    // 要素ごとの安定IDは不要
+    pours: {
+      type: [
+        {
+          _id: false,
+          elapsedSeconds: { type: Number, required: true, min: 0 },
+          cumulativeWaterWeight: { type: Number, required: true, min: 0 },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true },
 );

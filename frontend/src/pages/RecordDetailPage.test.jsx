@@ -3,10 +3,10 @@
  *
  * 読み込み中・404・その他エラー・詳細が何も無い場合の空状態・
  * 正常系（Coffee Information・Notes・味覚グラフ/Connections・削除フロー）
- * を確認する。SimilarRecordsは独立した機能（SimilarRecords.test.jsxで
- * 別途検証済み）のためスタブに差し替える。TasteRadarChart・
- * RecordConnectionsDiagramは軽量な自前SVGでこのページの構成確認に
- * 必要なため実装をそのまま使う。
+ * を確認する。SimilarRecords・BrewDetailsCardは独立した機能
+ * （それぞれ専用のテストファイルで別途検証済み）のためスタブに差し替える。
+ * TasteRadarChart・RecordConnectionsDiagramは軽量な自前SVGでこのページの
+ * 構成確認に必要なため実装をそのまま使う。
  */
 import { describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -24,6 +24,10 @@ vi.mock("../features/coffee-records/api/coffeeRecordApi", () => ({
 
 vi.mock("../features/similarRecords/components/SimilarRecords", () => ({
   default: () => <div>SimilarRecordsスタブ</div>,
+}));
+
+vi.mock("../features/coffee-records/components/BrewDetailsCard", () => ({
+  default: () => <div>BrewDetailsCardスタブ</div>,
 }));
 
 import RecordDetailPage from "./RecordDetailPage";
@@ -103,6 +107,13 @@ describe("RecordDetailPage", () => {
     expect(
       await screen.findByText("産地やフレーバーを追加すると、ほかの記録とのつながりが見えるようになります。"),
     ).toBeInTheDocument();
+  });
+
+  test("BrewDetailsCardは他のCoffee情報の有無に関わらず常に表示する", async () => {
+    fetchCoffeeRecord.mockResolvedValue(BASE_RECORD);
+    renderRecordDetailPage();
+
+    expect(await screen.findByText("BrewDetailsCardスタブ")).toBeInTheDocument();
   });
 
   test("記録の詳細（タイトル・評価・Coffee Information・メモ・Connections）を表示する", async () => {

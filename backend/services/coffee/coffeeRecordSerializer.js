@@ -90,6 +90,16 @@ export const serializeCoffeeRecord = (record) => {
     roastLevel: serializeRef(doc.roastLevelId),
     flavors: serializeRefs(doc.flavorIds),
 
+    // 抽出の詳細（記録詳細ページの独立カードでのみ編集する。
+    // docs/domain-model.md参照）
+    doseWeight: doc.doseWeight ?? null,
+    waterWeight: doc.waterWeight ?? null,
+    brewTimeSeconds: doc.brewTimeSeconds ?? null,
+    pours: (doc.pours ?? []).map((pour) => ({
+      elapsedSeconds: pour.elapsedSeconds,
+      cumulativeWaterWeight: pour.cumulativeWaterWeight,
+    })),
+
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };

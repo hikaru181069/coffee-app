@@ -50,6 +50,22 @@ const TASTE_FIELDS = [
   "tasteAftertaste",
 ];
 
+/**
+ * 抽出の詳細（任意、数値）。記録編集フォームではなく記録詳細ページの
+ * 独立カード（BrewDetailsCard.jsx）からのみ送られてくる想定だが、
+ * 検証自体はcreate/updateどちらでも同じルールで通す。
+ * 上限は誤入力防止のための緩いガード（重さ5000g、時間86400秒=24時間。
+ * コールドブリューの長時間抽出も許容する）
+ */
+const BREW_NUMERIC_LIMITS = {
+  doseWeight: 5000,
+  waterWeight: 5000,
+  brewTimeSeconds: 86400,
+};
+const BREW_NUMERIC_FIELDS = Object.keys(BREW_NUMERIC_LIMITS);
+
+const MAX_POURS = 20;
+
 const isMissing = (value) => value === undefined || value === null || value === "";
 
 // ── 個別の検証 ──────────────────────────────────────────────────
@@ -140,6 +156,59 @@ const validateMultiRef = (field, value, details) => {
   }
 };
 
+const validateBrewNumber = (field, value, details) => {
+  // 未記録を許可する（doseWeight等はdefault null）
+  if (isMissing(value)) return;
+
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    details.push({ field, message: "0より大きい数値で指定してください" });
+    return;
+  }
+  if (value > BREW_NUMERIC_LIMITS[field]) {
+    details.push({ field, message: "数値が大きすぎます" });
+  }
+};
+
+/**
+ * 注湯記録（経過時間ごとの累計湯量）の検証。
+ * 各要素の妥当性に加え、elapsedSecondsが単調増加であることを確認する
+ * （後の注湯が前より時間的に早い、という矛盾したデータを防ぐ）
+ */
+const validatePours = (value, details) => {
+  if (isMissing(value)) return;
+
+  if (!Array.isArray(value)) {
+    details.push({ field: "pours", message: "配列で指定してください" });
+    return;
+  }
+  if (value.length > MAX_POURS) {
+    details.push({ field: "pours", message: `注湯の記録は${MAX_POURS}件までです` });
+    return;
+  }
+
+  let previousElapsedSeconds = -Infinity;
+  for (const pour of value) {
+    const { elapsedSeconds, cumulativeWaterWeight } = pour ?? {};
+    const isValidShape =
+      typeof elapsedSeconds === "number" &&
+      Number.isFinite(elapsedSeconds) &&
+      elapsedSeconds >= 0 &&
+      typeof cumulativeWaterWeight === "number" &&
+      Number.isFinite(cumulativeWaterWeight) &&
+      cumulativeWaterWeight > 0;
+
+    if (!isValidShape) {
+      details.push({ field: "pours", message: "経過時間と累計湯量を正しく入力してください" });
+      return;
+    }
+    if (elapsedSeconds <= previousElapsedSeconds) {
+      details.push({ field: "pours", message: "経過時間は前の注湯より後にしてください" });
+      return;
+    }
+    previousElapsedSeconds = elapsedSeconds;
+  }
+};
+
 // ── 公開API ────────────────────────────────────────────────────
 
 /**
@@ -175,6 +244,10 @@ export const validateCreateCoffeeRecord = (body = {}) => {
   for (const field of MULTI_REF_FIELDS) {
     validateMultiRef(field, body[field], details);
   }
+  for (const field of BREW_NUMERIC_FIELDS) {
+    validateBrewNumber(field, body[field], details);
+  }
+  validatePours(body.pours, details);
 
   return { valid: details.length === 0, details };
 };
@@ -218,6 +291,10 @@ export const validateUpdateCoffeeRecord = (body = {}) => {
   for (const field of MULTI_REF_FIELDS) {
     if (field in body) validateMultiRef(field, body[field], details);
   }
+  for (const field of BREW_NUMERIC_FIELDS) {
+    if (field in body) validateBrewNumber(field, body[field], details);
+  }
+  if ("pours" in body) validatePours(body.pours, details);
 
   return { valid: details.length === 0, details };
 };
@@ -238,6 +315,8 @@ export const pickCoffeeRecordFields = (body = {}) => {
     ...TASTE_FIELDS,
     ...SINGLE_REF_FIELDS,
     ...MULTI_REF_FIELDS,
+    ...BREW_NUMERIC_FIELDS,
+    "pours",
   ];
 
   const result = {};

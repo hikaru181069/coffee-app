@@ -114,6 +114,85 @@ describe("validateCreateCoffeeRecord", () => {
     });
   });
 
+  describe.each(["doseWeight", "waterWeight", "brewTimeSeconds"])(
+    "%s（抽出の詳細）",
+    (field) => {
+      test("未指定・null は許可する（未記録）", () => {
+        expect(validateCreateCoffeeRecord(validBody()).valid).toBe(true);
+        expect(validateCreateCoffeeRecord(validBody({ [field]: null })).valid).toBe(true);
+      });
+
+      test("正の数値を許可する", () => {
+        expect(validateCreateCoffeeRecord(validBody({ [field]: 18 })).valid).toBe(true);
+      });
+
+      test("0以下・文字列は拒否する", () => {
+        for (const value of [0, -1, "18"]) {
+          expect(validateCreateCoffeeRecord(validBody({ [field]: value })).valid).toBe(false);
+        }
+      });
+
+      test("上限を超える値は拒否する", () => {
+        const limit = field === "brewTimeSeconds" ? 86400 : 5000;
+        expect(validateCreateCoffeeRecord(validBody({ [field]: limit + 1 })).valid).toBe(false);
+      });
+    },
+  );
+
+  describe("pours（注湯記録）", () => {
+    test("未指定を許可する", () => {
+      expect(validateCreateCoffeeRecord(validBody()).valid).toBe(true);
+    });
+
+    test("経過時間が単調増加する配列を許可する", () => {
+      const body = validBody({
+        pours: [
+          { elapsedSeconds: 0, cumulativeWaterWeight: 50 },
+          { elapsedSeconds: 45, cumulativeWaterWeight: 150 },
+        ],
+      });
+
+      expect(validateCreateCoffeeRecord(body).valid).toBe(true);
+    });
+
+    test("配列以外は拒否する", () => {
+      expect(fieldsOf(validateCreateCoffeeRecord(validBody({ pours: "abc" })))).toContain(
+        "pours",
+      );
+    });
+
+    test("要素数が上限（20件）を超えると拒否する", () => {
+      const pours = Array.from({ length: 21 }, (_, index) => ({
+        elapsedSeconds: index,
+        cumulativeWaterWeight: index + 1,
+      }));
+
+      expect(validateCreateCoffeeRecord(validBody({ pours })).valid).toBe(false);
+    });
+
+    test("経過時間が前の要素以下だと拒否する", () => {
+      const body = validBody({
+        pours: [
+          { elapsedSeconds: 45, cumulativeWaterWeight: 150 },
+          { elapsedSeconds: 45, cumulativeWaterWeight: 200 },
+        ],
+      });
+
+      expect(validateCreateCoffeeRecord(body).valid).toBe(false);
+    });
+
+    test("累計湯量が0以下、または項目が欠けていると拒否する", () => {
+      expect(
+        validateCreateCoffeeRecord(
+          validBody({ pours: [{ elapsedSeconds: 0, cumulativeWaterWeight: 0 }] }),
+        ).valid,
+      ).toBe(false);
+      expect(
+        validateCreateCoffeeRecord(validBody({ pours: [{ elapsedSeconds: 0 }] })).valid,
+      ).toBe(false);
+    });
+  });
+
   describe("マスターデータへの参照", () => {
     test("正しいObjectId文字列を受け入れる", () => {
       const body = validBody({
@@ -207,6 +286,30 @@ describe("validateUpdateCoffeeRecord", () => {
     expect(validateUpdateCoffeeRecord({ tasteAcidity: 4 }).valid).toBe(true);
     expect(validateUpdateCoffeeRecord({ tasteAcidity: 9 }).valid).toBe(false);
   });
+
+  test("抽出の詳細（BrewDetailsCard.jsxからのPATCH）を更新できる", () => {
+    const result = validateUpdateCoffeeRecord({
+      doseWeight: 18,
+      waterWeight: 280,
+      brewTimeSeconds: 150,
+      pours: [
+        { elapsedSeconds: 0, cumulativeWaterWeight: 50 },
+        { elapsedSeconds: 45, cumulativeWaterWeight: 280 },
+      ],
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  test("抽出の詳細は送られてきたものだけを検証する", () => {
+    expect(validateUpdateCoffeeRecord({ doseWeight: 18 }).valid).toBe(true);
+    expect(validateUpdateCoffeeRecord({ doseWeight: -1 }).valid).toBe(false);
+  });
+
+  test("null を送ってpours・数値を未記録に戻せる", () => {
+    expect(validateUpdateCoffeeRecord({ pours: [] }).valid).toBe(true);
+    expect(validateUpdateCoffeeRecord({ doseWeight: null }).valid).toBe(true);
+  });
 });
 
 describe("pickCoffeeRecordFields", () => {
@@ -264,5 +367,17 @@ describe("pickCoffeeRecordFields", () => {
       tasteAroma: 4,
       tasteAftertaste: 3,
     });
+  });
+
+  test("抽出の詳細も書き込んでよい項目に含まれる", () => {
+    const pours = [{ elapsedSeconds: 0, cumulativeWaterWeight: 50 }];
+    const result = pickCoffeeRecordFields({
+      doseWeight: 18,
+      waterWeight: 280,
+      brewTimeSeconds: 150,
+      pours,
+    });
+
+    expect(result).toEqual({ doseWeight: 18, waterWeight: 280, brewTimeSeconds: 150, pours });
   });
 });

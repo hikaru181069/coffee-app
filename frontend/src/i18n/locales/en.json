@@ -165,7 +165,23 @@
     "connectionsHeading": "Connections",
     "moreActionsLabel": "More actions",
     "connectionsFlavorOverflow": "+{{count}} more flavors",
-    "tasteHeading": "Taste Profile"
+    "tasteHeading": "Taste Profile",
+    "brewDetailsHeading": "Brew Details",
+    "brewDetailsEmptyTitle": "No brew details yet",
+    "brewDetailsEmptyCta": "Record brew details",
+    "brewDetailsDoseLabel": "Dose (g)",
+    "brewDetailsWaterLabel": "Total water (g)",
+    "brewDetailsRatioLabel": "Ratio",
+    "brewDetailsTimeLabel": "Brew time (sec)",
+    "brewDetailsPoursHeading": "Pour schedule",
+    "brewDetailsPoursHint": "Enter the elapsed time and the cumulative water poured at that point.",
+    "brewDetailsAddPourCta": "+ Add pour",
+    "brewDetailsRemovePourAriaLabel": "Remove pour {{index}}",
+    "brewDetailsElapsedLabel": "Elapsed time (sec)",
+    "brewDetailsCumulativeWaterLabel": "Cumulative water (g)",
+    "brewDetailsNoPours": "No pours recorded",
+    "brewDetailsSave": "Save",
+    "brewDetailsSaveError": "Failed to save"
   },
   "recordForm": {
     "title": "Title",
@@ -463,7 +479,11 @@
     "ratingRange": "Please select a rating from 1 to 5",
     "nameRequired": "Please enter your name",
     "emailRequired": "Please enter your email",
-    "passwordRequired": "Please enter your password"
+    "passwordRequired": "Please enter your password",
+    "positiveNumberRequired": "Please enter a number greater than 0",
+    "numberTooLarge": "This number is too large",
+    "pourIncomplete": "Please enter both the elapsed time and cumulative water",
+    "pourOrder": "The elapsed time must be later than the previous pour"
   },
   "errors": {
     "byCode": {

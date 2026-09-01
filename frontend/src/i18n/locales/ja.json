@@ -161,7 +161,23 @@
     "connectionsHeading": "つながり",
     "moreActionsLabel": "その他の操作",
     "connectionsFlavorOverflow": "ほかに{{count}}件のフレーバー",
-    "tasteHeading": "味覚グラフ"
+    "tasteHeading": "味覚グラフ",
+    "brewDetailsHeading": "抽出の詳細",
+    "brewDetailsEmptyTitle": "まだ抽出データがありません",
+    "brewDetailsEmptyCta": "抽出データを記録する",
+    "brewDetailsDoseLabel": "粉量（g）",
+    "brewDetailsWaterLabel": "総湯量（g）",
+    "brewDetailsRatioLabel": "レシオ",
+    "brewDetailsTimeLabel": "抽出時間（秒）",
+    "brewDetailsPoursHeading": "注湯記録",
+    "brewDetailsPoursHint": "経過時間と、その時点までの累計湯量を入力してください。",
+    "brewDetailsAddPourCta": "＋注湯を追加",
+    "brewDetailsRemovePourAriaLabel": "{{index}}回目の注湯を削除",
+    "brewDetailsElapsedLabel": "経過時間（秒）",
+    "brewDetailsCumulativeWaterLabel": "累計湯量（g）",
+    "brewDetailsNoPours": "注湯記録はありません",
+    "brewDetailsSave": "保存",
+    "brewDetailsSaveError": "保存に失敗しました"
   },
   "recordForm": {
     "title": "タイトル",
@@ -454,7 +470,11 @@
     "ratingRange": "評価は1〜5で選択してください",
     "nameRequired": "名前を入力してください",
     "emailRequired": "メールアドレスを入力してください",
-    "passwordRequired": "パスワードを入力してください"
+    "passwordRequired": "パスワードを入力してください",
+    "positiveNumberRequired": "0より大きい数値で入力してください",
+    "numberTooLarge": "数値が大きすぎます",
+    "pourIncomplete": "経過時間と累計湯量の両方を入力してください",
+    "pourOrder": "経過時間は前の注湯より後にしてください"
   },
   "errors": {
     "byCode": {

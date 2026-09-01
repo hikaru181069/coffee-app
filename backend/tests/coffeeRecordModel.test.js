@@ -113,6 +113,47 @@ describe.each([
   });
 });
 
+describe.each(["doseWeight", "waterWeight", "brewTimeSeconds"])(
+  "%s（抽出の詳細）",
+  (field) => {
+    test("既定値は null（未記録）", () => {
+      expect(buildRecord()[field]).toBeNull();
+    });
+
+    test("正の数値を受け入れる", async () => {
+      expect(await errorFields(buildRecord({ [field]: 18 }))).toEqual([]);
+    });
+
+    test("0以下は拒否する", async () => {
+      expect(await errorFields(buildRecord({ [field]: -1 }))).toContain(field);
+    });
+  },
+);
+
+describe("pours（注湯記録）", () => {
+  test("既定値は空配列", () => {
+    expect(buildRecord().pours).toEqual([]);
+  });
+
+  test("経過時間・累計湯量を持つ要素を受け入れる", async () => {
+    const record = buildRecord({
+      pours: [
+        { elapsedSeconds: 0, cumulativeWaterWeight: 50 },
+        { elapsedSeconds: 45, cumulativeWaterWeight: 150 },
+      ],
+    });
+
+    expect(await errorFields(record)).toEqual([]);
+    expect(record.pours).toHaveLength(2);
+  });
+
+  test("elapsedSeconds・cumulativeWaterWeightが無い要素は拒否する", async () => {
+    const record = buildRecord({ pours: [{ elapsedSeconds: 0 }] });
+
+    expect(await errorFields(record)).toContain("pours.0.cumulativeWaterWeight");
+  });
+});
+
 describe("文字列項目", () => {
   test("titleの前後の空白を取り除く", () => {
     expect(buildRecord({ title: "  Kenya AA  " }).title).toBe("Kenya AA");

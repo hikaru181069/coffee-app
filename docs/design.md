@@ -117,9 +117,11 @@ Coffee Detailsとして段階的に見せる項目:
 
 - 基本情報
 - Coffee Details
-- 味覚グラフ
 - Notes
+- 味覚グラフ
 - 関連ノード
+- 抽出の詳細（独立カード、味覚グラフの下。記録編集フォームとは別に
+  インライン編集する。docs/domain-model.md「抽出の詳細」参照）
 - Edit / Delete
 - Graphで見る
 

@@ -82,6 +82,10 @@ describe("POST /api/coffee-records", () => {
       recordType: "home",
       rating: 5,
       notes: "紅茶のよう",
+      doseWeight: null,
+      waterWeight: null,
+      brewTimeSeconds: null,
+      pours: [],
     });
     expect(res.body.data.id).toBeDefined();
   });
@@ -536,6 +540,34 @@ describe("PATCH /api/coffee-records/:recordId", () => {
       .send({ rating: 3 });
 
     expect(res.status).toBe(404);
+  });
+
+  test("抽出の詳細（粉量・湯量・時間・注湯記録）を更新できる", async () => {
+    const record = await createRecordFor(alice.user._id);
+
+    const res = await request(app)
+      .patch(`${ENDPOINT}/${record._id}`)
+      .set("Authorization", alice.authHeader)
+      .send({
+        doseWeight: 18,
+        waterWeight: 280,
+        brewTimeSeconds: 150,
+        pours: [
+          { elapsedSeconds: 0, cumulativeWaterWeight: 50 },
+          { elapsedSeconds: 45, cumulativeWaterWeight: 280 },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      doseWeight: 18,
+      waterWeight: 280,
+      brewTimeSeconds: 150,
+      pours: [
+        { elapsedSeconds: 0, cumulativeWaterWeight: 50 },
+        { elapsedSeconds: 45, cumulativeWaterWeight: 280 },
+      ],
+    });
   });
 
   test("userIdを送っても所有者は変わらない", async () => {
