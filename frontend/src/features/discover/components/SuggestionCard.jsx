@@ -14,6 +14,11 @@ import { secondaryButtonClass } from "../../coffee-records/components/formStyles
  * 2026-08、`DiscoverSuggestions.jsx`の外枠を`cardClass`で囲んだ際、
  * このカードがその中へ入れ子になった。StatCard.jsxの`flat`propと
  * 同じ理由で、ネストされた内側のカードには影を付けない。
+ *
+ * 2026-08、「この産地を記録してみる」に産地名をクエリ文字列
+ * （`?originName=`）で添えるようにした。suggestedOriginはCQI参照
+ * データ由来でOriginマスターのIDを持たないため、名前で渡し
+ * RecordFormPage.jsx側でmasterDataと突き合わせてoriginIdへ解決する。
  */
 function SuggestionCard({ suggestion, flat = false }) {
   const { t } = useTranslation();
@@ -30,7 +35,10 @@ function SuggestionCard({ suggestion, flat = false }) {
           suggestedLabel: suggestion.suggestedOrigin.label,
         })}
       </p>
-      <Link to="/records/new" className={`${secondaryButtonClass} mt-3`}>
+      <Link
+        to={`/records/new?originName=${encodeURIComponent(suggestion.suggestedOrigin.label)}`}
+        className={`${secondaryButtonClass} mt-3`}
+      >
         {t("discover.recordCta")}
       </Link>
     </li>

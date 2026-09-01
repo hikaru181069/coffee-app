@@ -155,6 +155,68 @@ describe("useRecordForm（新規作成）", () => {
   });
 });
 
+describe("useRecordForm（Discoverからの産地事前入力）", () => {
+  test("prefillOriginIdを渡すとoriginIdへ反映される", () => {
+    const { result } = renderHook(() => useRecordForm(null, vi.fn(), "origin-123"));
+
+    expect(result.current.values.originId).toBe("origin-123");
+  });
+
+  test("事前入力はisDirtyをtrueにしない（アプリが入れた初期値であり、ユーザーの編集ではないため）", () => {
+    const { result } = renderHook(() => useRecordForm(null, vi.fn(), "origin-123"));
+
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  test("masterData読み込み待ちでprefillOriginIdが後から届いても反映される", () => {
+    const { result, rerender } = renderHook(
+      ({ prefillOriginId }) => useRecordForm(null, vi.fn(), prefillOriginId),
+      { initialProps: { prefillOriginId: null } },
+    );
+
+    expect(result.current.values.originId).toBe("");
+
+    rerender({ prefillOriginId: "origin-456" });
+
+    expect(result.current.values.originId).toBe("origin-456");
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  test("編集（recordあり）のときは事前入力を無視する", () => {
+    const existingRecord = {
+      title: "Ethiopia Guji",
+      consumedAt: "2026-07-01T09:00:00.000Z",
+      recordType: "home",
+      rating: null,
+      notes: "",
+      cafeName: "",
+      roasterName: "",
+      origin: { id: "origin-existing", name: "Ethiopia" },
+      farmName: "",
+      varieties: [],
+      process: null,
+      roastLevel: null,
+      flavors: [],
+    };
+
+    const { result } = renderHook(() => useRecordForm(existingRecord, vi.fn(), "origin-123"));
+
+    expect(result.current.values.originId).toBe("origin-existing");
+  });
+
+  test("ユーザーが手動で選び直した後にprefillOriginIdが変わっても上書きしない", () => {
+    const { result, rerender } = renderHook(
+      ({ prefillOriginId }) => useRecordForm(null, vi.fn(), prefillOriginId),
+      { initialProps: { prefillOriginId: "origin-123" } },
+    );
+
+    act(() => result.current.setValue("originId", "origin-manually-chosen"));
+    rerender({ prefillOriginId: "origin-123" });
+
+    expect(result.current.values.originId).toBe("origin-manually-chosen");
+  });
+});
+
 describe("useRecordForm（編集）", () => {
   const existingRecord = {
     title: "Guatemala Huehuetenango",

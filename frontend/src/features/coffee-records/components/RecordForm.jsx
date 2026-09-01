@@ -60,9 +60,26 @@ function RecordForm({
   isMasterDataLoading,
   masterDataError,
   submitLabel,
+  prefillOriginId = null,
 }) {
   const { t } = useTranslation();
   const [isDetailsOpen, setIsDetailsOpen] = useState(() => hasExistingCoffeeDetails(values));
+
+  // 2026-08、Discoverの「この産地を記録してみる」からの産地事前入力
+  // （useRecordForm.jsのprefillOriginId）は、masterData読み込み待ちで
+  // 初回レンダーより後に届く。上のuseStateの遅延初期化は初回レンダー
+  // でしか評価されないため、それだけでは間に合わずCoffee Detailsが
+  // 閉じたままになってしまう。GraphPage.jsxのappliedFocusGraphと同じ
+  // 「レンダリング中に前回値と比較する」パターンで、prefillOriginIdが
+  // 届いたときだけ1回開く。hasExistingCoffeeDetails(values)全般では
+  // 判定しない（RecordForm.test.jsxの「隠れた項目にエラーがあれば自動的に
+  // 開く」ケースと違い、値が入っただけ・エラーが無い間は開かないという
+  // Record First の方針を崩さないため）
+  const [openedForPrefillOriginId, setOpenedForPrefillOriginId] = useState(null);
+  if (prefillOriginId && prefillOriginId !== openedForPrefillOriginId) {
+    setOpenedForPrefillOriginId(prefillOriginId);
+    setIsDetailsOpen(true);
+  }
 
   const handleSubmit = (event) => {
     event.preventDefault();
