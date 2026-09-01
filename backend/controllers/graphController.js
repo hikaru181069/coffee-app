@@ -17,7 +17,7 @@ export const getGraph = async (req, res) => {
 
   const graph = await graphService.buildGraphForUser(req.user._id, query);
 
-  res.status(200).json(graph);
+  res.status(200).json({ data: graph });
 };
 
 /**

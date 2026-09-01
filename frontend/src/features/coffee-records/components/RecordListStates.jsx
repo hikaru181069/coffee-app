@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { primaryButtonClass, secondaryButtonClass } from "./formStyles";
 import { getErrorMessage } from "../../../utils/errorMessage";
+import EmptyState from "../../../components/EmptyState";
 
 /**
  * 一覧の「中身が無いとき」の表示をまとめる。
@@ -11,6 +12,9 @@ import { getErrorMessage } from "../../../utils/errorMessage";
  * loading / empty / error は必ず作る（prompts/03 の States）。
  * 何も出さないと、読み込み中なのか記録が無いのか通信が失敗したのかが
  * 区別できず、ユーザーは待つべきか操作すべきか判断できない。
+ *
+ * empty/noMatch/errorの見た目は共通コンポーネント（components/EmptyState.jsx）
+ * に集約している。
  */
 
 /**
@@ -52,18 +56,16 @@ export function RecordListSkeleton({ count = 4 }) {
 export function RecordsEmptyState() {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
-      <Coffee size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
-      <div>
-        <p className="text-sm font-medium text-text">{t("records.emptyTitle")}</p>
-        <p className="mt-1 text-sm italic text-text-tertiary">
-          {t("records.emptyDesc")}
-        </p>
-      </div>
-      <Link to="/records/new" className={`${primaryButtonClass} mt-1`}>
-        {t("records.emptyCta")}
-      </Link>
-    </div>
+    <EmptyState
+      icon={Coffee}
+      title={t("records.emptyTitle")}
+      description={t("records.emptyDesc")}
+      action={
+        <Link to="/records/new" className={`${primaryButtonClass} mt-1`}>
+          {t("records.emptyCta")}
+        </Link>
+      }
+    />
   );
 }
 
@@ -71,16 +73,16 @@ export function RecordsEmptyState() {
 export function RecordsNoMatchState({ onClearFilters }) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
-      <SearchX size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
-      <div>
-        <p className="text-sm font-medium text-text">{t("records.noMatchTitle")}</p>
-        <p className="mt-1 text-sm italic text-text-tertiary">{t("records.noMatchDesc")}</p>
-      </div>
-      <button type="button" onClick={onClearFilters} className={secondaryButtonClass}>
-        {t("common.clearFilters")}
-      </button>
-    </div>
+    <EmptyState
+      icon={SearchX}
+      title={t("records.noMatchTitle")}
+      description={t("records.noMatchDesc")}
+      action={
+        <button type="button" onClick={onClearFilters} className={secondaryButtonClass}>
+          {t("common.clearFilters")}
+        </button>
+      }
+    />
   );
 }
 
@@ -88,17 +90,18 @@ export function RecordsNoMatchState({ onClearFilters }) {
 export function RecordsErrorState({ error, onRetry }) {
   const { t } = useTranslation();
   return (
-    <div
+    <EmptyState
       role="alert"
-      className="flex flex-col items-center gap-3 rounded-xl border border-danger/40 bg-danger/5 px-6 py-12 text-center"
-    >
-      <AlertCircle size={32} aria-hidden="true" className="text-danger" strokeWidth={1.5} />
-      <p className="text-sm text-text">{error ? getErrorMessage(error, t) : t("common.loadFailed")}</p>
-      {onRetry && (
-        <button type="button" onClick={onRetry} className={secondaryButtonClass}>
-          {t("common.retry")}
-        </button>
-      )}
-    </div>
+      variant="error"
+      icon={AlertCircle}
+      title={error ? getErrorMessage(error, t) : t("common.loadFailed")}
+      action={
+        onRetry && (
+          <button type="button" onClick={onRetry} className={secondaryButtonClass}>
+            {t("common.retry")}
+          </button>
+        )
+      }
+    />
   );
 }

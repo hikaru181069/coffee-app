@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import ForceGraph2D from "react-force-graph-2d";
 import { forceCollide, forceX, forceY } from "d3-force";
 
@@ -300,6 +301,7 @@ function paintNodePointerArea(node, color, ctx, isSelected) {
 }
 
 function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, interactive = true }) {
+  const { t } = useTranslation();
   const containerRef = useRef(null);
   const fgRef = useRef(null);
   const isDraggingRef = useRef(false);
@@ -542,6 +544,8 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-label={t("graph.canvasAriaLabel", { nodeCount: nodes.length, edgeCount: links.length })}
       className="h-full w-full"
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}

@@ -49,7 +49,7 @@ describe("POST /api/auth/register", () => {
     await expect(bcrypt.compare("password123", stored.password)).resolves.toBe(true);
   });
 
-  test("既に登録済みのメールアドレスは400", async () => {
+  test("既に登録済みのメールアドレスは409", async () => {
     await request(app).post(REGISTER).send({
       name: "Alice",
       email: "alice@example.com",
@@ -62,11 +62,11 @@ describe("POST /api/auth/register", () => {
       password: "password456",
     });
 
-    expect(res.status).toBe(400);
-    expect(res.body.message).toBe("User already exists");
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("CONFLICT");
   });
 
-  test("大文字小文字が違うだけの同じメールアドレスも400（別アカウントにならない）", async () => {
+  test("大文字小文字が違うだけの同じメールアドレスも409（別アカウントにならない）", async () => {
     await request(app).post(REGISTER).send({
       name: "Alice",
       email: "Alice@Example.com",
@@ -79,8 +79,8 @@ describe("POST /api/auth/register", () => {
       password: "password456",
     });
 
-    expect(res.status).toBe(400);
-    expect(res.body.message).toBe("User already exists");
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("CONFLICT");
   });
 
   test("保存されるemailは小文字に正規化される", async () => {
@@ -103,7 +103,7 @@ describe("POST /api/auth/register", () => {
     const res = await request(app).post(REGISTER).send(body);
 
     expect(res.status).toBe(400);
-    expect(res.body.details.some((detail) => detail.field === expectedField)).toBe(true);
+    expect(res.body.error.details.some((detail) => detail.field === expectedField)).toBe(true);
   });
 });
 
@@ -134,7 +134,7 @@ describe("POST /api/auth/login", () => {
     });
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe("Invalid email or password");
+    expect(res.body.error.code).toBe("INVALID_CREDENTIALS");
   });
 
   test("存在しないメールアドレスでも必ずbcrypt.compareを実行する（タイミングサイドチャネル対策）", async () => {
@@ -159,14 +159,14 @@ describe("POST /api/auth/login", () => {
     });
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe("Invalid email or password");
+    expect(res.body.error.code).toBe("INVALID_CREDENTIALS");
   });
 
   test("emailかpasswordが未指定なら400", async () => {
     const res = await request(app).post(LOGIN).send({ email: "alice@example.com" });
 
     expect(res.status).toBe(400);
-    expect(res.body.details.some((detail) => detail.field === "password")).toBe(true);
+    expect(res.body.error.details.some((detail) => detail.field === "password")).toBe(true);
   });
 
   test("登録時と大文字小文字が違うメールアドレスでもログインできる", async () => {
@@ -189,6 +189,6 @@ describe("POST /api/auth/login", () => {
       .send({ email: { $ne: null }, password: "password123" });
 
     expect(res.status).toBe(400);
-    expect(res.body.details.some((detail) => detail.field === "email")).toBe(true);
+    expect(res.body.error.details.some((detail) => detail.field === "email")).toBe(true);
   });
 });

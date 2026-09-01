@@ -30,7 +30,7 @@ describe("SuggestionCard", () => {
     ).toBeInTheDocument();
   });
 
-  test("「この産地を記録してみる」は新規記録フォームへのリンクになっている", () => {
+  test("「この産地を記録してみる」は提案先の産地名を添えて新規記録フォームへ遷移する", () => {
     render(
       <MemoryRouter>
         <SuggestionCard suggestion={SUGGESTION} />
@@ -39,7 +39,7 @@ describe("SuggestionCard", () => {
 
     expect(screen.getByRole("link", { name: "この産地を記録してみる" })).toHaveAttribute(
       "href",
-      "/records/new",
+      "/records/new?originName=Costa%20Rica",
     );
   });
 });

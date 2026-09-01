@@ -3,14 +3,20 @@ import { useTranslation } from "react-i18next";
 import { getNodeVisual, ATTRIBUTE_NODE_TYPES } from "../utils/nodeVisuals";
 import { RECORD_TYPES } from "../../coffee-records/utils/recordFormat";
 
+// RecordFilters.jsxのcompactInputClassと同じ見た目。1箇所でしか使わない
+// 短いスタイル文字列のため、共通コンポーネント化はせずそのまま複製している
+const compactInputClass =
+  "w-auto rounded-lg border border-line/60 bg-surface-1 px-2.5 py-1.5 text-sm text-text " +
+  "transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50";
+
 /**
  * グラフの絞り込み。
  *
- * docs/api.md の GET /graph が持つクエリのうち、nodeTypes・recordType・
- * ratingMin の3つをUIに出す。dateFrom/dateToはAPIには残しつつ、
- * このPhaseのUIでは扱わない（docs/mvp.md の「基本フィルター」の範囲に
- * とどめる判断。必要になれば features/coffee-records/components/
- * RecordFilters.jsx と同じ形で追加できる）。
+ * docs/api.md の GET /graph が持つクエリ（nodeTypes・recordType・
+ * dateFrom/dateTo・ratingMin）をすべてUIに出す。2026-08、期間
+ * （dateFrom/dateTo）はAPI・純粋関数側には実装済みだったがUIに未反映
+ * だったため、features/coffee-records/components/RecordFilters.jsx と
+ * 同じ形（date input 2つ）で追加した。
  */
 function GraphFilters({ filters, onChange }) {
   const { t } = useTranslation();
@@ -73,6 +79,32 @@ function GraphFilters({ filters, onChange }) {
             ))}
           </select>
         </label>
+
+        <div className="flex items-center gap-1.5">
+          <label htmlFor="graph-filter-dateFrom" className="sr-only">
+            {t("records.dateFrom")}
+          </label>
+          <input
+            id="graph-filter-dateFrom"
+            type="date"
+            value={filters.dateFrom}
+            onChange={(event) => onChange({ ...filters, dateFrom: event.target.value })}
+            className={compactInputClass}
+          />
+          <span aria-hidden="true" className="text-xs text-text-tertiary">
+            〜
+          </span>
+          <label htmlFor="graph-filter-dateTo" className="sr-only">
+            {t("records.dateTo")}
+          </label>
+          <input
+            id="graph-filter-dateTo"
+            type="date"
+            value={filters.dateTo}
+            onChange={(event) => onChange({ ...filters, dateTo: event.target.value })}
+            className={compactInputClass}
+          />
+        </div>
       </div>
 
       {/* ノード種別フィルター。属性ノードの表示/非表示を切り替える。

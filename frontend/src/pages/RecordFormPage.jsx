@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from "react";
-import { Link, useBlocker, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { Link, useBlocker, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
@@ -45,6 +45,7 @@ function RecordFormPage() {
   const { recordId } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const [searchParams] = useSearchParams();
 
   const isEditing = Boolean(recordId);
 
@@ -55,6 +56,17 @@ function RecordFormPage() {
     isLoading: isMasterDataLoading,
     error: masterDataError,
   } = useMasterData();
+
+  // Discoverの「この産地を記録してみる」（SuggestionCard.jsx）から
+  // ?originName=Panama のように遷移してきた場合、masterDataと突き合わせて
+  // originIdへ解決する。CQI参照データはOriginマスターのIDを持たないため
+  // 名前で渡ってくる（suggestedOriginにはlabelしかない）。一致しなければ
+  // 通常の空のフォームのまま（未対応の産地名でもエラーにはしない）
+  const originNameParam = searchParams.get("originName");
+  const prefillOriginId = useMemo(
+    () => masterData.origins.find((origin) => origin.name === originNameParam)?.id ?? null,
+    [masterData.origins, originNameParam],
+  );
 
   // 保存直後の遷移まで確認ダイアログで止めないためのフラグ。
   // useRecordForm.submit()内のawait onSubmit(...)が完了する前に
@@ -86,7 +98,7 @@ function RecordFormPage() {
     [isEditing, recordId, addToast, navigate, t],
   );
 
-  const form = useRecordForm(record, handleSubmit);
+  const form = useRecordForm(record, handleSubmit, prefillOriginId);
 
   const shouldBlockNavigation = useCallback(
     ({ currentLocation, nextLocation }) =>
@@ -175,6 +187,7 @@ function RecordFormPage() {
         isMasterDataLoading={isMasterDataLoading}
         masterDataError={masterDataError}
         submitLabel={isEditing ? t("records.submitEdit") : t("records.submitCreate")}
+        prefillOriginId={prefillOriginId}
       />
 
       <ConfirmDialog

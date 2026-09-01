@@ -41,3 +41,17 @@ export const notFoundError = (message = "対象が見つかりません") =>
 
 export const conflictError = (message = "すでに存在します") =>
   new AppError("CONFLICT", 409, message);
+
+// ログイン失敗（メールアドレス・パスワードの組み合わせが不正）は
+// UNAUTHORIZED（トークンが無効・未指定）と意味が異なるため、別のcodeにする。
+// 同じUNAUTHORIZEDにまとめると、フロント（errorMessage.js）が
+// 「ログインしてください」という不適切な文言を出してしまう
+export const invalidCredentialsError = (
+  message = "メールアドレスまたはパスワードが正しくありません",
+) => new AppError("INVALID_CREDENTIALS", 401, message);
+
+// 「現在のパスワードが違う」は入力内容の問題であり、トークンの有効性とは
+// 無関係。401にすると「トークン無効」と区別できず、フロント側の共通
+// クライアント（httpClient.js）が自動ログアウトしてしまう
+export const invalidCurrentPasswordError = (message = "現在のパスワードが正しくありません") =>
+  new AppError("INVALID_CURRENT_PASSWORD", 400, message);

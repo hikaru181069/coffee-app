@@ -23,6 +23,8 @@
  * （coffeeRecordSerializer.js参照）。
  */
 
+import { pickTop } from "../shared/aggregationHelpers.js";
+
 const THRESHOLDS = {
   minRoastSample: 3,
   minFlavorSample: 3,
@@ -94,11 +96,9 @@ const countBy = (values) => {
 
 /** 登場回数トップのキーを返す。同率首位のときは断定せず null を返す */
 const findTopKey = (counts) => {
-  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  const top = sorted[0];
-  if (!top) return null;
-  if (sorted[1]?.[1] === top[1]) return null;
-  return top[0];
+  const candidates = [...counts.entries()].map(([key, count]) => ({ key, count }));
+  const top = pickTop(candidates);
+  return top ? top.key : null;
 };
 
 /** 焙煎度をバケット分けし、件数と首位バケットを求める */
@@ -167,11 +167,7 @@ const summarizeDominantRef = (refs, minSample) => {
     counts.set(ref.id, entry);
   }
 
-  const sorted = [...counts.values()].sort((a, b) => b.count - a.count);
-  const top = sorted[0];
-  if (!top) return null;
-  if (sorted[1]?.count === top.count) return null;
-  return top;
+  return pickTop([...counts.values()]);
 };
 
 /** 全記録のprocessを集計する（record.processは{id,name}|null） */

@@ -59,11 +59,24 @@ matchup/news/player/position/recommendation/scout/similarPlayer/stats/team）
 ### 再利用した（現存）
 
 `utils/apiConfig.js` / `utils/authStorage.js` / `utils/datetime.js` /
-`services/api/apiError.js` / `services/api/authApi.js` /
+`services/api/authApi.js` /
 `components/ProtectedRoute.jsx` / `contexts/ToastContext.jsx` /
 `components/ErrorCard.jsx` /
-`components/SearchInput.jsx` /
 `components/Navbar.jsx` + `components/BottomTabBar.jsx`
+
+2026-08、設計レビューで`components/SearchInput.jsx`も「再利用した（現存）」
+と誤って記載されたままだったことが判明した。実際には横断検索機能
+（`docs/features.md`「Search」）の実装時に`features/search/components/
+SearchBox.jsx`へ置き換わっており、`SearchInput.jsx`はどこからも
+importされていない死んだコンポーネントだった（`placeholder="Search
+player name"`というMLB時代の文言も残ったまま）。`PageHeader.jsx`と
+同じ扱いとして削除した。
+
+同じ設計レビューで、`services/api/apiError.js`（`getApiErrorMessage`/
+`isUnauthorizedError`）も、認証まわりのcontroller層の見直しに伴い
+`services/api/userApi.js`が共通クライアント（`features/coffee-records/
+api/httpClient.js`）経由へ移行したことでどこからも参照されなくなり、
+削除した。
 
 `components/SkeletonCard.jsx`も再利用予定だったが、`PageHeader.jsx`と同様
 どのページからも使われていない死んだコンポーネントとして残っていたため、
@@ -106,9 +119,31 @@ MLB系ページ約26件（`Archetype` `Compare` `Game` `League` `Matchup`
 801件を確認無しに一括削除するのは安全ではないと判断し、今回は見送った。
 `PageHeader.jsx`削除に伴う`.page-header*`等（上記「再利用した」節参照、
 参照元が完全に1コンポーネントへ限定でき安全に判定できたもの）だけを
-削除するに留めている。`.home-player-section`等を含む残り約800件の未使用
-セレクタの整理は、個別に使用箇所を確認しながら進める専用タスクとして
-IMPLEMENTATION.mdの未解決事項に残す。
+削除するに留めている。
+
+2026-08、設計レビューで、このファイルに名指しで記載されていた
+`.home-player-section` `.home-team-section` `.home-favorites-section`
+`.home-recommendations-section`（旧MLB時代のTeam/Favorites/Recommendations
+セクション向け定義、および関連する`.player-list-carousel` `.similar-players`
+の2ブロック、計約110行）について、JSX側の参照がゼロであることを再確認
+した上で削除した。これらは元々このファイルに「未対応」として名指しで
+記載されていた、確認済みの削除候補だったため対応した。
+
+2026-09-01、残り約800件についても機械的な削除を行った。`App.css`の
+全823クラスをパース・JSX側との突き合わせを行い、動的クラス名の誤検出
+パターン（`toast toast--${type}`）を事前に洗い出して除外したうえで、
+「セレクタに含まれる全クラスが未参照」と判定できたルールだけを対象に
+779クラス・1036ルール（約7,300行）を削除した（`App.css`は8,692行→
+1,368行）。削除後はclaude-in-chromeでログイン前後の全主要画面を目視
+確認し、視覚的な崩れが無いことを確認済み（詳細はIMPLEMENTATION.md
+2026-09-01のエントリ参照）。
+
+残っているのは59クラスのみ: 40クラスは実際に使われており、19クラス
+（`.player-detail`・`.discovery-cta-btn`等）は基底クラス自体は死んでいる
+可能性が高いが、`.discovery-cta-btn.secondary`のように汎用的な修飾子
+クラス（`active`/`secondary`等、他の箇所で偶然「使用中」と判定される
+語）と組み合わさっているため機械判定を保留し、削除せず残した。今後
+着手する場合は、この19クラスを個別に目視確認しながら進める。
 
 ## fastapi-service
 

@@ -37,7 +37,7 @@ vi.mock("topojson-client", () => ({
     ],
   }),
 }));
-vi.mock("world-atlas/countries-50m.json", () => ({ default: { objects: { countries: {} } } }));
+vi.mock("world-atlas/countries-110m.json", () => ({ default: { objects: { countries: {} } } }));
 
 // vi.mockはモジュールimportより前に巻き上げられるため、モック後にimportする
 const { default: WorldMap } = await import("./WorldMap");

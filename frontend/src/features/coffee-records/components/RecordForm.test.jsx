@@ -30,8 +30,13 @@ const EMPTY_MASTER_DATA = {
  * ユーザーが未入力のまま開いていない状態から検証するためのテスト専用の
  * 抜け道（本来のユーザー操作では起こらない、DOM外からの直接書き込み）。
  */
-function Harness({ onSubmit = vi.fn(), record = null, prefillRoasterName = false }) {
-  const form = useRecordForm(record, onSubmit);
+function Harness({
+  onSubmit = vi.fn(),
+  record = null,
+  prefillRoasterName = false,
+  prefillOriginId = null,
+}) {
+  const form = useRecordForm(record, onSubmit, prefillOriginId);
 
   useEffect(() => {
     if (prefillRoasterName) form.setValue("roasterName", "a".repeat(121));
@@ -52,6 +57,7 @@ function Harness({ onSubmit = vi.fn(), record = null, prefillRoasterName = false
       isMasterDataLoading={false}
       masterDataError={null}
       submitLabel="保存する"
+      prefillOriginId={prefillOriginId}
     />
   );
 }
@@ -112,6 +118,19 @@ describe("RecordForm", () => {
 
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByLabelText(/^焙煎者・ロースター/)).toBeInTheDocument();
+  });
+
+  test("Discoverからの産地事前入力（prefillOriginId）が後から届くと、Coffee Detailsが自動的に開く", () => {
+    const { rerender } = render(<Harness prefillOriginId={null} />);
+
+    const toggle = screen.getByRole("button", { name: /コーヒーの詳細/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    // masterData読み込み待ちで、originNameの解決が後から届く想定
+    // （RecordFormPage.jsxのuseMemo経由）を再レンダーで再現する
+    rerender(<Harness prefillOriginId="origin-123" />);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
   });
 
   test("送信中は保存ボタンが無効化され「保存中...」と表示される", async () => {

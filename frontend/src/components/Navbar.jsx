@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { HouseIcon, ChartNetworkIcon, CoffeeIcon, ChartBarIcon, UserIcon, LogOutIcon } from "@animateicons/react/lucide";
 import CoffeeLogo from "./CoffeeLogo";
 import { clearAuthData, getAuthToken, getAuthUserName } from "../utils/authStorage";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // 2026-08、以前はlucide-reactも使わず必要な分だけSVGを自前で書いていたが、
 // ホバーで動くアイコン（mobbin.comで見た体験の再現）を導入するため
@@ -99,9 +100,15 @@ function Navbar() {
   const [open, setOpen] = useState(false);
   const token = getAuthToken();
   const userName = getAuthUserName();
+  const drawerRef = useRef(null);
 
   // ナビリンクをクリックしたらドロワーを閉じる（モバイル用）
   const close = () => setOpen(false);
+
+  // 2026-08、監査で発覚: Escapeで閉じる・開いたらフォーカスを移す・
+  // Tabをドロワー内で循環させる、のどれも無かった（ConfirmDialog.jsxには
+  // あった）。hooks/useFocusTrap.jsへ共通化したものをここでも使う
+  useFocusTrap(drawerRef, open, close);
 
   const handleLogout = () => {
     clearAuthData();
@@ -150,6 +157,12 @@ function Navbar() {
           - 開いた状態: translate-x-0 (画面内に表示) */}
       <aside
         id="mobile-nav-drawer"
+        ref={drawerRef}
+        // 閉じている間（-translate-x-fullで画面外）もDOMには残り続けるため、
+        // inertでフォーカス・クリック・スクリーンリーダーへの露出を丸ごと
+        // 無効化する。これが無いと、閉じたままキーボードでTabしていくと
+        // 画面外の非表示リンクへフォーカスが飛んでしまっていた（2026-08、監査で発覚）
+        inert={!open}
         className={[
           "fixed left-0 top-0 z-50 h-full w-52 border-r border-surface-2/50 bg-raised md:hidden",
           "transition-transform duration-300 ease-in-out",

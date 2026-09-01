@@ -53,9 +53,11 @@ describe("GET /api/graph", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
-      nodes: [],
-      edges: [],
-      summary: { recordCount: 0, nodeCount: 0, edgeCount: 0 },
+      data: {
+        nodes: [],
+        edges: [],
+        summary: { recordCount: 0, nodeCount: 0, edgeCount: 0 },
+      },
     });
   });
 
@@ -68,8 +70,8 @@ describe("GET /api/graph", () => {
 
     const res = await request(app).get(GRAPH_ENDPOINT).set("Authorization", alice.authHeader);
 
-    expect(res.body.summary.recordCount).toBe(1);
-    const recordNode = res.body.nodes.find((node) => node.type === "record");
+    expect(res.body.data.summary.recordCount).toBe(1);
+    const recordNode = res.body.data.nodes.find((node) => node.type === "record");
     expect(recordNode.label).toBe("Aliceの記録");
   });
 
@@ -85,8 +87,8 @@ describe("GET /api/graph", () => {
 
     const res = await request(app).get(GRAPH_ENDPOINT).set("Authorization", alice.authHeader);
 
-    const originNode = res.body.nodes.find((node) => node.type === "origin");
-    const flavorNode = res.body.nodes.find((node) => node.type === "flavor");
+    const originNode = res.body.data.nodes.find((node) => node.type === "origin");
+    const flavorNode = res.body.data.nodes.find((node) => node.type === "flavor");
     expect(originNode.label).toBe("Ethiopia");
     expect(flavorNode.label).toBe("Citrus");
   });
@@ -101,10 +103,10 @@ describe("GET /api/graph", () => {
 
     const res = await request(app).get(GRAPH_ENDPOINT).set("Authorization", alice.authHeader);
 
-    const originNodes = res.body.nodes.filter((node) => node.type === "origin");
+    const originNodes = res.body.data.nodes.filter((node) => node.type === "origin");
     expect(originNodes).toHaveLength(1);
     expect(originNodes[0].metadata.recordCount).toBe(3);
-    expect(res.body.summary.recordCount).toBe(3);
+    expect(res.body.data.summary.recordCount).toBe(3);
   });
 
   describe("フィルター", () => {
@@ -129,8 +131,8 @@ describe("GET /api/graph", () => {
         .query({ recordType: "cafe" })
         .set("Authorization", alice.authHeader);
 
-      expect(res.body.summary.recordCount).toBe(1);
-      const recordNode = res.body.nodes.find((node) => node.type === "record");
+      expect(res.body.data.summary.recordCount).toBe(1);
+      const recordNode = res.body.data.nodes.find((node) => node.type === "record");
       expect(recordNode.label).toBe("カフェで");
     });
 
@@ -140,7 +142,7 @@ describe("GET /api/graph", () => {
         .query({ ratingMin: "4" })
         .set("Authorization", alice.authHeader);
 
-      expect(res.body.summary.recordCount).toBe(1);
+      expect(res.body.data.summary.recordCount).toBe(1);
     });
 
     test("dateFrom/dateToで絞り込める", async () => {
@@ -149,7 +151,7 @@ describe("GET /api/graph", () => {
         .query({ dateFrom: "2026-05-01" })
         .set("Authorization", alice.authHeader);
 
-      expect(res.body.summary.recordCount).toBe(1);
+      expect(res.body.data.summary.recordCount).toBe(1);
     });
 
     test("不正なフィルター値は400", async () => {
@@ -176,7 +178,7 @@ describe("GET /api/graph", () => {
         .query({ nodeTypes: "origin" })
         .set("Authorization", alice.authHeader);
 
-      const types = new Set(res.body.nodes.map((node) => node.type));
+      const types = new Set(res.body.data.nodes.map((node) => node.type));
       expect(types).toEqual(new Set(["record", "origin"]));
     });
 

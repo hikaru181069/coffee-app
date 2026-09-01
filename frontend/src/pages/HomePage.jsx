@@ -1,12 +1,9 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
-import { getCurrentUser } from "../services/api/userApi";
-import { clearAuthData, getAuthToken } from "../utils/authStorage";
-import { isUnauthorizedError } from "../services/api/apiError";
+import { useProfile } from "../features/profile/hooks/useProfile";
 import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeRecords";
 import HomeRecordCard from "../features/coffee-records/components/HomeRecordCard";
 import HomeRecordCardSkeleton from "../features/coffee-records/components/HomeRecordCardSkeleton";
@@ -92,16 +89,11 @@ const getGreeting = (t) => {
 
 function HomePage() {
   const { t } = useTranslation();
-  const [user, setUser] = useState(null);
-  const token = getAuthToken();
-
-  useEffect(() => {
-    getCurrentUser(token)
-      .then(setUser)
-      .catch((err) => {
-        if (isUnauthorizedError(err)) clearAuthData();
-      });
-  }, [token]);
+  // 2026-08、以前はここで直接getCurrentUserを呼んでいたが、
+  // features/profile/hooks/useProfile.js と同じ取得ロジックが重複していた
+  // ため、そちらを再利用するよう揃えた（401時の自動ログアウトも
+  // apiRequest側で共通化済み、useProfile.js参照）。
+  const { user } = useProfile();
 
   // 最近の記録だけを取る。一覧の全機能（フィルター・ページ送り）は
   // RecordsPageの役割なので、ここでは最小限のfilterで6件に絞る

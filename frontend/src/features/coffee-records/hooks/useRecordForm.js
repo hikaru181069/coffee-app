@@ -69,8 +69,12 @@ const toFormValues = (record) => ({
 /**
  * @param {object|null} record 編集対象。新規作成なら null
  * @param {Function} onSubmit  APIへ送る関数。payload を受け取る
+ * @param {string|null} [prefillOriginId] 新規作成時にoriginIdへ事前入力する値
+ *   （Discoverの「この産地を記録してみる」から遷移した場合。
+ *   RecordFormPage.jsxがクエリ文字列の産地名をmasterDataと突き合わせて
+ *   解決した結果を渡す）
  */
-export const useRecordForm = (record, onSubmit) => {
+export const useRecordForm = (record, onSubmit, prefillOriginId = null) => {
   const { t } = useTranslation();
   const [values, setValues] = useState(emptyValues);
   const [errors, setErrors] = useState({});
@@ -93,6 +97,19 @@ export const useRecordForm = (record, onSubmit) => {
     const initial = toFormValues(record);
     setValues(initial);
     setInitialValues(initial);
+  }
+
+  // Discoverからの「この産地を記録してみる」で遷移した場合の事前入力。
+  // 新規作成（record===null）のときだけ適用する。valuesだけでなく
+  // initialValuesも揃えることで、アプリが入れた初期値をユーザーの編集
+  // として扱わない（isDirtyがtrueにならない）。masterData読み込み待ちで
+  // prefillOriginIdが後から届く前提のため、record同期と同じ
+  // 「レンダリング中に前回値と比較する」パターンにしている
+  const [appliedPrefillOriginId, setAppliedPrefillOriginId] = useState(null);
+  if (!record && prefillOriginId && prefillOriginId !== appliedPrefillOriginId) {
+    setAppliedPrefillOriginId(prefillOriginId);
+    setValues((prev) => ({ ...prev, originId: prefillOriginId }));
+    setInitialValues((prev) => ({ ...prev, originId: prefillOriginId }));
   }
 
   // toFormValues/emptyValuesは常に同じキー順でプレーンな文字列・配列だけを

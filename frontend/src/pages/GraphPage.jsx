@@ -25,7 +25,7 @@ import {
  * （CLAUDE.md: pageコンポーネントに巨大なJSXを置かない）。
  */
 
-const DEFAULT_FILTERS = { nodeTypes: [], recordType: "", ratingMin: "" };
+const DEFAULT_FILTERS = { nodeTypes: [], recordType: "", ratingMin: "", dateFrom: "", dateTo: "" };
 
 function GraphPage() {
   const { t } = useTranslation();
@@ -56,7 +56,9 @@ function GraphPage() {
     () =>
       (filters.nodeTypes?.length ?? 0) > 0 ||
       filters.recordType !== "" ||
-      filters.ratingMin !== "",
+      filters.ratingMin !== "" ||
+      filters.dateFrom !== "" ||
+      filters.dateTo !== "",
     [filters],
   );
 

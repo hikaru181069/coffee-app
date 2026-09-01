@@ -16,7 +16,7 @@ const GRAPH_PATH = "/api/graph";
  * @param {object} params nodeTypes(配列) / recordType / ratingMin
  * @returns {{ nodes: Array, edges: Array, summary: object }}
  */
-export const fetchGraph = (params, { signal } = {}) => {
+export const fetchGraph = async (params, { signal } = {}) => {
   // nodeTypesは配列で受け取り、APIへはカンマ区切りの1文字列として送る
   // （backend/validators/graphQueryValidator.js がこの形式を受け付ける）
   const query = { ...params };
@@ -24,7 +24,10 @@ export const fetchGraph = (params, { signal } = {}) => {
     query.nodeTypes = query.nodeTypes.length > 0 ? query.nodeTypes.join(",") : undefined;
   }
 
-  return apiRequest(GRAPH_PATH, { params: query, signal });
+  // 2026-08、/api/graphだけ他のエンドポイントと違い{data:...}でラップ
+  // されていなかった不整合を解消した（backend/controllers/graphController.js参照）
+  const payload = await apiRequest(GRAPH_PATH, { params: query, signal });
+  return payload.data;
 };
 
 /**

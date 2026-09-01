@@ -18,6 +18,12 @@ describe("未定義のルート", () => {
     const res = await request(app).get("/api/this-route-does-not-exist");
 
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ message: "Route not found" });
+    expect(res.body).toEqual({
+      error: {
+        code: "NOT_FOUND",
+        message: "リクエストされたエンドポイントは存在しません",
+        details: [],
+      },
+    });
   });
 });

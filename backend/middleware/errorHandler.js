@@ -12,7 +12,7 @@ import { AppError } from "../utils/AppError.js";
  * 自動でエラーミドルウェアへ渡される。そのため controller 側に
  * try/catch を書かなくてよい（Express 4 では next(error) が必要だった）。
  *
- * 応答形式は docs/architecture.md の Error Response に従う:
+ * 応答形式は docs/api.md の「エラーレスポンスの形式」に従う:
  *   { "error": { "code": "...", "message": "...", "details": [] } }
  */
 
@@ -23,10 +23,7 @@ const buildErrorBody = (code, message, details = []) => ({
 
 /**
  * どのルートにも一致しなかったリクエストを 404 にする。
- *
- * 新形式を使うのは /api/coffee-records と /api/master-data のみで、
- * 既存のMLBルートは app.js 側の旧ハンドラが引き続き処理する
- * （既存APIの互換性を理由なく壊さないため）。
+ * app.js で全ルート登録の後段に置き、すべてのAPIに対して統一形式で返す。
  */
 export const notFoundHandler = (req, res) => {
   res

@@ -1,5 +1,6 @@
 import { normalizeName } from "../../utils/normalizeName.js";
 import { originNodeId, varietyNodeId, processNodeId, flavorNodeId, cafeNodeId } from "../graph/nodeId.js";
+import { average, roundTo1 } from "../shared/aggregationHelpers.js";
 
 /**
  * 記録全体を通した統計を組み立てる純粋関数。
@@ -16,9 +17,6 @@ import { originNodeId, varietyNodeId, processNodeId, flavorNodeId, cafeNodeId } 
  */
 
 const TOP_N = 5;
-
-const average = (numbers) => (numbers.length === 0 ? null : numbers.reduce((sum, n) => sum + n, 0) / numbers.length);
-const roundTo1 = (value) => (value == null ? null : Math.round(value * 10) / 10);
 
 /** 単数の参照（origin/process）でグループ化し、stable IDをキーにする */
 const groupBySingleRef = (records, getRef, toNodeId) => {
