@@ -1,90 +1,26 @@
-import { API_URL } from "../../utils/apiConfig";
-import { handleUnauthorized } from "../../utils/authStorage";
-
-const createAuthHeaders = (token) => {
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
+import { apiRequest } from "../../features/coffee-records/api/httpClient";
 
 /**
- * !response.ok のときに投げる共通処理。
+ * ログイン中ユーザー自身のプロフィールAPI。
  *
- * 401は「トークンが無効・期限切れ」として自動ログアウトする
- * （handleUnauthorized、utils/authStorage.js参照）。
- * ただしchangePasswordだけは、この関数を使わず個別にハンドリングする。
- * backend/controllers/userController.jsの「現在のパスワードが間違って
- * いる」判定も401を返すため、ここで一律に自動ログアウトすると
- * パスワードを打ち間違えただけで強制ログアウトされてしまう誤動作になる。
+ * 2026-08、以前は生fetchで実装しており、他のfeature（coffee-records等）
+ * が使う共通クライアント（features/coffee-records/api/httpClient.js）とは
+ * 別のエラー処理を個別に持っていた。当時はchangePasswordの「現在の
+ * パスワードが違う」を401で返しており、共通クライアントの「401は必ず
+ * トークン無効」という前提と衝突するため独自実装にしていたが、backend側で
+ * 400（INVALID_CURRENT_PASSWORD）へ改めたことでこの前提が成り立つように
+ * なり、他のfeatureと同じ共通クライアントへ揃えられるようになった。
  */
-const throwIfError = (response, data, fallbackMessage) => {
-  if (response.ok) return;
 
-  if (response.status === 401) handleUnauthorized();
+export const getCurrentUser = ({ signal } = {}) => apiRequest("/api/users/me", { signal });
 
-  const error = new Error(data.message || fallbackMessage);
-  error.status = response.status;
-  throw error;
-};
+export const updateProfile = ({ name }) =>
+  apiRequest("/api/users/me", { method: "PATCH", body: { name } });
 
-export const getCurrentUser = async (token) => {
-  const response = await fetch(`${API_URL}/api/users/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  const data = await response.json();
-
-  throwIfError(response, data, "Failed to load user.");
-
-  return data;
-};
-
-export const updateProfile = async ({ name }, token) => {
-  const response = await fetch(`${API_URL}/api/users/me`, {
+export const changePassword = ({ currentPassword, newPassword }) =>
+  apiRequest("/api/users/me/password", {
     method: "PATCH",
-    headers: createAuthHeaders(token),
-    body: JSON.stringify({ name }),
+    body: { currentPassword, newPassword },
   });
-  const data = await response.json();
 
-  throwIfError(response, data, "Failed to update profile.");
-
-  return data;
-};
-
-/**
- * changePasswordだけはthrowIfErrorを使わない。
- * 401が「トークン無効」ではなく「現在のパスワードが間違っている」
- * （userController.js）を意味するケースがあり、ここで自動ログアウトすると
- * 誤動作になるため（throwIfErrorのコメント参照）。
- */
-export const changePassword = async ({ currentPassword, newPassword }, token) => {
-  const response = await fetch(`${API_URL}/api/users/me/password`, {
-    method: "PATCH",
-    headers: createAuthHeaders(token),
-    body: JSON.stringify({ currentPassword, newPassword }),
-  });
-  const data = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(data.message || "Failed to change password.");
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
-};
-
-export const deleteAccount = async (token) => {
-  const response = await fetch(`${API_URL}/api/users/me`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const data = await response.json();
-
-  throwIfError(response, data, "Failed to delete account.");
-
-  return data;
-};
+export const deleteAccount = () => apiRequest("/api/users/me", { method: "DELETE" });

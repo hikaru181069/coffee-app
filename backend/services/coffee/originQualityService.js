@@ -1,4 +1,4 @@
-import Origin from "../../models/Origin.js";
+import * as masterDataRepository from "../../repositories/masterDataRepository.js";
 import { loadCqiDataset } from "../../data/cqiDataset.js";
 import { resolveOriginNameFromNodeId } from "./originLookup.js";
 import {
@@ -12,6 +12,9 @@ import {
  * discoverService.js と同じ構成: core/originQuality/originQualityBuilder.js
  * （純粋関数）とDB問い合わせをつなぐ。graphBuilder.jsへは依存しない
  * （discoverServiceと同じ理由。知識グラフ生成ロジックを変更しない）。
+ *
+ * 2026-08、Originモデルへ直接アクセスしていたのを他のserviceと同じ
+ * masterDataRepository経由へ揃えた。
  */
 
 /**
@@ -50,8 +53,10 @@ export const getAllOriginQualityScores = async () => {
   const cqiDataset = loadCqiDataset();
   const scores = getQualityScoresForAllOrigins(cqiDataset);
 
-  const origins = await Origin.find({ name: { $in: scores.map((score) => score.originName) } }).select(
-    "name countryCode",
+  const origins = await masterDataRepository.findByNames(
+    "origins",
+    scores.map((score) => score.originName),
+    { select: "name countryCode" },
   );
   const countryCodeByName = new Map(origins.map((origin) => [origin.name, origin.countryCode]));
 

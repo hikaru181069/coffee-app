@@ -3,18 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { geoNaturalEarth1, geoPath, geoGraticule10 } from "d3-geo";
 import { feature } from "topojson-client";
-import worldTopology from "world-atlas/countries-50m.json";
+import worldTopology from "world-atlas/countries-110m.json";
 import { getOriginFillClass } from "../../coffee-records/utils/originAccent";
 import { getQualityTierFillClass } from "../utils/qualityColor";
 
 // d3-geoの他のグラフ・図（TasteRadarChart.jsx・RecordConnectionsDiagram.jsx）
 // と違い、国境の形状データは自作が現実的ではないため、world-atlas
-// （Natural Earthベースのtopojson、50m解像度）を採用した唯一の例外
-// （2026-08、react-simple-mapsを検討したがReact 19未対応で導入できず、
-// Reactに依存しないd3-geo + topojson-clientの組み合わせへ変更した）。
+// （Natural Earthベースのtopojson）を採用した唯一の例外（2026-08、
+// react-simple-mapsを検討したがReact 19未対応で導入できず、Reactに
+// 依存しないd3-geo + topojson-clientの組み合わせへ変更した）。
 // 投影法はNatural Earth（geoNaturalEarth1、d3-geo本体に標準搭載で
 // 追加パッケージ不要）を使う。世界全体を歪みが少なく見せる、この種の
 // 用途で定番の投影法。
+//
+// 2026-08、設計レビューでバンドルサイズが指摘され、50m解像度
+// （756KB）から110m解像度（108KB）へ切り替えた。国単位のハイライト
+// 表示にしか使っておらず、海岸線の精密さは不要なため（docs/features.md
+// 「World Map」参照）。国自体の有無・ISO数値IDは解像度に関わらず同じ。
 
 const WIDTH = 960;
 const HEIGHT = 500;
@@ -55,8 +60,8 @@ const graticuleGeoJson = geoGraticule10();
 function WorldMap({ visitedByNumericId, colorMode = "visited", qualityByNumericId }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  // world-atlasのcountries-50m.jsonは、一部の国（海を挟んだ領土を持つ国等）
-  // が同じidで複数のfeatureに分かれている（実機で確認: オーストラリアの
+  // world-atlasのtopojsonは、一部の国（海を挟んだ領土を持つ国等）が
+  // 同じidで複数のfeatureに分かれている（実機で確認: オーストラリアの
   // idが2件重複していた）。country.idはReactのkeyやhover状態の識別には
   // 使わず、配列のindexを使うことで重複idによる「keyの重複警告」や
   // 「間違ったfeatureのツールチップが出る」不具合を避ける。visitedとの

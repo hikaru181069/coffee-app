@@ -15,6 +15,8 @@
  * 表示しようとしない）。
  */
 
+import { average, roundTo1, pickTop } from "../shared/aggregationHelpers.js";
+
 // 閾値。件数や評価差の基準に「絶対の正解」は無いため、ここへ集約して
 // 将来チューニングしやすくしている
 const THRESHOLDS = {
@@ -39,10 +41,6 @@ const PRIORITY = [
   "topFlavor",
   "topOrigin",
 ];
-
-const roundTo1 = (value) => Math.round(value * 10) / 10;
-
-const average = (numbers) => numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
 
 const ratingsOf = (records) => records.map((record) => record.rating).filter((rating) => rating != null);
 
@@ -72,26 +70,24 @@ const groupByMultiRef = (records, getRefs) => {
 
 /** 最も多く登場する産地（3件以上、同率首位のときは断定しない） */
 const findTopOrigin = (records) => {
-  const sorted = [...groupBySingleRef(records, (record) => record.origin).values()].sort(
-    (a, b) => b.records.length - a.records.length,
+  const candidates = [...groupBySingleRef(records, (record) => record.origin).values()].map(
+    (group) => ({ label: group.label, count: group.records.length }),
   );
-  const top = sorted[0];
-  if (!top || top.records.length < THRESHOLDS.minOriginCount) return null;
-  if (sorted[1]?.records.length === top.records.length) return null;
+  const top = pickTop(candidates, THRESHOLDS.minOriginCount);
+  if (!top) return null;
 
-  return { type: "topOrigin", label: top.label, count: top.records.length };
+  return { type: "topOrigin", label: top.label, count: top.count };
 };
 
 /** よく選ぶフレーバー（3件以上、同率首位のときは断定しない） */
 const findTopFlavor = (records) => {
-  const sorted = [...groupByMultiRef(records, (record) => record.flavors).values()].sort(
-    (a, b) => b.records.length - a.records.length,
+  const candidates = [...groupByMultiRef(records, (record) => record.flavors).values()].map(
+    (group) => ({ label: group.label, count: group.records.length }),
   );
-  const top = sorted[0];
-  if (!top || top.records.length < THRESHOLDS.minFlavorCount) return null;
-  if (sorted[1]?.records.length === top.records.length) return null;
+  const top = pickTop(candidates, THRESHOLDS.minFlavorCount);
+  if (!top) return null;
 
-  return { type: "topFlavor", label: top.label, count: top.records.length };
+  return { type: "topFlavor", label: top.label, count: top.count };
 };
 
 /** 高評価が多い精製方法（2件以上・平均4.0以上のうち最高） */

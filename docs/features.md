@@ -612,9 +612,12 @@ numericでcountryを識別する）と突き合わせるための対応表
 他のグラフ・図（TasteRadarChart、RecordConnectionsDiagram、
 GraphIllustration）は自前のSVGで描画しているが、国境の形状データだけは
 自作が現実的ではないため例外的に`world-atlas`（Natural Earthベースの
-topojson、50m解像度）を使う。React本体には依存しない`d3-geo`・
-`topojson-client`で投影・パス生成を行い、Reactコンポーネント自体は
-自前で書く（react-simple-mapsを検討したがReact 19のpeer dependency
+topojson）を使う。国単位のハイライト表示にしか使わず海岸線の精密さは
+不要なため、110m解像度（108KB）を採用している（2026-08、設計レビューで
+バンドルサイズを指摘され、50m解像度・756KBから切り替えた。国の有無・
+ISO 3166-1 numericのIDは解像度に関わらず同じ）。React本体には依存しない
+`d3-geo`・`topojson-client`で投影・パス生成を行い、Reactコンポーネント
+自体は自前で書く（react-simple-mapsを検討したがReact 19のpeer dependency
 に対応しておらず導入できなかったため）。投影法はNatural Earth
 （`geoNaturalEarth1`、d3-geo本体に標準搭載）を使う。
 

@@ -7,11 +7,9 @@
  * いた。coffeeRecordValidator.jsと同じ「DB/Expressに依存しない純粋関数、
  * {valid, details}を返す」パターンに揃える。
  *
- * ただしauthController.js/userController.jsは、frontend側の
- * utils/errorMessage.jsが特定の英語メッセージ文字列（"Invalid email or
- * password"等）をそのまま照合する古い応答形式（{ message }）に依存して
- * いるため、他のvalidatorのようにAppError/validationErrorへは寄せず、
- * 既存の応答形式のまま使う（既存APIの互換性を理由なく壊さないため）。
+ * 2026-08、authController.js/userController.jsも他のcontrollerと同じ
+ * AppError/errorHandler経由の応答形式へ統一した
+ * （docs/api.md「エラーレスポンスの形式」参照）。
  */
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

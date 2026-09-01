@@ -24,7 +24,7 @@ import statsRoutes from "./routes/statsRoutes.js";
 import diagnosisRoutes from "./routes/diagnosisRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import { errorHandler } from "./middleware/errorHandler.js";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
@@ -64,11 +64,7 @@ app.get("/", (req, res) => {
   res.send("Backend server is running");
 });
 
-app.use((req, res) => {
-  res.status(404).json({
-    message: "Route not found",
-  });
-});
+app.use(notFoundHandler);
 
 // エラーミドルウェアは全ルートの後ろに置く。
 // ここより前に登録されたハンドラで投げられたエラーだけが届く。

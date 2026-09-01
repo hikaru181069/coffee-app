@@ -1,7 +1,8 @@
 /**
  * ISO 3166-1 alpha-2（Originマスターのcountry Code、backend/models/Origin.js）
- * から、world-atlasのtopojson（countries-50m.json）が国を識別するのに使う
- * ISO 3166-1 numeric（3桁文字列）への対応表。
+ * から、world-atlasのtopojson（WorldMap.jsx参照）が国を識別するのに使う
+ * ISO 3166-1 numeric（3桁文字列）への対応表。ISO数値IDは解像度
+ * （50m/110m等）に関わらず同じなので、この対応表もどちらでも使える。
  *
  * world-atlasを実際に読み込み、backend/seeds/data/origins.jsに登録済みの
  * 全20か国それぞれをproperties.name（英語の国名）で検索し、一致した

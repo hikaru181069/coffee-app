@@ -7,12 +7,15 @@ import {
   secondaryButtonClass,
 } from "../../coffee-records/components/formStyles";
 import { getErrorMessage } from "../../../utils/errorMessage";
+import EmptyState from "../../../components/EmptyState";
 
 /**
  * グラフの「中身が無いとき」の表示。
  *
  * features/coffee-records/components/RecordListStates.jsx と同じ方針。
  * loading / empty / error を必ず用意する（prompts/05 の Checks）。
+ * empty/noMatch/errorの見た目は共通コンポーネント（components/EmptyState.jsx）
+ * に集約している。fillHeightでキャンバス全体の高さいっぱいに中央寄せする。
  */
 
 /**
@@ -47,18 +50,17 @@ export function GraphLoadingState() {
 export function GraphEmptyState() {
   const { t } = useTranslation();
   return (
-    <div className="flex h-full min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
-      <Share2 size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
-      <div>
-        <p className="text-sm font-medium text-text">{t("graph.emptyTitle")}</p>
-        <p className="mt-1 text-sm italic text-text-tertiary">
-          {t("graph.emptyDesc")}
-        </p>
-      </div>
-      <Link to="/records/new" className={`${primaryButtonClass} mt-1`}>
-        {t("records.emptyCta")}
-      </Link>
-    </div>
+    <EmptyState
+      fillHeight
+      icon={Share2}
+      title={t("graph.emptyTitle")}
+      description={t("graph.emptyDesc")}
+      action={
+        <Link to="/records/new" className={`${primaryButtonClass} mt-1`}>
+          {t("records.emptyCta")}
+        </Link>
+      }
+    />
   );
 }
 
@@ -66,29 +68,34 @@ export function GraphEmptyState() {
 export function GraphNoMatchState({ onClearFilters }) {
   const { t } = useTranslation();
   return (
-    <div className="flex h-full min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
-      <p className="text-sm font-medium text-text">{t("records.noMatchTitle")}</p>
-      <button type="button" onClick={onClearFilters} className={secondaryButtonClass}>
-        {t("common.clearFilters")}
-      </button>
-    </div>
+    <EmptyState
+      fillHeight
+      title={t("records.noMatchTitle")}
+      action={
+        <button type="button" onClick={onClearFilters} className={secondaryButtonClass}>
+          {t("common.clearFilters")}
+        </button>
+      }
+    />
   );
 }
 
 export function GraphErrorState({ error, onRetry }) {
   const { t } = useTranslation();
   return (
-    <div
+    <EmptyState
+      fillHeight
       role="alert"
-      className="flex h-full min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-danger/40 bg-danger/5 px-6 py-12 text-center"
-    >
-      <AlertCircle size={32} aria-hidden="true" className="text-danger" strokeWidth={1.5} />
-      <p className="text-sm text-text">{error ? getErrorMessage(error, t) : t("common.loadFailed")}</p>
-      {onRetry && (
-        <button type="button" onClick={onRetry} className={secondaryButtonClass}>
-          {t("common.retry")}
-        </button>
-      )}
-    </div>
+      variant="error"
+      icon={AlertCircle}
+      title={error ? getErrorMessage(error, t) : t("common.loadFailed")}
+      action={
+        onRetry && (
+          <button type="button" onClick={onRetry} className={secondaryButtonClass}>
+            {t("common.retry")}
+          </button>
+        )
+      }
+    />
   );
 }

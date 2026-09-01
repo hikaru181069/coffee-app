@@ -94,3 +94,6 @@ export const updateOneForUser = (recordId, userId, update) =>
 /** 記録を1件削除する。他ユーザーの記録は削除できない */
 export const deleteOneForUser = (recordId, userId) =>
   CoffeeRecord.findOneAndDelete({ _id: recordId, userId });
+
+/** ユーザーの記録をすべて削除する（アカウント削除時に使う） */
+export const deleteAllForUser = (userId) => CoffeeRecord.deleteMany({ userId });

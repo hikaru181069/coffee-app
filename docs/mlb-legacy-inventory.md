@@ -59,11 +59,24 @@ matchup/news/player/position/recommendation/scout/similarPlayer/stats/team）
 ### 再利用した（現存）
 
 `utils/apiConfig.js` / `utils/authStorage.js` / `utils/datetime.js` /
-`services/api/apiError.js` / `services/api/authApi.js` /
+`services/api/authApi.js` /
 `components/ProtectedRoute.jsx` / `contexts/ToastContext.jsx` /
 `components/ErrorCard.jsx` /
-`components/SearchInput.jsx` /
 `components/Navbar.jsx` + `components/BottomTabBar.jsx`
+
+2026-08、設計レビューで`components/SearchInput.jsx`も「再利用した（現存）」
+と誤って記載されたままだったことが判明した。実際には横断検索機能
+（`docs/features.md`「Search」）の実装時に`features/search/components/
+SearchBox.jsx`へ置き換わっており、`SearchInput.jsx`はどこからも
+importされていない死んだコンポーネントだった（`placeholder="Search
+player name"`というMLB時代の文言も残ったまま）。`PageHeader.jsx`と
+同じ扱いとして削除した。
+
+同じ設計レビューで、`services/api/apiError.js`（`getApiErrorMessage`/
+`isUnauthorizedError`）も、認証まわりのcontroller層の見直しに伴い
+`services/api/userApi.js`が共通クライアント（`features/coffee-records/
+api/httpClient.js`）経由へ移行したことでどこからも参照されなくなり、
+削除した。
 
 `components/SkeletonCard.jsx`も再利用予定だったが、`PageHeader.jsx`と同様
 どのページからも使われていない死んだコンポーネントとして残っていたため、
@@ -106,9 +119,15 @@ MLB系ページ約26件（`Archetype` `Compare` `Game` `League` `Matchup`
 801件を確認無しに一括削除するのは安全ではないと判断し、今回は見送った。
 `PageHeader.jsx`削除に伴う`.page-header*`等（上記「再利用した」節参照、
 参照元が完全に1コンポーネントへ限定でき安全に判定できたもの）だけを
-削除するに留めている。`.home-player-section`等を含む残り約800件の未使用
-セレクタの整理は、個別に使用箇所を確認しながら進める専用タスクとして
-IMPLEMENTATION.mdの未解決事項に残す。
+削除するに留めている。
+
+2026-08、設計レビューで、このファイルに名指しで記載されていた
+`.home-player-section` `.home-team-section` `.home-favorites-section`
+`.home-recommendations-section`（旧MLB時代のTeam/Favorites/Recommendations
+セクション向け定義、および関連する`.player-list-carousel` `.similar-players`
+の2ブロック、計約110行）について、JSX側の参照がゼロであることを再確認
+した上で削除した。これらは元々このファイルに「未対応」として名指しで
+記載されていた、確認済みの削除候補だったため対応した。
 
 ## fastapi-service
 

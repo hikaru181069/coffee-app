@@ -97,7 +97,7 @@ describe("PATCH /api/users/me/password", () => {
     expect(oldLoginRes.status).toBe(401);
   });
 
-  test("現在のパスワードが間違っていれば401", async () => {
+  test("現在のパスワードが間違っていれば400（トークン失効の401とは区別する）", async () => {
     const { authHeader } = await registerUser();
 
     const res = await request(app)
@@ -105,7 +105,8 @@ describe("PATCH /api/users/me/password", () => {
       .set("Authorization", authHeader)
       .send({ currentPassword: "wrong-password", newPassword: "newpassword456" });
 
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("INVALID_CURRENT_PASSWORD");
   });
 
   test("新パスワードが短すぎれば400", async () => {

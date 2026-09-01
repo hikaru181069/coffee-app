@@ -230,6 +230,7 @@
     "emptyTitle": "まだつながりがありません",
     "emptyDesc": "コーヒーを記録すると、産地やフレーバーのつながりがここに現れます。",
     "selectedNodeAriaLabel": "選択中のノード",
+    "canvasAriaLabel": "コーヒーの知識グラフ。ノード{{nodeCount}}件、つながり{{edgeCount}}件。ノードの選択は上の検索欄から行えます。",
     "viewRecordDetail": "記録の詳細を見る",
     "viewEntityDetail": "詳細を見る",
     "appearsInCount": "<mono>{{count}}</mono> 件の記録で登場",
@@ -464,17 +465,9 @@
       "CONFLICT": "すでに登録されています",
       "NETWORK_ERROR": "サーバーに接続できません。通信環境を確認してください。",
       "UNKNOWN_ERROR": "エラーが発生しました。時間をおいて再度お試しください。",
-      "INTERNAL_ERROR": "サーバー内部でエラーが発生しました"
-    },
-    "legacy": {
-      "invalidCredentials": "メールアドレスまたはパスワードが正しくありません",
-      "userExists": "このメールアドレスは既に登録されています",
-      "loginFailed": "ログインに失敗しました",
-      "registerFailed": "登録に失敗しました",
-      "loadUserFailed": "ユーザー情報の取得に失敗しました",
-      "updateProfileFailed": "プロフィールの更新に失敗しました",
-      "changePasswordFailed": "パスワードの変更に失敗しました",
-      "deleteAccountFailed": "アカウントの削除に失敗しました"
+      "INTERNAL_ERROR": "サーバー内部でエラーが発生しました",
+      "INVALID_CREDENTIALS": "メールアドレスまたはパスワードが正しくありません",
+      "INVALID_CURRENT_PASSWORD": "現在のパスワードが正しくありません"
     }
   }
 }

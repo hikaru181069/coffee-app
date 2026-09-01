@@ -19,6 +19,8 @@
  * 一切混ぜない。
  */
 
+import { pickTop } from "../shared/aggregationHelpers.js";
+
 const THRESHOLDS = {
   // 「よく選んでいる」と言うための、その産地の最低記録数
   minRecordsForOrigin: 2,
@@ -39,12 +41,7 @@ const findDominantProcess = (originRecords) => {
     counts.set(record.process.id, entry);
   }
 
-  const sorted = [...counts.values()].sort((a, b) => b.count - a.count);
-  const top = sorted[0];
-  if (!top) return null;
-  if (sorted[1]?.count === top.count) return null;
-
-  return top;
+  return pickTop([...counts.values()]);
 };
 
 /**

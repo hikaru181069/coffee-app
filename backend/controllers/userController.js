@@ -1,88 +1,63 @@
 import bcrypt from "bcryptjs";
-import User from "../models/User.js";
-import CoffeeRecord from "../models/CoffeeRecord.js";
+import * as userRepository from "../repositories/userRepository.js";
+import * as coffeeRecordRepository from "../repositories/coffeeRecordRepository.js";
+import { validateUpdateProfile, validateChangePassword } from "../validators/userValidator.js";
+import { validationError, invalidCurrentPasswordError } from "../utils/AppError.js";
 
-const createUserResponse = (user) => {
-  return {
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-  };
-};
+/**
+ * ログイン中ユーザー自身のプロフィールを扱うcontroller。
+ *
+ * 2026-08、User/CoffeeRecordモデルへ直接アクセスしていたのを
+ * authController.jsと同じくrepository経由・AppError投げっぱなしの形へ
+ * 揃えた。
+ */
 
-const getMe = async (req, res) => {
+const createUserResponse = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+});
+
+export const getMe = async (req, res) => {
   res.json(createUserResponse(req.user));
 };
 
-const updateProfile = async (req, res) => {
-  try {
-    const { name } = req.body;
+export const updateProfile = async (req, res) => {
+  const { valid, details } = validateUpdateProfile(req.body);
+  if (!valid) throw validationError(details);
 
-    if (!name || !name.trim()) {
-      return res.status(400).json({ message: "Name is required" });
-    }
+  const user = await userRepository.updateName(req.user._id, req.body.name.trim());
 
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { name: name.trim() },
-      { returnDocument: "after", runValidators: true },
-    ).select("-password");
-
-    res.json(createUserResponse(user));
-  } catch (error) {
-    console.error("Update profile error:", error.message);
-    res.status(400).json({ message: "Failed to update profile" });
-  }
+  res.json(createUserResponse(user));
 };
 
-const changePassword = async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
+export const changePassword = async (req, res) => {
+  const { valid, details } = validateChangePassword(req.body);
+  if (!valid) throw validationError(details);
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: "Both current and new password are required" });
-    }
+  const { currentPassword, newPassword } = req.body;
 
-    // 2026-08、型チェックが無く、オブジェクト等を送るとnewPassword.lengthが
-    // undefinedになりチェックをすり抜けたり、bcrypt.hashに非文字列が渡ったり
-    // していた（validateLogin.jsの型チェックと同じ考え方）
-    if (typeof currentPassword !== "string" || typeof newPassword !== "string") {
-      return res.status(400).json({ message: "Both current and new password must be strings" });
-    }
+  const user = await userRepository.findById(req.user._id);
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: "New password must be at least 6 characters" });
-    }
+  // 2026-08、以前は401を返していたが、「現在のパスワードが違う」は
+  // トークンの有効性とは無関係の入力内容の問題。401のままだと
+  // フロントの共通クライアント（httpClient.js）が自動ログアウトして
+  // しまうため400にした（AppError.jsのinvalidCurrentPasswordError参照）
+  if (!isMatch) throw invalidCurrentPasswordError();
 
-    const user = await User.findById(req.user._id);
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+  // ハッシュ化はUser.js（pre-saveフック）が行う
+  user.password = newPassword;
+  await user.save();
 
-    if (!isMatch) {
-      return res.status(401).json({ message: "Current password is incorrect" });
-    }
-
-    // ハッシュ化はUser.js（pre-saveフック）が行う
-    user.password = newPassword;
-    await user.save();
-
-    res.json({ message: "Password updated successfully" });
-  } catch (error) {
-    console.error("Change password error:", error.message);
-    res.status(500).json({ message: "Failed to change password" });
-  }
+  res.json({ message: "Password updated successfully" });
 };
 
-const deleteAccount = async (req, res) => {
-  try {
-    // ユーザーを消すだけだと記録が持ち主のいないデータとして残ってしまうので、
-    // 自分の記録も一緒に削除する
-    await CoffeeRecord.deleteMany({ userId: req.user._id });
-    await User.findByIdAndDelete(req.user._id);
-    res.json({ message: "Account deleted successfully" });
-  } catch (error) {
-    console.error("Delete account error:", error.message);
-    res.status(500).json({ message: "Failed to delete account" });
-  }
-};
+export const deleteAccount = async (req, res) => {
+  // ユーザーを消すだけだと記録が持ち主のいないデータとして残ってしまうので、
+  // 自分の記録も一緒に削除する
+  await coffeeRecordRepository.deleteAllForUser(req.user._id);
+  await userRepository.deleteById(req.user._id);
 
-export { changePassword, deleteAccount, getMe, updateProfile };
+  res.json({ message: "Account deleted successfully" });
+};

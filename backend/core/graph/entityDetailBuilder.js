@@ -1,4 +1,5 @@
 import { ATTRIBUTE_NODE_TYPES } from "./graphBuilder.js";
+import { average, roundTo1 } from "../shared/aggregationHelpers.js";
 
 /**
  * 属性ノード1件の詳細（統計・関連属性・関連記録）を組み立てる純粋関数。
@@ -16,9 +17,6 @@ import { ATTRIBUTE_NODE_TYPES } from "./graphBuilder.js";
  */
 
 const RECORD_PREFIX = "record:";
-
-const average = (numbers) => (numbers.length === 0 ? null : numbers.reduce((sum, n) => sum + n, 0) / numbers.length);
-const roundTo1 = (value) => (value == null ? null : Math.round(value * 10) / 10);
 
 /** attributeNodeIdに接続する記録ノードのID一覧（"record:xxx"形式）。エッジは常にrecord→属性の向き */
 const findConnectedRecordNodeIds = (graph, attributeNodeId) => {

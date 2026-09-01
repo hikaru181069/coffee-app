@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
 import { changePassword, deleteAccount, updateProfile } from "../services/api/userApi";
-import { clearAuthData, getAuthToken, saveAuthUserName } from "../utils/authStorage";
+import { clearAuthData, saveAuthUserName } from "../utils/authStorage";
 import { useProfile } from "../features/profile/hooks/useProfile";
 import ProfileSkeleton from "../features/profile/components/ProfileSkeleton";
 import LanguageSwitcher from "../components/LanguageSwitcher";
@@ -50,7 +50,6 @@ function ProfilePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const token = getAuthToken();
 
   const { user, isLoading, error, reload, setUser } = useProfile();
 
@@ -98,7 +97,7 @@ function ProfilePage() {
 
     setIsSavingName(true);
     try {
-      const updated = await updateProfile({ name: trimmed }, token);
+      const updated = await updateProfile({ name: trimmed });
       setUser(updated);
       saveAuthUserName(updated.name);
       addToast(t("profile.toastNameUpdated"), "success");
@@ -115,7 +114,7 @@ function ProfilePage() {
 
     setIsChangingPassword(true);
     try {
-      await changePassword(passwordForm, token);
+      await changePassword(passwordForm);
       setPasswordForm({ currentPassword: "", newPassword: "" });
       addToast(t("profile.toastPasswordChanged"), "success");
     } catch (caught) {
@@ -130,7 +129,7 @@ function ProfilePage() {
 
     setIsDeleting(true);
     try {
-      await deleteAccount(token);
+      await deleteAccount();
       clearAuthData();
       navigate("/login", { replace: true });
     } catch (caught) {
