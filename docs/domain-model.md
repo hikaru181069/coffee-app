@@ -17,6 +17,24 @@ rating、notes、産地、品種、フレーバー、6軸の味覚評価（甘�
 呼び名を揃えているが、notesから自動抽出される仕組みとは独立しており、
 知識グラフのノードにもならない（下記「Knowledge Graph Terms」参照）。
 
+### 抽出の詳細（doseWeight / waterWeight / brewTimeSeconds / pours）
+
+2026-09、「知識グラフを深める／データの幅を広げる」という発展の一環で
+追加した。粉量・総湯量・抽出時間（`doseWeight`/`waterWeight`/
+`brewTimeSeconds`）と、注湯記録（`pours`。経過時間ごとの累計湯量の配列、
+`{elapsedSeconds, cumulativeWaterWeight}`）を持つ。いずれも任意項目で、
+既定値はnull（数値項目）または空配列（`pours`）。
+
+6軸の味覚評価と同じ理由（記録1件に閉じた数値データで、複数記録をまたいだ
+関係性を持たないため）で知識グラフのノードにはしない。
+
+他の任意項目と異なる点として、**記録編集フォーム（RecordFormPage /
+RecordForm.jsx）には含めず、記録詳細ページの独立カード
+（`BrewDetailsCard.jsx`）でのみインライン編集する**。レシオ関連の情報は
+「豆そのものの情報」（産地・品種・精製方法等）とは性質が異なるという
+判断による。保存は既存の`PATCH /api/coffee-records/:recordId`をそのまま
+使い、専用のAPIエンドポイントは新設していない。
+
 ## Master Entities
 
 産地、品種、精製方法、焙煎度、フレーバーは、それぞれ別コレクションのマスターデータとして管理している。そうすることで、グラフのノードを一貫して保てる。マスターデータにすることで、表記揺れを防げる。
