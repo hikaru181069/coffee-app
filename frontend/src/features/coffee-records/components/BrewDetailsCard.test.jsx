@@ -100,6 +100,41 @@ describe("BrewDetailsCard", () => {
     );
   });
 
+  test("抽出時間を分・秒で入力して保存すると合計秒数に変換される", async () => {
+    updateCoffeeRecord.mockResolvedValue(FULL_RECORD);
+    const user = userEvent.setup();
+    render(<BrewDetailsCard record={EMPTY_RECORD} />);
+
+    await user.click(screen.getByRole("button", { name: "抽出データを記録する" }));
+    await user.type(screen.getByLabelText("分"), "2");
+    await user.type(screen.getByLabelText("秒"), "30");
+    await user.click(screen.getByRole("button", { name: "保存" }));
+
+    expect(updateCoffeeRecord).toHaveBeenCalledWith("r1", expect.objectContaining({ brewTimeSeconds: 150 }));
+  });
+
+  test("注湯の経過時間を分・秒で入力して保存すると合計秒数に変換される", async () => {
+    updateCoffeeRecord.mockResolvedValue(FULL_RECORD);
+    const user = userEvent.setup();
+    render(<BrewDetailsCard record={EMPTY_RECORD} />);
+
+    await user.click(screen.getByRole("button", { name: "抽出データを記録する" }));
+    await user.click(screen.getByRole("button", { name: "＋注湯を追加" }));
+
+    const minutesInputs = screen.getAllByLabelText("分");
+    const secondsInputs = screen.getAllByLabelText("秒");
+    // 1つ目は抽出時間、2つ目が注湯の行
+    await user.type(minutesInputs[1], "1");
+    await user.type(secondsInputs[1], "5");
+    await user.type(screen.getByLabelText("累計湯量（g）"), "150");
+    await user.click(screen.getByRole("button", { name: "保存" }));
+
+    expect(updateCoffeeRecord).toHaveBeenCalledWith(
+      "r1",
+      expect.objectContaining({ pours: [{ elapsedSeconds: 65, cumulativeWaterWeight: 150 }] }),
+    );
+  });
+
   test("キャンセルすると変更を破棄して閲覧モードへ戻る", async () => {
     const user = userEvent.setup();
     render(<BrewDetailsCard record={EMPTY_RECORD} />);
