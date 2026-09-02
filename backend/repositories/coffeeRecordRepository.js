@@ -3,9 +3,8 @@ import CoffeeRecord from "../models/CoffeeRecord.js";
 /**
  * CoffeeRecord へのDB問い合わせ。
  *
- * Phase 1 では「土台」だけを用意する。
- * CRUD APIの組み立て（フィルター構築・ページネーション・所有者確認）は
- * Phase 2（prompts/02-coffee-record-api.md）で service 側に足していく。
+ * フィルター構築・ページネーション・所有者確認は呼び出し側（service層）
+ * が組み立てる。
  *
  * この層の約束:
  *   - 引数で受け取った条件をそのままクエリにする。業務判断はしない

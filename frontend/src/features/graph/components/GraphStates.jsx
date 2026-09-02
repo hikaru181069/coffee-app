@@ -13,7 +13,7 @@ import EmptyState from "../../../components/EmptyState";
  * グラフの「中身が無いとき」の表示。
  *
  * features/coffee-records/components/RecordListStates.jsx と同じ方針。
- * loading / empty / error を必ず用意する（prompts/05 の Checks）。
+ * loading / empty / error を必ず用意する（docs/design.md の UI Rules）。
  * empty/noMatch/errorの見た目は共通コンポーネント（components/EmptyState.jsx）
  * に集約している。fillHeightでキャンバス全体の高さいっぱいに中央寄せする。
  */

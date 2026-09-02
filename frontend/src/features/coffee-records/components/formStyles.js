@@ -8,7 +8,7 @@
  * 2026-08、mobbin.comの実測値に合わせて配色・角丸・奥行きを刷新した。
  * 主要ボタンは色を使わず、明背景+暗文字の反転ピルボタン
  * （bg-inverse text-on-inverse rounded-full）に変更した
- * （prompts/design/00-design-principles.md 6.1参照）。
+ * （docs/design.md「Design Tokens」のColor参照）。
  */
 
 const BASE_CONTROL =

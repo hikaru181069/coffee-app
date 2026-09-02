@@ -9,7 +9,7 @@ import EmptyState from "../../../components/EmptyState";
 /**
  * 一覧の「中身が無いとき」の表示をまとめる。
  *
- * loading / empty / error は必ず作る（prompts/03 の States）。
+ * loading / empty / error は必ず作る（docs/design.md の UI Rules）。
  * 何も出さないと、読み込み中なのか記録が無いのか通信が失敗したのかが
  * 区別できず、ユーザーは待つべきか操作すべきか判断できない。
  *

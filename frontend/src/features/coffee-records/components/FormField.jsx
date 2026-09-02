@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
  *   - 任意項目を必須に見せない → 必須のときだけ「必須」を出す
  *   - 色だけで状態を表現しない → エラーは赤色に加えて文言でも示す
  *
- * エラーメッセージは入力欄のすぐ下に出す（prompts/03 の Form UX）。
+ * エラーメッセージは入力欄のすぐ下に出す。
  * 画面上部にまとめて出すと、どの欄の話か分からなくなる。
  */
 function FormField({ id, label, required = false, hint, error, children }) {

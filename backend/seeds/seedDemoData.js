@@ -10,7 +10,7 @@ import { seedMasterData } from "./seedMasterData.js";
 import { demoRecords } from "./data/demoRecords.js";
 
 /**
- * デモ用ユーザーとコーヒー記録の投入（prompts/06 の「demo seed」）。
+ * デモ用ユーザーとコーヒー記録の投入。
  *
  * 面接・ポートフォリオ閲覧者が「まず何もない状態から記録する」体験と、
  * 「記録が育った後の知識グラフ」の両方を見せたいため、

@@ -121,7 +121,6 @@ frontend は FastAPI へ直接アクセスせず、MongoDB へも直接接続し
 ```text
 coffee-app/
 ├── docs/                      仕様・設計ドキュメント（仕様の正）
-├── prompts/                   Phase単位の実装指示
 ├── frontend/src/
 │   ├── features/
 │   │   ├── coffee-records/    記録機能のAPI・hooks・components

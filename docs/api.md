@@ -14,6 +14,24 @@
 - `/graph` - 知識グラフ
 - `/insights`、`/discover`、`/similar-records`、`/search`、`/stats`、`/diagnosis` - 個別機能
 
+### 主要エンドポイント一覧
+
+`/insights`等の個別機能のリクエスト・レスポンス形は`docs/features.md`を
+参照。ここではCRUDの中心となる`/coffee-records`・`/master-data`のみ挙げる。
+
+| メソッド | パス | 用途 |
+| --- | --- | --- |
+| GET | `/api/coffee-records` | 自分の記録一覧（フィルター・ページネーション） |
+| POST | `/api/coffee-records` | 記録の作成 |
+| GET | `/api/coffee-records/:recordId` | 記録の詳細 |
+| PATCH | `/api/coffee-records/:recordId` | 記録の部分更新（所有者のみ） |
+| DELETE | `/api/coffee-records/:recordId` | 記録の削除（所有者のみ） |
+| GET | `/api/master-data` | 産地・品種・精製方法・焙煎度・フレーバーを全種類まとめて取得 |
+| GET | `/api/master-data/:type` | 種類別のマスターデータ（検索・件数制限つき） |
+
+いずれも認証必須（`userId`はリクエスト本文ではなく認証情報から取得する。
+CLAUDE.md参照）。
+
 ## ステータスコード
 
 - 200 成功
