@@ -7,7 +7,12 @@ import FormField from "./FormField";
 import PourScheduleEditor from "./PourScheduleEditor";
 import { cardClass, controlClass, primaryButtonClass, secondaryButtonClass } from "./formStyles";
 import { updateCoffeeRecord } from "../api/coffeeRecordApi";
-import { validateBrewDetails, hasErrors, toBrewApiPayload } from "../validation/brewDetailsValidation";
+import {
+  validateBrewDetails,
+  hasErrors,
+  toBrewApiPayload,
+  secondsToMinutesSecondsStrings,
+} from "../validation/brewDetailsValidation";
 import { getErrorMessage } from "../../../utils/errorMessage";
 
 /** APIのレコードから、このカードが扱う4項目だけを取り出す */
@@ -18,22 +23,39 @@ const extractBrewData = (record) => ({
   pours: record?.pours ?? [],
 });
 
-/** 表示用の値（数値・配列）を、編集フォーム用の文字列ベースの値へ変換する */
-const toFormValues = (brewData) => ({
-  doseWeight: brewData.doseWeight === null ? "" : String(brewData.doseWeight),
-  waterWeight: brewData.waterWeight === null ? "" : String(brewData.waterWeight),
-  brewTimeSeconds: brewData.brewTimeSeconds === null ? "" : String(brewData.brewTimeSeconds),
-  pours: brewData.pours.map((pour) => ({
-    elapsedSeconds: String(pour.elapsedSeconds),
-    cumulativeWaterWeight: String(pour.cumulativeWaterWeight),
-  })),
-});
+/**
+ * 表示用の値（数値・配列）を、編集フォーム用の文字列ベースの値へ変換する。
+ * 抽出時間・注湯の経過時間は「分」「秒」の2欄に分けて編集する
+ * （合計秒数を直接入力させるより直感的なため。ユーザー指摘で追加）
+ */
+const toFormValues = (brewData) => {
+  const brewTime = secondsToMinutesSecondsStrings(brewData.brewTimeSeconds);
+  return {
+    doseWeight: brewData.doseWeight === null ? "" : String(brewData.doseWeight),
+    waterWeight: brewData.waterWeight === null ? "" : String(brewData.waterWeight),
+    brewTimeMinutes: brewTime.minutes,
+    brewTimeSecondsPart: brewTime.seconds,
+    pours: brewData.pours.map((pour) => {
+      const elapsed = secondsToMinutesSecondsStrings(pour.elapsedSeconds);
+      return {
+        elapsedMinutes: elapsed.minutes,
+        elapsedSecondsPart: elapsed.seconds,
+        cumulativeWaterWeight: String(pour.cumulativeWaterWeight),
+      };
+    }),
+  };
+};
 
 const formatSeconds = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 };
+
+// 抽出時間は「分」「秒」の2欄に分かれているが、エラーは合計秒数として
+// 1つのキー（brewTimeSeconds）にまとめて出す（PourScheduleEditorのpours
+// と同じ、行/欄ごとの個別エラーは持たない方針）
+const BREW_TIME_ERROR_KEY_MAP = { brewTimeMinutes: "brewTimeSeconds", brewTimeSecondsPart: "brewTimeSeconds" };
 
 /**
  * 記録詳細ページの独立カード。粉量・湯量・抽出時間・注湯記録
@@ -91,10 +113,11 @@ function BrewDetailsCard({ record }) {
 
   const setField = (field, value) => {
     setValues((prev) => ({ ...prev, [field]: value }));
+    const errorKey = BREW_TIME_ERROR_KEY_MAP[field] ?? field;
     setErrors((prev) => {
-      if (!prev[field]) return prev;
+      if (!prev[errorKey]) return prev;
       const next = { ...prev };
-      delete next[field];
+      delete next[errorKey];
       return next;
     });
   };
@@ -115,7 +138,7 @@ function BrewDetailsCard({ record }) {
   const addRow = () => {
     setValues((prev) => ({
       ...prev,
-      pours: [...prev.pours, { elapsedSeconds: "", cumulativeWaterWeight: "" }],
+      pours: [...prev.pours, { elapsedMinutes: "", elapsedSecondsPart: "", cumulativeWaterWeight: "" }],
     }));
   };
 
@@ -258,20 +281,37 @@ function BrewDetailsCard({ record }) {
               />
             </FormField>
             <FormField
-              id="brewTimeSeconds"
+              id="brewTimeMinutes"
               label={t("records.brewDetailsTimeLabel")}
               error={errors.brewTimeSeconds}
             >
-              <input
-                id="brewTimeSeconds"
-                type="number"
-                inputMode="numeric"
-                min="0"
-                value={values.brewTimeSeconds}
-                onChange={(event) => setField("brewTimeSeconds", event.target.value)}
-                disabled={isSubmitting}
-                className={controlClass(errors.brewTimeSeconds)}
-              />
+              <div className="flex items-center gap-1">
+                <input
+                  id="brewTimeMinutes"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  value={values.brewTimeMinutes}
+                  onChange={(event) => setField("brewTimeMinutes", event.target.value)}
+                  disabled={isSubmitting}
+                  aria-label={t("records.brewDetailsMinutesLabel")}
+                  className={controlClass(errors.brewTimeSeconds)}
+                />
+                <span aria-hidden="true" className="text-text-tertiary">
+                  :
+                </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  max="59"
+                  value={values.brewTimeSecondsPart}
+                  onChange={(event) => setField("brewTimeSecondsPart", event.target.value)}
+                  disabled={isSubmitting}
+                  aria-label={t("records.brewDetailsSecondsLabel")}
+                  className={controlClass(errors.brewTimeSeconds)}
+                />
+              </div>
             </FormField>
           </div>
 
