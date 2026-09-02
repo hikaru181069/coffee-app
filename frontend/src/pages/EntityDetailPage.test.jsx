@@ -4,8 +4,8 @@
  * 読み込み中・エラー・統計カード（記録数・平均評価・最終記録日）・
  * 関連する属性の「もっと見る」展開（2026-08、設計レビューで種別ごと
  * 5件上限を撤廃した際に追加したロジック）・関連記録一覧を確認する。
- * OriginQualityScores/DiscoverSuggestionsは産地ノードのときだけ描画
- * され、それぞれ独立した機能（別のAPIに依存）のためスタブに差し替える。
+ * DiscoverSuggestionsは産地ノードのときだけ描画され、独立した機能
+ * （別のAPIに依存）のためスタブに差し替える。
  */
 import { describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -17,9 +17,6 @@ vi.mock("../features/graph/api/graphApi", () => ({
   fetchNodeDetail: (...args) => fetchNodeDetail(...args),
 }));
 
-vi.mock("../features/originQuality/components/OriginQualityScores", () => ({
-  default: () => <div>OriginQualityScoresスタブ</div>,
-}));
 vi.mock("../features/discover/components/DiscoverSuggestions", () => ({
   default: () => <div>DiscoverSuggestionsスタブ</div>,
 }));
@@ -83,12 +80,11 @@ describe("EntityDetailPage", () => {
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 
-  test("産地ノードのときだけOriginQualityScores・DiscoverSuggestions・地図リンクを表示する", async () => {
+  test("産地ノードのときだけDiscoverSuggestions・地図リンクを表示する", async () => {
     fetchNodeDetail.mockResolvedValue({ ...FLAVOR_DETAIL, id: "origin:1", type: "origin", label: "Ethiopia" });
     renderEntityDetailPage("origin%3A1");
 
-    expect(await screen.findByText("OriginQualityScoresスタブ")).toBeInTheDocument();
-    expect(screen.getByText("DiscoverSuggestionsスタブ")).toBeInTheDocument();
+    expect(await screen.findByText("DiscoverSuggestionsスタブ")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "地図で見る" })).toHaveAttribute("href", "/map");
   });
 

@@ -5,7 +5,6 @@ import { geoNaturalEarth1, geoPath, geoGraticule10 } from "d3-geo";
 import { feature } from "topojson-client";
 import worldTopology from "world-atlas/countries-110m.json";
 import { getOriginFillClass } from "../../coffee-records/utils/originAccent";
-import { getQualityTierFillClass } from "../utils/qualityColor";
 
 // d3-geoの他のグラフ・図（TasteRadarChart.jsx・RecordConnectionsDiagram.jsx）
 // と違い、国境の形状データは自作が現実的ではないため、world-atlas
@@ -48,16 +47,11 @@ const graticuleGeoJson = geoGraticule10();
  * absoluteで重ねる」手法でツールチップを出す（SVG内へ直接文字を置くより
  * フォント・折り返しの制御がしやすいため）。
  *
- * 2026-08、産地フォーカス機能群の続きとして「品質スコアで色分け」モードを
- * 追加した（docs/features.md「Origin Quality」参照）。colorModeが
- * "quality"のときは、訪問済みかどうかに関わらずCQIデータのある産地
- * （qualityByNumericId）すべてに品質スコアの濃淡（qualityColor.js、
- * 産地アクセントカラーとは別の単色グラデーション）で色を付ける。ただし
- * クリック・キーボード操作できるのは引き続き訪問済みの産地だけ
- * （エンティティ詳細ページへ遷移できるのは自分の記録がある産地のみの
- * ため）。塗り色とクリック可否の判定基準が分かれる点に注意。
+ * 2026-09、「品質スコアで色分け」モード（Origin Quality機能）は、CQIの
+ * 概算スコアが「その国のコーヒーは常にこの点数」という誤解を招く懸念が
+ * あるとの判断で削除した。訪問状況の1モードのみに戻している。
  */
-function WorldMap({ visitedByNumericId, colorMode = "visited", qualityByNumericId }) {
+function WorldMap({ visitedByNumericId }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   // world-atlasのtopojsonは、一部の国（海を挟んだ領土を持つ国等）が
@@ -75,8 +69,6 @@ function WorldMap({ visitedByNumericId, colorMode = "visited", qualityByNumericI
 
   const hoveredCountry = hoveredIndex !== null ? countriesGeoJson.features[hoveredIndex] : null;
   const hoveredVisited = hoveredCountry ? visitedByNumericId.get(hoveredCountry.id) : null;
-  const hoveredQuality =
-    hoveredCountry && colorMode === "quality" ? qualityByNumericId?.get(hoveredCountry.id) : null;
   const tooltipPoint = hoveredCountry ? path.centroid(hoveredCountry) : null;
 
   return (
@@ -94,23 +86,11 @@ function WorldMap({ visitedByNumericId, colorMode = "visited", qualityByNumericI
         />
         {countriesGeoJson.features.map((country, index) => {
           const visited = visitedByNumericId.get(country.id);
-          const quality = colorMode === "quality" ? qualityByNumericId?.get(country.id) : null;
           const isHovered = hoveredIndex === index;
 
-          // 塗り色: colorModeが"quality"なら品質スコアの濃淡、"visited"なら
-          // 産地ごとのアクセントカラー。どちらも対象データが無ければ中立グレー
-          const fillClass =
-            colorMode === "quality"
-              ? quality
-                ? getQualityTierFillClass(quality.avgQualityScore)
-                : "fill-surface-2"
-              : visited
-                ? getOriginFillClass(visited.label)
-                : "fill-surface-2";
+          // 塗り色: 産地ごとのアクセントカラー。対象データが無ければ中立グレー
+          const fillClass = visited ? getOriginFillClass(visited.label) : "fill-surface-2";
 
-          // クリック・キーボード操作できるかは塗り色モードに関わらず常に
-          // 「訪問済み（自分の記録がある）」で決まる。エンティティ詳細
-          // ページへ遷移できるのは自分の記録がある産地のみのため
           if (!visited) {
             return (
               <path
@@ -157,14 +137,7 @@ function WorldMap({ visitedByNumericId, colorMode = "visited", qualityByNumericI
             top: `${(tooltipPoint[1] / HEIGHT) * 100 - 2}%`,
           }}
         >
-          {hoveredQuality ? (
-            <>
-              <span className="font-medium">{hoveredQuality.originName}</span>
-              <span className="ml-1.5 font-mono text-text-tertiary">
-                {t("map.qualityScore", { score: hoveredQuality.avgQualityScore.toFixed(1) })}
-              </span>
-            </>
-          ) : hoveredVisited ? (
+          {hoveredVisited ? (
             <>
               <span className="font-medium">{hoveredVisited.label}</span>
               <span className="ml-1.5 font-mono text-text-tertiary">

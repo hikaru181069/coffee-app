@@ -30,7 +30,7 @@ export const getOriginDiscovery = async (userId, nodeId) => {
   // resolveOriginNameFromNodeIdの内部でも同じfindAllForUserを呼んでおり、
   // ここで2回READが走る。記録数がデモ規模である前提（docs/database.md
   // 「MVPレベルなら毎回計算しても時間的問題はない」）のもとで、
-  // nodeId解決ロジックをoriginQualityService.jsと共有する再利用性を優先した
+  // nodeId解決ロジックを独立した関数に切り出す再利用性・単純さを優先した
   const originName = await resolveOriginNameFromNodeId(userId, nodeId);
   if (!originName) {
     return { suggestions: [] };
