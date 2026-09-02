@@ -16,7 +16,7 @@ import { extractKeywords } from "./noteKeywordExtractor.js";
 /**
  * 知識グラフを組み立てる純粋関数。
  *
- * prompts/04 の制約により、HTTPやMongoDBの責務をここへ混ぜない。
+ * HTTPやMongoDBの責務をここへ混ぜない（docs/architecture.md参照）。
  * 入力はプレーンなJSオブジェクトの配列（services/coffee/coffeeRecordSerializer.js
  * が返す形と同じ: { id, title, consumedAt, rating, origin, farmName,
  * varieties, process, roastLevel, flavors, ... }）。

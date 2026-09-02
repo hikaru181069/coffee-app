@@ -14,7 +14,7 @@ import { isObjectIdString } from "../utils/objectId.js";
  * 設計:
  *   DBにもExpressにも依存しない純粋関数にしている。
  *   req / res を受け取らないので、テストがモック無しで書ける。
- *   Expressのmiddlewareへ載せるのは Phase 2（prompts/02）。
+ *   呼び出しは`controllers/coffeeRecordController.js`が`req.body`を渡す形で行う。
  *
  * 返り値:
  *   { valid: boolean, details: [{ field, message }] }

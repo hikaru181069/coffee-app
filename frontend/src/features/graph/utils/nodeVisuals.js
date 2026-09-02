@@ -17,7 +17,7 @@ import { getCanvasColor } from "./canvasColors";
  * labelKeyはテキストではなく翻訳キー。呼び出し側が t(visual.labelKey) の
  * 形で翻訳する（DOM・i18nextに依存しない純粋関数のままにするため）。
  *
- * 色の設計（prompts/design/00-design-principles.md 6.1参照）:
+ * 色の設計（docs/design.md「Design Tokens」のColor参照）:
  * 2026-08、実機レビューで「全属性が同程度にミュートで見分けづらい・
  * 地味」という指摘を受け、Catppuccin Mochaの9色（record=`accent-moss`
  * 含む）へ全面刷新した。以前は「色は識別性より階層表現（主役=モス、
