@@ -110,22 +110,6 @@ export const upsertOne = async (type, uniqueFilter, document) => {
   return result.upsertedCount > 0 ? "inserted" : "skipped";
 };
 
-/**
- * 名前の完全一致で複数件取得する。
- *
- * originQualityService.js（CQIデータの産地名からOriginマスターの
- * countryCodeを引く）が使う。findExistingIdsのID版と対になる、名前版。
- */
-export const findByNames = async (type, names, { select } = {}) => {
-  if (!Array.isArray(names) || names.length === 0) return [];
-
-  const { model } = getConfig(type);
-  const query = model.find({ name: { $in: names } });
-  if (select) query.select(select);
-
-  return query.lean();
-};
-
 /** 件数を数える（seedの結果表示に使う） */
 export const countAll = async (type) => {
   const { model } = getConfig(type);

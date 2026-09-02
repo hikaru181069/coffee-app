@@ -9,7 +9,6 @@ import { formatConsumedAtShort } from "../features/coffee-records/utils/recordFo
 import { getErrorMessage } from "../utils/errorMessage";
 import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import DiscoverSuggestions from "../features/discover/components/DiscoverSuggestions";
-import OriginQualityScores from "../features/originQuality/components/OriginQualityScores";
 import BackLink from "../components/BackLink";
 import StatCard from "../components/StatCard";
 import { contentContainerClass } from "../styles/pageContainer";
@@ -150,12 +149,6 @@ function EntityDetailPage() {
         )}
       </div>
 
-      {/* 2026-08、産地フォーカス機能群の続きとしてOrigin Qualityを追加した
-          （docs/features.md「Origin Quality」参照）。DiscoverSuggestionsと
-          同じCQI参照データを使うが、こちらは「この産地自体の特徴」を
-          描写するだけで提案は行わない別の問いのため、先に置く
-          （描写 → 提案、という自然な読み順） */}
-      {detail.type === "origin" && <OriginQualityScores nodeId={detail.id} />}
       {detail.type === "origin" && <DiscoverSuggestions nodeId={detail.id} />}
 
       {relatedTypes.length > 0 && (

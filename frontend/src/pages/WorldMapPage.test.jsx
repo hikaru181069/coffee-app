@@ -20,11 +20,6 @@ vi.mock("../features/coffee-records/api/masterDataApi", () => ({
   fetchAllMasterData: (...args) => fetchAllMasterData(...args),
 }));
 
-const fetchAllOriginQuality = vi.fn();
-vi.mock("../features/originQuality/api/originQualityApi", () => ({
-  fetchAllOriginQuality: (...args) => fetchAllOriginQuality(...args),
-}));
-
 vi.mock("../features/map/components/WorldMap", () => ({
   default: () => <div>WorldMapスタブ</div>,
 }));
@@ -53,7 +48,6 @@ describe("WorldMapPage", () => {
   test("読み込み中はスケルトンを表示する", () => {
     fetchGraph.mockReturnValue(new Promise(() => {}));
     fetchAllMasterData.mockResolvedValue(EMPTY_MASTER_DATA);
-    fetchAllOriginQuality.mockResolvedValue({ origins: [] });
 
     renderWorldMapPage();
 
@@ -63,7 +57,6 @@ describe("WorldMapPage", () => {
   test("取得に失敗したらエラー状態を表示する", async () => {
     fetchGraph.mockRejectedValue(new Error("読み込みエラー"));
     fetchAllMasterData.mockResolvedValue(EMPTY_MASTER_DATA);
-    fetchAllOriginQuality.mockResolvedValue({ origins: [] });
 
     renderWorldMapPage();
 
@@ -73,7 +66,6 @@ describe("WorldMapPage", () => {
   test("訪問済みの産地が無ければ空状態を表示する", async () => {
     fetchGraph.mockResolvedValue({ nodes: [], edges: [], summary: { recordCount: 0, nodeCount: 0, edgeCount: 0 } });
     fetchAllMasterData.mockResolvedValue(EMPTY_MASTER_DATA);
-    fetchAllOriginQuality.mockResolvedValue({ origins: [] });
 
     renderWorldMapPage();
 
@@ -83,7 +75,6 @@ describe("WorldMapPage", () => {
   test("訪問済みの産地があれば地図・サマリー・一覧を表示する", async () => {
     fetchGraph.mockResolvedValue(VISITED_GRAPH);
     fetchAllMasterData.mockResolvedValue({ ...EMPTY_MASTER_DATA, origins: Array.from({ length: 20 }, (_, i) => ({ id: `o${i}`, name: `Origin${i}` })) });
-    fetchAllOriginQuality.mockResolvedValue({ origins: [] });
 
     renderWorldMapPage();
 

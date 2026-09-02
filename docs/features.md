@@ -14,7 +14,6 @@ MVP完成後に追加した個別機能の仕様。もともとは機能ごと�
 - **Discover**: 外部データ（CQI）を使用し、まだ試していない産地を提案する
 - **Coffee Diagnosis**: 記録から「コーヒータイプ」を判定し、Insight・Statsの要約とあわせて1画面で見せる
 - **World Map**: 自分が記録した産地を世界地図上でハイライトする
-- **Origin Quality**: 外部データ（CQI）を使用し、産地自体の品質スコア（精製方法別）を見せる
 - **Similar Records**: 知識グラフの共起関係を使い、ある記録と属性を共有する他の記録を提示する
 
 ---
@@ -638,82 +637,30 @@ Navigation」参照）。訪問済みの産地だけクリック・キーボー�
 方針を踏襲）。産地の提案（Discover）とは役割が重複しないよう、ここでは
 記録済みデータの集計のみを表示する。
 
-2026-08、Origin Qualityの追加にあわせて、地図の色分けを「訪問状況」
-（既定、産地ごとのアクセントカラー）と「品質スコア」（CQIデータの
-20産地全てをアンバー系の濃淡で色分け）の2モードに拡張した。品質スコア
-モードでは訪問の有無に関わらずCQIデータのある産地すべてに色が付くが、
-クリック・キーボード操作で遷移できるのは引き続き訪問済みの産地だけ
-（塗り色の基準とクリック可否の基準は独立している）。「訪れた産地一覧」
-の各チップの色は、モードを切り替えても産地ごとのアクセントカラーの
-まま変えない（単なる産地一覧としての一貫性を優先した簡略化）。
+2026-08、Origin Quality機能の追加にあわせて、地図の色分けを「訪問状況」
+（既定）と「品質スコア」の2モードに拡張したことがあったが、2026-09、
+Origin Quality機能自体を削除した際にこのモードも削除し、訪問状況の
+1モードのみに戻した（下記「Origin Quality（削除済み）」参照）。
 
 ---
 
-## Origin Quality
+## Origin Quality（削除済み）
 
-### Purpose
+2026-08に追加、2026-09に削除した機能。CQI（Coffee Quality Institute）の
+参考データから、産地自体の品質スコア（精製方法別）をEntity Detailページ・
+World Mapの色分けモードで見せていた。
 
-2026-08、World Mapに続く「産地にフォーカスした機能群」の一手として追加した。
-Discoverが「次に何を試すべきか」という提案を作るのに対し、Origin Qualityは
-「この産地自体の特徴（品質スコア）は何か」という描写的な情報を返すだけで、
-他産地への提案・比較は一切行わない。Insight（意味づけ）とStats（生の集計）の
-関係と同じく、Discoverとは別の問いに答える独立した機能
-（`features/discover/`とは別の`features/originQuality/`）。
+削除理由: CQIの品質スコアは、実際のCQIデータベースの正確な値を再現した
+ものではなく、公開されている傾向を参考にした概算値だった
+（`backend/data/cqiDatabase.json`のコメント参照）。にもかかわらず
+「86.4」のような小数点付きの数値をそのまま見せていたため、「その産地の
+コーヒーは常にこの点数」という誤解を招く懸念があるとユーザーから指摘を
+受けた。見出しの言葉や注記だけでは誤解を防ぎきれないと判断し、機能自体を
+削除した（`IMPLEMENTATION.md`の該当日エントリ参照）。
 
-### なぜAI推薦ではないか
-
-Discoverと同じ理由（`docs/features.md`「Discover」参照）。CQI参照データ
-（`backend/data/cqiDatabase.json`）から、産地名・精製方法でエントリを
-検索・平均するだけで、機械学習・自然言語処理は使わない。
-
-### Source of Truth
-
-CQI参照データ（静的ファイル）とOriginマスターデータ（`countryCode`の
-突き合わせ用）を正とする。ログインユーザーのCoffeeRecordには依存しない
-（産地自体が持つ、ユーザーに依存しない情報のため）。ただし、
-`GET /origin-quality/nodes/:nodeId`は「自分の記録に存在する産地ノードか」
-の確認にCoffeeRecordを使う（`docs/entity-detail.md`の404方針と同じ。
-`backend/services/coffee/originLookup.js`が`discoverService.js`と共有する）。
-
-### Response Shape
-
-```json
-GET /api/origin-quality/nodes/origin%3A507f...
-
-{
-  "data": {
-    "originLabel": "Ethiopia",
-    "scores": [
-      { "processLabel": "Natural", "avgQualityScore": 86.4, "sampleSize": 210 },
-      { "processLabel": "Washed", "avgQualityScore": 85.1, "sampleSize": 260 }
-    ]
-  }
-}
-```
-
-`origin:`以外のプレフィックスは404にせず`{ originLabel: null, scores: [] }`。
-`origin:`で自分の記録に無い産地IDは404。CQIデータに無い産地（20産地に
-含まれない）は空配列。
-
-```json
-GET /api/origin-quality
-
-{ "data": { "origins": [{ "originName": "Panama", "avgQualityScore": 86.37, "countryCode": "PA" }] } }
-```
-
-産地ごとに精製方法をまたいだ単純平均を1件返す（サンプル数による重み付けは
-CQIデータ自体が目安値のため行わない）。認証は必須だが、ログインユーザーの
-記録には依存しない（CQIデータとOriginマスターだけで決まる）。
-
-### 表示
-
-`/entities/origin:xxx`（Entity Detailページ、産地ノードのみ）。
-`DiscoverSuggestions`と同じ位置に並べ、「描写（Origin Quality）→提案
-（Discover）」の順で表示する。条件を満たすデータが無い・読み込み中・
-エラー時は何も表示しない（`DiscoverSuggestions`と同じ「静かな道具」の方針）。
-
-`GET /api/origin-quality`（産地一覧・countryCode付き）はWorld Mapの
-「品質スコアで色分け」モード（下記「World Map」の「表示」参照）が使う。
+Discover（同じCQI参照データを内部で使うが、生のスコア数値は画面に出さず
+「まだ試していない産地」の提案だけを行う）は、この懸念に当てはまらないため
+削除していない。
 
 ---
 

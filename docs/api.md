@@ -12,7 +12,7 @@
 - `/coffee-records` - 記録のCRUD
 - `/master-data` - 産地・品種などの選択肢一覧
 - `/graph` - 知識グラフ
-- `/insights`、`/discover`、`/origin-quality`、`/similar-records`、`/search`、`/stats`、`/diagnosis` - 個別機能
+- `/insights`、`/discover`、`/similar-records`、`/search`、`/stats`、`/diagnosis` - 個別機能
 
 ## ステータスコード
 
