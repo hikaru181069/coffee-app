@@ -1,10 +1,10 @@
-import { apiRequest } from "../../features/coffee-records/api/httpClient";
+import { apiRequest } from "./httpClient";
 
 /**
  * ログイン中ユーザー自身のプロフィールAPI。
  *
  * 2026-08、以前は生fetchで実装しており、他のfeature（coffee-records等）
- * が使う共通クライアント（features/coffee-records/api/httpClient.js）とは
+ * が使う共通クライアント（services/api/httpClient.js）とは
  * 別のエラー処理を個別に持っていた。当時はchangePasswordの「現在の
  * パスワードが違う」を401で返しており、共通クライアントの「401は必ず
  * トークン無効」という前提と衝突するため独自実装にしていたが、backend側で

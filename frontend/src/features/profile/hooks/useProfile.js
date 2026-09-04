@@ -4,8 +4,8 @@ import { getCurrentUser } from "../../../services/api/userApi";
 /**
  * ログイン中ユーザーのプロフィールを取得する。
  *
- * 2026-08、userApi.js が共通クライアント（features/coffee-records/api/
- * httpClient.js）経由になり AbortSignal を受け取れるようになったため、
+ * 2026-08、userApi.js が共通クライアント（services/api/httpClient.js）
+ * 経由になり AbortSignal を受け取れるようになったため、
  * 他のfeature hook（useCoffeeRecord等）と同じAbortControllerパターンへ
  * 揃えた（以前はcancelledフラグ方式だった）。401（トークン無効）の
  * ハンドリングもapiRequest側で共通化されたため、ここでは行わない。

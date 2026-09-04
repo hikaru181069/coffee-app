@@ -1,5 +1,5 @@
-import { API_URL } from "../../../utils/apiConfig";
-import { getAuthToken, handleUnauthorized } from "../../../utils/authStorage";
+import { API_URL } from "../../utils/apiConfig";
+import { getAuthToken, handleUnauthorized } from "../../utils/authStorage";
 
 /**
  * coffee-app のAPIを呼ぶための共通クライアント。

@@ -1,4 +1,4 @@
-import { apiRequest } from "../../coffee-records/api/httpClient";
+import { apiRequest } from "../../../services/api/httpClient";
 
 /**
  * Similar Records（似た記録）のAPI呼び出し。

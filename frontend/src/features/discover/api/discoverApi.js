@@ -1,4 +1,4 @@
-import { apiRequest } from "../../coffee-records/api/httpClient";
+import { apiRequest } from "../../../services/api/httpClient";
 
 /**
  * Discover（まだ試していない産地の提案）のAPI呼び出し。

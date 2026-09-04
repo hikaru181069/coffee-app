@@ -1,4 +1,4 @@
-import { apiRequest } from "../../coffee-records/api/httpClient";
+import { apiRequest } from "../../../services/api/httpClient";
 
 /**
  * 横断検索のAPI呼び出し。

@@ -1,4 +1,4 @@
-import { apiRequest } from "./httpClient";
+import { apiRequest } from "../../../services/api/httpClient";
 
 /**
  * マスターデータ（産地・品種・精製方法・焙煎度・フレーバー）のAPI呼び出し。

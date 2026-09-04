@@ -74,9 +74,10 @@ player name"`というMLB時代の文言も残ったまま）。`PageHeader.jsx`
 
 同じ設計レビューで、`services/api/apiError.js`（`getApiErrorMessage`/
 `isUnauthorizedError`）も、認証まわりのcontroller層の見直しに伴い
-`services/api/userApi.js`が共通クライアント（`features/coffee-records/
-api/httpClient.js`）経由へ移行したことでどこからも参照されなくなり、
-削除した。
+`services/api/userApi.js`が共通クライアント（`services/api/httpClient.js`。
+2026-09、複数featureから使われる実態に合わせて`features/coffee-records/`
+から`services/api/`へ移動した）経由へ移行したことでどこからも参照
+されなくなり、削除した。
 
 `components/SkeletonCard.jsx`も再利用予定だったが、`PageHeader.jsx`と同様
 どのページからも使われていない死んだコンポーネントとして残っていたため、

@@ -1,4 +1,4 @@
-import { apiRequest } from "../../coffee-records/api/httpClient";
+import { apiRequest } from "../../../services/api/httpClient";
 
 const DIAGNOSIS_PATH = "/api/diagnosis";
 

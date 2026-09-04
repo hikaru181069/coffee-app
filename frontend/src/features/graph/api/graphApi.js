@@ -1,4 +1,4 @@
-import { apiRequest } from "../../coffee-records/api/httpClient";
+import { apiRequest } from "../../../services/api/httpClient";
 
 /**
  * 知識グラフのAPI呼び出し。

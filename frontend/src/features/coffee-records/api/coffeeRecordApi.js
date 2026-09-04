@@ -1,4 +1,4 @@
-import { apiRequest } from "./httpClient";
+import { apiRequest } from "../../../services/api/httpClient";
 
 /**
  * CoffeeRecord のAPI呼び出し。
