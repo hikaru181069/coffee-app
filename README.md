@@ -306,7 +306,7 @@ cd fastapi-service && ../.venv/bin/pytest    # pytest
 
 **苦労した点**
 
-- **知識グラフのノード自動選択** — 記録詳細画面の「Graphで見る」を実装した際、既存のページ遷移アニメーション（`location.key` を使い、どんなナビゲーションでもページ全体を再マウントする仕組み）と、URLを書き換える処理が衝突し、選択した直後に状態が消えるバグに遭遇しました。原因は「URLの書き換えがReact Routerの新しいナビゲーションとして扱われ、ページごと再マウントされていた」ことで、`window.history.replaceState` を直接使うことでReact Routerのナビゲーションを介さずにURLだけを更新する形に直して解決しました。
+- **知識グラフのノード自動選択** — 記録詳細画面の「Graphで見る」を実装した際、既存のページ遷移アニメーション（`location.key` を使い、どんなナビゲーションでもページ全体を再マウントする仕組み）と、選択後にURLの`?focus=`を消す処理が衝突し、選択した直後に状態が消えるバグに遭遇しました。原因は「URLの書き換えがReact Routerの新しいナビゲーションとして扱われ、ページごと再マウントされていた」ことです。当初は `window.history.replaceState` を直接使う回避策で解決しましたが、後日「他の全ページはURLを開いた瞬間に読む入力としてだけ使い、ページ側から書き戻すことはしていない」という共通ルールに気づき、Graph画面だけが持っていたこの後片付け処理自体を削除しました。選択状態は既にコンポーネント内のstateへ1回だけ反映済みのため、URLに`?focus=`が残っても再選択が誤って走ることはなく、これによりGraph画面も他の全ページと同じ設計に揃いました。
 - **`react-force-graph-2d` の未文書化の挙動** — 乗り換え後も、`onNodeClick`/`onBackgroundClick` がほぼ発火しない、`width`/`height` を明示的に渡すとズーム・ドラッグが効かなくなる、カメラ追従用の `onEngineTick`/`onEngineStop` が実際には力学シミュレーションが動いているにもかかわらず一度も呼ばれない、といった複数の不具合に遭遇しました。いずれもライブラリ本体（`force-graph`）のソースを直接読んで原因を特定し、クリック判定を自前のpointerdown/pointerup比較で置き換える、canvasサイズを初回計測値で固定する、カメラ追従を自前の`requestAnimationFrame`ループへ置き換える、という形でそれぞれ回避しました（詳細は `frontend/src/features/graph/components/GraphCanvas.jsx` 冒頭のコメント参照）。
 
 ## Future Work

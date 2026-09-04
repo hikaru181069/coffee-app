@@ -78,16 +78,19 @@ function GraphPage() {
    * （effect内での同期的なsetStateはカスケードする再レンダリングを招くため）。
    * features/coffee-records/hooks/useRecordForm.js の syncedRecord と同じ形。
    *
-   * URLから focus を消す処理は setSearchParams ではなく
-   * window.history.replaceState を直接使っている。
-   * このアプリには既存のページ遷移アニメーション（App.jsx の
-   * AnimatedRoutes、location.key を React の key に使う仕組み）があり、
-   * どんなナビゲーションでもページ全体を再マウントする設計になっている。
-   * setSearchParams経由でURLを書き換えると、それ自体が新しい
-   * location.key を発行してしまい、選択した直後にページが丸ごと
-   * 再マウントされて選択状態が消えてしまう（実機で確認して気づいた）。
-   * history.replaceState は React Router の location を更新しないため、
-   * この再マウントを起こさずにURLだけを綺麗にできる。
+   * URLの ?focus= はここでは消さない。他の全ページ（EntityDetailPageの
+   * useParams等）と同じく「URLは開いた瞬間に読む入力として使うだけで、
+   * ページ側から書き戻さない」という方針に揃えている。focusNodeIdは
+   * 上でuseStateの初期化関数として1度だけ読み取り済みで、
+   * appliedFocusGraphのガードにより選択処理も1回しか走らないため、
+   * URLに?focus=が残り続けても誤って再選択されることはない。
+   *
+   * かつては選択後にsetSearchParams/window.history.replaceStateで
+   * URLから?focus=を消す後片付けをしていたが、URLを書き換える行為自体が
+   * App.jsxのページ遷移アニメーション（location.keyをReactのkeyに使い、
+   * どんなナビゲーションでもページ全体を再マウントする仕組み）と衝突し、
+   * 選択した直後に状態が消えるバグを踏んだ（README.md「苦労した点」参照）。
+   * 後片付け自体をやめることで、この特別な回避策も不要になった。
    */
   if (focusNodeId && graph && graph !== appliedFocusGraph) {
     setAppliedFocusGraph(graph);
@@ -95,10 +98,6 @@ function GraphPage() {
     const node = graph.nodes.find((candidate) => candidate.id === focusNodeId);
     if (node) {
       setSelectedNode({ id: node.id, data: node });
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete("focus");
-      window.history.replaceState(null, "", url);
     }
   }
 
