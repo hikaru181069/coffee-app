@@ -3,8 +3,8 @@ import { apiRequest } from "../../../services/api/httpClient";
 /**
  * Discover（まだ試していない産地の提案）のAPI呼び出し。
  *
- * features/insights/api/insightApi.js と同じ方針: httpClientはcoffee-records
- * featureのものをそのまま使う。Insightとは完全に独立した機能・エンドポイント
+ * features/insights/api/insightApi.js と同じ方針: httpClientは
+ * services/api/httpClient.js のものをそのまま使う。Insightとは完全に独立した機能・エンドポイント
  * （docs/features.md「Discover」参照。core/insights/insightBuilder.jsには
  * 一切触れていない）。
  */

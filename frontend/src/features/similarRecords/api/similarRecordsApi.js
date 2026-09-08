@@ -3,8 +3,8 @@ import { apiRequest } from "../../../services/api/httpClient";
 /**
  * Similar Records（似た記録）のAPI呼び出し。
  *
- * features/discover/api/discoverApi.js と同じ方針: httpClientはcoffee-records
- * featureのものをそのまま使う。Discover/Origin Qualityとは完全に独立した
+ * features/discover/api/discoverApi.js と同じ方針: httpClientは
+ * services/api/httpClient.js のものをそのまま使う。Discover/Origin Qualityとは完全に独立した
  * 機能・エンドポイント（docs/features.md「Similar Records」参照）。
  */
 

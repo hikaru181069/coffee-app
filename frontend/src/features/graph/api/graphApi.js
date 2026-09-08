@@ -3,7 +3,7 @@ import { apiRequest } from "../../../services/api/httpClient";
 /**
  * 知識グラフのAPI呼び出し。
  *
- * httpClient は coffee-records feature のものをそのまま使う。
+ * httpClient は services/api/httpClient.js のものをそのまま使う。
  * 認証ヘッダの付与とエラー形式の解釈は既にそちらへ集約されており、
  * グラフ専用に作り直す理由が無いため。
  */

@@ -1,4 +1,5 @@
 import { Coffee, Store } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 /**
  * 自宅とカフェ、それぞれの件数・平均評価を並べて見せる。
@@ -8,7 +9,8 @@ import { Coffee, Store } from "lucide-react";
  * StatCard.jsxの`flat`propと同じ理由で、ネストされた内側のカードには
  * 影を付けない。
  */
-function HomeVsCafeCard({ homeVsCafe, t, flat = false }) {
+function HomeVsCafeCard({ homeVsCafe, flat = false }) {
+  const { t } = useTranslation();
   return (
     <section
       className={`rounded-2xl border border-surface-2 bg-raised p-4 ${flat ? "" : "shadow-elevated"}`}

@@ -3,8 +3,8 @@ import { apiRequest } from "../../../services/api/httpClient";
 /**
  * 横断検索のAPI呼び出し。
  *
- * features/graph/api/graphApi.js と同じ方針: httpClientはcoffee-records
- * featureのものをそのまま使う。
+ * features/graph/api/graphApi.js と同じ方針: httpClientは
+ * services/api/httpClient.js のものをそのまま使う。
  */
 
 const SEARCH_PATH = "/api/search";

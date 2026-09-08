@@ -1,6 +1,17 @@
 import { API_URL } from "../../utils/apiConfig";
 
 /**
+ * login/registerだけは、他のfeatureのAPIクライアントと違い
+ * services/api/httpClient.js の apiRequest を使わず、生のfetchで実装している。
+ *
+ * apiRequestは401を受け取ると必ずhandleUnauthorized()（認証情報を消して
+ * /loginへ強制遷移）を呼ぶ。しかしログイン画面の401は「トークン切れ」
+ * ではなく「メール・パスワードが違う」という意味であり、共通クライアントを
+ * 通すと、入力ミスをしただけのユーザーを誤ってログアウト処理してしまう。
+ * そのためこのファイルだけ独自にfetch+エラー処理を持つ。
+ */
+
+/**
  * !response.ok のときに投げる共通処理。
  *
  * backendは { error: { code, message, details } } を返す

@@ -98,8 +98,8 @@ function StatsPage() {
         <section className={cardClass}>
           <h2 className="text-base font-semibold text-text">{t("stats.paceHeading")}</h2>
           <div className="mt-5 flex flex-col gap-4">
-            <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} t={t} />
-            <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} t={t} />
+            <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} />
+            <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} />
           </div>
         </section>
 
@@ -114,17 +114,17 @@ function StatsPage() {
             </Link>
           </div>
           <div className="mt-5">
-            <CollectionStats collection={stats.collection} t={t} />
+            <CollectionStats collection={stats.collection} />
           </div>
         </section>
 
         <section className={cardClass}>
           <h2 className="text-base font-semibold text-text">{t("stats.tasteHeading")}</h2>
           <div className="mt-5 flex flex-col gap-6">
-            <RatingDistributionChart distribution={stats.ratingDistribution} t={t} />
+            <RatingDistributionChart distribution={stats.ratingDistribution} />
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {RANKING_TYPES.map((type) => (
-                <TopRankingList key={type} type={type} items={stats[RANKING_KEYS[type]]} t={t} />
+                <TopRankingList key={type} type={type} items={stats[RANKING_KEYS[type]]} />
               ))}
             </div>
           </div>

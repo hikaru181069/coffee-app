@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
-import { changePassword, deleteAccount, updateProfile } from "../services/api/userApi";
-import { clearAuthData, saveAuthUserName } from "../utils/authStorage";
+import { logout } from "../utils/authStorage";
 import { useProfile } from "../features/profile/hooks/useProfile";
 import ProfileSkeleton from "../features/profile/components/ProfileSkeleton";
 import LanguageSwitcher from "../components/LanguageSwitcher";
@@ -48,29 +46,33 @@ const TECH_STACK = ["MongoDB", "Express", "React", "Node.js", "FastAPI", "JWT"];
 
 function ProfilePage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { addToast } = useToast();
 
-  const { user, isLoading, error, reload, setUser } = useProfile();
+  const {
+    user,
+    isLoading,
+    error,
+    reload,
+    updateName,
+    isSavingName,
+    changePassword,
+    isChangingPassword,
+    deleteAccount,
+    isDeletingAccount,
+  } = useProfile();
 
   const [name, setName] = useState("");
-  // useProfileが取得・reload・保存成功のたびに返す新しいuserを検知して
-  // nameへ同期する（レンダー中にstateを更新する公式パターン。effectで
-  // 同期すると1フレーム分よけいな再レンダリングが挟まるため使わない:
-  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes）
+  // useProfileが取得・reload・保存成功のたびに返す新しいuserを検知してnameへ同期する。
+  // features/coffee-records/hooks/useRecordForm.js の syncedRecord と同じ形（レンダリング中に前回値と比較する）
   const [syncedUser, setSyncedUser] = useState(null);
   if (user && user !== syncedUser) {
     setSyncedUser(user);
     setName(user.name);
   }
 
-  const [isSavingName, setIsSavingName] = useState(false);
-
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "" });
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   if (isLoading) {
     return (
@@ -93,48 +95,36 @@ function ProfilePage() {
   const handleSaveName = async (event) => {
     event.preventDefault();
     const trimmed = name.trim();
-    if (isSavingName || !trimmed) return;
+    if (!trimmed) return;
 
-    setIsSavingName(true);
     try {
-      const updated = await updateProfile({ name: trimmed });
-      setUser(updated);
-      saveAuthUserName(updated.name);
+      await updateName(trimmed);
       addToast(t("profile.toastNameUpdated"), "success");
     } catch (caught) {
       addToast(getErrorMessage(caught, t), "error");
-    } finally {
-      setIsSavingName(false);
     }
   };
 
   const handleChangePassword = async (event) => {
     event.preventDefault();
-    if (isChangingPassword) return;
 
-    setIsChangingPassword(true);
     try {
       await changePassword(passwordForm);
       setPasswordForm({ currentPassword: "", newPassword: "" });
       addToast(t("profile.toastPasswordChanged"), "success");
     } catch (caught) {
       addToast(getErrorMessage(caught, t), "error");
-    } finally {
-      setIsChangingPassword(false);
     }
   };
 
   const handleDeleteAccount = async () => {
-    if (isDeleting) return;
-
-    setIsDeleting(true);
     try {
       await deleteAccount();
-      clearAuthData();
-      navigate("/login", { replace: true });
+      // SPAの状態をすべてリセットするためのフルリロード（Navbar.jsx・
+      // LoginPage.jsxのログアウトと同じutils/authStorage.jsのlogout()）
+      logout();
     } catch (caught) {
       addToast(getErrorMessage(caught, t), "error");
-      setIsDeleting(false);
       setIsConfirmOpen(false);
     }
   };
@@ -234,7 +224,7 @@ function ProfilePage() {
         isOpen={isConfirmOpen}
         title={t("profile.confirmDeleteTitle")}
         description={t("profile.confirmDeleteDescription")}
-        isProcessing={isDeleting}
+        isProcessing={isDeletingAccount}
         onConfirm={handleDeleteAccount}
         onCancel={() => setIsConfirmOpen(false)}
       />

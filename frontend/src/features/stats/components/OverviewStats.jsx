@@ -1,4 +1,5 @@
 import { Calendar, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import StatCard from "../../../components/StatCard";
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 
@@ -19,7 +20,8 @@ import { getNodeVisual } from "../../graph/utils/nodeVisuals";
  * 均等grid特有の「短い内容でも幅いっぱいに引き伸ばされる」余白が
  * 生まれない）。RecordDetailPage.jsxのCoffee Detailsタイルと同じ考え方。
  */
-function OverviewStats({ overview, daysSinceStart, t }) {
+function OverviewStats({ overview, daysSinceStart }) {
+  const { t } = useTranslation();
   const record = getNodeVisual("record");
 
   return (

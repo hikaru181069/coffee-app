@@ -42,8 +42,8 @@ function AppLayout() {
 
             注意: この仕組みは setSearchParams などURLを書き換える操作でも
             location.key が変わり、意図せずページ全体を再マウントさせる
-            （features/graph/pages/GraphPage.jsx で実際に踏んだ）。
-            URLだけを書き換えたい場合は window.history.replaceState を使うこと。 */}
+            （pages/GraphPage.jsx で実際に踏んだ）。ページ側からURLへ
+            書き戻す設計自体を避けること（経緯はGraphPage.jsxのコメント参照）。 */}
         <div key={location.key} className="page-transition">
           <Outlet />
         </div>

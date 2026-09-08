@@ -79,6 +79,10 @@ player name"`というMLB時代の文言も残ったまま）。`PageHeader.jsx`
 から`services/api/`へ移動した）経由へ移行したことでどこからも参照
 されなくなり、削除した。
 
+（2026-09、`userApi.js`自体もその後`features/profile/api/userApi.js`へ
+移動した。利用箇所が`features/profile/`配下だけで、`services/`直下に
+置くべき「複数featureから使われる」という事情が無かったため）
+
 `components/SkeletonCard.jsx`も再利用予定だったが、`PageHeader.jsx`と同様
 どのページからも使われていない死んだコンポーネントとして残っていたため、
 2026-08のスケルトン表示改善時に削除した。

@@ -6,6 +6,7 @@ import {
   toApiPayload,
 } from "../validation/recordFormValidation";
 import { TASTE_AXES, toDateTimeLocalValue } from "../utils/recordFormat";
+import { createCoffeeRecord, updateCoffeeRecord } from "../api/coffeeRecordApi";
 
 /**
  * 記録フォームの状態を管理する。
@@ -67,14 +68,14 @@ const toFormValues = (record) => ({
 });
 
 /**
- * @param {object|null} record 編集対象。新規作成なら null
- * @param {Function} onSubmit  APIへ送る関数。payload を受け取る
+ * @param {object|null} record 編集対象。新規作成なら null（作成/更新どちらの
+ *   APIを呼ぶかもこれで判断する）
  * @param {string|null} [prefillOriginId] 新規作成時にoriginIdへ事前入力する値
  *   （Discoverの「この産地を記録してみる」から遷移した場合。
  *   RecordFormPage.jsxがクエリ文字列の産地名をmasterDataと突き合わせて
  *   解決した結果を渡す）
  */
-export const useRecordForm = (record, onSubmit, prefillOriginId = null) => {
+export const useRecordForm = (record, prefillOriginId = null) => {
   const { t } = useTranslation();
   const [values, setValues] = useState(emptyValues);
   const [errors, setErrors] = useState({});
@@ -158,7 +159,10 @@ export const useRecordForm = (record, onSubmit, prefillOriginId = null) => {
     setErrors({});
 
     try {
-      return await onSubmit(toApiPayload(values));
+      const payload = toApiPayload(values);
+      return record
+        ? await updateCoffeeRecord(record.id, payload)
+        : await createCoffeeRecord(payload);
     } catch (caught) {
       // サーバーが項目ごとの理由を返してきたら、各入力欄の下へ出す。
       // それ以外（通信エラーなど）はフォーム全体のメッセージにする
@@ -173,7 +177,7 @@ export const useRecordForm = (record, onSubmit, prefillOriginId = null) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, values, onSubmit, t]);
+  }, [isSubmitting, values, record, t]);
 
   return { values, errors, submitError, isSubmitting, isDirty, setValue, toggleValue, submit };
 };

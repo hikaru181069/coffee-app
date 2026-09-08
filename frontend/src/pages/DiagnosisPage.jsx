@@ -98,22 +98,22 @@ function DiagnosisPage() {
       <div className="flex flex-col gap-6">
         <section className={cardClass}>
           <h2 className="mb-4 text-sm font-semibold text-text">{t("diagnosis.archetypeHeading")}</h2>
-          <ArchetypeCard archetype={archetype} t={t} flat />
+          <ArchetypeCard archetype={archetype} flat />
         </section>
 
         <section className={cardClass}>
           <h2 className="mb-4 text-sm font-semibold text-text">{t("diagnosis.insightsHeading")}</h2>
-          <InsightList insights={insights} t={t} />
+          <InsightList insights={insights} />
         </section>
 
         <section className={cardClass}>
           <h2 className="mb-4 text-sm font-semibold text-text">{t("diagnosis.overviewHeading")}</h2>
           <div className="flex flex-col gap-4">
-            <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} t={t} />
-            <HomeVsCafeCard homeVsCafe={stats.homeVsCafe} t={t} flat />
+            <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} />
+            <HomeVsCafeCard homeVsCafe={stats.homeVsCafe} flat />
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <TopRankingList type="origin" items={stats.topOrigins} t={t} />
-              <TopRankingList type="flavor" items={stats.topFlavors} t={t} />
+              <TopRankingList type="origin" items={stats.topOrigins} />
+              <TopRankingList type="flavor" items={stats.topFlavors} />
             </div>
           </div>
         </section>

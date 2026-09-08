@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
 import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecord";
-import { deleteCoffeeRecord } from "../features/coffee-records/api/coffeeRecordApi";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import BackLink from "../components/BackLink";
 import RecordDetailSkeleton from "../features/coffee-records/components/RecordDetailSkeleton";
@@ -104,23 +103,17 @@ function RecordDetailPage() {
   const navigate = useNavigate();
   const { addToast } = useToast();
 
-  const { record, isLoading, error, reload } = useCoffeeRecord(recordId);
+  const { record, isLoading, error, reload, deleteRecord, isDeleting } = useCoffeeRecord(recordId);
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    // 二重送信の防止。削除中にもう一度押されると404が出てしまう
-    if (isDeleting) return;
-
-    setIsDeleting(true);
     try {
-      await deleteCoffeeRecord(recordId);
+      await deleteRecord(recordId);
       addToast(t("records.toastDeleted"), "success");
       navigate("/records", { replace: true });
     } catch (caught) {
       addToast(getErrorMessage(caught, t), "error");
-      setIsDeleting(false);
       setIsConfirmOpen(false);
     }
   };
