@@ -1,44 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { cardClass } from "../../coffee-records/components/formStyles";
+import StatCardSkeleton from "../../../components/StatCardSkeleton";
+import RankingListSkeleton from "../../../components/RankingListSkeleton";
 
 const TREND_BAR_HEIGHTS = ["h-6", "h-10", "h-8", "h-14", "h-9", "h-12"];
 const RATING_BAR_HEIGHTS = ["h-4", "h-8", "h-14", "h-10", "h-6"];
 const RANKING_TYPE_COUNT = 5;
-
-/** StatCard（アイコンバッジ+ラベル/値）と同じ形のプレースホルダー。cardClass内にネストするためflat（影なし）にする */
-function StatCardSkeleton() {
-  return (
-    <div className="min-w-44 rounded-2xl border border-surface-2 bg-raised p-4">
-      <div className="flex items-center gap-3">
-        <div className="skeleton-block h-9 w-9 flex-shrink-0 rounded-full" />
-        <div className="flex flex-col gap-1.5">
-          <div className="skeleton-block h-3 w-14 rounded" />
-          <div className="skeleton-block h-5 w-8 rounded" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** TopRankingList（アイコン+見出し+ランキング行）と同じ形のプレースホルダー */
-function RankingListSkeleton() {
-  return (
-    <div>
-      <div className="mb-2 flex items-center gap-2">
-        <div className="skeleton-block h-3.5 w-3.5 rounded-full" />
-        <div className="skeleton-block h-3 w-16 rounded" />
-      </div>
-      <div className="flex flex-col gap-0.5">
-        {Array.from({ length: 3 }, (_, row) => (
-          <div key={row} className="flex items-center justify-between gap-2 px-2 py-1.5">
-            <div className="skeleton-block h-3.5 w-32 rounded" />
-            <div className="skeleton-block h-3.5 w-5 rounded" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /**
  * 読み込み中のStatsページ。StatsPage.jsxの実際の構成

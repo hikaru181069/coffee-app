@@ -1,5 +1,6 @@
 import { validateRecordFilterQuery } from "./recordFilterValidator.js";
 import { ATTRIBUTE_NODE_TYPES } from "../core/graph/graphBuilder.js";
+import { isMissing } from "../utils/isMissing.js";
 
 /**
  * GET /api/graph のクエリ文字列を検証・変換する。
@@ -8,8 +9,6 @@ import { ATTRIBUTE_NODE_TYPES } from "../core/graph/graphBuilder.js";
  * dateTo・ratingMinの5つ。一覧APIと違い、originId/flavorIdでの絞り込みは
  * 持たない（グラフ自体がそれらのノードを探索する画面のため）。
  */
-
-const isMissing = (value) => value === undefined || value === null || value === "";
 
 /**
  * @returns {{ valid: boolean, details: Array, query: { recordFilter: object, nodeTypes: string[]|null } }}

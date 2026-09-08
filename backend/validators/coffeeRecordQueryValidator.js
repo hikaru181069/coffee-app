@@ -1,4 +1,5 @@
 import { validateRecordFilterQuery } from "./recordFilterValidator.js";
+import { isMissing } from "../utils/isMissing.js";
 
 /**
  * 一覧API（GET /api/coffee-records）のクエリ文字列を検証・変換する。
@@ -26,8 +27,6 @@ const SORT_OPTIONS = {
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
-
-const isMissing = (value) => value === undefined || value === null || value === "";
 
 /** "12" のような文字列を整数へ。整数でなければ null を返す */
 const toInteger = (value) => {
