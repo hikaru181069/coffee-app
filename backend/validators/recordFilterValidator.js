@@ -1,5 +1,7 @@
 import { isObjectIdString } from "../utils/objectId.js";
 import { escapeRegExp } from "../utils/escapeRegExp.js";
+import { isMissing } from "../utils/isMissing.js";
+import { RATING_MIN, RATING_MAX } from "../utils/ratingScale.js";
 
 /**
  * CoffeeRecordの絞り込み条件（recordType・産地・農園参照・評価・期間・
@@ -24,8 +26,6 @@ import { escapeRegExp } from "../utils/escapeRegExp.js";
 const RECORD_TYPES = ["home", "cafe"];
 // 1リクエストで指定できるIDの上限。$inクエリが際限なく膨らむのを防ぐ
 const MAX_IDS_PER_FIELD = 20;
-
-const isMissing = (value) => value === undefined || value === null || value === "";
 
 const toInteger = (value) => {
   const parsed = Number(value);
@@ -108,7 +108,7 @@ export const validateRecordFilterQuery = (
 
   if (!isMissing(rawQuery.ratingMin)) {
     const ratingMin = toInteger(rawQuery.ratingMin);
-    if (ratingMin === null || ratingMin < 1 || ratingMin > 5) {
+    if (ratingMin === null || ratingMin < RATING_MIN || ratingMin > RATING_MAX) {
       details.push({
         field: "ratingMin",
         message: "ratingMinは1〜5の整数で指定してください",

@@ -1,4 +1,6 @@
 import { isObjectIdString } from "../utils/objectId.js";
+import { isMissing } from "../utils/isMissing.js";
+import { RATING_MIN, RATING_MAX } from "../utils/ratingScale.js";
 
 /**
  * CoffeeRecord のリクエスト入力を検証する。
@@ -66,8 +68,6 @@ const BREW_NUMERIC_FIELDS = Object.keys(BREW_NUMERIC_LIMITS);
 
 const MAX_POURS = 20;
 
-const isMissing = (value) => value === undefined || value === null || value === "";
-
 // ── 個別の検証 ──────────────────────────────────────────────────
 
 const validateTitle = (value, details) => {
@@ -104,7 +104,7 @@ const validateRating = (value, details) => {
   // 未評価を許可する。null / undefined / "" は「評価なし」として扱う
   if (isMissing(value)) return;
 
-  if (!Number.isInteger(value) || value < 1 || value > 5) {
+  if (!Number.isInteger(value) || value < RATING_MIN || value > RATING_MAX) {
     details.push({ field: "rating", message: "評価は1〜5の整数で指定してください" });
   }
 };
@@ -115,7 +115,7 @@ const validateTasteScore = (field, value, details) => {
   // これは6軸それぞれの評価）
   if (isMissing(value)) return;
 
-  if (!Number.isInteger(value) || value < 1 || value > 5) {
+  if (!Number.isInteger(value) || value < RATING_MIN || value > RATING_MAX) {
     details.push({ field, message: "1〜5の整数で指定してください" });
   }
 };

@@ -1,3 +1,5 @@
+import { MIN_PASSWORD_LENGTH } from "../utils/passwordPolicy.js";
+
 /**
  * updateProfile / changePassword の入力を検証する。
  *
@@ -5,8 +7,6 @@
  * {valid, details}を返す」パターンに揃える。以前はuserController.js内に
  * インラインで書かれており、他のvalidatorsと形が異なっていた。
  */
-
-const MIN_PASSWORD_LENGTH = 6;
 
 export const validateUpdateProfile = (body = {}) => {
   const details = [];

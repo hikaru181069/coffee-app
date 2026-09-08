@@ -12,15 +12,17 @@ import { apiRequest } from "../../../services/api/httpClient";
  * なり、他のfeatureと同じ共通クライアントへ揃えられるようになった。
  */
 
-export const getCurrentUser = ({ signal } = {}) => apiRequest("/api/users/me", { signal });
+const USERS_PATH = "/api/users/me";
+
+export const getCurrentUser = ({ signal } = {}) => apiRequest(USERS_PATH, { signal });
 
 export const updateProfile = ({ name }) =>
-  apiRequest("/api/users/me", { method: "PATCH", body: { name } });
+  apiRequest(USERS_PATH, { method: "PATCH", body: { name } });
 
 export const changePassword = ({ currentPassword, newPassword }) =>
-  apiRequest("/api/users/me/password", {
+  apiRequest(`${USERS_PATH}/password`, {
     method: "PATCH",
     body: { currentPassword, newPassword },
   });
 
-export const deleteAccount = () => apiRequest("/api/users/me", { method: "DELETE" });
+export const deleteAccount = () => apiRequest(USERS_PATH, { method: "DELETE" });

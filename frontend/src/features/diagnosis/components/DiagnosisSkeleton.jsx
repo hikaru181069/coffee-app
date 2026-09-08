@@ -1,40 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { cardClass } from "../../coffee-records/components/formStyles";
-
-/** OverviewStatsのStatCard（アイコンバッジ+ラベル/値、影なし）と同じ形のプレースホルダー */
-function StatCardSkeleton() {
-  return (
-    <div className="min-w-44 rounded-2xl border border-surface-2 bg-raised p-4">
-      <div className="flex items-center gap-3">
-        <div className="skeleton-block h-9 w-9 flex-shrink-0 rounded-full" />
-        <div className="flex flex-col gap-1.5">
-          <div className="skeleton-block h-3 w-14 rounded" />
-          <div className="skeleton-block h-5 w-8 rounded" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** TopRankingList（アイコン+見出し+ランキング行）と同じ形のプレースホルダー */
-function RankingListSkeleton() {
-  return (
-    <div>
-      <div className="mb-2 flex items-center gap-2">
-        <div className="skeleton-block h-3.5 w-3.5 rounded-full" />
-        <div className="skeleton-block h-3 w-16 rounded" />
-      </div>
-      <div className="flex flex-col gap-0.5">
-        {Array.from({ length: 3 }, (_, row) => (
-          <div key={row} className="flex items-center justify-between gap-2 px-2 py-1.5">
-            <div className="skeleton-block h-3.5 w-32 rounded" />
-            <div className="skeleton-block h-3.5 w-5 rounded" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+import StatCardSkeleton from "../../../components/StatCardSkeleton";
+import RankingListSkeleton from "../../../components/RankingListSkeleton";
 
 /**
  * 読み込み中の診断ページ。実際の3セクション構成

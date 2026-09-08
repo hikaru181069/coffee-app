@@ -83,6 +83,11 @@ player name"`というMLB時代の文言も残ったまま）。`PageHeader.jsx`
 移動した。利用箇所が`features/profile/`配下だけで、`services/`直下に
 置くべき「複数featureから使われる」という事情が無かったため）
 
+2026-09、「変更しやすさ」の監査で`hooks/useRecentlyViewed.js`を新たに
+発見・削除した。中身が`playerId`/`team`/`position`、storage keyが
+`mlbapp_recently_viewed`とMLBテンプレート由来のままで、アプリのどこからも
+importされていない死んだフックだった（`SearchInput.jsx`と同種の見落とし）。
+
 `components/SkeletonCard.jsx`も再利用予定だったが、`PageHeader.jsx`と同様
 どのページからも使われていない死んだコンポーネントとして残っていたため、
 2026-08のスケルトン表示改善時に削除した。

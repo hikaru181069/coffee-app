@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { cardClass } from "../../coffee-records/components/formStyles";
+import StatCardSkeleton from "../../../components/StatCardSkeleton";
 
 /**
  * 読み込み中のWorld Mapページ。実際の構成
@@ -19,15 +20,7 @@ function WorldMapSkeleton() {
     <div aria-busy="true" aria-label={t("common.loading")} className="flex flex-col gap-6">
       <div className={cardClass}>
         <div className="flex flex-wrap gap-3">
-          <div className="min-w-44 rounded-2xl border border-surface-2 bg-raised p-4">
-            <div className="flex items-center gap-3">
-              <div className="skeleton-block h-9 w-9 flex-shrink-0 rounded-full" />
-              <div className="flex flex-col gap-1.5">
-                <div className="skeleton-block h-3 w-20 rounded" />
-                <div className="skeleton-block h-5 w-14 rounded" />
-              </div>
-            </div>
-          </div>
+          <StatCardSkeleton />
         </div>
       </div>
 

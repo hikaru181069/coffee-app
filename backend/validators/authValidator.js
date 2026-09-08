@@ -1,3 +1,6 @@
+import { isMissing } from "../utils/isMissing.js";
+import { MIN_PASSWORD_LENGTH } from "../utils/passwordPolicy.js";
+
 /**
  * register / login の入力を検証する。
  *
@@ -13,9 +16,7 @@
  */
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 6;
 
-const isMissing = (value) => value === undefined || value === null || value === "";
 const isBlankString = (value) => typeof value === "string" && value.trim() === "";
 
 export const validateRegister = (body = {}) => {
