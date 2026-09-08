@@ -1,9 +1,11 @@
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const CHART_HEIGHT_PX = 64;
 
 /** ★1〜5ごとの件数を、シンプルなCSSの棒グラフで見せる */
-function RatingDistributionChart({ distribution, t }) {
+function RatingDistributionChart({ distribution }) {
+  const { t } = useTranslation();
   const maxCount = Math.max(1, ...distribution.map((entry) => entry.count));
 
   return (

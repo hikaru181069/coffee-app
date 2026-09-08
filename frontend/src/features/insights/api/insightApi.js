@@ -3,8 +3,8 @@ import { apiRequest } from "../../../services/api/httpClient";
 /**
  * Insight（傾向）のAPI呼び出し。
  *
- * features/graph/api/graphApi.js と同じ方針: httpClientはcoffee-records
- * featureのものをそのまま使う。フィルターは持たない
+ * features/graph/api/graphApi.js と同じ方針: httpClientは
+ * services/api/httpClient.js のものをそのまま使う。フィルターは持たない
  * （「自分の記録全体からの傾向」を示す機能のため）。
  */
 

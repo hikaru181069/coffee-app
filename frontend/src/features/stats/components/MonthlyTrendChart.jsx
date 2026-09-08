@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { formatMonthLabel } from "../../coffee-records/utils/recordFormat";
 
 const CHART_HEIGHT_PX = 80;
 
 /** 月ごとの記録数を、シンプルなCSSの棒グラフで見せる（グラフ描画ライブラリは使わない） */
-function MonthlyTrendChart({ monthlyTrend, language, t }) {
+function MonthlyTrendChart({ monthlyTrend, language }) {
+  const { t } = useTranslation();
   if (monthlyTrend.length === 0) return null;
 
   const maxCount = Math.max(...monthlyTrend.map((entry) => entry.count));

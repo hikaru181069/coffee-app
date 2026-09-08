@@ -8,9 +8,9 @@ import FormField from "../features/coffee-records/components/FormField";
 import { controlClass, dangerButtonClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
 import { validateLoginForm, hasErrors } from "../utils/authFormValidation";
 import {
-  clearAuthData,
   getAuthToken,
   getAuthUserName,
+  logout,
   saveAuthData,
 } from "../utils/authStorage";
 import { loginUser } from "../services/api/authApi";
@@ -26,11 +26,6 @@ function LoginPage() {
   const navigate = useNavigate();
   const token = getAuthToken();
   const userName = getAuthUserName();
-
-  const handleLogout = () => {
-    clearAuthData();
-    window.location.reload();
-  };
 
   const setValue = (field, value) => {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -88,7 +83,7 @@ function LoginPage() {
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link className={primaryButtonClass} to="/">{t("auth.goToHome")}</Link>
-              <button className={dangerButtonClass} type="button" onClick={handleLogout}>
+              <button className={dangerButtonClass} type="button" onClick={logout}>
                 {t("nav.logout")}
               </button>
             </div>

@@ -1,4 +1,4 @@
-import { apiRequest } from "./httpClient";
+import { apiRequest } from "../../../services/api/httpClient";
 
 /**
  * ログイン中ユーザー自身のプロフィールAPI。

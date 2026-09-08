@@ -1,4 +1,5 @@
 import { Coffee } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { getArchetypeColorClass } from "../utils/archetypeVisuals";
 import TasteRadarChart from "../../coffee-records/components/TasteRadarChart";
@@ -26,7 +27,8 @@ import TasteRadarChart from "../../coffee-records/components/TasteRadarChart";
  * 二重に入れ子になった。StatCard.jsxの`flat`propと同じ理由で、
  * ネストされた内側のカードには影を付けない。
  */
-function ArchetypeCard({ archetype, t, flat = false }) {
+function ArchetypeCard({ archetype, flat = false }) {
+  const { t } = useTranslation();
   if (!archetype) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line/60 px-6 py-10 text-center">

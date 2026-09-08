@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { getCurrentUser } from "../../../services/api/userApi";
+import { changePassword, deleteAccount, getCurrentUser, updateProfile } from "../api/userApi";
+import { saveAuthUserName } from "../../../utils/authStorage";
 
 /**
- * ログイン中ユーザーのプロフィールを取得する。
+ * ログイン中ユーザーのプロフィールの取得・更新をまとめて扱う。
  *
  * 2026-08、userApi.js が共通クライアント（services/api/httpClient.js）
  * 経由になり AbortSignal を受け取れるようになったため、
@@ -10,10 +11,10 @@ import { getCurrentUser } from "../../../services/api/userApi";
  * 揃えた（以前はcancelledフラグ方式だった）。401（トークン無効）の
  * ハンドリングもapiRequest側で共通化されたため、ここでは行わない。
  *
- * 更新（名前変更・パスワード変更・退会）はここに含めない。取得は
- * このhookの責務、更新後の反映（setUserの呼び出しやトースト表示）は
- * ProfilePage側の責務とする（useCoffeeRecordとRecordDetailPage/
- * RecordFormPageの関係と同じ非対称な設計）。
+ * 2026-09、名前変更・パスワード変更・退会のAPI呼び出しもこのhookへ
+ * 移した。features/coffee-records/hooks/useCoffeeRecord.js の
+ * deleteRecord と同じ形（呼び出し中フラグ+API呼び出し+finally）。
+ * ページ側は成功/失敗に応じたトースト表示・フォームリセット・navigateだけを行う。
  */
 export const useProfile = () => {
   const [user, setUser] = useState(null);
@@ -46,5 +47,59 @@ export const useProfile = () => {
 
   const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
-  return { user, isLoading, error, reload, setUser };
+  // 各書き込み系関数の「呼び出し中なら早期return」は、useCoffeeRecord.js の
+  // deleteRecord と同じ二重送信防止（保存/削除ボタンのdisabledだけに頼ると、
+  // Enterキーでの送信や連打で通り抜けることがある）
+  const [isSavingName, setIsSavingName] = useState(false);
+  const updateName = useCallback(async (name) => {
+    if (isSavingName) return null;
+
+    setIsSavingName(true);
+    try {
+      const updated = await updateProfile({ name });
+      setUser(updated);
+      // Navbar.jsxのユーザー名表示はlocalStorageから読むため、こちらも更新する
+      saveAuthUserName(updated.name);
+      return updated;
+    } finally {
+      setIsSavingName(false);
+    }
+  }, [isSavingName]);
+
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const changeUserPassword = useCallback(async (passwordForm) => {
+    if (isChangingPassword) return;
+
+    setIsChangingPassword(true);
+    try {
+      await changePassword(passwordForm);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  }, [isChangingPassword]);
+
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const deleteUserAccount = useCallback(async () => {
+    if (isDeletingAccount) return;
+
+    setIsDeletingAccount(true);
+    try {
+      await deleteAccount();
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  }, [isDeletingAccount]);
+
+  return {
+    user,
+    isLoading,
+    error,
+    reload,
+    updateName,
+    isSavingName,
+    changePassword: changeUserPassword,
+    isChangingPassword,
+    deleteAccount: deleteUserAccount,
+    isDeletingAccount,
+  };
 };

@@ -3,17 +3,35 @@
  *
  * このコンポーネント自体は状態を持たない（Coffee Detailsの開閉を除く）ため、
  * useRecordFormと組み合わせた小さなHarnessで、実際にRecordFormPage.jsxが
- * 行っているのと同じ配線（values/errors/setValue/onSubmit=form.submit）で
- * レンダーする。フィールドを1つ1つモックするより、実際の使われ方に近い
- * 形で「主要な正常系・重要な異常系」（CLAUDE.mdのテスト方針）を検証できる。
+ * 行っているのと同じ配線（values/errors/setValue/onSubmit=フォーム送信の
+ * ラッパー）でレンダーする。フィールドを1つ1つモックするより、実際の
+ * 使われ方に近い形で「主要な正常系・重要な異常系」（CLAUDE.mdのテスト方針）
+ * を検証できる。
+ *
+ * useRecordForm自体がAPI（createCoffeeRecord/updateCoffeeRecord）を呼ぶため、
+ * ここではそのAPIモジュールをモックする（RecordFormPage.jsxが実際に
+ * useRecordFormへ渡すのと同じ、record===nullなのでcreateCoffeeRecordが
+ * 呼ばれる想定）。
  */
-import { useEffect } from "react";
-import { describe, expect, test, vi } from "vitest";
+import { useCallback, useEffect } from "react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import RecordForm from "./RecordForm";
 import { useRecordForm } from "../hooks/useRecordForm";
+import { createCoffeeRecord } from "../api/coffeeRecordApi";
+
+vi.mock("../api/coffeeRecordApi", () => ({
+  createCoffeeRecord: vi.fn(),
+  updateCoffeeRecord: vi.fn(),
+}));
+
+afterEach(() => {
+  vi.clearAllMocks();
+  createCoffeeRecord.mockResolvedValue({ id: "1" });
+});
+createCoffeeRecord.mockResolvedValue({ id: "1" });
 
 const EMPTY_MASTER_DATA = {
   origins: [],
@@ -29,6 +47,11 @@ const EMPTY_MASTER_DATA = {
  * 場合に自動で開く」（RecordForm.jsxのhasHiddenError）を、実際に
  * ユーザーが未入力のまま開いていない状態から検証するためのテスト専用の
  * 抜け道（本来のユーザー操作では起こらない、DOM外からの直接書き込み）。
+ *
+ * onSubmit: 送信が成功（バリデーション・API呼び出しの両方を通過）した
+ * ときだけ、保存された記録付きで呼ばれる。RecordFormPage.jsxの
+ * handleFormSubmitと同じ「form.submit()を呼び、truthyな戻り値のときだけ
+ * 反応する」という薄いラッパー経由で配線する。
  */
 function Harness({
   onSubmit = vi.fn(),
@@ -36,7 +59,12 @@ function Harness({
   prefillRoasterName = false,
   prefillOriginId = null,
 }) {
-  const form = useRecordForm(record, onSubmit, prefillOriginId);
+  const form = useRecordForm(record, prefillOriginId);
+
+  const handleSubmit = useCallback(async () => {
+    const saved = await form.submit();
+    if (saved) onSubmit(saved);
+  }, [form, onSubmit]);
 
   useEffect(() => {
     if (prefillRoasterName) form.setValue("roasterName", "a".repeat(121));
@@ -51,7 +79,7 @@ function Harness({
       isSubmitting={form.isSubmitting}
       setValue={form.setValue}
       toggleValue={form.toggleValue}
-      onSubmit={form.submit}
+      onSubmit={handleSubmit}
       onCancel={vi.fn()}
       masterData={EMPTY_MASTER_DATA}
       isMasterDataLoading={false}
@@ -136,13 +164,13 @@ describe("RecordForm", () => {
   test("送信中は保存ボタンが無効化され「保存中...」と表示される", async () => {
     const user = userEvent.setup();
     let resolveSubmit;
-    const onSubmit = vi.fn(
+    createCoffeeRecord.mockImplementation(
       () =>
         new Promise((resolve) => {
           resolveSubmit = resolve;
         }),
     );
-    render(<Harness onSubmit={onSubmit} />);
+    render(<Harness />);
 
     await user.type(screen.getByLabelText(/^タイトル/), "とりあえず買った豆");
     await user.click(screen.getByRole("button", { name: "保存する" }));

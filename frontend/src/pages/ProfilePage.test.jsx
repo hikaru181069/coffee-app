@@ -1,8 +1,8 @@
 /**
  * ProfilePage.jsxのテスト。
  *
- * services/api/userApi.js（2026-08、設計レビューでapiRequest経由へ統一）
- * をモックし、名前変更・パスワード変更・退会の主要経路を確認する。
+ * features/profile/api/userApi.js をモックし、名前変更・パスワード変更・
+ * 退会の主要経路を確認する。
  * 特に「現在のパスワードが違う」（400・INVALID_CURRENT_PASSWORD）が
  * 誤って自動ログアウトを起こさないことは、今回のリファクタの中心的な
  * 変更点なので重点的に検証する。
@@ -16,7 +16,7 @@ const getCurrentUser = vi.fn();
 const updateProfile = vi.fn();
 const changePassword = vi.fn();
 const deleteAccount = vi.fn();
-vi.mock("../services/api/userApi", () => ({
+vi.mock("../features/profile/api/userApi", () => ({
   getCurrentUser: (...args) => getCurrentUser(...args),
   updateProfile: (...args) => updateProfile(...args),
   changePassword: (...args) => changePassword(...args),

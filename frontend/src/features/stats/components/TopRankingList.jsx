@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 import { computeRanks } from "../utils/rankings";
@@ -14,7 +15,8 @@ import { revealDelayClass } from "../../../utils/revealDelay";
  * 該当種別の記録が1件も無ければ何も表示しない（空のランキングを
  * 並べて情報過多にしないため）。
  */
-function TopRankingList({ type, items, t }) {
+function TopRankingList({ type, items }) {
+  const { t } = useTranslation();
   if (items.length === 0) return null;
 
   const visual = getNodeVisual(type);

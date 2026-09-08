@@ -17,7 +17,7 @@ vi.mock("../features/coffee-records/api/coffeeRecordApi", () => ({
 }));
 
 const getCurrentUser = vi.fn();
-vi.mock("../services/api/userApi", () => ({
+vi.mock("../features/profile/api/userApi", () => ({
   getCurrentUser: (...args) => getCurrentUser(...args),
 }));
 

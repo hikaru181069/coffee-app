@@ -127,11 +127,14 @@ export const apiRequest = async (path, { method = "GET", body, params, signal } 
     const apiError = payload?.error;
 
     // このクライアントを使う全エンドポイント（coffee-records/graph/stats/
-    // insights/discover/search/masterData）は認証必須で、「現在の
-    // パスワードが違う」のような別の意味の401を返すものが無い。
-    // そのため401は常に「トークンが無効・期限切れ」と断定してよい
-    // （services/api/userApi.js のchangePasswordだけは例外なので、
-    // あちらでは同じ処理を個別に呼んでいる）
+    // insights/discover/search/masterData/users）は認証必須で、「現在の
+    // パスワードが違う」のような別の意味の401を返すものが無い
+    // （features/profile/api/userApi.js のchangePasswordも、backend側で
+    // 「現在のパスワードが違う」を400・INVALID_CURRENT_PASSWORDへ改めた
+    // ことでこの前提に合流した）。そのため401は常に「トークンが
+    // 無効・期限切れ」と断定してよい。login/register（services/api/
+    // authApi.js）だけはこのクライアントを使わず生fetchで実装している
+    // （あちらの401は「メール・パスワードが違う」の意味のため）
     if (response.status === 401) handleUnauthorized();
 
     throw new ApiError({

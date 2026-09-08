@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import StatCard from "../../../components/StatCard";
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 
@@ -16,7 +17,8 @@ import { getNodeVisual } from "../../graph/utils/nodeVisuals";
  * 均等割りから`flex flex-wrap`（中身に応じた幅、StatCard側のmin-wが
  * 下限）へ変更した。OverviewStats.jsxと同じ理由。
  */
-function CollectionStats({ collection, t }) {
+function CollectionStats({ collection }) {
+  const { t } = useTranslation();
   const origin = getNodeVisual("origin");
   const variety = getNodeVisual("variety");
   const process = getNodeVisual("process");

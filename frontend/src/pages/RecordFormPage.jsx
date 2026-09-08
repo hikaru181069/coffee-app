@@ -6,10 +6,6 @@ import "../features/coffee-records/coffee-records.css";
 import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecord";
 import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
 import { useRecordForm } from "../features/coffee-records/hooks/useRecordForm";
-import {
-  createCoffeeRecord,
-  updateCoffeeRecord,
-} from "../features/coffee-records/api/coffeeRecordApi";
 import RecordForm from "../features/coffee-records/components/RecordForm";
 import RecordFormSkeleton from "../features/coffee-records/components/RecordFormSkeleton";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
@@ -69,36 +65,32 @@ function RecordFormPage() {
   );
 
   // 保存直後の遷移まで確認ダイアログで止めないためのフラグ。
-  // useRecordForm.submit()内のawait onSubmit(...)が完了する前に
-  // handleSubmit内のnavigate()が実行されてしまうため、
-  // state更新では間に合わない（再レンダリングを待たないrefで持つ）
+  // handleFormSubmit内でnavigate()を呼んだ直後にuseBlockerが判定を
+  // 行うため、state更新では間に合わない（再レンダリングを待たないrefで持つ）
   const justSavedRef = useRef(false);
 
+  const form = useRecordForm(record, prefillOriginId);
+
   /**
-   * フォームから呼ばれる送信処理。
+   * RecordFormから呼ばれる送信処理。
    *
-   * useRecordForm が例外をそのまま投げ返してくるので、
-   * ここでは「成功したときに何をするか」だけを書けばよい。
+   * API呼び出し自体はuseRecordForm.submit()が行う（作成/更新の分岐も
+   * useRecordForm側でrecordの有無から判断する）。ここでは
+   * 「成功したときに何をするか」という画面固有の反応だけを書く。
+   * form.submit()はバリデーション/送信エラー時にnullを返す
+   * （エラー表示自体はuseRecordFormが行うので、ここでは何もしない）。
    */
-  const handleSubmit = useCallback(
-    async (payload) => {
-      const saved = isEditing
-        ? await updateCoffeeRecord(recordId, payload)
-        : await createCoffeeRecord(payload);
+  const handleFormSubmit = useCallback(async () => {
+    const saved = await form.submit();
+    if (!saved) return;
 
-      addToast(isEditing ? t("records.toastUpdated") : t("records.toastCreated"), "success");
+    addToast(isEditing ? t("records.toastUpdated") : t("records.toastCreated"), "success");
 
-      // 保存後は詳細画面へ。一覧へ戻すと「保存されたか」を確認しづらい。
-      // navigate()より先にフラグを立て、直後のuseBlockerの判定に確実に間に合わせる
-      justSavedRef.current = true;
-      navigate(`/records/${saved.id}`, { replace: true });
-
-      return saved;
-    },
-    [isEditing, recordId, addToast, navigate, t],
-  );
-
-  const form = useRecordForm(record, handleSubmit, prefillOriginId);
+    // 保存後は詳細画面へ。一覧へ戻すと「保存されたか」を確認しづらい。
+    // navigate()より先にフラグを立て、直後のuseBlockerの判定に確実に間に合わせる
+    justSavedRef.current = true;
+    navigate(`/records/${saved.id}`, { replace: true });
+  }, [form, isEditing, addToast, navigate, t]);
 
   const shouldBlockNavigation = useCallback(
     ({ currentLocation, nextLocation }) =>
@@ -181,7 +173,7 @@ function RecordFormPage() {
         isSubmitting={form.isSubmitting}
         setValue={form.setValue}
         toggleValue={form.toggleValue}
-        onSubmit={form.submit}
+        onSubmit={handleFormSubmit}
         onCancel={() => navigate(isEditing ? `/records/${recordId}` : "/records")}
         masterData={masterData}
         isMasterDataLoading={isMasterDataLoading}

@@ -23,15 +23,21 @@ export const clearAuthData = () => {
 };
 
 /**
- * トークンが失効・無効化された（APIが401を返した）ときに呼ぶ。
  * 認証情報を消し、ログイン画面へ強制的に戻す。
  *
- * React Routerのnavigateではなくwindow.location.hrefによるフルリロード
- * にしているのは、Navbar.jsxの明示的なログアウトと同じ方式に揃えるため
- * （SPAの状態をすべてリセットしたい。トークンだけ消して画面はそのまま、
- * という中途半端な状態を避ける）。
+ * React Routerのnavigateではなくwindow.location.hrefによるフルリロードに
+ * しているのは、SPAの状態をすべてリセットしたいため（トークンだけ消して
+ * 画面はそのまま、という中途半端な状態を避ける）。Navbar.jsxの明示的な
+ * ログアウトボタン・LoginPage.jsxのログイン済み状態からのログアウト・
+ * 下記handleUnauthorized（401時の自動ログアウト）の3箇所が同じ処理を
+ * 個別に持っていたため、ここへ共通化した。
  */
-export const handleUnauthorized = () => {
+export const logout = () => {
   clearAuthData();
   window.location.href = "/login";
+};
+
+/** トークンが失効・無効化された（APIが401を返した）ときに呼ぶ */
+export const handleUnauthorized = () => {
+  logout();
 };

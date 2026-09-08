@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { describeInsight } from "../../insights/utils/describeInsight";
 import { useReveal } from "../../../hooks/useReveal";
@@ -12,7 +13,8 @@ import { revealDelayClass } from "../../../utils/revealDelay";
  * 見せる（docs/features.md「Coffee Diagnosis」参照）。文言生成は
  * features/insights/utils/describeInsight.jsをそのまま再利用する。
  */
-function InsightList({ insights, t }) {
+function InsightList({ insights }) {
+  const { t } = useTranslation();
   if (insights.length === 0) {
     return <p className="text-sm text-text-tertiary">{t("diagnosis.insightsEmpty")}</p>;
   }

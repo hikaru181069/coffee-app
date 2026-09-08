@@ -12,7 +12,7 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { HouseIcon, ChartNetworkIcon, CoffeeIcon, ChartBarIcon, UserIcon, LogOutIcon } from "@animateicons/react/lucide";
 import CoffeeLogo from "./CoffeeLogo";
-import { clearAuthData, getAuthToken, getAuthUserName } from "../utils/authStorage";
+import { getAuthToken, getAuthUserName, logout } from "../utils/authStorage";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // 2026-08、以前はlucide-reactも使わず必要な分だけSVGを自前で書いていたが、
@@ -110,14 +110,6 @@ function Navbar() {
   // あった）。hooks/useFocusTrap.jsへ共通化したものをここでも使う
   useFocusTrap(drawerRef, open, close);
 
-  const handleLogout = () => {
-    clearAuthData();
-    // navigate() ではなく location.href を使う理由:
-    // JWT をクリアした後、React のメモリ上に残っている認証状態も
-    // 強制的にリセットするためにフルリロードが必要
-    window.location.href = "/login";
-  };
-
   return (
     <>
       {/* ── モバイル用トップバー (md 未満のみ表示) ── */}
@@ -192,7 +184,7 @@ function Navbar() {
               <>
                 <NavIconLink to="/profile" Icon={UserIcon} label={userName || t("nav.profile")} onClick={close} />
                 <NavIconButton
-                  onClick={handleLogout}
+                  onClick={logout}
                   Icon={LogOutIcon}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
                 >
@@ -256,7 +248,7 @@ function Navbar() {
             <>
               <NavIconLink to="/profile" Icon={UserIcon} label={userName || t("nav.profile")} />
               <NavIconButton
-                onClick={handleLogout}
+                onClick={logout}
                 Icon={LogOutIcon}
                 className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
               >
