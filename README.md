@@ -92,6 +92,7 @@ Password: coffeedemo123
 - **Coffee Diagnosis** — 焙煎度・フレーバーの傾向から「コーヒータイプ」をルールベースで判定し、Insight・Statsの要約とあわせて1画面で見せる
 - **World Map** — 自分が記録した産地を世界地図上でハイライトする。産地ごとのアクセントカラー（地域でまとまった配色、20件重複なし）は知識グラフのノードやRecords一覧とも共通
 - **Similar Records** — 知識グラフの共起関係を使い、ある記録と2つ以上の属性（産地・精製方法・フレーバーなど）を共有する他の記録を、共有数の多い順に提示する
+- **抽出の詳細** — 粉量・総湯量・抽出時間・注湯記録（経過時間ごとの累計湯量）を記録詳細画面から任意で追記できる。豆自体の情報（産地・品種など）とは性質が異なるため、記録編集フォームとは別の独立したカードでインライン編集する
 
 Out of Scope（MVPでは扱わない）: AI推薦、自然言語による味覚分析、SNS・フォロー、カフェ口コミ、EC連携、画像認識。詳細は [`docs/mvp.md`](docs/mvp.md) を参照してください。
 
@@ -125,11 +126,13 @@ coffee-app/
 │   ├── features/
 │   │   ├── coffee-records/    記録機能のAPI・hooks・components
 │   │   ├── graph/             知識グラフのAPI・hooks・components（react-force-graph-2d）
-│   │   ├── insights/ discover/ search/ stats/   個別機能ごとに同じ構成
+│   │   ├── insights/ discover/ search/ stats/ diagnosis/ map/
+│   │   │   similarRecords/ profile/   個別機能ごとに同じ構成
 │   ├── pages/                 ルート単位の画面
 │   └── components/            複数機能で共有するUI
 ├── backend/
-│   ├── core/graph/ insights/ discover/ search/ stats/   機能ごとの純粋関数（DB/HTTP非依存）
+│   ├── core/graph/ insights/ discover/ search/ stats/
+│   │   diagnosis/ similarRecords/ shared/   機能ごとの純粋関数（DB/HTTP非依存）
 │   ├── routes/ controllers/ services/ repositories/ models/ validators/
 │   └── seeds/                 マスターデータ・デモデータの投入
 ├── fastapi-service/           FastAPI（ヘルスチェックのみの最小構成）
@@ -207,7 +210,7 @@ frontend・backend とも ES Modules を使用します。採用理由と落と�
 2. `backend/core/graph/graphBuilder.js`（DB/HTTPに依存しない純粋関数）が、`record:{id}` のような種別プレフィックス付きのstable IDでノードを重複排除し、edgeを生成する
 3. フロントエンドの `features/graph/components/GraphCanvas.jsx` が、そのJSONをそのまま `react-force-graph-2d` へ渡す。座標計算・レイアウトは内蔵の d3-force（chargeStrength / linkDistance / collideRadius を調整）が担い、ノードのドラッグ操作にも反応してその場で再計算する（一度きりの静的レイアウトではなく、常時稼働する物理シミュレーション）。ノードの見た目（アイコン・色・当たり判定）はcanvasへ自前で描画している（`utils/nodeVisuals.js` / `utils/canvasIcons.js`）
 
-ノード種別（record / origin / farm / variety / process / roastLevel / flavor）は色だけでなくアイコン・形状でも区別しています。詳細は [`docs/knowledge-graph.md`](docs/knowledge-graph.md)・[`docs/design.md`](docs/design.md) を参照してください。
+ノード種別（record / origin / farm / variety / process / roastLevel / flavor / cafe / keyword）は色だけでなくアイコン・形状でも区別しています。keywordは、notesの自由記述を固定辞書と部分文字列一致で照合して都度導出するノードで、他の属性のようなマスターデータのコレクションは持ちません。詳細は [`docs/knowledge-graph.md`](docs/knowledge-graph.md)・[`docs/design.md`](docs/design.md) を参照してください。
 
 ## Setup
 
@@ -296,7 +299,7 @@ cd fastapi-service && ../.venv/bin/pytest    # pytest
 
 ## Design Decisions
 
-**mlb-appから再利用したもの** — このリポジトリは、同じ構成（React + Vite / Express + JWT認証 / MongoDB / FastAPI / Docker Compose）で先に作った [mlb-app](https://github.com/hikaru181069/mlb-app) を土台にしています。認証（register/login/JWT発行）、`app.js`/`server.js` の分離、共通UI（ErrorCard・SkeletonCard・ProtectedRoute・Navbarのレスポンシブ構造）、Docker/CI構成をそのまま流用しました。
+**mlb-appから再利用したもの** — このリポジトリは、同じ構成（React + Vite / Express + JWT認証 / MongoDB / FastAPI / Docker Compose）で先に作った [mlb-app](https://github.com/hikaru181069/mlb-app) を土台にしています。認証（register/login/JWT発行）、`app.js`/`server.js` の分離、共通UI（ErrorCard・ProtectedRoute・Navbarのレスポンシブ構造）、Docker/CI構成をそのまま流用しました。
 
 **新しく設計し直したもの** — CoffeeRecordとマスターデータのモデル・API・知識グラフはすべて新規設計です。特に以下は当初の想定から実装中に判断を変えた点です。
 
