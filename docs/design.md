@@ -41,17 +41,22 @@ Diagnosisページ（`/diagnosis`）・World Mapページ（`/map`）は上記�
 目的:
 
 - プロダクトの世界観（Record → Connect → Discover）を一目で伝える
-- 他のジャーナル型・SNS型アプリとの違い（知識グラフでつながる点）を伝える
+- 知識グラフでつながる点を、背景の装飾グラフイラストで視覚的に伝える（他社との言葉での比較はしない）
 - Get Startedへの導線を作る（primary actionは1つ）
 
 構成例:
 
-- ミニナビ（ロゴ、言語切り替え、Login）。Get StartedはナビのすぐScroll先のHeroに既にあるため重複させない
-- Hero（見出し、Get Started CTA、装飾的な知識グラフのイラスト）
-- How it works（Record → Connect → Discoverの3ステップ説明）
-- Your Knowledge Graph（知識グラフの視覚的なイメージ。実データではなく固定サンプル）
-- Why Coffee App?（他のジャーナル型アプリとの比較）
-- 末尾のGet Started CTA（Heroと同じ導線の再掲）
+- ミニナビ（ロゴ、言語切り替え、Login）
+- Hero（kicker、見出し、Record → Connect → Discoverの3ステップ［アイコン+ラベルのみ］、Get Started CTA、背景に装飾的な知識グラフのイラスト）。ページはこのHero1セクションのみで完結させる
+
+2026-09、シンプルな1画面レイアウトへ再設計した（ユーザーとの相談で決定）。
+以前はHeroに加えHow it works（3ステップの説明文つきカード）・Your
+Knowledge Graph（知識グラフの視覚的なイメージ単体セクション）・Why
+Coffee App?（他社比較）・末尾の再掲CTAという4セクションを持っていたが、
+「テキストの説明を減らし、シンプルなレイアウトにしたい」という要望を
+受けてすべて削除・統合した。3ステップの説明はHero内のアイコン+ラベルの
+インライン表示に圧縮し、知識グラフの視覚表現はHero背景の装飾イラスト
+（1つ）に一本化した。
 
 Record / Connect / Discoverは言語を問わず共通のブランド語として扱い、翻訳しない。
 

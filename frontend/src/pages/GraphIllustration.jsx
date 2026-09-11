@@ -8,9 +8,9 @@ import styles from "./GraphIllustration.module.css";
  * GraphPreview（features/graph/components/GraphPreview.jsx）は使えない
  * （useGraph()が認証必須のAPIを叩く構造のため）。そのため固定座標の
  * サンプルノードだけを描く、DB/API非依存の純粋な装飾コンポーネントとして
- * 別に用意する。Landingページ（Hero背景+Your Knowledge Graphセクション）
- * でのみ使う（2026-08、一時期Login/Registerの背景にも使っていたが、
- * 単機能画面には不要とユーザーの判断で削除し、Landing専用に戻した）。
+ * 別に用意する。LandingページのHero背景専用（2026-09、Hero以外の
+ * セクションを削除したのにあわせて、大きく・くっきり見せる
+ * variant="feature"は使われなくなったため廃止した）。
  *
  * ノード2件（record）が、共有する属性ノード（origin・roastLevel）を介して
  * つながっている構図にした。単なる星型ではなく「記録どうしが属性を
@@ -42,15 +42,13 @@ const EDGES = [
 
 const nodeById = Object.fromEntries(NODES.map((node) => [node.id, node]));
 
-/** @param {{ variant?: "ambient" | "feature", className?: string }} props */
-function GraphIllustration({ variant = "feature", className = "" }) {
-  const isAmbient = variant === "ambient";
-
+/** @param {{ className?: string }} props */
+function GraphIllustration({ className = "" }) {
   return (
     <svg
       viewBox="0 0 400 300"
       aria-hidden="true"
-      className={`${styles.graphIllustration} ${isAmbient ? styles.graphAmbient : styles.graphFeature} ${className}`}
+      className={`${styles.graphIllustration} ${className}`}
     >
       {EDGES.map(([fromId, toId]) => {
         const from = nodeById[fromId];
