@@ -50,30 +50,6 @@
     "kicker": "コーヒージャーナル & 知識グラフ",
     "hero": {
       "title": "coffee-app"
-    },
-    "steps": {
-      "record": {
-        "desc": "飲んだコーヒーを産地・フレーバーとともに記録する。"
-      },
-      "connect": {
-        "desc": "産地・品種・精製方法・フレーバーが記録どうしで自動につながる。"
-      },
-      "discover": {
-        "desc": "知識グラフから、自分の好みや未知の関係を発見する。"
-      }
-    },
-    "graph": {
-      "heading": "育っていく知識グラフ",
-      "caption": "記録するたびに、産地やフレーバーがつながっていく。"
-    },
-    "comparison": {
-      "heading": "他のアプリとの違い",
-      "othersLabel": "他のジャーナルアプリ",
-      "othersValue": "時系列に並ぶだけ",
-      "thisValue": "知識グラフでつながる"
-    },
-    "finalCta": {
-      "heading": "さあ、あなたの知識グラフを育てよう。"
     }
   },
   "auth": {
