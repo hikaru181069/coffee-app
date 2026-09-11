@@ -1,4 +1,7 @@
-import CoffeeRecord from "../models/CoffeeRecord.js";
+import mongoose from "mongoose";
+import CoffeeRecord, { CoffeeRecordDocument } from "../models/CoffeeRecord.js";
+
+type RecordId = string | mongoose.Types.ObjectId;
 
 /**
  * CoffeeRecord へのDB問い合わせ。
@@ -27,7 +30,7 @@ import CoffeeRecord from "../models/CoffeeRecord.js";
  * serializeRefはpopulate済みオブジェクトが持つフィールドしか転記できない
  * ため、ここで選択し忘れると常にnullになる（実際に踏んだ不具合）。
  */
-const withMasterData = (query) =>
+const withMasterData = <T,>(query: mongoose.Query<T, CoffeeRecordDocument>) =>
   query
     .populate("originId", "name countryCode")
     .populate("varietyIds", "name")
@@ -36,7 +39,11 @@ const withMasterData = (query) =>
     .populate("flavorIds", "name category");
 
 /** 記録を1件作成する */
-export const create = (data) => CoffeeRecord.create(data);
+export const create = (data: Partial<CoffeeRecordDocument>) => CoffeeRecord.create(data);
+
+interface PopulateOption {
+  populate?: boolean;
+}
 
 /**
  * 記録を1件取得する。
@@ -45,10 +52,21 @@ export const create = (data) => CoffeeRecord.create(data);
  * こうすると他ユーザーの記録は「見つからない」扱いになり、
  * 呼び出し側が所有者確認を忘れても情報が漏れない。
  */
-export const findOneByIdForUser = (recordId, userId, { populate = false } = {}) => {
+export const findOneByIdForUser = (
+  recordId: RecordId,
+  userId: RecordId,
+  { populate = false }: PopulateOption = {},
+) => {
   const query = CoffeeRecord.findOne({ _id: recordId, userId });
   return populate ? withMasterData(query) : query;
 };
+
+interface FindManyForUserOptions extends PopulateOption {
+  filter?: mongoose.QueryFilter<CoffeeRecordDocument>;
+  sort?: Record<string, 1 | -1>;
+  skip?: number;
+  limit?: number;
+}
 
 /**
  * 自分の記録を取得する。
@@ -57,16 +75,18 @@ export const findOneByIdForUser = (recordId, userId, { populate = false } = {}) 
  * ここで既定値を持つと「どの並び順が使われるか」が2か所に散るため。
  */
 export const findManyForUser = (
-  userId,
-  { filter = {}, sort = { consumedAt: -1 }, skip = 0, limit = 20, populate = false } = {},
+  userId: RecordId,
+  { filter = {}, sort = { consumedAt: -1 }, skip = 0, limit = 20, populate = false }: FindManyForUserOptions = {},
 ) => {
   const query = CoffeeRecord.find({ userId, ...filter }).sort(sort).skip(skip).limit(limit);
   return populate ? withMasterData(query) : query;
 };
 
 /** ページネーションの total を出すための件数取得 */
-export const countForUser = (userId, filter = {}) =>
-  CoffeeRecord.countDocuments({ userId, ...filter });
+export const countForUser = (
+  userId: RecordId,
+  filter: mongoose.QueryFilter<CoffeeRecordDocument> = {},
+) => CoffeeRecord.countDocuments({ userId, ...filter });
 
 /**
  * 自分の記録を全件取得する（知識グラフ生成用）。
@@ -76,13 +96,21 @@ export const countForUser = (userId, filter = {}) =>
  * populate はデフォルトで有効にしている。グラフのノードラベルは
  * 産地・品種などの「名前」を必要とし、IDのままでは使えないため。
  */
-export const findAllForUser = (userId, filter = {}, { populate = true } = {}) => {
+export const findAllForUser = (
+  userId: RecordId,
+  filter: mongoose.QueryFilter<CoffeeRecordDocument> = {},
+  { populate = true }: PopulateOption = {},
+) => {
   const query = CoffeeRecord.find({ userId, ...filter }).sort({ consumedAt: -1 });
   return populate ? withMasterData(query) : query;
 };
 
 /** 記録を1件更新する。他ユーザーの記録は更新できない */
-export const updateOneForUser = (recordId, userId, update) =>
+export const updateOneForUser = (
+  recordId: RecordId,
+  userId: RecordId,
+  update: mongoose.UpdateQuery<CoffeeRecordDocument>,
+) =>
   CoffeeRecord.findOneAndUpdate({ _id: recordId, userId }, update, {
     // 更新後のドキュメントを返す（Mongoose 9 では new: true ではなくこちら）
     returnDocument: "after",
@@ -91,8 +119,8 @@ export const updateOneForUser = (recordId, userId, update) =>
   });
 
 /** 記録を1件削除する。他ユーザーの記録は削除できない */
-export const deleteOneForUser = (recordId, userId) =>
+export const deleteOneForUser = (recordId: RecordId, userId: RecordId) =>
   CoffeeRecord.findOneAndDelete({ _id: recordId, userId });
 
 /** ユーザーの記録をすべて削除する（アカウント削除時に使う） */
-export const deleteAllForUser = (userId) => CoffeeRecord.deleteMany({ userId });
+export const deleteAllForUser = (userId: RecordId) => CoffeeRecord.deleteMany({ userId });

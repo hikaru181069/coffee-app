@@ -22,7 +22,41 @@ import { dedupeIds } from "../utils/objectId.js";
  *    CoffeeRecord とマスターデータから要求時に導出する（docs/database.md
  *    「Graph Persistence」）。二重管理と更新時の同期問題を避けるため。
  */
-const coffeeRecordSchema = new mongoose.Schema(
+
+/** 注湯記録の1行分（経過時間ごとの累計湯量） */
+export interface Pour {
+  elapsedSeconds: number;
+  cumulativeWaterWeight: number;
+}
+
+export interface CoffeeRecordDocument extends mongoose.Document {
+  userId: mongoose.Types.ObjectId;
+  title: string;
+  consumedAt: Date;
+  recordType: "home" | "cafe";
+  rating: number | null;
+  tasteSweetness: number | null;
+  tasteBitterness: number | null;
+  tasteAcidity: number | null;
+  tasteBody: number | null;
+  tasteAroma: number | null;
+  tasteAftertaste: number | null;
+  notes: string;
+  cafeName: string;
+  roasterName: string;
+  originId: mongoose.Types.ObjectId | null;
+  farmName: string;
+  varietyIds: mongoose.Types.ObjectId[];
+  processId: mongoose.Types.ObjectId | null;
+  roastLevelId: mongoose.Types.ObjectId | null;
+  flavorIds: mongoose.Types.ObjectId[];
+  doseWeight: number | null;
+  waterWeight: number | null;
+  brewTimeSeconds: number | null;
+  pours: Pour[];
+}
+
+const coffeeRecordSchema = new mongoose.Schema<CoffeeRecordDocument>(
   {
     // 所有者。リクエスト本文ではなく認証情報から設定する（CLAUDE.md）
     userId: {
@@ -56,7 +90,7 @@ const coffeeRecordSchema = new mongoose.Schema(
       min: 1,
       max: 5,
       validate: {
-        validator: (value) => value === null || Number.isInteger(value),
+        validator: (value: number | null) => value === null || Number.isInteger(value),
         message: "rating must be an integer between 1 and 5",
       },
     },
@@ -72,7 +106,7 @@ const coffeeRecordSchema = new mongoose.Schema(
       min: 1,
       max: 5,
       validate: {
-        validator: (value) => value === null || Number.isInteger(value),
+        validator: (value: number | null) => value === null || Number.isInteger(value),
         message: "tasteSweetness must be an integer between 1 and 5",
       },
     },
@@ -82,7 +116,7 @@ const coffeeRecordSchema = new mongoose.Schema(
       min: 1,
       max: 5,
       validate: {
-        validator: (value) => value === null || Number.isInteger(value),
+        validator: (value: number | null) => value === null || Number.isInteger(value),
         message: "tasteBitterness must be an integer between 1 and 5",
       },
     },
@@ -92,7 +126,7 @@ const coffeeRecordSchema = new mongoose.Schema(
       min: 1,
       max: 5,
       validate: {
-        validator: (value) => value === null || Number.isInteger(value),
+        validator: (value: number | null) => value === null || Number.isInteger(value),
         message: "tasteAcidity must be an integer between 1 and 5",
       },
     },
@@ -102,7 +136,7 @@ const coffeeRecordSchema = new mongoose.Schema(
       min: 1,
       max: 5,
       validate: {
-        validator: (value) => value === null || Number.isInteger(value),
+        validator: (value: number | null) => value === null || Number.isInteger(value),
         message: "tasteBody must be an integer between 1 and 5",
       },
     },
@@ -112,7 +146,7 @@ const coffeeRecordSchema = new mongoose.Schema(
       min: 1,
       max: 5,
       validate: {
-        validator: (value) => value === null || Number.isInteger(value),
+        validator: (value: number | null) => value === null || Number.isInteger(value),
         message: "tasteAroma must be an integer between 1 and 5",
       },
     },
@@ -122,7 +156,7 @@ const coffeeRecordSchema = new mongoose.Schema(
       min: 1,
       max: 5,
       validate: {
-        validator: (value) => value === null || Number.isInteger(value),
+        validator: (value: number | null) => value === null || Number.isInteger(value),
         message: "tasteAftertaste must be an integer between 1 and 5",
       },
     },
@@ -227,4 +261,4 @@ coffeeRecordSchema.index({ userId: 1, originId: 1 });
 // 「このフレーバーを含む自分の記録」を引くために必要
 coffeeRecordSchema.index({ userId: 1, flavorIds: 1 });
 
-export default mongoose.model("CoffeeRecord", coffeeRecordSchema);
+export default mongoose.model<CoffeeRecordDocument>("CoffeeRecord", coffeeRecordSchema);

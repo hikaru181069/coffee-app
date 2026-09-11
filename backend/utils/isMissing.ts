@@ -7,4 +7,5 @@
  * null / undefined / 空文字列のいずれも「未入力」として扱う
  * （0やfalseのような正当な値は「未入力」ではないため対象外）。
  */
-export const isMissing = (value) => value === undefined || value === null || value === "";
+export const isMissing = (value: unknown): boolean =>
+  value === undefined || value === null || value === "";

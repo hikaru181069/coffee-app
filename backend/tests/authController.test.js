@@ -10,7 +10,7 @@
 
 import request from "supertest";
 import bcrypt from "bcryptjs";
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 
 import app from "../app.js";
 import User from "../models/User.js";
@@ -141,7 +141,7 @@ describe("POST /api/auth/login", () => {
     // ユーザーの有無で処理時間が変わらないようにするための修正。
     // 実際の時間差ではなく「compareが呼ばれたか」で振る舞いを確認する
     // （時間ベースのテストはCI環境の負荷でフレーキーになりやすいため）
-    const compareSpy = jest.spyOn(bcrypt, "compare");
+    const compareSpy = vi.spyOn(bcrypt, "compare");
 
     await request(app).post(LOGIN).send({
       email: "nobody@example.com",

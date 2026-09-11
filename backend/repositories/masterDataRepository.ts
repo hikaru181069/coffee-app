@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Origin from "../models/Origin.js";
 import Variety from "../models/Variety.js";
 import Process from "../models/Process.js";
@@ -16,8 +17,16 @@ import { escapeRegExp } from "../utils/escapeRegExp.js";
  * docs/api.md のパス（/master-data/origins など）とこの type が対応する。
  */
 
+export type MasterType = "origins" | "varieties" | "processes" | "roastLevels" | "flavors";
+
+interface MasterTypeConfig {
+  // 5種類それぞれdocument型が異なる動的ディスパッチのため、ここだけ意図的にanyで緩める
+  model: mongoose.Model<any>;
+  defaultSort: Record<string, 1 | -1>;
+}
+
 /** 焙煎度だけスキーマが異なる（normalizedName を持たず、key と order を持つ） */
-export const MASTER_TYPES = {
+export const MASTER_TYPES: Record<MasterType, MasterTypeConfig> = {
   origins: {
     model: Origin,
     // 一覧の既定の並び順。焙煎度以外は名前順が自然
@@ -30,28 +39,28 @@ export const MASTER_TYPES = {
 };
 
 /** 有効な master type かどうか（controllerがパスを検証するのに使う） */
-export const isMasterType = (type) =>
+export const isMasterType = (type: string): type is MasterType =>
   Object.prototype.hasOwnProperty.call(MASTER_TYPES, type);
 
-const getConfig = (type) => {
+const getConfig = (type: string): MasterTypeConfig => {
   if (!isMasterType(type)) {
     throw new Error(`Unknown master data type: ${type}`);
   }
   return MASTER_TYPES[type];
 };
 
-/**
- * 1種類のマスターを一覧取得する。
- *
- * @param {string} type   MASTER_TYPES のキー
- * @param {object} options
- * @param {string} [options.search] 名前の部分一致検索
- * @param {number} [options.limit]  取得件数の上限
- */
-export const findMany = async (type, { search, limit } = {}) => {
+interface FindManyOptions {
+  /** 名前の部分一致検索 */
+  search?: string;
+  /** 取得件数の上限 */
+  limit?: number;
+}
+
+/** 1種類のマスターを一覧取得する。typeはMASTER_TYPESのキー */
+export const findMany = async (type: MasterType, { search, limit }: FindManyOptions = {}) => {
   const { model, defaultSort } = getConfig(type);
 
-  const filter = {};
+  const filter: Record<string, unknown> = {};
   if (search && search.trim() !== "") {
     filter.name = { $regex: escapeRegExp(search.trim()), $options: "i" };
   }
@@ -64,7 +73,7 @@ export const findMany = async (type, { search, limit } = {}) => {
 
 /** 全種類のマスターをまとめて取得する（docs/api.md の GET /master-data 用） */
 export const findAllTypes = async () => {
-  const types = Object.keys(MASTER_TYPES);
+  const types = Object.keys(MASTER_TYPES) as MasterType[];
   const results = await Promise.all(types.map((type) => findMany(type)));
 
   return Object.fromEntries(types.map((type, index) => [type, results[index]]));
@@ -76,7 +85,7 @@ export const findAllTypes = async () => {
  * CoffeeRecord作成時に「存在しない産地IDが指定されていないか」を
  * service層が確認するために使う。_id だけ取れば十分なので projection を絞る。
  */
-export const findExistingIds = async (type, ids) => {
+export const findExistingIds = async (type: MasterType, ids: unknown[]): Promise<string[]> => {
   if (!Array.isArray(ids) || ids.length === 0) return [];
 
   const { model } = getConfig(type);
@@ -95,10 +104,12 @@ export const findExistingIds = async (type, ids) => {
  *   $set にすると、実行のたびに既存ドキュメントを上書きしてしまう。
  *   seedはあくまで「初期候補を用意する」ものなので、
  *   すでにあるデータには手を触れない。
- *
- * @returns {"inserted" | "skipped"}
  */
-export const upsertOne = async (type, uniqueFilter, document) => {
+export const upsertOne = async (
+  type: MasterType,
+  uniqueFilter: Record<string, unknown>,
+  document: Record<string, unknown>,
+): Promise<"inserted" | "skipped"> => {
   const { model } = getConfig(type);
 
   const result = await model.updateOne(
@@ -111,7 +122,7 @@ export const upsertOne = async (type, uniqueFilter, document) => {
 };
 
 /** 件数を数える（seedの結果表示に使う） */
-export const countAll = async (type) => {
+export const countAll = async (type: MasterType): Promise<number> => {
   const { model } = getConfig(type);
   return model.countDocuments();
 };

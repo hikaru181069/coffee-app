@@ -1,3 +1,9 @@
+/** バリデーションエラーの項目ごとの詳細（validators/配下が生成する形） */
+export interface ErrorDetail {
+  field: string;
+  message: string;
+}
+
 /**
  * アプリケーションが意図的に投げるエラー。
  *
@@ -8,13 +14,17 @@
  * code は docs/architecture.md の Error Response の code に対応する。
  */
 export class AppError extends Error {
+  code: string;
+  statusCode: number;
+  details: ErrorDetail[];
+
   /**
-   * @param {string} code       VALIDATION_ERROR / NOT_FOUND など
-   * @param {number} statusCode HTTPステータス
-   * @param {string} message    ユーザーへ見せてよいメッセージ
-   * @param {Array}  details    項目ごとの詳細（主にバリデーション用）
+   * @param code       VALIDATION_ERROR / NOT_FOUND など
+   * @param statusCode HTTPステータス
+   * @param message    ユーザーへ見せてよいメッセージ
+   * @param details    項目ごとの詳細（主にバリデーション用）
    */
-  constructor(code, statusCode, message, details = []) {
+  constructor(code: string, statusCode: number, message: string, details: ErrorDetail[] = []) {
     super(message);
     this.name = "AppError";
     this.code = code;
@@ -27,7 +37,7 @@ export class AppError extends Error {
 // controller / service 側で statusCode と code の対応を毎回書かずに済み、
 // 対応表がこのファイルに集約される。
 
-export const validationError = (details = [], message = "入力内容を確認してください") =>
+export const validationError = (details: ErrorDetail[] = [], message = "入力内容を確認してください") =>
   new AppError("VALIDATION_ERROR", 400, message, details);
 
 export const unauthorizedError = (message = "ログインが必要です") =>

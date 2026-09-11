@@ -20,7 +20,7 @@
  *   "medium-dark" と "medium dark" は別物として扱いたいケースがあり、
  *   MVPの段階で過度に丸めると、逆に区別できない不具合になるため。
  */
-export const normalizeName = (value) => {
+export const normalizeName = (value: unknown): string => {
   if (typeof value !== "string") return "";
 
   return value

@@ -74,7 +74,7 @@ DB名は`coffeeApp`（ローカルの`MONGO_URI`と揃える）。この接続�
 - **Root Directory**: `backend`
 - **Environment**: Node
 - **Build Command**: `npm install`
-- **Start Command**: `npm start`（`node server.js`。`npm run dev`のnodemonは開発専用なので使わない）
+- **Start Command**: `npm start`（2026-09、TypeScript化のutils/models/repositories層導入にあわせて`tsx server.js`へ変更した。`server.js`自体はまだ`.js`のままだが、その依存グラフに`.ts`ファイルが含まれるため、TS未対応のプレーンな`node`では解決できない。`npm run dev`のnodemonも同様に`tsx`経由に変更済みだが、開発専用なので本番では使わない）
 
 環境変数（Render の Environment タブで設定）:
 
