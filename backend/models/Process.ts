@@ -8,7 +8,12 @@ import { normalizeName } from "../utils/normalizeName.js";
  * 味への影響が大きく、ユーザーの好みが出やすい要素なので
  * 知識グラフの主要なノード種別のひとつにしている。
  */
-const processSchema = new mongoose.Schema(
+export interface ProcessDocument extends mongoose.Document {
+  name: string;
+  normalizedName: string;
+}
+
+const processSchema = new mongoose.Schema<ProcessDocument>(
   {
     name: {
       type: String,
@@ -32,4 +37,4 @@ processSchema.pre("validate", function () {
 });
 
 // コレクション名は "processes"（Mongooseが自動で複数形にする）
-export default mongoose.model("Process", processSchema);
+export default mongoose.model<ProcessDocument>("Process", processSchema);

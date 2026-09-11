@@ -7,7 +7,13 @@ import { normalizeName } from "../utils/normalizeName.js";
  * CoffeeRecord から参照される。自由入力ではなく参照にする理由は
  * docs/database.md「Why References」を参照。
  */
-const originSchema = new mongoose.Schema(
+export interface OriginDocument extends mongoose.Document {
+  name: string;
+  normalizedName: string;
+  countryCode: string | null;
+}
+
+const originSchema = new mongoose.Schema<OriginDocument>(
   {
     // 画面に表示する名前。ユーザーが入力した見た目を保つ
     name: {
@@ -47,4 +53,4 @@ originSchema.pre("validate", function () {
   this.normalizedName = normalizeName(this.name);
 });
 
-export default mongoose.model("Origin", originSchema);
+export default mongoose.model<OriginDocument>("Origin", originSchema);

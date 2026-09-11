@@ -7,7 +7,12 @@ import { normalizeName } from "../utils/normalizeName.js";
  * 1つの記録に複数の品種が含まれることがある（ブレンド）ため、
  * CoffeeRecord 側では varietyIds という配列で参照する。
  */
-const varietySchema = new mongoose.Schema(
+export interface VarietyDocument extends mongoose.Document {
+  name: string;
+  normalizedName: string;
+}
+
+const varietySchema = new mongoose.Schema<VarietyDocument>(
   {
     name: {
       type: String,
@@ -30,4 +35,4 @@ varietySchema.pre("validate", function () {
   this.normalizedName = normalizeName(this.name);
 });
 
-export default mongoose.model("Variety", varietySchema);
+export default mongoose.model<VarietyDocument>("Variety", varietySchema);

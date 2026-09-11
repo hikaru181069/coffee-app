@@ -11,7 +11,13 @@ import mongoose from "mongoose";
  * そのため、機械が使う識別子 key（unique）と、並び順 order を持たせている。
  * name は表示用で、将来の多言語化でここだけ差し替えられる。
  */
-const roastLevelSchema = new mongoose.Schema({
+export interface RoastLevelDocument extends mongoose.Document {
+  name: string;
+  key: string;
+  order: number;
+}
+
+const roastLevelSchema = new mongoose.Schema<RoastLevelDocument>({
   name: {
     type: String,
     required: true,
@@ -34,4 +40,4 @@ const roastLevelSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.model("RoastLevel", roastLevelSchema);
+export default mongoose.model<RoastLevelDocument>("RoastLevel", roastLevelSchema);

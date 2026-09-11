@@ -18,11 +18,11 @@ import mongoose from "mongoose";
  *   - validator は HTTP境界の純粋関数にしておきたく、
  *     文字列の形を見るだけのためにDBライブラリへ依存させたくない
  */
-export const isObjectIdString = (value) =>
+export const isObjectIdString = (value: unknown): value is string =>
   typeof value === "string" && /^[0-9a-fA-F]{24}$/.test(value);
 
 /** ObjectIdインスタンスか、ObjectIdとして解釈できる文字列かを判定する */
-export const isObjectIdLike = (value) =>
+export const isObjectIdLike = (value: unknown): boolean =>
   value instanceof mongoose.Types.ObjectId || isObjectIdString(value);
 
 /**
@@ -32,11 +32,11 @@ export const isObjectIdLike = (value) =>
  * 同じIDが別インスタンスなら重複を除去できない。文字列に直して比較する。
  * 元の並び順は保つ（ユーザーが選んだ順を表示に使えるようにするため）。
  */
-export const dedupeIds = (values) => {
+export const dedupeIds = <T,>(values: T[]): T[] => {
   if (!Array.isArray(values)) return values;
 
-  const seen = new Set();
-  const result = [];
+  const seen = new Set<string>();
+  const result: T[] = [];
 
   for (const value of values) {
     if (value === null || value === undefined) continue;

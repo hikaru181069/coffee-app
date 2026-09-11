@@ -8,4 +8,4 @@
  * `recordFilterValidator.js`（記録タイトルの部分一致検索）でも
  * 同じ用途で必要になったため共通化した。
  */
-export const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

@@ -1,4 +1,5 @@
-import User from "../models/User.js";
+import mongoose from "mongoose";
+import User, { UserDocument } from "../models/User.js";
 
 /**
  * User へのDB問い合わせ。
@@ -8,18 +9,20 @@ import User from "../models/User.js";
  * controller/serviceの担当。
  */
 
-export const findByEmail = (email) => User.findOne({ email });
+type UserId = string | mongoose.Types.ObjectId;
 
-export const findById = (userId) => User.findById(userId);
+export const findByEmail = (email: string) => User.findOne({ email });
 
-export const create = (data) => User.create(data);
+export const findById = (userId: UserId) => User.findById(userId);
+
+export const create = (data: Partial<UserDocument>) => User.create(data);
 
 /** 名前だけを更新し、更新後のドキュメント（パスワード除く）を返す */
-export const updateName = (userId, name) =>
+export const updateName = (userId: UserId, name: string) =>
   User.findByIdAndUpdate(
     userId,
     { name },
     { returnDocument: "after", runValidators: true },
   ).select("-password");
 
-export const deleteById = (userId) => User.findByIdAndDelete(userId);
+export const deleteById = (userId: UserId) => User.findByIdAndDelete(userId);

@@ -8,7 +8,13 @@ import { normalizeName } from "../utils/normalizeName.js";
  * category は「fruity」「sweet」のような大分類で、
  * 将来グラフの色分けやフィルターに使えるようにした任意項目。
  */
-const flavorSchema = new mongoose.Schema(
+export interface FlavorDocument extends mongoose.Document {
+  name: string;
+  normalizedName: string;
+  category: string | null;
+}
+
+const flavorSchema = new mongoose.Schema<FlavorDocument>(
   {
     name: {
       type: String,
@@ -37,4 +43,4 @@ flavorSchema.pre("validate", function () {
   this.normalizedName = normalizeName(this.name);
 });
 
-export default mongoose.model("Flavor", flavorSchema);
+export default mongoose.model<FlavorDocument>("Flavor", flavorSchema);
