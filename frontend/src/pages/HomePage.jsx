@@ -120,14 +120,14 @@ function HomePage() {
       {/* Record Coffee: 主要CTA。初回（記録が無い）は独立したセクションとして
           大きく見せ、Record Firstを強く表現する。すでに記録があるリピーター
           には、同じ強さで毎回出す必要が無いため小さいボタンへ縮小する。
-          2026-09、以前はGraphのノード色を使ったグラデーション枠線
-          （index.cssの.home-cta-gradient-border）で特別感を出していたが、
-          「アプリの世界観（静かな道具）に対して派手すぎる」という指摘を
-          受け、色数を9→3色へ絞った後も派手さが残ったため、グラデーション
-          自体をやめ、他の主要CTA（primaryButtonClass、Landing の
-          Get Started等）と同じ反転配色（bg-inverse text-on-inverse
-          rounded-full）へ統一した。目立たせる方向性自体は、他の主要CTAと
-          同様に位置・サイズ（初回は大きな専用セクション）で担う */}
+          2026-09、色による特別扱い（Graphのノード色を使ったグラデーション
+          枠線→色数を絞ったグラデーション→白背景の反転配色、の順に試した）
+          をすべて試したが、いずれも「アプリの世界観（静かな道具）に
+          合わない」という指摘を受けた。最終的に、他のカード
+          （HomeRecordCard.jsx等）と同じ暗い配色（bg-raised・
+          border-surface-2）へ揃え、色による強調をやめた。目立たせる方向性
+          自体は、初回だけ大きな専用セクションとして表示するサイズ・位置で
+          担う（ユーザーとの相談の末の妥協案） */}
       <section className="mb-6">
         {!isRepeatVisitor && (
           <h2 className="mb-3 text-sm font-semibold text-text">
@@ -136,7 +136,7 @@ function HomePage() {
         )}
         <Link
           to="/records/new"
-          className={`flex items-center justify-center gap-2 rounded-full bg-inverse text-on-inverse transition-colors duration-150 hover:bg-inverse/90 focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+          className={`flex items-center justify-center gap-2 rounded-2xl border border-surface-2 bg-raised text-text shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50 ${
             isRepeatVisitor ? "py-3" : "flex-col py-10"
           }`}
         >
