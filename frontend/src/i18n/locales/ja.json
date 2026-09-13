@@ -171,7 +171,7 @@
     "detailsHint": "産地や品種を選ぶと、記録どうしがつながります（すべて任意）",
     "masterDataError": "選択肢を読み込めませんでした。この部分は空欄のままでも記録は保存できます。",
     "componentHeading": "コーヒー{{index}}",
-    "addComponent": "+ コーヒーの詳細を追加",
+    "addComponent": "コーヒーの詳細を追加",
     "origin": "産地",
     "farmName": "農園",
     "farmNameHint": "候補が無いため自由入力です",
