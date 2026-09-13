@@ -46,6 +46,12 @@ jobs:
       - name: Install dependencies
         run: cd backend && npm ci
 
+      # 2026-09、backendのutils/models/repositories層をTypeScript化した際に追加。
+      # tsconfig.jsonのallowJs: true・checkJs: falseにより、.jsファイルは
+      # 対象外のまま.tsファイルだけを型チェックする（tsc --noEmit）
+      - name: Type check
+        run: cd backend && npm run typecheck
+
       - name: Run tests
         run: cd backend && npm test
 

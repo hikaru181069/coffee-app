@@ -145,11 +145,11 @@ coffee-app/
 | -------------- | ------------------------------------------------------------------ |
 | Frontend       | React 19 / Vite / React Router / Tailwind CSS                      |
 | 知識グラフ描画 | react-force-graph-2d（canvas描画 + d3-force）                      |
-| Backend        | Node.js / Express 5（ES Modules）                                  |
+| Backend        | Node.js / Express 5（ES Modules）。データ層（`utils/` `models/` `repositories/`）はTypeScript化済み、他は移行中（Future Work参照） |
 | Database       | MongoDB / Mongoose                                                 |
 | 計算サービス   | Python / FastAPI                                                   |
 | 認証           | JWT / bcryptjs                                                     |
-| テスト・CI     | Jest + Supertest / mongodb-memory-server（backend）、Vitest + React Testing Library（frontend）、pytest、GitHub Actions |
+| テスト・CI     | Vitest + Supertest / mongodb-memory-server（backend）、Vitest + React Testing Library（frontend）、pytest、GitHub Actions |
 | 開発環境       | Docker Compose                                                     |
 
 frontend・backend とも ES Modules を使用します。採用理由と落とし穴は [`docs/architecture.md`](docs/architecture.md#module-format) にまとめています。
@@ -288,7 +288,8 @@ frontend は `VITE_API_URL` で Express の URL を指定します（未指定�
 ## Testing
 
 ```bash
-cd backend && npm test          # Jest + Supertest + mongodb-memory-server
+cd backend && npm run typecheck # tsc --noEmit（utils/models/repositories層のみ、Future Work参照）
+cd backend && npm test          # Vitest + Supertest + mongodb-memory-server
 cd frontend && npm run test     # Vitest + React Testing Library
 cd frontend && npm run lint     # ESLint
 cd frontend && npm run build    # ビルド確認
@@ -317,7 +318,7 @@ cd fastapi-service && ../.venv/bin/pytest    # pytest
 - AI推薦・自然言語による味覚分析（`docs/mvp.md` のOut of Scope）
 - 記録詳細画面への「関連ノード」の直接埋め込み（現在はGraph画面への遷移のみ）
 - FastAPIサービスの活用（将来の味覚分析・類似度計算）
-- TypeScript化・CSS Modulesへの移行
+- TypeScript化の継続（backendは`utils/` `models/` `repositories/`まで完了。次は`validators/` `services/` `controllers/` `routes/` `middleware/`、その後frontend）・CSS Modulesへの移行
 
 ---
 
