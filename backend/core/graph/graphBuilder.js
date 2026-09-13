@@ -18,8 +18,8 @@ import { extractKeywords } from "./noteKeywordExtractor.js";
  *
  * HTTPやMongoDBの責務をここへ混ぜない（docs/architecture.md参照）。
  * 入力はプレーンなJSオブジェクトの配列（services/coffee/coffeeRecordSerializer.js
- * が返す形と同じ: { id, title, consumedAt, rating, origin, farmName,
- * varieties, process, roastLevel, flavors, ... }）。
+ * が返す形と同じ: { id, title, consumedAt, rating, components: [{ origin,
+ * farmName, varieties, process }], roastLevel, flavors, ... }）。
  * 既存のserializerと同じ形を使うことで、CoffeeRecord APIとグラフAPIで
  * 「参照をどう表現するか」の理解が1つで済む。
  *
@@ -50,9 +50,10 @@ export const ATTRIBUTE_NODE_TYPES = [
 /**
  * 1つの記録から生成される「属性の参照」を列挙する。
  *
- * record → 属性 の対応が7種類あり、単数（process/roastLevel/farm/cafe）と
- * 複数（origin/variety/flavor）が混ざっている。ここで一度
- * リストへ均すことで、buildGraph 側のループが1種類の書き方で済む。
+ * record → 属性 の対応が7種類あり、単数（roastLevel/cafe）と複数
+ * （flavor、および「コーヒーの詳細」componentsから展開されるorigin/
+ * farm/variety/process）が混ざっている。ここで一度リストへ均すことで、
+ * buildGraph 側のループが1種類の書き方で済む。
  *
  * @param {object} record
  * @param {Map<string, {id: string, name: string}>} [flavorsByNormalizedName]
@@ -63,50 +64,57 @@ export const ATTRIBUTE_NODE_TYPES = [
 const collectAttributeRefs = (record, flavorsByNormalizedName) => {
   const refs = [];
 
-  for (const origin of record.origins ?? []) {
-    refs.push({
-      type: "origin",
-      id: originNodeId(origin.id),
-      label: origin.name,
-      // countryCodeは世界地図機能（2026-08）向け。coffeeRecordSerializer.js
-      // のserializeRefがOriginをpopulateしたときだけ返すフィールドなので、
-      // 元々countryCodeを持たない産地（未設定のOrigin）ではnullになる
-      metadata: { originId: origin.id, countryCode: origin.countryCode ?? null },
-      edgeType: "ORIGIN",
-    });
-  }
+  // 2026-09、ブレンドコーヒー対応で産地・農園・品種・精製方法を
+  // 「コーヒーの詳細」1グループ（component）にまとめ、その配列
+  // （record.components）を持つようにした（docs/domain-model.md参照）。
+  // ここでは各グループを順に展開し、同じ考え方（単数はif、複数はfor）を
+  // グループの中で適用する
+  for (const component of record.components ?? []) {
+    if (component.origin) {
+      refs.push({
+        type: "origin",
+        id: originNodeId(component.origin.id),
+        label: component.origin.name,
+        // countryCodeは世界地図機能（2026-08）向け。coffeeRecordSerializer.js
+        // のserializeRefがOriginをpopulateしたときだけ返すフィールドなので、
+        // 元々countryCodeを持たない産地（未設定のOrigin）ではnullになる
+        metadata: { originId: component.origin.id, countryCode: component.origin.countryCode ?? null },
+        edgeType: "ORIGIN",
+      });
+    }
 
-  if (record.farmName) {
-    // farmだけは別コレクションを持たないため、正規化した名前をIDにする
-    // （nodeId.js の farmNodeId を参照）
-    const normalized = normalizeName(record.farmName);
-    refs.push({
-      type: "farm",
-      id: farmNodeId(normalized),
-      label: record.farmName,
-      metadata: { farmName: record.farmName },
-      edgeType: "FARM",
-    });
-  }
+    if (component.farmName) {
+      // farmだけは別コレクションを持たないため、正規化した名前をIDにする
+      // （nodeId.js の farmNodeId を参照）
+      const normalized = normalizeName(component.farmName);
+      refs.push({
+        type: "farm",
+        id: farmNodeId(normalized),
+        label: component.farmName,
+        metadata: { farmName: component.farmName },
+        edgeType: "FARM",
+      });
+    }
 
-  for (const variety of record.varieties ?? []) {
-    refs.push({
-      type: "variety",
-      id: varietyNodeId(variety.id),
-      label: variety.name,
-      metadata: { varietyId: variety.id },
-      edgeType: "VARIETY",
-    });
-  }
+    for (const variety of component.varieties ?? []) {
+      refs.push({
+        type: "variety",
+        id: varietyNodeId(variety.id),
+        label: variety.name,
+        metadata: { varietyId: variety.id },
+        edgeType: "VARIETY",
+      });
+    }
 
-  if (record.process) {
-    refs.push({
-      type: "process",
-      id: processNodeId(record.process.id),
-      label: record.process.name,
-      metadata: { processId: record.process.id },
-      edgeType: "PROCESS",
-    });
+    if (component.process) {
+      refs.push({
+        type: "process",
+        id: processNodeId(component.process.id),
+        label: component.process.name,
+        metadata: { processId: component.process.id },
+        edgeType: "PROCESS",
+      });
+    }
   }
 
   if (record.roastLevel) {

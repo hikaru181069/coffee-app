@@ -18,9 +18,12 @@
  * { id, name } までしか持たない（order・categoryはpopulateしてもserializer側で
  * 落とされる。coffeeRecordSerializer.js の serializeRef 参照）。そのため
  * order・categoryはservice層がマスターデータから作る索引（Map）を
- * 引数で受け取って引く。一方 record.process / record.varieties は
- * 名前がそのままserializeされているため、追加の索引は不要
- * （coffeeRecordSerializer.js参照）。
+ * 引数で受け取って引く。一方 record.components[].process /
+ * record.components[].varieties は名前がそのままserializeされているため、
+ * 追加の索引は不要（coffeeRecordSerializer.js参照）。
+ *
+ * 2026-09、ブレンドコーヒー対応で精製方法・品種は「コーヒーの詳細」
+ * （components）の配列から展開して集計する（docs/domain-model.md参照）。
  */
 
 import { pickTop } from "../shared/aggregationHelpers.js";
@@ -170,15 +173,28 @@ const summarizeDominantRef = (refs, minSample) => {
   return pickTop([...counts.values()]);
 };
 
-/** 全記録のprocessを集計する（record.processは{id,name}|null） */
+/**
+ * 記録内で重複しうる参照配列から、id基準で重複を除く。
+ *
+ * 同じ記録の中に同じ精製方法・品種を持つcomponentが複数あっても、
+ * その記録は1回だけ数える（insightBuilder.js/statsBuilder.jsの
+ * uniqueRefsと同じ考え方）
+ */
+const uniqueRefs = (refs) => [...new Map(refs.map((ref) => [ref.id, ref])).values()];
+
+/** 全記録のprocessを集計する（componentsから展開。componentのprocessは{id,name}|null） */
 const summarizeDominantProcess = (records) => {
-  const refs = records.map((record) => record.process).filter((ref) => ref != null);
+  const refs = records.flatMap((record) =>
+    uniqueRefs((record.components ?? []).map((component) => component.process).filter(Boolean)),
+  );
   return summarizeDominantRef(refs, THRESHOLDS.minProcessSample);
 };
 
-/** 全記録のvarietiesを集計する（record.varietiesは{id,name}[]） */
+/** 全記録のvarietiesを集計する（componentsから展開。componentのvarietiesは{id,name}[]） */
 const summarizeDominantVariety = (records) => {
-  const refs = records.flatMap((record) => record.varieties ?? []);
+  const refs = records.flatMap((record) =>
+    uniqueRefs((record.components ?? []).flatMap((component) => component.varieties ?? [])),
+  );
   return summarizeDominantRef(refs, THRESHOLDS.minVarietySample);
 };
 

@@ -126,28 +126,43 @@ export const formatMonthLabel = (monthString, language) => {
  * Linkにする。ロースター名だけは知識グラフのノードが無いためidが
  * 常にnullになり、Linkにはしない。
  *
- * 2026-08、単一値は1行テキスト・複数値（品種）はカンマ区切りテキスト
- * だった表現を、フレーバーと同じpillタグへ統一した際に、値を文字列で
- * 持つ形からこの{id, name}配列の形へ書き換えた（フレーバーもこの関数へ
- * 統合し、呼び出し側の特別扱いを無くした）。
+ * 2026-09、ブレンドコーヒー対応で産地・農園・品種・精製方法は
+ * 「コーヒーの詳細」1グループ（component）の配列になった。
+ * どの産地がどの精製方法と組み合わさっているかという対応関係は、
+ * componentsごとに独立した行の集まり（`components`）として返すことで
+ * 保つ。焙煎度・ロースター名・フレーバーは記録全体で1つの
+ * 「カップとしての結果」のため、従来どおりフラットな一覧（`shared`）
+ * のまま返す（docs/domain-model.md参照）。
  *
  * @param {object} record
  * @param {Function} t react-i18nextのt関数
+ * @returns {{ components: Array<Array<{key, label, items}>>, shared: Array<{key, label, items}> }}
  */
 export const collectCoffeeDetails = (record, t) => {
-  if (!record) return [];
+  if (!record) return { components: [], shared: [] };
 
   const toItems = (refs) => (refs ?? []).filter(Boolean).map((ref) => ({ id: ref.id, name: ref.name }));
 
-  const details = [
-    { key: "origins", label: t("recordForm.origin"), items: toItems(record.origins) },
-    {
-      key: "farmName",
-      label: t("recordForm.farmName"),
-      items: record.farmName ? [{ id: record.farmNodeId ?? null, name: record.farmName }] : [],
-    },
-    { key: "varieties", label: t("recordForm.variety"), items: toItems(record.varieties) },
-    { key: "process", label: t("recordForm.process"), items: toItems(record.process ? [record.process] : []) },
+  const components = (record.components ?? [])
+    .map((component) =>
+      [
+        { key: "origin", label: t("recordForm.origin"), items: toItems(component.origin ? [component.origin] : []) },
+        {
+          key: "farmName",
+          label: t("recordForm.farmName"),
+          items: component.farmName ? [{ id: component.farmNodeId ?? null, name: component.farmName }] : [],
+        },
+        { key: "varieties", label: t("recordForm.variety"), items: toItems(component.varieties) },
+        {
+          key: "process",
+          label: t("recordForm.process"),
+          items: toItems(component.process ? [component.process] : []),
+        },
+      ].filter((row) => row.items.length > 0),
+    )
+    .filter((rows) => rows.length > 0);
+
+  const shared = [
     {
       key: "roastLevel",
       label: t("recordForm.roastLevel"),
@@ -159,9 +174,9 @@ export const collectCoffeeDetails = (record, t) => {
       items: record.roasterName ? [{ id: null, name: record.roasterName }] : [],
     },
     { key: "flavors", label: t("records.flavorsHeading"), items: toItems(record.flavors) },
-  ];
+  ].filter((detail) => detail.items.length > 0);
 
-  return details.filter((detail) => detail.items.length > 0);
+  return { components, shared };
 };
 
 /**
@@ -174,10 +189,10 @@ export const collectCoffeeDetails = (record, t) => {
 export const hasCoffeeDetails = (record) =>
   Boolean(
     record &&
-      ((record.origins?.length ?? 0) > 0 ||
-        record.farmName ||
-        (record.varieties?.length ?? 0) > 0 ||
-        record.process?.name ||
+      ((record.components ?? []).some(
+        (component) =>
+          component.origin || component.farmName || (component.varieties?.length ?? 0) > 0 || component.process,
+      ) ||
         record.roastLevel?.name ||
         record.roasterName ||
         (record.flavors?.length ?? 0) > 0),

@@ -44,19 +44,13 @@ const PRIORITY = [
 
 const ratingsOf = (records) => records.map((record) => record.rating).filter((rating) => rating != null);
 
-/** 単数の参照（process）でグループ化する */
-const groupBySingleRef = (records, getRef) => {
-  const groups = new Map();
-  for (const record of records) {
-    const ref = getRef(record);
-    if (!ref) continue;
-    if (!groups.has(ref.id)) groups.set(ref.id, { label: ref.name, records: [] });
-    groups.get(ref.id).records.push(record);
-  }
-  return groups;
-};
-
-/** 複数の参照（origins/flavors）でグループ化する */
+/**
+ * 複数の参照（産地・精製方法・フレーバー）でグループ化する。
+ *
+ * 2026-09、ブレンドコーヒー対応で産地・精製方法もrecord単位では複数
+ * になりうるようになったため（componentsから展開される）、単数専用の
+ * グループ化関数（旧groupBySingleRef）は使わなくなり削除した。
+ */
 const groupByMultiRef = (records, getRefs) => {
   const groups = new Map();
   for (const record of records) {
@@ -68,9 +62,27 @@ const groupByMultiRef = (records, getRefs) => {
   return groups;
 };
 
+/**
+ * 記録内で重複しうる参照配列から、id基準で重複を除く。
+ *
+ * 2026-09、ブレンドコーヒー対応で産地・精製方法が「コーヒーの詳細」
+ * （components）から展開される配列になったため、同じ記録の中で
+ * 同じ産地・精製方法を持つcomponentが複数あっても1件として数える
+ * （varietyIds/flavorIdsがDB保存時に重複除去されるのと同じ考え方）
+ */
+const uniqueRefs = (refs) => [...new Map(refs.map((ref) => [ref.id, ref])).values()];
+
+/** 記録が持つ産地の一覧（componentsから展開、重複除去済み） */
+const getOriginRefs = (record) =>
+  uniqueRefs((record.components ?? []).map((component) => component.origin).filter(Boolean));
+
+/** 記録が持つ精製方法の一覧（componentsから展開、重複除去済み） */
+const getProcessRefs = (record) =>
+  uniqueRefs((record.components ?? []).map((component) => component.process).filter(Boolean));
+
 /** 最も多く登場する産地（3件以上、同率首位のときは断定しない） */
 const findTopOrigin = (records) => {
-  const candidates = [...groupByMultiRef(records, (record) => record.origins).values()].map(
+  const candidates = [...groupByMultiRef(records, getOriginRefs).values()].map(
     (group) => ({ label: group.label, count: group.records.length }),
   );
   const top = pickTop(candidates, THRESHOLDS.minOriginCount);
@@ -92,7 +104,7 @@ const findTopFlavor = (records) => {
 
 /** 高評価が多い精製方法（2件以上・平均4.0以上のうち最高） */
 const findTopProcessRating = (records) => {
-  const groups = groupBySingleRef(records, (record) => record.process);
+  const groups = groupByMultiRef(records, getProcessRefs);
 
   const candidates = [...groups.values()]
     .map((group) => ({ label: group.label, ratings: ratingsOf(group.records) }))
@@ -111,18 +123,31 @@ const findTopProcessRating = (records) => {
   return { type: "topProcessRating", label: top.label, avgRating: roundTo1(top.avgRating), count: top.count };
 };
 
-/** 評価の高い産地×精製方法の組み合わせ（2件以上・平均4.0以上のうち最高） */
+/**
+ * 評価の高い産地×精製方法の組み合わせ（2件以上・平均4.0以上のうち最高）。
+ *
+ * 2026-09、産地・精製方法は「コーヒーの詳細」（component）単位で対応が
+ * 決まっている（同じcomponentの中のorigin/processだけが実際に組み合わさって
+ * いる）ため、record全体のorigin一覧×process一覧の総当たりではなく、
+ * component単位でペアを作る。ブレンド記録は、含まれるcomponentそれぞれの
+ * 組み合わせを1件ずつ数える（varietyIds/flavorIdsの集計と同じ「記録を
+ * 各値へ1回ずつカウントする」考え方。docs/domain-model.md参照）
+ */
 const findTopCombination = (records) => {
   const groups = new Map();
   for (const record of records) {
-    if (!record.process || record.rating == null) continue;
-    // ブレンド記録（origins複数）は、含まれる産地それぞれとの組み合わせを
-    // 1件ずつ数える（varietyIds/flavorIdsの集計と同じ「記録を各値へ
-    // 1回ずつカウントする」考え方。docs/domain-model.md参照）
-    for (const origin of record.origins ?? []) {
-      const key = `${origin.id}::${record.process.id}`;
+    if (record.rating == null) continue;
+
+    const seenKeys = new Set();
+    for (const component of record.components ?? []) {
+      if (!component.origin || !component.process) continue;
+
+      const key = `${component.origin.id}::${component.process.id}`;
+      if (seenKeys.has(key)) continue;
+      seenKeys.add(key);
+
       if (!groups.has(key)) {
-        groups.set(key, { origin: origin.name, process: record.process.name, ratings: [] });
+        groups.set(key, { origin: component.origin.name, process: component.process.name, ratings: [] });
       }
       groups.get(key).ratings.push(record.rating);
     }
@@ -177,7 +202,6 @@ const findHomeVsCafeDiff = (records) => {
   };
 };
 
-const getOriginRefs = (record) => record.origins ?? [];
 const getFlavorRefs = (record) => record.flavors ?? [];
 
 /** 集団内での各参照（産地 or フレーバー）の登場回数を数える */

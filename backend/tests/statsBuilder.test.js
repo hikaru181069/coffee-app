@@ -13,6 +13,9 @@ const PROCESS_WASHED = { id: "process-washed", name: "Washed" };
 const VARIETY_HEIRLOOM = { id: "variety-heirloom", name: "Heirloom" };
 const FLAVOR_BERRY = { id: "flavor-berry", name: "Berry" };
 
+/** 「コーヒーの詳細」1グループ分のテスト用オブジェクトを作る */
+const component = (overrides = {}) => ({ origin: null, farmName: "", varieties: [], process: null, ...overrides });
+
 /** テスト用の最小限の記録を作る。必要な項目だけ上書きする */
 const buildRecord = (overrides = {}) => ({
   id: "record-1",
@@ -21,10 +24,7 @@ const buildRecord = (overrides = {}) => ({
   recordType: "home",
   rating: null,
   notes: "",
-  origins: [],
-  farmName: "",
-  varieties: [],
-  process: null,
+  components: [],
   roastLevel: null,
   flavors: [],
   cafeName: "",
@@ -67,8 +67,13 @@ describe("空の記録", () => {
 describe("overview", () => {
   test("recordCount・平均評価を集計する（種類数はcollection側で扱う）", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], flavors: [FLAVOR_BERRY], rating: 5 }),
-      buildRecord({ id: "b", origins: [ORIGIN_KENYA], rating: 3 }),
+      buildRecord({
+        id: "a",
+        components: [component({ origin: ORIGIN_ETHIOPIA })],
+        flavors: [FLAVOR_BERRY],
+        rating: 5,
+      }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_KENYA })], rating: 3 }),
     ];
     const stats = buildStats(records);
 
@@ -94,14 +99,18 @@ describe("collection", () => {
     const records = [
       buildRecord({
         id: "a",
-        origins: [ORIGIN_ETHIOPIA],
-        varieties: [VARIETY_HEIRLOOM],
-        process: PROCESS_WASHED,
-        farmName: "Test Farm",
+        components: [
+          component({
+            origin: ORIGIN_ETHIOPIA,
+            varieties: [VARIETY_HEIRLOOM],
+            process: PROCESS_WASHED,
+            farmName: "Test Farm",
+          }),
+        ],
         cafeName: "Blue Bottle Coffee",
         flavors: [FLAVOR_BERRY],
       }),
-      buildRecord({ id: "b", origins: [ORIGIN_KENYA] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_KENYA })] }),
     ];
     const stats = buildStats(records);
 
@@ -117,23 +126,39 @@ describe("collection", () => {
 
   test("farmNameは正規化した名前で統合される（cafeと同じ扱い。全角スペース・大文字小文字・前後の空白の表記ゆれを吸収する）", () => {
     const records = [
-      buildRecord({ id: "a", farmName: "Finca La Esperanza" }),
-      buildRecord({ id: "b", farmName: "  finca la esperanza  " }),
-      buildRecord({ id: "c", farmName: "Finca　La　Esperanza" }),
-      buildRecord({ id: "d", farmName: "Another Farm" }),
+      buildRecord({ id: "a", components: [component({ farmName: "Finca La Esperanza" })] }),
+      buildRecord({ id: "b", components: [component({ farmName: "  finca la esperanza  " })] }),
+      buildRecord({ id: "c", components: [component({ farmName: "Finca　La　Esperanza" })] }),
+      buildRecord({ id: "d", components: [component({ farmName: "Another Farm" })] }),
     ];
     const stats = buildStats(records);
 
     expect(stats.collection.farmCount).toBe(2);
+  });
+
+  test("同じ記録内で同じ産地・精製方法を持つcomponentが複数あっても1件として数える", () => {
+    const records = [
+      buildRecord({
+        id: "a",
+        components: [
+          component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_WASHED }),
+          component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_WASHED }),
+        ],
+      }),
+    ];
+    const stats = buildStats(records);
+
+    expect(stats.collection.originCount).toBe(1);
+    expect(stats.collection.processCount).toBe(1);
   });
 });
 
 describe("ランキング", () => {
   test("産地を登場回数順に返し、idはgraphBuilderと同じstable ID形式にする", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "c", origins: [ORIGIN_KENYA] }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "c", components: [component({ origin: ORIGIN_KENYA })] }),
     ];
     const stats = buildStats(records);
 
@@ -143,8 +168,27 @@ describe("ランキング", () => {
     ]);
   });
 
+  test("ブレンド記録（複数コンポーネント）は、含まれる産地それぞれの集計へ1件としてカウントする", () => {
+    const records = [
+      buildRecord({
+        id: "a",
+        components: [component({ origin: ORIGIN_ETHIOPIA }), component({ origin: ORIGIN_KENYA })],
+      }),
+    ];
+    const stats = buildStats(records);
+
+    expect(stats.topOrigins).toEqual(
+      expect.arrayContaining([
+        { id: "origin:origin-ethiopia", label: "Ethiopia", count: 1 },
+        { id: "origin:origin-kenya", label: "Kenya", count: 1 },
+      ]),
+    );
+  });
+
   test("品種・フレーバーは複数値でも正しく集計する", () => {
-    const records = [buildRecord({ id: "a", varieties: [VARIETY_HEIRLOOM], flavors: [FLAVOR_BERRY] })];
+    const records = [
+      buildRecord({ id: "a", components: [component({ varieties: [VARIETY_HEIRLOOM] })], flavors: [FLAVOR_BERRY] }),
+    ];
     const stats = buildStats(records);
 
     expect(stats.topVarieties).toEqual([{ id: "variety:variety-heirloom", label: "Heirloom", count: 1 }]);
@@ -165,7 +209,10 @@ describe("ランキング", () => {
 
   test("6件を超える種類があっても上位5件までに絞る", () => {
     const records = Array.from({ length: 6 }, (_, i) =>
-      buildRecord({ id: `r${i}`, process: { id: `process-${i}`, name: `Process ${i}` } }),
+      buildRecord({
+        id: `r${i}`,
+        components: [component({ process: { id: `process-${i}`, name: `Process ${i}` } })],
+      }),
     );
     const stats = buildStats(records);
 

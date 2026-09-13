@@ -71,12 +71,9 @@ describe("formatConsumedAt / formatConsumedAtShort / formatMonthLabel", () => {
 });
 
 describe("collectCoffeeDetails", () => {
-  test("設定されている項目だけを{id,name}配列として返す", () => {
+  test("componentsごとに設定されている項目だけを{id,name}配列として返す。sharedは記録全体で1つの項目", () => {
     const record = {
-      origins: [{ id: "origin:1", name: "Ethiopia" }],
-      farmName: "",
-      varieties: [],
-      process: null,
+      components: [{ origin: { id: "origin:1", name: "Ethiopia" }, farmName: "", varieties: [], process: null }],
       roastLevel: null,
       roasterName: "",
       flavors: [{ id: "flavor:1", name: "Berry" }],
@@ -84,33 +81,60 @@ describe("collectCoffeeDetails", () => {
 
     const details = collectCoffeeDetails(record, t);
 
-    expect(details.map((d) => d.key)).toEqual(["origins", "flavors"]);
-    expect(details[0].items).toEqual([{ id: "origin:1", name: "Ethiopia" }]);
-  });
-
-  test("recordがnullなら空配列を返す", () => {
-    expect(collectCoffeeDetails(null, t)).toEqual([]);
-  });
-
-  test("farmNameはidを持たない項目として返る（知識グラフのノードが無いため）", () => {
-    const details = collectCoffeeDetails({ farmName: "Konga Washing Station" }, t);
-    expect(details).toEqual([
-      {
-        key: "farmName",
-        label: "recordForm.farmName",
-        items: [{ id: null, name: "Konga Washing Station" }],
-      },
+    expect(details.components).toEqual([
+      [{ key: "origin", label: "recordForm.origin", items: [{ id: "origin:1", name: "Ethiopia" }] }],
+    ]);
+    expect(details.shared).toEqual([
+      { key: "flavors", label: "records.flavorsHeading", items: [{ id: "flavor:1", name: "Berry" }] },
     ]);
   });
 
-  test("何も設定されていなければ空配列を返す", () => {
-    expect(collectCoffeeDetails({}, t)).toEqual([]);
+  test("recordがnullなら空を返す", () => {
+    expect(collectCoffeeDetails(null, t)).toEqual({ components: [], shared: [] });
+  });
+
+  test("farmNameはidを持たない項目として返る（知識グラフのノードが無いため）", () => {
+    const details = collectCoffeeDetails({ components: [{ farmName: "Konga Washing Station" }] }, t);
+    expect(details.components).toEqual([
+      [
+        {
+          key: "farmName",
+          label: "recordForm.farmName",
+          items: [{ id: null, name: "Konga Washing Station" }],
+        },
+      ],
+    ]);
+  });
+
+  test("何も設定されていなければ空を返す", () => {
+    expect(collectCoffeeDetails({}, t)).toEqual({ components: [], shared: [] });
+  });
+
+  test("複数のcomponentsは、それぞれ独立したグループとして返る（産地と精製方法の対応を保つ）", () => {
+    const record = {
+      components: [
+        { origin: { id: "o1", name: "Ethiopia" }, process: { id: "p1", name: "Natural" } },
+        { origin: { id: "o2", name: "Kenya" }, process: { id: "p2", name: "Washed" } },
+      ],
+    };
+
+    const details = collectCoffeeDetails(record, t);
+
+    expect(details.components).toHaveLength(2);
+    expect(details.components[0]).toEqual([
+      { key: "origin", label: "recordForm.origin", items: [{ id: "o1", name: "Ethiopia" }] },
+      { key: "process", label: "recordForm.process", items: [{ id: "p1", name: "Natural" }] },
+    ]);
+    expect(details.components[1]).toEqual([
+      { key: "origin", label: "recordForm.origin", items: [{ id: "o2", name: "Kenya" }] },
+      { key: "process", label: "recordForm.process", items: [{ id: "p2", name: "Washed" }] },
+    ]);
   });
 });
 
 describe("hasCoffeeDetails", () => {
   test("いずれかの項目があればtrue", () => {
-    expect(hasCoffeeDetails({ origins: [{ name: "Ethiopia" }] })).toBe(true);
+    expect(hasCoffeeDetails({ components: [{ origin: { name: "Ethiopia" } }] })).toBe(true);
     expect(hasCoffeeDetails({ flavors: [{ name: "Berry" }] })).toBe(true);
   });
 

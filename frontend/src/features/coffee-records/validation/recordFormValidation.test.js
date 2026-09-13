@@ -21,10 +21,7 @@ const buildValues = (overrides = {}) => ({
   notes: "",
   cafeName: "",
   roasterName: "",
-  farmName: "",
-  originIds: [],
-  varietyIds: [],
-  processId: "",
+  components: [],
   roastLevelId: "",
   flavorIds: [],
   ...overrides,
@@ -100,14 +97,14 @@ describe("toApiPayload", () => {
         title: "  Ethiopia Natural  ",
         rating: "5",
         notes: "  美味しい  ",
-        originIds: ["origin-1"],
+        components: [{ originId: "origin-1", farmName: "", varietyIds: [], processId: "" }],
       }),
     );
 
     expect(payload.title).toBe("Ethiopia Natural");
     expect(payload.rating).toBe(5);
     expect(payload.notes).toBe("美味しい");
-    expect(payload.originIds).toEqual(["origin-1"]);
+    expect(payload.components).toEqual([{ originId: "origin-1", farmName: "", varietyIds: [], processId: null }]);
   });
 
   test("ratingが空文字ならnullにする（未評価）", () => {
@@ -125,15 +122,26 @@ describe("toApiPayload", () => {
     expect(payload.cafeName).toBe("Blue Bottle Coffee");
   });
 
-  test("未選択の単一参照項目は空文字ではなくnullにする（サーバーが選択解除として扱うため）", () => {
-    const payload = toApiPayload(buildValues({ processId: "", roastLevelId: "" }));
-    expect(payload.processId).toBeNull();
+  test("未選択の単一参照項目（roastLevelId）は空文字ではなくnullにする（サーバーが選択解除として扱うため）", () => {
+    const payload = toApiPayload(buildValues({ roastLevelId: "" }));
     expect(payload.roastLevelId).toBeNull();
   });
 
-  test("未選択の複数参照項目（originIds等）は空配列のまま送る", () => {
-    const payload = toApiPayload(buildValues({ originIds: [] }));
-    expect(payload.originIds).toEqual([]);
+  test("componentsが空なら空配列のまま送る", () => {
+    const payload = toApiPayload(buildValues({ components: [] }));
+    expect(payload.components).toEqual([]);
+  });
+
+  test("componentsの各グループは、未選択のoriginId/processIdを空文字ではなくnullへ変換し、farmNameをtrimする", () => {
+    const payload = toApiPayload(
+      buildValues({
+        components: [{ originId: "", farmName: "  Finca X  ", varietyIds: ["v1"], processId: "" }],
+      }),
+    );
+
+    expect(payload.components).toEqual([
+      { originId: null, farmName: "Finca X", varietyIds: ["v1"], processId: null },
+    ]);
   });
 
   test("味覚グラフの6軸は数値へ変換し、空文字はnullにする", () => {

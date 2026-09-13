@@ -8,6 +8,9 @@
 
 import { buildGraph, findRecordIdsConnectedToNode } from "../core/graph/graphBuilder.js";
 
+/** 「コーヒーの詳細」1グループ分のテスト用オブジェクトを作る */
+const component = (overrides = {}) => ({ origin: null, farmName: "", varieties: [], process: null, ...overrides });
+
 /** テスト用の最小限の記録を作る。必要な項目だけ上書きする */
 const buildRecord = (overrides = {}) => ({
   id: "record-1",
@@ -16,10 +19,7 @@ const buildRecord = (overrides = {}) => ({
   recordType: "home",
   rating: 5,
   notes: "",
-  origins: [],
-  farmName: "",
-  varieties: [],
-  process: null,
+  components: [],
   roastLevel: null,
   flavors: [],
   cafeName: "",
@@ -65,7 +65,7 @@ describe("recordノード", () => {
   test("null項目は属性ノードを作らない（docs/knowledge-graph.md Tests）", () => {
     const graph = buildGraph([buildRecord({ id: "a" })]);
 
-    // originId等がすべてnull/空のときは record ノードだけになる
+    // componentsが空・roastLevel等がnullのときは record ノードだけになる
     expect(graph.nodes).toHaveLength(1);
     expect(graph.nodes[0].type).toBe("record");
     expect(graph.edges).toHaveLength(0);
@@ -76,9 +76,9 @@ describe("ノードの重複排除", () => {
   test("同一originが1ノードに統合される（docs/knowledge-graph.md Tests）", () => {
     const origin = { id: "origin-1", name: "Ethiopia" };
     const graph = buildGraph([
-      buildRecord({ id: "a", origins: [origin] }),
-      buildRecord({ id: "b", origins: [origin] }),
-      buildRecord({ id: "c", origins: [origin] }),
+      buildRecord({ id: "a", components: [component({ origin })] }),
+      buildRecord({ id: "b", components: [component({ origin })] }),
+      buildRecord({ id: "c", components: [component({ origin })] }),
     ]);
 
     const originNodes = graph.nodes.filter((node) => node.type === "origin");
@@ -104,7 +104,7 @@ describe("ノードの重複排除", () => {
 
   test("originのcountryCodeがnodeのmetadataへ渡る（世界地図機能用）", () => {
     const graph = buildGraph([
-      buildRecord({ id: "a", origins: [{ id: "o1", name: "Ethiopia", countryCode: "ET" }] }),
+      buildRecord({ id: "a", components: [component({ origin: { id: "o1", name: "Ethiopia", countryCode: "ET" } })] }),
     ]);
 
     const originNode = graph.nodes.find((node) => node.type === "origin");
@@ -112,7 +112,9 @@ describe("ノードの重複排除", () => {
   });
 
   test("countryCodeが無いoriginはnullになる（未設定でもエラーにならない）", () => {
-    const graph = buildGraph([buildRecord({ id: "a", origins: [{ id: "o1", name: "Ethiopia" }] })]);
+    const graph = buildGraph([
+      buildRecord({ id: "a", components: [component({ origin: { id: "o1", name: "Ethiopia" } })] }),
+    ]);
 
     const originNode = graph.nodes.find((node) => node.type === "origin");
     expect(originNode.metadata.countryCode).toBeNull();
@@ -120,8 +122,8 @@ describe("ノードの重複排除", () => {
 
   test("異なる産地は別ノードになる", () => {
     const graph = buildGraph([
-      buildRecord({ id: "a", origins: [{ id: "o1", name: "Ethiopia" }] }),
-      buildRecord({ id: "b", origins: [{ id: "o2", name: "Kenya" }] }),
+      buildRecord({ id: "a", components: [component({ origin: { id: "o1", name: "Ethiopia" } })] }),
+      buildRecord({ id: "b", components: [component({ origin: { id: "o2", name: "Kenya" } })] }),
     ]);
 
     const originNodes = graph.nodes.filter((node) => node.type === "origin");
@@ -130,8 +132,8 @@ describe("ノードの重複排除", () => {
 
   test("farmは正規化した名前で統合される（表記揺れを吸収する）", () => {
     const graph = buildGraph([
-      buildRecord({ id: "a", farmName: "Konga Washing Station" }),
-      buildRecord({ id: "b", farmName: "  konga washing station  " }),
+      buildRecord({ id: "a", components: [component({ farmName: "Konga Washing Station" })] }),
+      buildRecord({ id: "b", components: [component({ farmName: "  konga washing station  " })] }),
     ]);
 
     const farmNodes = graph.nodes.filter((node) => node.type === "farm");
@@ -156,7 +158,7 @@ describe("ノードの重複排除", () => {
     const graph = buildGraph([
       buildRecord({
         id: "a",
-        origins: [{ id: "shared-id", name: "Ethiopia" }],
+        components: [component({ origin: { id: "shared-id", name: "Ethiopia" } })],
         flavors: [{ id: "shared-id", name: "Citrus" }],
       }),
     ]);
@@ -165,6 +167,20 @@ describe("ノードの重複排除", () => {
     expect(ids).toContain("origin:shared-id");
     expect(ids).toContain("flavor:shared-id");
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  test("同じ記録内の複数componentが持つ産地・精製方法・品種も、それぞれ重複排除される", () => {
+    const origin = { id: "origin-1", name: "Ethiopia" };
+    const process = { id: "process-1", name: "Washed" };
+    const graph = buildGraph([
+      buildRecord({
+        id: "a",
+        components: [component({ origin, process }), component({ origin, process })],
+      }),
+    ]);
+
+    expect(graph.nodes.filter((node) => node.type === "origin")).toHaveLength(1);
+    expect(graph.nodes.filter((node) => node.type === "process")).toHaveLength(1);
   });
 });
 
@@ -222,7 +238,7 @@ describe("keywordノード", () => {
         buildRecord({
           id: "a",
           notes: "甘いコーヒー",
-          origins: [{ id: "o1", name: "Ethiopia" }],
+          components: [component({ origin: { id: "o1", name: "Ethiopia" } })],
         }),
       ],
       { nodeTypes: ["keyword"] },
@@ -314,10 +330,14 @@ describe("エッジの生成", () => {
     const graph = buildGraph([
       buildRecord({
         id: "a",
-        origins: [{ id: "o1", name: "Ethiopia" }],
-        farmName: "Konga",
-        varieties: [{ id: "v1", name: "Heirloom" }],
-        process: { id: "p1", name: "Natural" },
+        components: [
+          component({
+            origin: { id: "o1", name: "Ethiopia" },
+            farmName: "Konga",
+            varieties: [{ id: "v1", name: "Heirloom" }],
+            process: { id: "p1", name: "Natural" },
+          }),
+        ],
         roastLevel: { id: "r1", name: "Light" },
         flavors: [{ id: "f1", name: "Citrus" }],
       }),
@@ -339,9 +359,13 @@ describe("エッジの生成", () => {
     const graph = buildGraph([
       buildRecord({
         id: "a",
-        varieties: [
-          { id: "v1", name: "Heirloom" },
-          { id: "v2", name: "Bourbon" },
+        components: [
+          component({
+            varieties: [
+              { id: "v1", name: "Heirloom" },
+              { id: "v2", name: "Bourbon" },
+            ],
+          }),
         ],
       }),
     ]);
@@ -353,20 +377,35 @@ describe("エッジの生成", () => {
   test("同じ属性への複数記録は複数のedgeを持つ（属性ノードは1つでもエッジは記録の数だけ）", () => {
     const origin = { id: "o1", name: "Ethiopia" };
     const graph = buildGraph([
-      buildRecord({ id: "a", origins: [origin] }),
-      buildRecord({ id: "b", origins: [origin] }),
+      buildRecord({ id: "a", components: [component({ origin })] }),
+      buildRecord({ id: "b", components: [component({ origin })] }),
     ]);
 
     const originEdges = graph.edges.filter((edge) => edge.type === "ORIGIN");
     expect(originEdges.map((edge) => edge.source).sort()).toEqual(["record:a", "record:b"]);
+  });
+
+  test("複数componentを持つ記録（ブレンド）は、産地ごとに別々のedgeを持つ", () => {
+    const graph = buildGraph([
+      buildRecord({
+        id: "a",
+        components: [
+          component({ origin: { id: "o1", name: "Ethiopia" } }),
+          component({ origin: { id: "o2", name: "Kenya" } }),
+        ],
+      }),
+    ]);
+
+    const originEdges = graph.edges.filter((edge) => edge.type === "ORIGIN");
+    expect(originEdges.map((edge) => edge.target).sort()).toEqual(["origin:o1", "origin:o2"]);
   });
 });
 
 describe("summary", () => {
   test("recordCount/nodeCount/edgeCountを集計する", () => {
     const graph = buildGraph([
-      buildRecord({ id: "a", origins: [{ id: "o1", name: "Ethiopia" }] }),
-      buildRecord({ id: "b", origins: [{ id: "o1", name: "Ethiopia" }] }),
+      buildRecord({ id: "a", components: [component({ origin: { id: "o1", name: "Ethiopia" } })] }),
+      buildRecord({ id: "b", components: [component({ origin: { id: "o1", name: "Ethiopia" } })] }),
     ]);
 
     expect(graph.summary).toEqual({
@@ -381,9 +420,8 @@ describe("nodeTypesフィルター", () => {
   const records = [
     buildRecord({
       id: "a",
-      origins: [{ id: "o1", name: "Ethiopia" }],
+      components: [component({ origin: { id: "o1", name: "Ethiopia" }, process: { id: "p1", name: "Washed" } })],
       flavors: [{ id: "f1", name: "Citrus" }],
-      process: { id: "p1", name: "Washed" },
     }),
   ];
 
@@ -421,9 +459,9 @@ describe("findRecordIdsConnectedToNode", () => {
   test("指定ノードに向かうエッジの記録IDを集める", () => {
     const origin = { id: "o1", name: "Ethiopia" };
     const graph = buildGraph([
-      buildRecord({ id: "a", origins: [origin] }),
-      buildRecord({ id: "b", origins: [origin] }),
-      buildRecord({ id: "c", origins: [{ id: "o2", name: "Kenya" }] }),
+      buildRecord({ id: "a", components: [component({ origin })] }),
+      buildRecord({ id: "b", components: [component({ origin })] }),
+      buildRecord({ id: "c", components: [component({ origin: { id: "o2", name: "Kenya" } })] }),
     ]);
 
     const recordIds = findRecordIdsConnectedToNode(graph, "origin:o1");
@@ -438,7 +476,9 @@ describe("findRecordIdsConnectedToNode", () => {
   });
 
   test("recordノードのIDを渡しても空集合になる（エッジは常にrecord→属性の向き）", () => {
-    const graph = buildGraph([buildRecord({ id: "a", origins: [{ id: "o1", name: "Ethiopia" }] })]);
+    const graph = buildGraph([
+      buildRecord({ id: "a", components: [component({ origin: { id: "o1", name: "Ethiopia" } })] }),
+    ]);
 
     expect(findRecordIdsConnectedToNode(graph, "record:a")).toEqual(new Set());
   });

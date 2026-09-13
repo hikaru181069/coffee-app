@@ -32,32 +32,32 @@ describe("recordType", () => {
 });
 
 describe("参照系フィルター（産地・品種・精製方法・焙煎度・フレーバー）", () => {
-  test("単一IDは等価条件になる", () => {
+  test("単一IDは等価条件になる（産地・品種・精製方法はcomponents配下のドット記法になる）", () => {
     const { filter } = validateRecordFilterQuery({ originIds: VALID_ID_1 });
-    expect(filter.originIds).toBe(VALID_ID_1);
+    expect(filter["components.originId"]).toBe(VALID_ID_1);
   });
 
   test("複数IDは$in条件になる", () => {
     const { filter } = validateRecordFilterQuery({ originIds: `${VALID_ID_1},${VALID_ID_2}` });
-    expect(filter.originIds).toEqual({ $in: [VALID_ID_1, VALID_ID_2] });
+    expect(filter["components.originId"]).toEqual({ $in: [VALID_ID_1, VALID_ID_2] });
   });
 
   test("ObjectId形式でない値はdetailsに積まれfilterに反映されない", () => {
     const { details, filter } = validateRecordFilterQuery({ originIds: "not-an-id" });
     expect(details).toEqual([{ field: "originIds", message: expect.any(String) }]);
-    expect(filter.originIds).toBeUndefined();
+    expect(filter["components.originId"]).toBeUndefined();
   });
 
   test("上限（20件）を超えるとdetailsに積まれる", () => {
     const ids = Array.from({ length: 21 }, (_, i) => VALID_ID_1).join(",");
     const { details, filter } = validateRecordFilterQuery({ originIds: ids });
     expect(details).toEqual([{ field: "originIds", message: expect.any(String) }]);
-    expect(filter.originIds).toBeUndefined();
+    expect(filter["components.originId"]).toBeUndefined();
   });
 
-  test("varietyIds/flavorIdsは配列フィールド名(varietyIds/flavorIds)のまま条件になる", () => {
+  test("varietyIdsはcomponents.varietyIds、flavorIdsはそのままの条件になる", () => {
     const { filter } = validateRecordFilterQuery({ varietyIds: VALID_ID_1, flavorIds: VALID_ID_1 });
-    expect(filter.varietyIds).toBe(VALID_ID_1);
+    expect(filter["components.varietyIds"]).toBe(VALID_ID_1);
     expect(filter.flavorIds).toBe(VALID_ID_1);
   });
 

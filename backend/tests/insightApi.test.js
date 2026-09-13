@@ -59,10 +59,10 @@ describe("GET /api/insights", () => {
     const process = await Process.findOne({ normalizedName: "natural" });
 
     // Aliceは条件を満たす組み合わせを持つが、Bobの記録は混ざらない
-    await createRecordFor(alice.user._id, { originIds: [origin._id], processId: process._id, rating: 5 });
-    await createRecordFor(alice.user._id, { originIds: [origin._id], processId: process._id, rating: 4 });
-    await createRecordFor(bob.user._id, { originIds: [origin._id], processId: process._id, rating: 5 });
-    await createRecordFor(bob.user._id, { originIds: [origin._id], processId: process._id, rating: 5 });
+    await createRecordFor(alice.user._id, { components: [{ originId: origin._id, processId: process._id }], rating: 5 });
+    await createRecordFor(alice.user._id, { components: [{ originId: origin._id, processId: process._id }], rating: 4 });
+    await createRecordFor(bob.user._id, { components: [{ originId: origin._id, processId: process._id }], rating: 5 });
+    await createRecordFor(bob.user._id, { components: [{ originId: origin._id, processId: process._id }], rating: 5 });
 
     const res = await request(app).get(INSIGHTS_ENDPOINT).set("Authorization", alice.authHeader);
 

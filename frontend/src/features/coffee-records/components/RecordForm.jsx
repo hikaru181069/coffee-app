@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import FormField from "./FormField";
 import RatingInput from "./RatingInput";
 import ChipMultiSelect from "./ChipMultiSelect";
+import CoffeeComponentFields from "./CoffeeComponentFields";
 import {
   controlClass,
   textareaClass,
@@ -24,14 +25,9 @@ import { getErrorMessage } from "../../../utils/errorMessage";
  * 最初から開いた状態にする（2026-08、UI/UXレビューで指摘を受け対応）。
  */
 const hasExistingCoffeeDetails = (values) => {
-  const singleValueFields = ["farmName", "roasterName", "processId", "roastLevelId"];
+  const singleValueFields = ["roasterName", "roastLevelId"];
   if (singleValueFields.some((field) => values[field])) return true;
-  if (
-    values.originIds?.length > 0 ||
-    values.varietyIds?.length > 0 ||
-    values.flavorIds?.length > 0
-  )
-    return true;
+  if (values.components?.length > 0 || values.flavorIds?.length > 0) return true;
   return TASTE_AXES.some(
     (axis) => values[axis.field] !== null && values[axis.field] !== undefined && values[axis.field] !== "",
   );
@@ -59,6 +55,10 @@ function RecordForm({
   isSubmitting,
   setValue,
   toggleValue,
+  addComponent,
+  removeComponent,
+  setComponentValue,
+  toggleComponentValue,
   onSubmit,
   onCancel,
   masterData,
@@ -96,13 +96,7 @@ function RecordForm({
 
   // 何か問題があるとき、閉じている詳細セクションの中にエラーがあると
   // ユーザーが気づけないので開いて見せる
-  const detailFields = [
-    "farmName",
-    "roasterName",
-    "processId",
-    "roastLevelId",
-    ...TASTE_AXES.map((axis) => axis.field),
-  ];
+  const detailFields = ["roasterName", "roastLevelId", ...TASTE_AXES.map((axis) => axis.field)];
   const hasHiddenError = detailFields.some((field) => errors[field]);
   const showDetails = isDetailsOpen || hasHiddenError;
 
@@ -237,64 +231,35 @@ function RecordForm({
               </p>
             )}
 
-            <span className="block text-sm font-semibold text-text">
-              {t("recordForm.originFlavorHeading")}
-            </span>
-
-            <FormField id="originIds" label={t("recordForm.origin")} hint={t("recordForm.multiSelectHint")}>
-              <ChipMultiSelect
-                id="originIds"
-                options={masterData.origins}
-                selectedIds={values.originIds}
-                onToggle={(optionId) => toggleValue("originIds", optionId)}
+            {/* 2026-09、ブレンドコーヒー対応で産地・農園・品種・精製方法を
+                「コーヒーの詳細」1グループとして繰り返し入力できるようにした
+                （docs/domain-model.md参照）。Record First（産地未入力でも
+                保存できる）を保つため、初期状態では0グループのまま */}
+            <div className="flex flex-col gap-3">
+              {values.components.map((component, index) => (
+                <CoffeeComponentFields
+                  key={index}
+                  index={index}
+                  value={component}
+                  onChange={(field, value) => setComponentValue(index, field, value)}
+                  onToggleVariety={(optionId) => toggleComponentValue(index, "varietyIds", optionId)}
+                  onRemove={() => removeComponent(index)}
+                  canRemove
+                  masterData={masterData}
+                  isMasterDataLoading={isMasterDataLoading}
+                  isSubmitting={isSubmitting}
+                />
+              ))}
+              <button
+                type="button"
+                onClick={addComponent}
                 disabled={isSubmitting}
-              />
-            </FormField>
-
-            <FormField
-              id="farmName"
-              label={t("recordForm.farmName")}
-              hint={t("recordForm.farmNameHint")}
-              error={errors.farmName}
-            >
-              <input
-                id="farmName"
-                type="text"
-                value={values.farmName}
-                onChange={(event) => setValue("farmName", event.target.value)}
-                placeholder={t("recordForm.farmNamePlaceholder")}
-                maxLength={120}
-                disabled={isSubmitting}
-                className={controlClass(errors.farmName)}
-              />
-            </FormField>
-
-            <FormField id="varietyIds" label={t("recordForm.variety")} hint={t("recordForm.multiSelectHint")}>
-              <ChipMultiSelect
-                id="varietyIds"
-                options={masterData.varieties}
-                selectedIds={values.varietyIds}
-                onToggle={(optionId) => toggleValue("varietyIds", optionId)}
-                disabled={isSubmitting}
-              />
-            </FormField>
-
-            <FormField id="processId" label={t("recordForm.process")} error={errors.processId}>
-              <select
-                id="processId"
-                value={values.processId}
-                onChange={(event) => setValue("processId", event.target.value)}
-                disabled={isSubmitting || isMasterDataLoading}
-                className={controlClass(errors.processId)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-line/60 px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors duration-150 hover:border-line hover:text-text focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <option value="">{t("common.notSelected")}</option>
-                {masterData.processes.map((process) => (
-                  <option key={process.id} value={process.id}>
-                    {process.name}
-                  </option>
-                ))}
-              </select>
-            </FormField>
+                <Plus size={16} aria-hidden="true" />
+                {t("recordForm.addComponent")}
+              </button>
+            </div>
 
             <FormField id="roastLevelId" label={t("recordForm.roastLevel")} error={errors.roastLevelId}>
               <select

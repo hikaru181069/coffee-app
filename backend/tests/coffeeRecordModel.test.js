@@ -178,7 +178,6 @@ describe("文字列項目", () => {
     expect(record.notes).toBe("");
     expect(record.cafeName).toBe("");
     expect(record.roasterName).toBe("");
-    expect(record.farmName).toBe("");
   });
 });
 
@@ -186,7 +185,6 @@ describe("マスターデータへの参照", () => {
   test("未選択（null）を許可する", async () => {
     const record = buildRecord();
 
-    expect(record.processId).toBeNull();
     expect(record.roastLevelId).toBeNull();
     expect(await errorFields(record)).toEqual([]);
   });
@@ -194,15 +192,24 @@ describe("マスターデータへの参照", () => {
   test("配列の既定値は空配列", () => {
     const record = buildRecord();
 
-    expect(record.originIds).toEqual([]);
-    expect(record.varietyIds).toEqual([]);
+    expect(record.components).toEqual([]);
     expect(record.flavorIds).toEqual([]);
   });
 
+  test("componentsの各フィールドの既定値", () => {
+    const record = buildRecord({ components: [{}] });
+
+    expect(record.components[0].originId).toBeNull();
+    expect(record.components[0].farmName).toBe("");
+    expect(record.components[0].varietyIds).toEqual([]);
+    expect(record.components[0].processId).toBeNull();
+  });
+
   test("ObjectIdとして解釈できない値は拒否する", async () => {
-    // 配列要素のcastエラーは"originIds.0"のようにインデックス付きのキーになる
-    expect(await errorFields(buildRecord({ originIds: ["not-an-id"] }))).toContain(
-      "originIds.0",
+    // 配列要素（componentsの中のoriginId）のcastエラーは
+    // "components.0.originId"のようにインデックス付きのキーになる
+    expect(await errorFields(buildRecord({ components: [{ originId: "not-an-id" }] }))).toContain(
+      "components.0.originId",
     );
   });
 });
@@ -218,13 +225,13 @@ describe("配列の重複除去", () => {
     expect(record.flavorIds).toHaveLength(2);
   });
 
-  test("varietyIds の重複を取り除く", () => {
+  test("componentsの中のvarietyIdsも重複を取り除く", () => {
     const variety = objectId();
     const record = buildRecord({
-      varietyIds: [variety, new mongoose.Types.ObjectId(variety.toString())],
+      components: [{ varietyIds: [variety, new mongoose.Types.ObjectId(variety.toString())] }],
     });
 
-    expect(record.varietyIds).toHaveLength(1);
+    expect(record.components[0].varietyIds).toHaveLength(1);
   });
 
   test("重複していなければそのまま保つ", () => {
@@ -241,7 +248,7 @@ describe("インデックス", () => {
       .map(([fields]) => JSON.stringify(fields));
 
     expect(defined).toContain(JSON.stringify({ userId: 1, consumedAt: -1 }));
-    expect(defined).toContain(JSON.stringify({ userId: 1, originIds: 1 }));
+    expect(defined).toContain(JSON.stringify({ userId: 1, "components.originId": 1 }));
     expect(defined).toContain(JSON.stringify({ userId: 1, flavorIds: 1 }));
   });
 });

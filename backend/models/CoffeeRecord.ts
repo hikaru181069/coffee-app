@@ -29,6 +29,27 @@ export interface Pour {
   cumulativeWaterWeight: number;
 }
 
+/**
+ * 「コーヒーの詳細」1グループ分（2026-09、ブレンドコーヒー対応）。
+ *
+ * 産地・農園・品種・精製方法は、実際の豆のロット単位でまとまっている
+ * （同じ産地・農園から届いた豆は、同じ精製方法で処理されている）。
+ * この対応関係を保つため、4項目を1つのサブドキュメントにまとめ、
+ * 記録は`components`の配列として複数グループを持てるようにしている
+ * （varietyIdsだけ配列なのは、同じロットの中に複数品種が混在することが
+ * あるため）。
+ *
+ * 一方、焙煎度・焙煎者・フレーバー・味覚グラフ・評価・メモは、複数の
+ * コーヒーをブレンドしたあとの「カップとしての結果」を表すため、
+ * 記録全体で1つのまま据え置く（docs/domain-model.md参照）。
+ */
+export interface CoffeeComponent {
+  originId: mongoose.Types.ObjectId | null;
+  farmName: string;
+  varietyIds: mongoose.Types.ObjectId[];
+  processId: mongoose.Types.ObjectId | null;
+}
+
 export interface CoffeeRecordDocument extends mongoose.Document {
   userId: mongoose.Types.ObjectId;
   title: string;
@@ -44,10 +65,7 @@ export interface CoffeeRecordDocument extends mongoose.Document {
   notes: string;
   cafeName: string;
   roasterName: string;
-  originIds: mongoose.Types.ObjectId[];
-  farmName: string;
-  varietyIds: mongoose.Types.ObjectId[];
-  processId: mongoose.Types.ObjectId | null;
+  components: CoffeeComponent[];
   roastLevelId: mongoose.Types.ObjectId | null;
   flavorIds: mongoose.Types.ObjectId[];
   doseWeight: number | null;
@@ -180,30 +198,29 @@ const coffeeRecordSchema = new mongoose.Schema<CoffeeRecordDocument>(
     },
 
     // ── コーヒーの要素（知識グラフのノードになる）──────────────────
-    // 2026-09、ブレンドコーヒー対応で単一参照から配列へ変更した
-    // （varietyIds/flavorIdsと同じ形。docs/domain-model.md参照）
-    originIds: {
-      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Origin" }],
+    // 2026-09、ブレンドコーヒー対応で、産地・農園・品種・精製方法を
+    // 「コーヒーの詳細」1グループ（CoffeeComponent）にまとめ、
+    // その配列として持つ形へ変更した（上のCoffeeComponentのコメント参照）。
+    // _id: false … pours と同じ理由で、コンポーネント自体に安定IDは不要
+    // （フォーム側は配列のインデックスで十分。他のドキュメントから
+    // コンポーネント単体を参照することも無い）
+    components: {
+      type: [
+        {
+          _id: false,
+          originId: { type: mongoose.Schema.Types.ObjectId, ref: "Origin", default: null },
+          // 農園だけはマスター化せず文字列で持つ（docs/domain-model.md「Farm」）
+          farmName: { type: String, default: "", trim: true, maxlength: 120 },
+          varietyIds: {
+            type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Variety" }],
+            default: [],
+            // 同じ品種を2回選んでもグラフのエッジが二重にならないよう、保存前に重複を除く
+            set: dedupeIds,
+          },
+          processId: { type: mongoose.Schema.Types.ObjectId, ref: "Process", default: null },
+        },
+      ],
       default: [],
-      set: dedupeIds,
-    },
-    // 農園だけはマスター化せず文字列で持つ（上のコメント参照）
-    farmName: {
-      type: String,
-      default: "",
-      trim: true,
-      maxlength: 120,
-    },
-    varietyIds: {
-      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Variety" }],
-      default: [],
-      // 同じ品種を2回選んでもグラフのエッジが二重にならないよう、保存前に重複を除く
-      set: dedupeIds,
-    },
-    processId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Process",
-      default: null,
     },
     roastLevelId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -256,9 +273,10 @@ const coffeeRecordSchema = new mongoose.Schema<CoffeeRecordDocument>(
 // 一覧は「自分の記録を新しい順に」取るのが基本形（docs/api.md の既定sort）
 coffeeRecordSchema.index({ userId: 1, consumedAt: -1 });
 
-// 産地での絞り込み・グラフの関連記録取得で使う。originIdsは配列なので
-// flavorIdsと同じくマルチキーインデックスになる
-coffeeRecordSchema.index({ userId: 1, originIds: 1 });
+// 産地での絞り込み・グラフの関連記録取得で使う。配列（components）の
+// 中のフィールドを指すドット記法のインデックスも、flavorIdsと同じく
+// マルチキーインデックスとして働く
+coffeeRecordSchema.index({ userId: 1, "components.originId": 1 });
 
 // flavorIds は配列なのでマルチキーインデックスになる。
 // 「このフレーバーを含む自分の記録」を引くために必要

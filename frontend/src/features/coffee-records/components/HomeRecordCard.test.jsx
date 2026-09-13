@@ -15,8 +15,7 @@ const BASE_RECORD = {
   id: "1",
   title: "Ethiopia Guji Natural",
   rating: null,
-  origins: [],
-  process: null,
+  components: [],
   flavors: [],
 };
 
@@ -44,12 +43,12 @@ describe("HomeRecordCard", () => {
   });
 
   test("originがあれば産地名を表示する", () => {
-    renderCard({ ...BASE_RECORD, origins: [{ id: "o1", name: "Ethiopia" }] });
+    renderCard({ ...BASE_RECORD, components: [{ origin: { id: "o1", name: "Ethiopia" } }] });
     expect(screen.getByText("Ethiopia")).toBeInTheDocument();
   });
 
   test("processがあればテキストで表示する", () => {
-    renderCard({ ...BASE_RECORD, process: { id: "p1", name: "Washed" } });
+    renderCard({ ...BASE_RECORD, components: [{ process: { id: "p1", name: "Washed" } }] });
     expect(screen.getByText("Washed")).toBeInTheDocument();
   });
 

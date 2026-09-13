@@ -29,16 +29,31 @@ const THRESHOLDS = {
 const MAX_SUGGESTIONS = 2;
 
 /**
- * 指定した産地の記録の中で、最も多く登場する精製方法を見つける。
+ * 指定した産地について、記録ごとに「その産地とペアになっている精製方法」
+ * （同じcomponent内のprocess）を集め、最も多く登場する精製方法を見つける。
  * 同率首位のときは「近い精製方法」を1つに決められないため断定しない。
+ *
+ * record全体のprocess一覧ではなく、その産地を持つcomponent単位で見ることで、
+ * ブレンド記録で別の産地の精製方法と混同しない（例: Ethiopia×Natural +
+ * Kenya×Washedのブレンドで、Kenyaの提案にNaturalを紛れ込ませない）。
+ * 同じ記録の中に同じ産地×精製方法のcomponentが複数あっても、その記録は
+ * 1回だけ数える（他の集計と同じ「記録を各値へ1回ずつカウントする」考え方）。
  */
-const findDominantProcess = (originRecords) => {
+const findDominantProcess = (records, originName) => {
   const counts = new Map();
-  for (const record of originRecords) {
-    if (!record.process) continue;
-    const entry = counts.get(record.process.id) ?? { label: record.process.name, count: 0 };
-    entry.count += 1;
-    counts.set(record.process.id, entry);
+
+  for (const record of records) {
+    const processesForOrigin = new Map();
+    for (const component of record.components ?? []) {
+      if (component.origin?.name !== originName || !component.process) continue;
+      processesForOrigin.set(component.process.id, component.process);
+    }
+
+    for (const process of processesForOrigin.values()) {
+      const entry = counts.get(process.id) ?? { label: process.name, count: 0 };
+      entry.count += 1;
+      counts.set(process.id, entry);
+    }
   }
 
   return pickTop([...counts.values()]);
@@ -54,21 +69,23 @@ const findDominantProcess = (originRecords) => {
  * @returns {{ suggestions: Array }}
  */
 export const buildOriginDiscovery = (records, cqiDataset, originName) => {
-  // ブレンド記録（origins複数）は、含まれる産地それぞれの集計へ1件として
-  // 数える（varietyIds/flavorIdsの集計と同じ考え方。docs/domain-model.md参照）
-  const originRecords = records.filter((record) => record.origins?.some((origin) => origin.name === originName));
+  // ブレンド記録（componentsが複数）は、含まれる産地それぞれの集計へ1件と
+  // して数える（varietyIds/flavorIdsの集計と同じ考え方。docs/domain-model.md参照）
+  const originRecords = records.filter((record) =>
+    (record.components ?? []).some((component) => component.origin?.name === originName),
+  );
   if (originRecords.length < THRESHOLDS.minRecordsForOrigin) {
     return { suggestions: [] };
   }
 
-  const dominantProcess = findDominantProcess(originRecords);
+  const dominantProcess = findDominantProcess(originRecords, originName);
   if (!dominantProcess) {
     return { suggestions: [] };
   }
 
   // 産地・精製方法を問わず、これまでに一度でも記録した産地は「未経験」ではない
   const triedOriginNames = new Set(
-    records.flatMap((record) => (record.origins ?? []).map((origin) => origin.name)),
+    records.flatMap((record) => (record.components ?? []).map((component) => component.origin?.name)).filter(Boolean),
   );
 
   const suggestions = (cqiDataset.entries ?? [])
@@ -108,9 +125,9 @@ export const buildOriginDiscovery = (records, cqiDataset, originName) => {
 export const buildDiscoverTeaser = (records, cqiDataset) => {
   const originIdByName = new Map();
   for (const record of records) {
-    for (const origin of record.origins ?? []) {
-      if (originIdByName.has(origin.name)) continue;
-      originIdByName.set(origin.name, origin.id);
+    for (const component of record.components ?? []) {
+      if (!component.origin || originIdByName.has(component.origin.name)) continue;
+      originIdByName.set(component.origin.name, component.origin.id);
     }
   }
 

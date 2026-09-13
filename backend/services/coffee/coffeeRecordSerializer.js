@@ -50,6 +50,25 @@ const serializeRefs = (values) => {
 };
 
 /**
+ * 「コーヒーの詳細」1グループ（産地・農園・品種・精製方法）を変換する。
+ *
+ * farmNodeIdはfarmNameと同じ理由（コレクションを持たない自由記述のため、
+ * 正規化した名前そのものをグラフのノードIDに使う。下のcomponentコメント
+ * および docs/domain-model.md「Farm」参照）でコンポーネントごとに持つ。
+ */
+const serializeComponent = (component) => ({
+  origin: serializeRef(component?.originId),
+  farmName: component?.farmName ?? "",
+  farmNodeId: component?.farmName ? normalizeName(component.farmName) : null,
+  varieties: serializeRefs(component?.varietyIds),
+  process: serializeRef(component?.processId),
+});
+
+/** components配列を変換する */
+const serializeComponents = (components) =>
+  Array.isArray(components) ? components.map(serializeComponent) : [];
+
+/**
  * CoffeeRecord 1件を API 応答の形へ変換する。
  *
  * @param {object} record Mongooseドキュメント または lean() の結果
@@ -77,16 +96,11 @@ export const serializeCoffeeRecord = (record) => {
     cafeName: doc.cafeName ?? "",
     roasterName: doc.roasterName ?? "",
 
-    origins: serializeRefs(doc.originIds),
-    farmName: doc.farmName ?? "",
-    // 農園は知識グラフのノードIDを組み立てるためのキー（core/graph/nodeId.jsの
-    // farmNodeIdと同じ正規化）。farmNameはマスターデータを持たず_idが無いため、
-    // 他の参照（origin.id等）と違って正規化した名前そのものをIDに使う
-    // （docs/domain-model.md「Farm」）。フロントは`farm:${farmNodeId}`の形で
-    // /entities/へリンクする
-    farmNodeId: doc.farmName ? normalizeName(doc.farmName) : null,
-    varieties: serializeRefs(doc.varietyIds),
-    process: serializeRef(doc.processId),
+    // 2026-09、ブレンドコーヒー対応で「コーヒーの詳細」1グループ
+    // （産地・農園・品種・精製方法）をcomponentsの配列へまとめた
+    // （docs/domain-model.md参照）。フロントは`farm:${component.farmNodeId}`
+    // の形で/entities/へリンクする
+    components: serializeComponents(doc.components),
     roastLevel: serializeRef(doc.roastLevelId),
     flavors: serializeRefs(doc.flavorIds),
 

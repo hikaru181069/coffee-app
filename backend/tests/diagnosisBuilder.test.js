@@ -45,8 +45,10 @@ const NO_SUPPLEMENT = {
 const buildRecord = ({ roastId, flavorIds = [], process = null, varieties = [], taste = {} } = {}) => ({
   roastLevel: roastId ? { id: roastId, name: roastId } : null,
   flavors: flavorIds.map((id) => ({ id, name: id })),
-  process,
-  varieties,
+  // 2026-09、ブレンドコーヒー対応で精製方法・品種は「コーヒーの詳細」
+  // （components）の中に入った。このテストヘルパーの引数（process/varieties）
+  // はそのまま1グループ分として渡す
+  components: [{ process, varieties }],
   tasteSweetness: null,
   tasteBitterness: null,
   tasteAcidity: null,

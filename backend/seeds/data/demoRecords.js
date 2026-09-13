@@ -9,14 +9,17 @@
  *     一覧のフィルターやページ送りも試せるようにする
  *   - 一部の記録はあえて産地やフレーバーを設定せず、
  *     「孤立したrecordノード」も混ぜて null 項目の扱いを確認できるようにする
- *   - 2026-09、ブレンドコーヒー対応にあわせて、originsに複数の産地名を
- *     持つ記録を2件混ぜた。1つの記録から複数のoriginノードへエッジが
- *     伸びる様子を実データで確認できるようにするため
+ *   - 2026-09、ブレンドコーヒー対応（「コーヒーの詳細」を複数持てる）に
+ *     あわせて、componentsに2グループ持つ記録を2件混ぜた。産地ごとに
+ *     異なる精製方法・品種を組み合わせ、1つの記録から複数のorigin/
+ *     process/varietyノードへエッジが伸びる様子と、産地×精製方法の
+ *     対応関係が正しく保たれる様子を実データで確認できるようにするため
  *
- * origin/variety/process/roastLevel/flavor は名前で指定する。
- * ObjectIdはseed実行時のDBの状態に依存するため、ここでは持たない
- * （seedDemoData.js が名前からマスターデータを引いてIDへ変換する）。
- * originsは配列（ブレンドなら複数要素）で指定する。
+ * origin/variety/process/farmはコーヒーの詳細（components）1グループの
+ * 中で名前で指定する。ObjectIdはseed実行時のDBの状態に依存するため、
+ * ここでは持たない（seedDemoData.js が名前からマスターデータを引いて
+ * IDへ変換する）。roastLevel/flavorsは記録全体で1つ（カップとしての
+ * 結果）のため、componentsの外に置く（docs/domain-model.md参照）。
  */
 
 export const demoRecords = [
@@ -26,9 +29,7 @@ export const demoRecords = [
     recordType: "home",
     rating: 5,
     notes: "レモンのような明るい酸味と紅茶のような後味。今までで一番好みだった。",
-    origins: ["Ethiopia"],
-    varieties: ["Heirloom"],
-    process: "Washed",
+    components: [{ origin: "Ethiopia", varieties: ["Heirloom"], process: "Washed" }],
     roastLevel: "light",
     flavors: ["Citrus", "Black Tea", "Floral"],
   },
@@ -38,9 +39,7 @@ export const demoRecords = [
     recordType: "home",
     rating: 4,
     notes: "ベリー系の甘さが強い。ナチュラル特有の発酵感もある。",
-    origins: ["Ethiopia"],
-    varieties: ["Heirloom"],
-    process: "Natural",
+    components: [{ origin: "Ethiopia", varieties: ["Heirloom"], process: "Natural" }],
     roastLevel: "light",
     flavors: ["Berry", "Winey"],
   },
@@ -51,8 +50,7 @@ export const demoRecords = [
     cafeName: "Blue Bottle Coffee",
     rating: 5,
     notes: "カフェで飲んだが家で淹れたものよりさらにフローラル。",
-    origins: ["Ethiopia"],
-    process: "Washed",
+    components: [{ origin: "Ethiopia", process: "Washed" }],
     roastLevel: "light",
     flavors: ["Floral", "Citrus"],
   },
@@ -62,9 +60,7 @@ export const demoRecords = [
     recordType: "home",
     rating: 5,
     notes: "トマトのような複雑な酸味。ブラックカラントの風味も。",
-    origins: ["Kenya"],
-    varieties: ["SL28", "SL34"],
-    process: "Washed",
+    components: [{ origin: "Kenya", varieties: ["SL28", "SL34"], process: "Washed" }],
     roastLevel: "medium-light",
     flavors: ["Berry", "Winey"],
   },
@@ -74,9 +70,7 @@ export const demoRecords = [
     recordType: "home",
     rating: 4,
     notes: "",
-    origins: ["Kenya"],
-    varieties: ["SL28"],
-    process: "Washed",
+    components: [{ origin: "Kenya", varieties: ["SL28"], process: "Washed" }],
     roastLevel: "medium-light",
     flavors: ["Berry", "Citrus"],
   },
@@ -87,7 +81,7 @@ export const demoRecords = [
     cafeName: "Fuglen Tokyo",
     rating: 4,
     notes: "北欧系ロースト、酸味が主役。",
-    origins: ["Kenya"],
+    components: [{ origin: "Kenya" }],
     roastLevel: "light",
     flavors: ["Citrus"],
   },
@@ -97,9 +91,7 @@ export const demoRecords = [
     recordType: "home",
     rating: 3,
     notes: "バランス型。悪くはないが強い印象は無い。",
-    origins: ["Colombia"],
-    varieties: ["Caturra"],
-    process: "Washed",
+    components: [{ origin: "Colombia", varieties: ["Caturra"], process: "Washed" }],
     roastLevel: "medium",
     flavors: ["Caramel", "Nutty"],
   },
@@ -109,9 +101,7 @@ export const demoRecords = [
     recordType: "home",
     rating: 4,
     notes: "ピンクブルボン、思ったよりフルーティー。",
-    origins: ["Colombia"],
-    varieties: ["Pink Bourbon"],
-    process: "Honey",
+    components: [{ origin: "Colombia", varieties: ["Pink Bourbon"], process: "Honey" }],
     roastLevel: "medium-light",
     flavors: ["Tropical Fruit", "Honey"],
   },
@@ -121,11 +111,10 @@ export const demoRecords = [
     recordType: "home",
     rating: 4,
     notes: "チョコレートのようなコクと、かすかなスパイス感。",
-    origins: ["Guatemala"],
-    varieties: ["Bourbon"],
-    process: "Washed",
+    components: [
+      { origin: "Guatemala", farmName: "Finca El Injerto", varieties: ["Bourbon"], process: "Washed" },
+    ],
     roastLevel: "medium",
-    farmName: "Finca El Injerto",
     flavors: ["Chocolate", "Spice"],
   },
   {
@@ -134,8 +123,7 @@ export const demoRecords = [
     recordType: "home",
     rating: 3,
     notes: "",
-    origins: ["Guatemala"],
-    process: "Washed",
+    components: [{ origin: "Guatemala", process: "Washed" }],
     roastLevel: "medium",
     flavors: ["Nutty", "Caramel"],
   },
@@ -146,9 +134,7 @@ export const demoRecords = [
     cafeName: "% Arabica",
     rating: 5,
     notes: "値段は張ったが、ジャスミンの香りが別格だった。",
-    origins: ["Panama"],
-    varieties: ["Geisha"],
-    process: "Washed",
+    components: [{ origin: "Panama", varieties: ["Geisha"], process: "Washed" }],
     roastLevel: "light",
     flavors: ["Jasmine", "Floral", "Tropical Fruit"],
   },
@@ -158,8 +144,7 @@ export const demoRecords = [
     recordType: "home",
     rating: 3,
     notes: "ナッツ系でクセが無く、エスプレッソに合いそう。",
-    origins: ["Brazil"],
-    process: "Natural",
+    components: [{ origin: "Brazil", process: "Natural" }],
     roastLevel: "medium-dark",
     flavors: ["Nutty", "Chocolate"],
   },
@@ -170,8 +155,7 @@ export const demoRecords = [
     cafeName: "Onibus Coffee",
     rating: 5,
     notes: "行きつけの店。ここのエチオピアはいつも安定して美味しい。",
-    origins: ["Ethiopia"],
-    process: "Natural",
+    components: [{ origin: "Ethiopia", process: "Natural" }],
     roastLevel: "light",
     flavors: ["Berry", "Floral"],
   },
@@ -181,8 +165,7 @@ export const demoRecords = [
     recordType: "home",
     rating: 4,
     notes: "みかんのような優しい酸味。",
-    origins: ["Rwanda"],
-    process: "Washed",
+    components: [{ origin: "Rwanda", process: "Washed" }],
     roastLevel: "medium-light",
     flavors: ["Orange", "Honey"],
   },
@@ -192,8 +175,13 @@ export const demoRecords = [
     recordType: "home",
     rating: 4,
     notes: "エチオピアの華やかさとグアテマラのコクを半々でブレンド。",
-    origins: ["Ethiopia", "Guatemala"],
-    process: "Washed",
+    // 2026-09、コーヒーの詳細ごとに産地×精製方法×品種を対応づけられる
+    // ようになったため、片方はNatural、もう片方はWashedという実際の
+    // ブレンドらしい組み合わせにしている
+    components: [
+      { origin: "Ethiopia", varieties: ["Heirloom"], process: "Natural" },
+      { origin: "Guatemala", farmName: "Finca El Injerto", varieties: ["Bourbon"], process: "Washed" },
+    ],
     roastLevel: "medium",
     flavors: ["Floral", "Chocolate"],
   },
@@ -204,7 +192,10 @@ export const demoRecords = [
     cafeName: "Fuglen Tokyo",
     rating: 4,
     notes: "エチオピアとケニアのブレンド。店のシグネチャーブレンド。",
-    origins: ["Ethiopia", "Kenya"],
+    components: [
+      { origin: "Ethiopia", process: "Natural" },
+      { origin: "Kenya", process: "Washed" },
+    ],
     roastLevel: "light",
     flavors: ["Berry", "Citrus"],
   },

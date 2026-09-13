@@ -108,10 +108,11 @@ LoginとRegisterは同じCSS（`.auth-page` / `.auth-card` / `.auth-form`）を�
 
 Coffee Detailsとして段階的に見せる項目:
 
-- origin
-- farm
-- variety
-- process
+- 「コーヒーの詳細」1グループ（origin・farm・variety・process）を、
+  「＋ コーヒーの詳細を追加」ボタンで任意個繰り返し入力できる
+  （2026-09、ブレンドコーヒー対応。`CoffeeComponentFields.jsx`。
+  docs/domain-model.md「コーヒーの詳細（components）」参照）。新規作成
+  時は0グループから始まり、Record Firstを崩さない
 - roastLevel
 - flavors
 - cafeName
@@ -121,7 +122,10 @@ Coffee Detailsとして段階的に見せる項目:
 ### Record Detail
 
 - 基本情報
-- Coffee Details
+- Coffee Details（2026-09、ブレンド記録は「コーヒーの詳細」1グループ
+  ごとに区切って表示し、産地と精製方法の対応関係を保つ。単一グループ
+  （シングルオリジン）のときは以前と同じ見た目のまま、枠や見出しを
+  追加しない）
 - Notes
 - 味覚グラフ
 - 関連ノード

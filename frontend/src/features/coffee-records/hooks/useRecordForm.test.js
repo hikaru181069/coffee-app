@@ -67,6 +67,45 @@ describe("useRecordForm（新規作成）", () => {
     expect(result.current.values.flavorIds).toEqual(["flavor-2"]);
   });
 
+  test("addComponent/removeComponentで「コーヒーの詳細」を追加・削除できる", () => {
+    const { result } = renderHook(() => useRecordForm(null));
+
+    expect(result.current.values.components).toEqual([]);
+
+    act(() => result.current.addComponent());
+    expect(result.current.values.components).toEqual([
+      { originId: "", farmName: "", varietyIds: [], processId: "" },
+    ]);
+
+    act(() => result.current.addComponent());
+    expect(result.current.values.components).toHaveLength(2);
+
+    act(() => result.current.removeComponent(0));
+    expect(result.current.values.components).toHaveLength(1);
+  });
+
+  test("setComponentValueで指定グループの1つの欄だけを更新する", () => {
+    const { result } = renderHook(() => useRecordForm(null));
+
+    act(() => result.current.addComponent());
+    act(() => result.current.addComponent());
+    act(() => result.current.setComponentValue(1, "originId", "origin-1"));
+
+    expect(result.current.values.components[0].originId).toBe("");
+    expect(result.current.values.components[1].originId).toBe("origin-1");
+  });
+
+  test("toggleComponentValueで指定グループの品種を追加・削除する", () => {
+    const { result } = renderHook(() => useRecordForm(null));
+
+    act(() => result.current.addComponent());
+    act(() => result.current.toggleComponentValue(0, "varietyIds", "variety-1"));
+    expect(result.current.values.components[0].varietyIds).toEqual(["variety-1"]);
+
+    act(() => result.current.toggleComponentValue(0, "varietyIds", "variety-1"));
+    expect(result.current.values.components[0].varietyIds).toEqual([]);
+  });
+
   test("titleが空のまま送信すると、createCoffeeRecordを呼ばずにバリデーションエラーを設定する", async () => {
     const { result } = renderHook(() => useRecordForm(null));
 
@@ -165,10 +204,12 @@ describe("useRecordForm（新規作成）", () => {
 });
 
 describe("useRecordForm（Discoverからの産地事前入力）", () => {
-  test("prefillOriginIdを渡すとoriginIdsへ反映される", () => {
+  test("prefillOriginIdを渡すと「コーヒーの詳細」1グループ目の産地へ反映される", () => {
     const { result } = renderHook(() => useRecordForm(null, "origin-123"));
 
-    expect(result.current.values.originIds).toEqual(["origin-123"]);
+    expect(result.current.values.components).toEqual([
+      { originId: "origin-123", farmName: "", varietyIds: [], processId: "" },
+    ]);
   });
 
   test("事前入力はisDirtyをtrueにしない（アプリが入れた初期値であり、ユーザーの編集ではないため）", () => {
@@ -183,11 +224,11 @@ describe("useRecordForm（Discoverからの産地事前入力）", () => {
       { initialProps: { prefillOriginId: null } },
     );
 
-    expect(result.current.values.originIds).toEqual([]);
+    expect(result.current.values.components).toEqual([]);
 
     rerender({ prefillOriginId: "origin-456" });
 
-    expect(result.current.values.originIds).toEqual(["origin-456"]);
+    expect(result.current.values.components[0].originId).toBe("origin-456");
     expect(result.current.isDirty).toBe(false);
   });
 
@@ -200,17 +241,14 @@ describe("useRecordForm（Discoverからの産地事前入力）", () => {
       notes: "",
       cafeName: "",
       roasterName: "",
-      origins: [{ id: "origin-existing", name: "Ethiopia" }],
-      farmName: "",
-      varieties: [],
-      process: null,
+      components: [{ origin: { id: "origin-existing", name: "Ethiopia" } }],
       roastLevel: null,
       flavors: [],
     };
 
     const { result } = renderHook(() => useRecordForm(existingRecord, "origin-123"));
 
-    expect(result.current.values.originIds).toEqual(["origin-existing"]);
+    expect(result.current.values.components[0].originId).toBe("origin-existing");
   });
 
   test("ユーザーが手動で選び直した後にprefillOriginIdが変わっても上書きしない", () => {
@@ -219,10 +257,10 @@ describe("useRecordForm（Discoverからの産地事前入力）", () => {
       { initialProps: { prefillOriginId: "origin-123" } },
     );
 
-    act(() => result.current.setValue("originIds", ["origin-manually-chosen"]));
+    act(() => result.current.setComponentValue(0, "originId", "origin-manually-chosen"));
     rerender({ prefillOriginId: "origin-123" });
 
-    expect(result.current.values.originIds).toEqual(["origin-manually-chosen"]);
+    expect(result.current.values.components[0].originId).toBe("origin-manually-chosen");
   });
 });
 
@@ -235,10 +273,7 @@ describe("useRecordForm（編集）", () => {
     notes: "",
     cafeName: "Blue Bottle Coffee",
     roasterName: "",
-    origin: { id: "origin-1" },
-    farmName: "",
-    varieties: [{ id: "variety-1" }],
-    process: null,
+    components: [{ origin: { id: "origin-1" }, varieties: [{ id: "variety-1" }], process: null }],
     roastLevel: null,
     flavors: [],
   };
@@ -248,7 +283,7 @@ describe("useRecordForm（編集）", () => {
 
     expect(result.current.values.title).toBe("Guatemala Huehuetenango");
     expect(result.current.values.recordType).toBe("cafe");
-    expect(result.current.values.varietyIds).toEqual(["variety-1"]);
+    expect(result.current.values.components[0].varietyIds).toEqual(["variety-1"]);
     expect(result.current.isDirty).toBe(false);
   });
 
