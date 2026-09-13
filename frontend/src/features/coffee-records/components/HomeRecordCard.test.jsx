@@ -15,7 +15,7 @@ const BASE_RECORD = {
   id: "1",
   title: "Ethiopia Guji Natural",
   rating: null,
-  origin: null,
+  origins: [],
   process: null,
   flavors: [],
 };
@@ -44,7 +44,7 @@ describe("HomeRecordCard", () => {
   });
 
   test("originがあれば産地名を表示する", () => {
-    renderCard({ ...BASE_RECORD, origin: { id: "o1", name: "Ethiopia" } });
+    renderCard({ ...BASE_RECORD, origins: [{ id: "o1", name: "Ethiopia" }] });
     expect(screen.getByText("Ethiopia")).toBeInTheDocument();
   });
 

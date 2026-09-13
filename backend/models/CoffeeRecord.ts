@@ -44,7 +44,7 @@ export interface CoffeeRecordDocument extends mongoose.Document {
   notes: string;
   cafeName: string;
   roasterName: string;
-  originId: mongoose.Types.ObjectId | null;
+  originIds: mongoose.Types.ObjectId[];
   farmName: string;
   varietyIds: mongoose.Types.ObjectId[];
   processId: mongoose.Types.ObjectId | null;
@@ -180,10 +180,12 @@ const coffeeRecordSchema = new mongoose.Schema<CoffeeRecordDocument>(
     },
 
     // ── コーヒーの要素（知識グラフのノードになる）──────────────────
-    originId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Origin",
-      default: null,
+    // 2026-09、ブレンドコーヒー対応で単一参照から配列へ変更した
+    // （varietyIds/flavorIdsと同じ形。docs/domain-model.md参照）
+    originIds: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Origin" }],
+      default: [],
+      set: dedupeIds,
     },
     // 農園だけはマスター化せず文字列で持つ（上のコメント参照）
     farmName: {
@@ -254,8 +256,9 @@ const coffeeRecordSchema = new mongoose.Schema<CoffeeRecordDocument>(
 // 一覧は「自分の記録を新しい順に」取るのが基本形（docs/api.md の既定sort）
 coffeeRecordSchema.index({ userId: 1, consumedAt: -1 });
 
-// 産地での絞り込み・グラフの関連記録取得で使う
-coffeeRecordSchema.index({ userId: 1, originId: 1 });
+// 産地での絞り込み・グラフの関連記録取得で使う。originIdsは配列なので
+// flavorIdsと同じくマルチキーインデックスになる
+coffeeRecordSchema.index({ userId: 1, originIds: 1 });
 
 // flavorIds は配列なのでマルチキーインデックスになる。
 // 「このフレーバーを含む自分の記録」を引くために必要

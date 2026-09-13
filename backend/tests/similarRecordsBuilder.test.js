@@ -16,7 +16,7 @@ const buildRecord = (overrides = {}) => ({
   recordType: "home",
   rating: 5,
   notes: "",
-  origin: null,
+  origins: [],
   farmName: "",
   varieties: [],
   process: null,
@@ -35,7 +35,7 @@ const GUATEMALA = { id: "origin-gt", name: "Guatemala" };
 describe("buildSimilarRecords", () => {
   test("対象記録に属性が無ければ空配列を返す", () => {
     const target = buildRecord({ id: "a" });
-    const other = buildRecord({ id: "b", origin: ETHIOPIA, process: NATURAL });
+    const other = buildRecord({ id: "b", origins: [ETHIOPIA], process: NATURAL });
 
     const { similarRecords } = buildSimilarRecords([target, other], "a");
 
@@ -43,9 +43,9 @@ describe("buildSimilarRecords", () => {
   });
 
   test("共有する属性が閾値（2件）未満なら候補に含めない", () => {
-    const target = buildRecord({ id: "a", origin: ETHIOPIA });
+    const target = buildRecord({ id: "a", origins: [ETHIOPIA] });
     // originだけ一致（1件）。閾値未満のため含まれない
-    const other = buildRecord({ id: "b", origin: ETHIOPIA, process: WASHED });
+    const other = buildRecord({ id: "b", origins: [ETHIOPIA], process: WASHED });
 
     const { similarRecords } = buildSimilarRecords([target, other], "a");
 
@@ -53,8 +53,8 @@ describe("buildSimilarRecords", () => {
   });
 
   test("2つ以上の属性を共有する記録を候補として返す", () => {
-    const target = buildRecord({ id: "a", origin: ETHIOPIA, process: NATURAL, flavors: [BERRY] });
-    const other = buildRecord({ id: "b", origin: ETHIOPIA, process: NATURAL });
+    const target = buildRecord({ id: "a", origins: [ETHIOPIA], process: NATURAL, flavors: [BERRY] });
+    const other = buildRecord({ id: "b", origins: [ETHIOPIA], process: NATURAL });
 
     const { similarRecords } = buildSimilarRecords([target, other], "a");
 
@@ -70,7 +70,7 @@ describe("buildSimilarRecords", () => {
   });
 
   test("対象記録自身は候補に含まれない", () => {
-    const target = buildRecord({ id: "a", origin: ETHIOPIA, process: NATURAL });
+    const target = buildRecord({ id: "a", origins: [ETHIOPIA], process: NATURAL });
 
     const { similarRecords } = buildSimilarRecords([target], "a");
 
@@ -78,19 +78,19 @@ describe("buildSimilarRecords", () => {
   });
 
   test("共有数が多い順に並び、同数ならratingの高い順になる", () => {
-    const target = buildRecord({ id: "a", origin: ETHIOPIA, process: NATURAL, flavors: [BERRY] });
+    const target = buildRecord({ id: "a", origins: [ETHIOPIA], process: NATURAL, flavors: [BERRY] });
     // 3件共有（最上位）
     const bestMatch = buildRecord({
       id: "b",
-      origin: ETHIOPIA,
+      origins: [ETHIOPIA],
       process: NATURAL,
       flavors: [BERRY],
       rating: 3,
     });
     // 2件共有・rating高い
-    const tieHighRating = buildRecord({ id: "c", origin: ETHIOPIA, process: NATURAL, rating: 5 });
+    const tieHighRating = buildRecord({ id: "c", origins: [ETHIOPIA], process: NATURAL, rating: 5 });
     // 2件共有・rating低い
-    const tieLowRating = buildRecord({ id: "d", origin: ETHIOPIA, process: NATURAL, rating: 2 });
+    const tieLowRating = buildRecord({ id: "d", origins: [ETHIOPIA], process: NATURAL, rating: 2 });
 
     const { similarRecords } = buildSimilarRecords(
       [target, bestMatch, tieHighRating, tieLowRating],
@@ -101,8 +101,8 @@ describe("buildSimilarRecords", () => {
   });
 
   test("関係の無い記録（共有属性ゼロ）は候補に含まれない", () => {
-    const target = buildRecord({ id: "a", origin: ETHIOPIA, process: NATURAL });
-    const unrelated = buildRecord({ id: "b", origin: GUATEMALA, process: WASHED });
+    const target = buildRecord({ id: "a", origins: [ETHIOPIA], process: NATURAL });
+    const unrelated = buildRecord({ id: "b", origins: [GUATEMALA], process: WASHED });
 
     const { similarRecords } = buildSimilarRecords([target, unrelated], "a");
 
@@ -110,9 +110,9 @@ describe("buildSimilarRecords", () => {
   });
 
   test("最大5件までに絞る", () => {
-    const target = buildRecord({ id: "a", origin: ETHIOPIA, process: NATURAL });
+    const target = buildRecord({ id: "a", origins: [ETHIOPIA], process: NATURAL });
     const others = Array.from({ length: 8 }, (_, index) =>
-      buildRecord({ id: `other-${index}`, origin: ETHIOPIA, process: NATURAL }),
+      buildRecord({ id: `other-${index}`, origins: [ETHIOPIA], process: NATURAL }),
     );
 
     const { similarRecords } = buildSimilarRecords([target, ...others], "a");

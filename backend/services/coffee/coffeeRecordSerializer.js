@@ -12,8 +12,8 @@ import { normalizeName } from "../../utils/normalizeName.js";
  *
  * ここを通ったものだけがクライアントへ出る、という一方通行にする。
  *
- * populate されている場合（originId に Origin ドキュメントが入っている）は
- * { id, name } の形へ、されていない場合はID文字列へ変換する。
+ * populate されている場合（varietyIds/flavorIds/originId等にドキュメントが
+ * 入っている）は { id, name } の形へ、されていない場合はID文字列へ変換する。
  * フロントは「オブジェクトなら名前を表示、文字列ならIDだけ」と扱える。
  */
 
@@ -77,7 +77,7 @@ export const serializeCoffeeRecord = (record) => {
     cafeName: doc.cafeName ?? "",
     roasterName: doc.roasterName ?? "",
 
-    origin: serializeRef(doc.originId),
+    origins: serializeRefs(doc.originIds),
     farmName: doc.farmName ?? "",
     // 農園は知識グラフのノードIDを組み立てるためのキー（core/graph/nodeId.jsの
     // farmNodeIdと同じ正規化）。farmNameはマスターデータを持たず_idが無いため、

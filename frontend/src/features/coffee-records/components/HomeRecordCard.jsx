@@ -30,6 +30,7 @@ import { revealDelayClass } from "../../../utils/revealDelay";
 function HomeRecordCard({ record, index = 0 }) {
   const { t } = useTranslation();
   const flavors = record.flavors ?? [];
+  const origins = record.origins ?? [];
   const [ref, isVisible] = useReveal();
 
   return (
@@ -39,14 +40,17 @@ function HomeRecordCard({ record, index = 0 }) {
         to={`/records/${record.id}`}
         className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} block h-full rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50 sm:p-5`}
       >
-        {record.origin && (
+        {origins.length > 0 && (
           <div className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className={`h-3 w-0.5 rounded-full ${getOriginAccentClass(record.origin.name)}`}
-            />
+            {/* ブレンド（産地が複数）は産地の数だけ細いバーを並べる
+                （2026-09、ブレンドコーヒー対応。docs/design.md参照） */}
+            <span className="flex items-center gap-0.5" aria-hidden="true">
+              {origins.map((origin) => (
+                <span key={origin.id} className={`h-3 w-0.5 rounded-full ${getOriginAccentClass(origin.name)}`} />
+              ))}
+            </span>
             <span className="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
-              {record.origin.name}
+              {origins.map((origin) => origin.name).join(" / ")}
             </span>
           </div>
         )}

@@ -88,11 +88,11 @@ export const validateRecordFilterQuery = (
   }
 
   if (includeReferenceFilters) {
-    // originId/processId/roastLevelId は単一参照だが、複数指定時は$inで
-    // 「いずれかに一致」を表す。varietyIds/flavorIdsは元から配列フィールド
+    // processId/roastLevelIdは単一参照だが、複数指定時は$inで「いずれかに
+    // 一致」を表す。originIds/varietyIds/flavorIdsは元から配列フィールド
     // なので、$in自体が「配列がいずれかを含む」を意味し扱いは同じになる
     const referenceFields = [
-      ["originIds", "originId"],
+      ["originIds", "originIds"],
       ["processIds", "processId"],
       ["roastLevelIds", "roastLevelId"],
       ["varietyIds", "varietyIds"],

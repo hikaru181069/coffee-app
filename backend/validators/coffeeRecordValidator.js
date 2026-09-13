@@ -8,7 +8,7 @@ import { RATING_MIN, RATING_MAX } from "../utils/ratingScale.js";
  * なぜモデルのvalidationと別に用意するのか:
  *   Mongooseのvalidationは「DBへ保存してよい形か」を守るもので、
  *   壊れた入力はDB層まで到達してから CastError などになる。
- *   例えば originId に "abc" が来ると Mongoose は CastError を投げ、
+ *   例えば processId に "abc" が来ると Mongoose は CastError を投げ、
  *   そのままだと500になってしまう（CLAUDE.md「不正ObjectIdを500にしない」）。
  *
  *   ここでHTTP境界の形を先に確認し、400 + details で返せるようにする。
@@ -34,10 +34,10 @@ const MAX_LENGTH = {
 };
 
 /** 参照が単数のフィールド（ObjectId 1つ） */
-const SINGLE_REF_FIELDS = ["originId", "processId", "roastLevelId"];
+const SINGLE_REF_FIELDS = ["processId", "roastLevelId"];
 
 /** 参照が複数のフィールド（ObjectIdの配列） */
-const MULTI_REF_FIELDS = ["varietyIds", "flavorIds"];
+const MULTI_REF_FIELDS = ["originIds", "varietyIds", "flavorIds"];
 
 /** 自由入力の文字列フィールド（任意） */
 const OPTIONAL_TEXT_FIELDS = ["notes", "cafeName", "roasterName", "farmName"];

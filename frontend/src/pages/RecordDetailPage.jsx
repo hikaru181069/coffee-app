@@ -89,7 +89,7 @@ import { getErrorMessage } from "../utils/errorMessage";
  */
 /** collectCoffeeDetails()のkeyから、対応する知識グラフのノード種別へ。roasterNameはノードに無いため含めない */
 const DETAIL_NODE_TYPE = {
-  origin: "origin",
+  origins: "origin",
   farmName: "farm",
   varieties: "variety",
   process: "process",
@@ -153,7 +153,9 @@ function RecordDetailPage() {
   const hasCoffeeInfo = details.length > 0;
   // Connectionsは知識グラフのノードに対応する4種別のみ（Property Gridとは違い
   // farmName/variety/roasterNameはグラフのノードではないため含めない）
-  const hasConnections = Boolean(record.origin || record.process || record.roastLevel || flavors.length > 0);
+  const hasConnections = Boolean(
+    (record.origins?.length ?? 0) > 0 || record.process || record.roastLevel || flavors.length > 0,
+  );
   const hasTasteRatings = TASTE_AXES.some(
     (axis) => record[axis.field] !== null && record[axis.field] !== undefined,
   );
@@ -311,7 +313,7 @@ function RecordDetailPage() {
                           のため、産地がある記録のときだけ導線を出す。EntityDetailPage.jsx
                           の産地ページと同じ理由で、地図側にこの記録の産地だけへ
                           フォーカスする仕組みは無く、地図全体を開くだけ */}
-                      {record.origin && (
+                      {(record.origins?.length ?? 0) > 0 && (
                         <Link
                           to="/map"
                           className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"

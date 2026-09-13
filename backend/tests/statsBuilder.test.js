@@ -21,7 +21,7 @@ const buildRecord = (overrides = {}) => ({
   recordType: "home",
   rating: null,
   notes: "",
-  origin: null,
+  origins: [],
   farmName: "",
   varieties: [],
   process: null,
@@ -67,8 +67,8 @@ describe("空の記録", () => {
 describe("overview", () => {
   test("recordCount・平均評価を集計する（種類数はcollection側で扱う）", () => {
     const records = [
-      buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA, flavors: [FLAVOR_BERRY], rating: 5 }),
-      buildRecord({ id: "b", origin: ORIGIN_KENYA, rating: 3 }),
+      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], flavors: [FLAVOR_BERRY], rating: 5 }),
+      buildRecord({ id: "b", origins: [ORIGIN_KENYA], rating: 3 }),
     ];
     const stats = buildStats(records);
 
@@ -94,14 +94,14 @@ describe("collection", () => {
     const records = [
       buildRecord({
         id: "a",
-        origin: ORIGIN_ETHIOPIA,
+        origins: [ORIGIN_ETHIOPIA],
         varieties: [VARIETY_HEIRLOOM],
         process: PROCESS_WASHED,
         farmName: "Test Farm",
         cafeName: "Blue Bottle Coffee",
         flavors: [FLAVOR_BERRY],
       }),
-      buildRecord({ id: "b", origin: ORIGIN_KENYA }),
+      buildRecord({ id: "b", origins: [ORIGIN_KENYA] }),
     ];
     const stats = buildStats(records);
 
@@ -131,9 +131,9 @@ describe("collection", () => {
 describe("ランキング", () => {
   test("産地を登場回数順に返し、idはgraphBuilderと同じstable ID形式にする", () => {
     const records = [
-      buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA }),
-      buildRecord({ id: "b", origin: ORIGIN_ETHIOPIA }),
-      buildRecord({ id: "c", origin: ORIGIN_KENYA }),
+      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] }),
+      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA] }),
+      buildRecord({ id: "c", origins: [ORIGIN_KENYA] }),
     ];
     const stats = buildStats(records);
 

@@ -44,7 +44,7 @@ const PRIORITY = [
 
 const ratingsOf = (records) => records.map((record) => record.rating).filter((rating) => rating != null);
 
-/** 単数の参照（origin/process）でグループ化する */
+/** 単数の参照（process）でグループ化する */
 const groupBySingleRef = (records, getRef) => {
   const groups = new Map();
   for (const record of records) {
@@ -56,7 +56,7 @@ const groupBySingleRef = (records, getRef) => {
   return groups;
 };
 
-/** 複数の参照（flavors）でグループ化する */
+/** 複数の参照（origins/flavors）でグループ化する */
 const groupByMultiRef = (records, getRefs) => {
   const groups = new Map();
   for (const record of records) {
@@ -70,7 +70,7 @@ const groupByMultiRef = (records, getRefs) => {
 
 /** 最も多く登場する産地（3件以上、同率首位のときは断定しない） */
 const findTopOrigin = (records) => {
-  const candidates = [...groupBySingleRef(records, (record) => record.origin).values()].map(
+  const candidates = [...groupByMultiRef(records, (record) => record.origins).values()].map(
     (group) => ({ label: group.label, count: group.records.length }),
   );
   const top = pickTop(candidates, THRESHOLDS.minOriginCount);
@@ -115,12 +115,17 @@ const findTopProcessRating = (records) => {
 const findTopCombination = (records) => {
   const groups = new Map();
   for (const record of records) {
-    if (!record.origin || !record.process || record.rating == null) continue;
-    const key = `${record.origin.id}::${record.process.id}`;
-    if (!groups.has(key)) {
-      groups.set(key, { origin: record.origin.name, process: record.process.name, ratings: [] });
+    if (!record.process || record.rating == null) continue;
+    // ブレンド記録（origins複数）は、含まれる産地それぞれとの組み合わせを
+    // 1件ずつ数える（varietyIds/flavorIdsの集計と同じ「記録を各値へ
+    // 1回ずつカウントする」考え方。docs/domain-model.md参照）
+    for (const origin of record.origins ?? []) {
+      const key = `${origin.id}::${record.process.id}`;
+      if (!groups.has(key)) {
+        groups.set(key, { origin: origin.name, process: record.process.name, ratings: [] });
+      }
+      groups.get(key).ratings.push(record.rating);
     }
-    groups.get(key).ratings.push(record.rating);
   }
 
   const candidates = [...groups.values()]
@@ -172,7 +177,7 @@ const findHomeVsCafeDiff = (records) => {
   };
 };
 
-const getOriginRefs = (record) => (record.origin ? [record.origin] : []);
+const getOriginRefs = (record) => record.origins ?? [];
 const getFlavorRefs = (record) => record.flavors ?? [];
 
 /** 集団内での各参照（産地 or フレーバー）の登場回数を数える */

@@ -165,10 +165,10 @@ describe("useRecordForm（新規作成）", () => {
 });
 
 describe("useRecordForm（Discoverからの産地事前入力）", () => {
-  test("prefillOriginIdを渡すとoriginIdへ反映される", () => {
+  test("prefillOriginIdを渡すとoriginIdsへ反映される", () => {
     const { result } = renderHook(() => useRecordForm(null, "origin-123"));
 
-    expect(result.current.values.originId).toBe("origin-123");
+    expect(result.current.values.originIds).toEqual(["origin-123"]);
   });
 
   test("事前入力はisDirtyをtrueにしない（アプリが入れた初期値であり、ユーザーの編集ではないため）", () => {
@@ -183,11 +183,11 @@ describe("useRecordForm（Discoverからの産地事前入力）", () => {
       { initialProps: { prefillOriginId: null } },
     );
 
-    expect(result.current.values.originId).toBe("");
+    expect(result.current.values.originIds).toEqual([]);
 
     rerender({ prefillOriginId: "origin-456" });
 
-    expect(result.current.values.originId).toBe("origin-456");
+    expect(result.current.values.originIds).toEqual(["origin-456"]);
     expect(result.current.isDirty).toBe(false);
   });
 
@@ -200,7 +200,7 @@ describe("useRecordForm（Discoverからの産地事前入力）", () => {
       notes: "",
       cafeName: "",
       roasterName: "",
-      origin: { id: "origin-existing", name: "Ethiopia" },
+      origins: [{ id: "origin-existing", name: "Ethiopia" }],
       farmName: "",
       varieties: [],
       process: null,
@@ -210,7 +210,7 @@ describe("useRecordForm（Discoverからの産地事前入力）", () => {
 
     const { result } = renderHook(() => useRecordForm(existingRecord, "origin-123"));
 
-    expect(result.current.values.originId).toBe("origin-existing");
+    expect(result.current.values.originIds).toEqual(["origin-existing"]);
   });
 
   test("ユーザーが手動で選び直した後にprefillOriginIdが変わっても上書きしない", () => {
@@ -219,10 +219,10 @@ describe("useRecordForm（Discoverからの産地事前入力）", () => {
       { initialProps: { prefillOriginId: "origin-123" } },
     );
 
-    act(() => result.current.setValue("originId", "origin-manually-chosen"));
+    act(() => result.current.setValue("originIds", ["origin-manually-chosen"]));
     rerender({ prefillOriginId: "origin-123" });
 
-    expect(result.current.values.originId).toBe("origin-manually-chosen");
+    expect(result.current.values.originIds).toEqual(["origin-manually-chosen"]);
   });
 });
 

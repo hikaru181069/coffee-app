@@ -32,7 +32,7 @@ type RecordId = string | mongoose.Types.ObjectId;
  */
 const withMasterData = <T,>(query: mongoose.Query<T, CoffeeRecordDocument>) =>
   query
-    .populate("originId", "name countryCode")
+    .populate("originIds", "name countryCode")
     .populate("varietyIds", "name")
     .populate("processId", "name")
     .populate("roastLevelId", "name order")

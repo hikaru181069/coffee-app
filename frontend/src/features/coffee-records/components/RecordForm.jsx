@@ -24,9 +24,14 @@ import { getErrorMessage } from "../../../utils/errorMessage";
  * 最初から開いた状態にする（2026-08、UI/UXレビューで指摘を受け対応）。
  */
 const hasExistingCoffeeDetails = (values) => {
-  const singleValueFields = ["farmName", "roasterName", "originId", "processId", "roastLevelId"];
+  const singleValueFields = ["farmName", "roasterName", "processId", "roastLevelId"];
   if (singleValueFields.some((field) => values[field])) return true;
-  if (values.varietyIds?.length > 0 || values.flavorIds?.length > 0) return true;
+  if (
+    values.originIds?.length > 0 ||
+    values.varietyIds?.length > 0 ||
+    values.flavorIds?.length > 0
+  )
+    return true;
   return TASTE_AXES.some(
     (axis) => values[axis.field] !== null && values[axis.field] !== undefined && values[axis.field] !== "",
   );
@@ -94,7 +99,6 @@ function RecordForm({
   const detailFields = [
     "farmName",
     "roasterName",
-    "originId",
     "processId",
     "roastLevelId",
     ...TASTE_AXES.map((axis) => axis.field),
@@ -237,21 +241,14 @@ function RecordForm({
               {t("recordForm.originFlavorHeading")}
             </span>
 
-            <FormField id="originId" label={t("recordForm.origin")} error={errors.originId}>
-              <select
-                id="originId"
-                value={values.originId}
-                onChange={(event) => setValue("originId", event.target.value)}
-                disabled={isSubmitting || isMasterDataLoading}
-                className={controlClass(errors.originId)}
-              >
-                <option value="">{t("common.notSelected")}</option>
-                {masterData.origins.map((origin) => (
-                  <option key={origin.id} value={origin.id}>
-                    {origin.name}
-                  </option>
-                ))}
-              </select>
+            <FormField id="originIds" label={t("recordForm.origin")} hint={t("recordForm.multiSelectHint")}>
+              <ChipMultiSelect
+                id="originIds"
+                options={masterData.origins}
+                selectedIds={values.originIds}
+                onToggle={(optionId) => toggleValue("originIds", optionId)}
+                disabled={isSubmitting}
+              />
             </FormField>
 
             <FormField

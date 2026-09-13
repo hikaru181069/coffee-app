@@ -140,7 +140,7 @@ export const collectCoffeeDetails = (record, t) => {
   const toItems = (refs) => (refs ?? []).filter(Boolean).map((ref) => ({ id: ref.id, name: ref.name }));
 
   const details = [
-    { key: "origin", label: t("recordForm.origin"), items: toItems(record.origin ? [record.origin] : []) },
+    { key: "origins", label: t("recordForm.origin"), items: toItems(record.origins) },
     {
       key: "farmName",
       label: t("recordForm.farmName"),
@@ -174,7 +174,7 @@ export const collectCoffeeDetails = (record, t) => {
 export const hasCoffeeDetails = (record) =>
   Boolean(
     record &&
-      (record.origin?.name ||
+      ((record.origins?.length ?? 0) > 0 ||
         record.farmName ||
         (record.varieties?.length ?? 0) > 0 ||
         record.process?.name ||

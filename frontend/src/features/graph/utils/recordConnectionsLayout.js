@@ -17,10 +17,17 @@ const CENTER = { x: 50, y: 50 };
 // 中心からの距離をおよそ17%縮め（36→30）、ノードが中央寄りにまとまる
 // ようにしている。他の定数もこの比率（30/36）に合わせて縮小した。
 const SINGLE_SLOTS = {
-  origin: { x: 50, y: 20 },
   process: { x: 20, y: 50 },
   roastLevel: { x: 80, y: 50 },
 };
+
+// 2026-09、ブレンドコーヒー対応でoriginが複数になりうるようになったため、
+// 上側のスロット（旧SINGLE_SLOTS.origin）を中心にflavorと同じ考え方で
+// 産地の数だけ横に扇状へ広げる。process/roastLevel（x=20/80）と重ならない
+// 範囲に収まるよう、flavorの下側の扇（MAX_FLAVOR_SPREAD=57）より狭くしている
+const ORIGIN_Y = 20;
+const ORIGIN_SPREAD_PER_NODE = 14;
+const MAX_ORIGIN_SPREAD = 28;
 
 const FLAVOR_TRUNK_Y = 72;
 const FLAVOR_LEAF_Y = 83;
@@ -32,20 +39,26 @@ export const MAX_FLAVOR_NODES = 5;
 
 /**
  * @param {object} params
- * @param {{id: string, name: string} | null} params.origin
+ * @param {{id: string, name: string}[]} params.origins
  * @param {{id: string, name: string} | null} params.process
  * @param {{id: string, name: string} | null} params.roastLevel
  * @param {{id: string, name: string}[]} params.flavors
  * @returns {{ center: {x:number,y:number}, nodes: Array, edges: Array, flavorOverflowCount: number }}
  */
-export function buildRecordConnectionsLayout({ origin, process, roastLevel, flavors = [] }) {
+export function buildRecordConnectionsLayout({ origins = [], process, roastLevel, flavors = [] }) {
   const nodes = [];
   const edges = [];
 
-  if (origin) {
-    const pos = SINGLE_SLOTS.origin;
-    nodes.push({ type: "origin", id: origin.id, label: origin.name, x: pos.x, y: pos.y });
-    edges.push({ x1: CENTER.x, y1: CENTER.y, x2: pos.x, y2: pos.y });
+  if (origins.length > 0) {
+    const spread = Math.min(MAX_ORIGIN_SPREAD, (origins.length - 1) * ORIGIN_SPREAD_PER_NODE);
+    const startX = 50 - spread / 2;
+    const step = origins.length > 1 ? spread / (origins.length - 1) : 0;
+
+    origins.forEach((origin, index) => {
+      const x = origins.length === 1 ? 50 : startX + step * index;
+      nodes.push({ type: "origin", id: origin.id, label: origin.name, x, y: ORIGIN_Y });
+      edges.push({ x1: CENTER.x, y1: CENTER.y, x2: x, y2: ORIGIN_Y });
+    });
   }
   if (process) {
     const pos = SINGLE_SLOTS.process;

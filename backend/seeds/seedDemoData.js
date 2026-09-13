@@ -74,7 +74,7 @@ const toCoffeeRecordDocument = async (record, userId) => ({
   cafeName: record.cafeName ?? "",
   roasterName: record.roasterName ?? "",
   farmName: record.farmName ?? "",
-  originId: await resolveId(Origin, record.origin),
+  originIds: await resolveIds(Origin, record.origins),
   varietyIds: await resolveIds(Variety, record.varieties),
   processId: await resolveId(Process, record.process),
   roastLevelId: await resolveRoastLevelId(record.roastLevel),

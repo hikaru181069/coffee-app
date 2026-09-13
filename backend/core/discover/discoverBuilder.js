@@ -54,7 +54,9 @@ const findDominantProcess = (originRecords) => {
  * @returns {{ suggestions: Array }}
  */
 export const buildOriginDiscovery = (records, cqiDataset, originName) => {
-  const originRecords = records.filter((record) => record.origin?.name === originName);
+  // ブレンド記録（origins複数）は、含まれる産地それぞれの集計へ1件として
+  // 数える（varietyIds/flavorIdsの集計と同じ考え方。docs/domain-model.md参照）
+  const originRecords = records.filter((record) => record.origins?.some((origin) => origin.name === originName));
   if (originRecords.length < THRESHOLDS.minRecordsForOrigin) {
     return { suggestions: [] };
   }
@@ -65,7 +67,9 @@ export const buildOriginDiscovery = (records, cqiDataset, originName) => {
   }
 
   // 産地・精製方法を問わず、これまでに一度でも記録した産地は「未経験」ではない
-  const triedOriginNames = new Set(records.map((record) => record.origin?.name).filter(Boolean));
+  const triedOriginNames = new Set(
+    records.flatMap((record) => (record.origins ?? []).map((origin) => origin.name)),
+  );
 
   const suggestions = (cqiDataset.entries ?? [])
     .filter((entry) => entry.processName === dominantProcess.label)
@@ -104,8 +108,10 @@ export const buildOriginDiscovery = (records, cqiDataset, originName) => {
 export const buildDiscoverTeaser = (records, cqiDataset) => {
   const originIdByName = new Map();
   for (const record of records) {
-    if (!record.origin || originIdByName.has(record.origin.name)) continue;
-    originIdByName.set(record.origin.name, record.origin.id);
+    for (const origin of record.origins ?? []) {
+      if (originIdByName.has(origin.name)) continue;
+      originIdByName.set(origin.name, origin.id);
+    }
   }
 
   const candidates = [];

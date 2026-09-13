@@ -10,7 +10,7 @@ import { isMissing } from "../utils/isMissing.js";
  * 未指定の項目は既定値で埋める。service 側で「未指定なら〜」という
  * 分岐を書かなくて済むようにするため。
  *
- * recordType・originId・flavorId・ratingMin・期間の検証は
+ * recordType・originIds・flavorIds・ratingMin・期間の検証は
  * validateRecordFilterQuery() へ切り出してある。
  * グラフAPI（graphQueryValidator.js）と同じ検証が必要なため。
  */

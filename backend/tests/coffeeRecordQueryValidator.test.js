@@ -86,14 +86,14 @@ describe("validateCoffeeRecordListQuery", () => {
     test("originIdsを1件だけ指定すると等価条件になる", () => {
       const { query } = validateCoffeeRecordListQuery({ originIds: VALID_ID });
 
-      expect(query.filter).toEqual({ originId: VALID_ID });
+      expect(query.filter).toEqual({ originIds: VALID_ID });
     });
 
     test("originIdsをカンマ区切りで複数指定すると$in条件になる（複数選択フィルター）", () => {
       const otherId = "507f1f77bcf86cd799439012";
       const { query } = validateCoffeeRecordListQuery({ originIds: `${VALID_ID},${otherId}` });
 
-      expect(query.filter).toEqual({ originId: { $in: [VALID_ID, otherId] } });
+      expect(query.filter).toEqual({ originIds: { $in: [VALID_ID, otherId] } });
     });
 
     test("flavorIdsは配列フィールドへの「いずれかを含む」条件になる", () => {
