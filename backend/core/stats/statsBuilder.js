@@ -18,20 +18,29 @@ import { average, roundTo1 } from "../shared/aggregationHelpers.js";
 
 const TOP_N = 5;
 
-/** 単数の参照（process）でグループ化し、stable IDをキーにする */
-const groupBySingleRef = (records, getRef, toNodeId) => {
-  const groups = new Map();
-  for (const record of records) {
-    const ref = getRef(record);
-    if (!ref) continue;
-    const nodeId = toNodeId(ref.id);
-    if (!groups.has(nodeId)) groups.set(nodeId, { label: ref.name, count: 0 });
-    groups.get(nodeId).count += 1;
-  }
-  return groups;
-};
+/**
+ * 記録内で重複しうる参照配列から、id基準で重複を除く。
+ *
+ * 2026-09、ブレンドコーヒー対応で産地・精製方法が「コーヒーの詳細」
+ * （components）から展開される配列になったため、同じ記録の中で
+ * 同じ値を持つcomponentが複数あっても1件として数える
+ * （insightBuilder.jsのuniqueRefsと同じ考え方）
+ */
+const uniqueRefs = (refs) => [...new Map(refs.map((ref) => [ref.id, ref])).values()];
 
-/** 複数の参照（origin/variety/flavor）でグループ化し、stable IDをキーにする */
+/** 記録が持つ産地の一覧（componentsから展開、重複除去済み） */
+const getOriginRefs = (record) =>
+  uniqueRefs((record.components ?? []).map((component) => component.origin).filter(Boolean));
+
+/** 記録が持つ精製方法の一覧（componentsから展開、重複除去済み） */
+const getProcessRefs = (record) =>
+  uniqueRefs((record.components ?? []).map((component) => component.process).filter(Boolean));
+
+/** 記録が持つ品種の一覧（componentsから展開、重複除去済み） */
+const getVarietyRefs = (record) =>
+  uniqueRefs((record.components ?? []).flatMap((component) => component.varieties ?? []));
+
+/** 複数の参照（origin/variety/process/flavor）でグループ化し、stable IDをキーにする */
 const groupByMultiRef = (records, getRefs, toNodeId) => {
   const groups = new Map();
   for (const record of records) {
@@ -60,12 +69,17 @@ const groupByCafe = (records) => {
  * farmNameもcafeNameと同じくマスター化していない自由記述（docs/domain-model.md
  * 「Farm / Cafe」参照）。Collectionの「農園の種類数」はランキング表示を持たない
  * ため、cafeのようなラベル付きMapではなく正規化済み名前のSetだけで十分。
+ *
+ * 2026-09、ブレンドコーヒー対応でfarmNameは「コーヒーの詳細」
+ * （components）ごとに持つようになったため、記録内の全componentを展開する
  */
 const groupByFarm = (records) => {
   const set = new Set();
   for (const record of records) {
-    if (!record.farmName) continue;
-    set.add(normalizeName(record.farmName));
+    for (const component of record.components ?? []) {
+      if (!component.farmName) continue;
+      set.add(normalizeName(component.farmName));
+    }
   }
   return set;
 };
@@ -122,9 +136,9 @@ const findFirstRecordedAt = (records) =>
  * @returns {object}
  */
 export const buildStats = (records) => {
-  const originGroups = groupByMultiRef(records, (record) => record.origins, originNodeId);
-  const varietyGroups = groupByMultiRef(records, (record) => record.varieties, varietyNodeId);
-  const processGroups = groupBySingleRef(records, (record) => record.process, processNodeId);
+  const originGroups = groupByMultiRef(records, getOriginRefs, originNodeId);
+  const varietyGroups = groupByMultiRef(records, getVarietyRefs, varietyNodeId);
+  const processGroups = groupByMultiRef(records, getProcessRefs, processNodeId);
   const flavorGroups = groupByMultiRef(records, (record) => record.flavors, flavorNodeId);
   const cafeGroups = groupByCafe(records);
   const farmNames = groupByFarm(records);

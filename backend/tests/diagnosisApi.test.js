@@ -99,8 +99,7 @@ describe("GET /api/diagnosis", () => {
       await createRecordFor(alice.user._id, {
         roastLevelId: light._id,
         flavorIds: [berry._id],
-        processId: natural._id,
-        varietyIds: [geisha._id],
+        components: [{ processId: natural._id, varietyIds: [geisha._id] }],
       });
     }
 

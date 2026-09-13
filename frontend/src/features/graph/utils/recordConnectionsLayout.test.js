@@ -4,6 +4,7 @@ import { buildRecordConnectionsLayout, MAX_FLAVOR_NODES } from "./recordConnecti
 const ORIGIN = { id: "origin:1", name: "Ethiopia" };
 const ORIGIN_2 = { id: "origin:2", name: "Kenya" };
 const PROCESS = { id: "process:1", name: "Washed" };
+const PROCESS_2 = { id: "process:2", name: "Natural" };
 const ROAST_LEVEL = { id: "roastLevel:1", name: "Medium" };
 const flavor = (n) => ({ id: `flavor:${n}`, name: `Flavor${n}` });
 
@@ -17,7 +18,7 @@ describe("buildRecordConnectionsLayout", () => {
   });
 
   test("origin/process/roastLevelはそれぞれ固定スロットに配置され、中心とedgeでつながる", () => {
-    const layout = buildRecordConnectionsLayout({ origins: [ORIGIN], process: PROCESS, roastLevel: ROAST_LEVEL });
+    const layout = buildRecordConnectionsLayout({ origins: [ORIGIN], processes: [PROCESS], roastLevel: ROAST_LEVEL });
 
     expect(layout.nodes).toHaveLength(3);
     expect(layout.edges).toHaveLength(3);
@@ -29,8 +30,8 @@ describe("buildRecordConnectionsLayout", () => {
     expect(originEdge).toMatchObject({ x1: 50, y1: 50 });
   });
 
-  test("いずれかがnullなら、そのノード・edgeだけ作られない", () => {
-    const layout = buildRecordConnectionsLayout({ origins: [ORIGIN], process: null, roastLevel: null });
+  test("いずれかが空なら、そのノード・edgeだけ作られない", () => {
+    const layout = buildRecordConnectionsLayout({ origins: [ORIGIN], processes: [], roastLevel: null });
     expect(layout.nodes.map((n) => n.type)).toEqual(["origin"]);
   });
 
@@ -43,6 +44,17 @@ describe("buildRecordConnectionsLayout", () => {
     // 2件なら中心(x=50)を挟んで左右対称に配置される
     expect(originNodes[0].x).toBeLessThan(50);
     expect(originNodes[1].x).toBeGreaterThan(50);
+  });
+
+  test("精製方法が複数（ブレンド）なら、精製方法の数だけノードが縦に並ぶ", () => {
+    const layout = buildRecordConnectionsLayout({ processes: [PROCESS, PROCESS_2] });
+
+    const processNodes = layout.nodes.filter((n) => n.type === "process");
+    expect(processNodes).toHaveLength(2);
+    expect(processNodes.map((n) => n.label)).toEqual([PROCESS.name, PROCESS_2.name]);
+    // 2件なら中心(y=50)を挟んで上下対称に配置される
+    expect(processNodes[0].y).toBeLessThan(50);
+    expect(processNodes[1].y).toBeGreaterThan(50);
   });
 
   test("フレーバーは幹（中心→trunk）から扇状に分岐する", () => {

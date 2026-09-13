@@ -14,10 +14,19 @@ import { createCoffeeRecord, updateCoffeeRecord } from "../api/coffeeRecordApi";
  * 作成と編集で同じフォームを使うため、初期値の組み立てもここで行う。
  * 画面側は「値」「エラー」「変更関数」「送信関数」を受け取るだけでよく、
  * 入力の持ち方を知らなくて済む。
+ *
+ * 2026-09、ブレンドコーヒー対応で「コーヒーの詳細」（産地・農園・品種・
+ * 精製方法）を1グループとしてまとめ、複数グループを持てるようにした
+ * （`values.components`、配列）。焙煎度・フレーバー・味覚グラフ・評価・
+ * メモは「カップとしての結果」のため、これまで通り記録全体で1つのまま
+ * （docs/domain-model.md参照）。
  */
 
 /** 現在時刻を datetime-local の形で返す（新規作成の初期値） */
 const nowForInput = () => toDateTimeLocalValue(new Date().toISOString());
+
+/** 「コーヒーの詳細」1グループぶんの空の値 */
+const emptyComponent = () => ({ originId: "", farmName: "", varietyIds: [], processId: "" });
 
 const emptyValues = () => ({
   title: "",
@@ -27,10 +36,7 @@ const emptyValues = () => ({
   notes: "",
   cafeName: "",
   roasterName: "",
-  originIds: [],
-  farmName: "",
-  varietyIds: [],
-  processId: "",
+  components: [],
   roastLevelId: "",
   flavorIds: [],
   ...Object.fromEntries(TASTE_AXES.map((axis) => [axis.field, ""])),
@@ -51,10 +57,12 @@ const toFormValues = (record) => ({
   notes: record.notes ?? "",
   cafeName: record.cafeName ?? "",
   roasterName: record.roasterName ?? "",
-  originIds: (record.origins ?? []).map((origin) => origin.id),
-  farmName: record.farmName ?? "",
-  varietyIds: (record.varieties ?? []).map((variety) => variety.id),
-  processId: record.process?.id ?? "",
+  components: (record.components ?? []).map((component) => ({
+    originId: component.origin?.id ?? "",
+    farmName: component.farmName ?? "",
+    varietyIds: (component.varieties ?? []).map((variety) => variety.id),
+    processId: component.process?.id ?? "",
+  })),
   roastLevelId: record.roastLevel?.id ?? "",
   flavorIds: (record.flavors ?? []).map((flavor) => flavor.id),
   ...Object.fromEntries(
@@ -70,11 +78,11 @@ const toFormValues = (record) => ({
 /**
  * @param {object|null} record 編集対象。新規作成なら null（作成/更新どちらの
  *   APIを呼ぶかもこれで判断する）
- * @param {string|null} [prefillOriginId] 新規作成時にoriginIdsへ事前入力する
- *   産地1件分の値（Discoverの「この産地を記録してみる」から遷移した場合。
- *   RecordFormPage.jsxがクエリ文字列の産地名をmasterDataと突き合わせて
- *   解決した結果を渡す。Discoverの提案は常に1産地のため、渡ってくる値
- *   自体は単一のまま。originIds配列には1要素として反映する）
+ * @param {string|null} [prefillOriginId] 新規作成時に「コーヒーの詳細」
+ *   1グループ目の産地へ事前入力する値（Discoverの「この産地を記録してみる」
+ *   から遷移した場合。RecordFormPage.jsxがクエリ文字列の産地名を
+ *   masterDataと突き合わせて解決した結果を渡す。Discoverの提案は常に
+ *   1産地のため、渡ってくる値自体は単一のまま）
  */
 export const useRecordForm = (record, prefillOriginId = null) => {
   const { t } = useTranslation();
@@ -110,8 +118,9 @@ export const useRecordForm = (record, prefillOriginId = null) => {
   const [appliedPrefillOriginId, setAppliedPrefillOriginId] = useState(null);
   if (!record && prefillOriginId && prefillOriginId !== appliedPrefillOriginId) {
     setAppliedPrefillOriginId(prefillOriginId);
-    setValues((prev) => ({ ...prev, originIds: [prefillOriginId] }));
-    setInitialValues((prev) => ({ ...prev, originIds: [prefillOriginId] }));
+    const prefilled = [{ ...emptyComponent(), originId: prefillOriginId }];
+    setValues((prev) => ({ ...prev, components: prefilled }));
+    setInitialValues((prev) => ({ ...prev, components: prefilled }));
   }
 
   // toFormValues/emptyValuesは常に同じキー順でプレーンな文字列・配列だけを
@@ -131,7 +140,7 @@ export const useRecordForm = (record, prefillOriginId = null) => {
     });
   }, []);
 
-  /** 複数選択（品種・フレーバー）の1件をトグルする */
+  /** 複数選択（フレーバー）の1件をトグルする */
   const toggleValue = useCallback((field, id) => {
     setValues((prev) => {
       const current = prev[field] ?? [];
@@ -141,6 +150,44 @@ export const useRecordForm = (record, prefillOriginId = null) => {
 
       return { ...prev, [field]: next };
     });
+  }, []);
+
+  /** 「コーヒーの詳細」を1グループ追加する */
+  const addComponent = useCallback(() => {
+    setValues((prev) => ({ ...prev, components: [...prev.components, emptyComponent()] }));
+  }, []);
+
+  /** 「コーヒーの詳細」の指定グループを削除する */
+  const removeComponent = useCallback((index) => {
+    setValues((prev) => ({
+      ...prev,
+      components: prev.components.filter((_, i) => i !== index),
+    }));
+  }, []);
+
+  /** 「コーヒーの詳細」の指定グループの1つの欄を変更する（産地・農園・精製方法） */
+  const setComponentValue = useCallback((index, field, value) => {
+    setValues((prev) => ({
+      ...prev,
+      components: prev.components.map((component, i) =>
+        i === index ? { ...component, [field]: value } : component,
+      ),
+    }));
+  }, []);
+
+  /** 「コーヒーの詳細」の指定グループの複数選択（品種）の1件をトグルする */
+  const toggleComponentValue = useCallback((index, field, id) => {
+    setValues((prev) => ({
+      ...prev,
+      components: prev.components.map((component, i) => {
+        if (i !== index) return component;
+        const current = component[field] ?? [];
+        const next = current.includes(id)
+          ? current.filter((value) => value !== id)
+          : [...current, id];
+        return { ...component, [field]: next };
+      }),
+    }));
   }, []);
 
   const submit = useCallback(async () => {
@@ -180,5 +227,18 @@ export const useRecordForm = (record, prefillOriginId = null) => {
     }
   }, [isSubmitting, values, record, t]);
 
-  return { values, errors, submitError, isSubmitting, isDirty, setValue, toggleValue, submit };
+  return {
+    values,
+    errors,
+    submitError,
+    isSubmitting,
+    isDirty,
+    setValue,
+    toggleValue,
+    addComponent,
+    removeComponent,
+    setComponentValue,
+    toggleComponentValue,
+    submit,
+  };
 };

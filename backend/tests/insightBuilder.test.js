@@ -13,6 +13,9 @@ const PROCESS_NATURAL = { id: "process-natural", name: "Natural" };
 const PROCESS_WASHED = { id: "process-washed", name: "Washed" };
 const FLAVOR_FLORAL = { id: "flavor-floral", name: "Floral" };
 
+/** 「コーヒーの詳細」1グループ分のテスト用オブジェクトを作る */
+const component = (overrides = {}) => ({ origin: null, farmName: "", varieties: [], process: null, ...overrides });
+
 /** テスト用の最小限の記録を作る。必要な項目だけ上書きする */
 const buildRecord = (overrides = {}) => ({
   id: "record-1",
@@ -21,10 +24,7 @@ const buildRecord = (overrides = {}) => ({
   recordType: "home",
   rating: null,
   notes: "",
-  origins: [],
-  farmName: "",
-  varieties: [],
-  process: null,
+  components: [],
   roastLevel: null,
   flavors: [],
   ...overrides,
@@ -37,8 +37,8 @@ describe("空・不十分な記録", () => {
 
   test("どの閾値も満たさない少数の記録では何も返さない", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], rating: 5 }),
-      buildRecord({ id: "b", origins: [ORIGIN_KENYA], rating: 3 }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })], rating: 5 }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_KENYA })], rating: 3 }),
     ];
     expect(buildInsights(records)).toEqual({ insights: [] });
   });
@@ -47,10 +47,10 @@ describe("空・不十分な記録", () => {
 describe("topOrigin", () => {
   test("同じ産地が3件以上で最多なら検出する", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "c", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "d", origins: [ORIGIN_KENYA] }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "c", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "d", components: [component({ origin: ORIGIN_KENYA })] }),
     ];
     const { insights } = buildInsights(records);
     expect(insights).toContainEqual({ type: "topOrigin", label: "Ethiopia", count: 3 });
@@ -58,12 +58,12 @@ describe("topOrigin", () => {
 
   test("同率首位のときは検出しない", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "c", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "d", origins: [ORIGIN_KENYA] }),
-      buildRecord({ id: "e", origins: [ORIGIN_KENYA] }),
-      buildRecord({ id: "f", origins: [ORIGIN_KENYA] }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "c", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "d", components: [component({ origin: ORIGIN_KENYA })] }),
+      buildRecord({ id: "e", components: [component({ origin: ORIGIN_KENYA })] }),
+      buildRecord({ id: "f", components: [component({ origin: ORIGIN_KENYA })] }),
     ];
     const { insights } = buildInsights(records);
     expect(insights.some((insight) => insight.type === "topOrigin")).toBe(false);
@@ -71,11 +71,24 @@ describe("topOrigin", () => {
 
   test("2件以下では検出しない（閾値未満）", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA] }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
     ];
     const { insights } = buildInsights(records);
     expect(insights.some((insight) => insight.type === "topOrigin")).toBe(false);
+  });
+
+  test("同じ記録内に同じ産地を持つcomponentが複数あっても1件として数える", () => {
+    const records = [
+      buildRecord({
+        id: "a",
+        components: [component({ origin: ORIGIN_ETHIOPIA }), component({ origin: ORIGIN_ETHIOPIA })],
+      }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "c", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+    ];
+    const { insights } = buildInsights(records);
+    expect(insights).toContainEqual({ type: "topOrigin", label: "Ethiopia", count: 3 });
   });
 });
 
@@ -94,8 +107,8 @@ describe("topFlavor", () => {
 describe("topProcessRating", () => {
   test("2件以上・平均4.0以上の精製方法を検出する", () => {
     const records = [
-      buildRecord({ id: "a", process: PROCESS_WASHED, rating: 5 }),
-      buildRecord({ id: "b", process: PROCESS_WASHED, rating: 4 }),
+      buildRecord({ id: "a", components: [component({ process: PROCESS_WASHED })], rating: 5 }),
+      buildRecord({ id: "b", components: [component({ process: PROCESS_WASHED })], rating: 4 }),
     ];
     const { insights } = buildInsights(records);
     expect(insights).toContainEqual({
@@ -108,8 +121,8 @@ describe("topProcessRating", () => {
 
   test("平均4.0未満なら検出しない", () => {
     const records = [
-      buildRecord({ id: "a", process: PROCESS_WASHED, rating: 3 }),
-      buildRecord({ id: "b", process: PROCESS_WASHED, rating: 4 }),
+      buildRecord({ id: "a", components: [component({ process: PROCESS_WASHED })], rating: 3 }),
+      buildRecord({ id: "b", components: [component({ process: PROCESS_WASHED })], rating: 4 }),
     ];
     const { insights } = buildInsights(records);
     expect(insights.some((insight) => insight.type === "topProcessRating")).toBe(false);
@@ -119,8 +132,16 @@ describe("topProcessRating", () => {
 describe("topCombination", () => {
   test("産地×精製方法の組み合わせが2件以上・平均4.0以上で検出する", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL, rating: 5 }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL, rating: 4 }),
+      buildRecord({
+        id: "a",
+        components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })],
+        rating: 5,
+      }),
+      buildRecord({
+        id: "b",
+        components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })],
+        rating: 4,
+      }),
     ];
     const { insights } = buildInsights(records);
     expect(insights).toContainEqual({
@@ -136,13 +157,51 @@ describe("topCombination", () => {
 
   test("優先度が最も高く、他の条件を満たす記録があっても先頭に来る", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL, rating: 5 }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL, rating: 5 }),
-      buildRecord({ id: "c", origins: [ORIGIN_ETHIOPIA], rating: 4 }),
-      buildRecord({ id: "d", origins: [ORIGIN_ETHIOPIA], rating: 4 }),
+      buildRecord({
+        id: "a",
+        components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })],
+        rating: 5,
+      }),
+      buildRecord({
+        id: "b",
+        components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })],
+        rating: 5,
+      }),
+      buildRecord({ id: "c", components: [component({ origin: ORIGIN_ETHIOPIA })], rating: 4 }),
+      buildRecord({ id: "d", components: [component({ origin: ORIGIN_ETHIOPIA })], rating: 4 }),
     ];
     const { insights } = buildInsights(records);
     expect(insights[0].type).toBe("topCombination");
+  });
+
+  test("異なるcomponent同士の産地×精製方法は組み合わせない（ブレンドの誤ペアリング防止）", () => {
+    // Ethiopia×Natural と Kenya×Washed の2componentを持つ記録。
+    // Ethiopia×Washed や Kenya×Natural のような、実在しない組み合わせを
+    // 誤って数えないことを確認する
+    const records = [
+      buildRecord({
+        id: "a",
+        components: [
+          component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL }),
+          component({ origin: ORIGIN_KENYA, process: PROCESS_WASHED }),
+        ],
+        rating: 5,
+      }),
+      buildRecord({
+        id: "b",
+        components: [
+          component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL }),
+          component({ origin: ORIGIN_KENYA, process: PROCESS_WASHED }),
+        ],
+        rating: 5,
+      }),
+    ];
+    const { insights } = buildInsights(records);
+    const combination = insights.find((insight) => insight.type === "topCombination");
+    expect(combination.attributes).toEqual([
+      { attrType: "origin", label: "Ethiopia" },
+      { attrType: "process", label: "Natural" },
+    ]);
   });
 });
 
@@ -180,14 +239,14 @@ describe("homeVsCafeDiff", () => {
 describe("risingTrend", () => {
   test("直近側に偏って登場する産地を検出する", () => {
     const older = [
-      buildRecord({ id: "a", consumedAt: "2026-01-01", origins: [ORIGIN_KENYA] }),
-      buildRecord({ id: "b", consumedAt: "2026-02-01", origins: [ORIGIN_KENYA] }),
-      buildRecord({ id: "c", consumedAt: "2026-03-01", origins: [ORIGIN_KENYA] }),
-      buildRecord({ id: "d", consumedAt: "2026-04-01", origins: [ORIGIN_KENYA] }),
+      buildRecord({ id: "a", consumedAt: "2026-01-01", components: [component({ origin: ORIGIN_KENYA })] }),
+      buildRecord({ id: "b", consumedAt: "2026-02-01", components: [component({ origin: ORIGIN_KENYA })] }),
+      buildRecord({ id: "c", consumedAt: "2026-03-01", components: [component({ origin: ORIGIN_KENYA })] }),
+      buildRecord({ id: "d", consumedAt: "2026-04-01", components: [component({ origin: ORIGIN_KENYA })] }),
     ];
     const recent = [
-      buildRecord({ id: "e", consumedAt: "2026-05-01", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "f", consumedAt: "2026-06-01", origins: [ORIGIN_ETHIOPIA] }),
+      buildRecord({ id: "e", consumedAt: "2026-05-01", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "f", consumedAt: "2026-06-01", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
     ];
     const { insights } = buildInsights([...older, ...recent]);
     expect(insights).toContainEqual({

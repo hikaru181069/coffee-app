@@ -17,7 +17,6 @@ const CENTER = { x: 50, y: 50 };
 // 中心からの距離をおよそ17%縮め（36→30）、ノードが中央寄りにまとまる
 // ようにしている。他の定数もこの比率（30/36）に合わせて縮小した。
 const SINGLE_SLOTS = {
-  process: { x: 20, y: 50 },
   roastLevel: { x: 80, y: 50 },
 };
 
@@ -28,6 +27,14 @@ const SINGLE_SLOTS = {
 const ORIGIN_Y = 20;
 const ORIGIN_SPREAD_PER_NODE = 14;
 const MAX_ORIGIN_SPREAD = 28;
+
+// 2026-09、精製方法も「コーヒの詳細」componentから展開されるため複数に
+// なりうる。左側の旧SINGLE_SLOTS.processを中心に、今度は縦方向へ扇状に
+// 広げる（横方向は産地の扇と紛らわしくなるため）。roastLevel（x=80）とは
+// 左右で分かれているため、同じ横幅の扇でも重ならない
+const PROCESS_X = 20;
+const PROCESS_SPREAD_PER_NODE = 14;
+const MAX_PROCESS_SPREAD = 28;
 
 const FLAVOR_TRUNK_Y = 72;
 const FLAVOR_LEAF_Y = 83;
@@ -40,12 +47,12 @@ export const MAX_FLAVOR_NODES = 5;
 /**
  * @param {object} params
  * @param {{id: string, name: string}[]} params.origins
- * @param {{id: string, name: string} | null} params.process
+ * @param {{id: string, name: string}[]} params.processes
  * @param {{id: string, name: string} | null} params.roastLevel
  * @param {{id: string, name: string}[]} params.flavors
  * @returns {{ center: {x:number,y:number}, nodes: Array, edges: Array, flavorOverflowCount: number }}
  */
-export function buildRecordConnectionsLayout({ origins = [], process, roastLevel, flavors = [] }) {
+export function buildRecordConnectionsLayout({ origins = [], processes = [], roastLevel, flavors = [] }) {
   const nodes = [];
   const edges = [];
 
@@ -60,10 +67,16 @@ export function buildRecordConnectionsLayout({ origins = [], process, roastLevel
       edges.push({ x1: CENTER.x, y1: CENTER.y, x2: x, y2: ORIGIN_Y });
     });
   }
-  if (process) {
-    const pos = SINGLE_SLOTS.process;
-    nodes.push({ type: "process", id: process.id, label: process.name, x: pos.x, y: pos.y });
-    edges.push({ x1: CENTER.x, y1: CENTER.y, x2: pos.x, y2: pos.y });
+  if (processes.length > 0) {
+    const spread = Math.min(MAX_PROCESS_SPREAD, (processes.length - 1) * PROCESS_SPREAD_PER_NODE);
+    const startY = 50 - spread / 2;
+    const step = processes.length > 1 ? spread / (processes.length - 1) : 0;
+
+    processes.forEach((process, index) => {
+      const y = processes.length === 1 ? 50 : startY + step * index;
+      nodes.push({ type: "process", id: process.id, label: process.name, x: PROCESS_X, y });
+      edges.push({ x1: CENTER.x, y1: CENTER.y, x2: PROCESS_X, y2: y });
+    });
   }
   if (roastLevel) {
     const pos = SINGLE_SLOTS.roastLevel;

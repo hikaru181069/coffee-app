@@ -88,14 +88,16 @@ export const validateRecordFilterQuery = (
   }
 
   if (includeReferenceFilters) {
-    // processId/roastLevelIdは単一参照だが、複数指定時は$inで「いずれかに
-    // 一致」を表す。originIds/varietyIds/flavorIdsは元から配列フィールド
-    // なので、$in自体が「配列がいずれかを含む」を意味し扱いは同じになる
+    // roastLevelIdは単一参照だが、複数指定時は$inで「いずれかに一致」を
+    // 表す。産地・精製方法・品種は「コーヒーの詳細」（components配列）の
+    // 中のフィールドのため、ドット記法（例: "components.originId"）で
+    // 指定する。MongoDBは配列内のドキュメントに対しても$inを
+    // 「いずれかの要素が一致」として評価するため、flavorIdsと同じ扱いになる
     const referenceFields = [
-      ["originIds", "originIds"],
-      ["processIds", "processId"],
+      ["originIds", "components.originId"],
+      ["processIds", "components.processId"],
       ["roastLevelIds", "roastLevelId"],
-      ["varietyIds", "varietyIds"],
+      ["varietyIds", "components.varietyIds"],
       ["flavorIds", "flavorIds"],
     ];
 

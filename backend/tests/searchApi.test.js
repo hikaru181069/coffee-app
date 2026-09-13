@@ -58,8 +58,8 @@ describe("GET /api/search", () => {
     await seedTestMasterData();
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
 
-    await createRecordFor(alice.user._id, { title: "Aliceの記録", originIds: [origin._id] });
-    await createRecordFor(bob.user._id, { title: "Bobの記録", originIds: [origin._id] });
+    await createRecordFor(alice.user._id, { title: "Aliceの記録", components: [{ originId: origin._id }] });
+    await createRecordFor(bob.user._id, { title: "Bobの記録", components: [{ originId: origin._id }] });
 
     const res = await request(app)
       .get(SEARCH_ENDPOINT)
@@ -75,7 +75,7 @@ describe("GET /api/search", () => {
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
     const flavor = await Flavor.findOne({ normalizedName: "berry" });
 
-    await createRecordFor(alice.user._id, { originIds: [origin._id], flavorIds: [flavor._id] });
+    await createRecordFor(alice.user._id, { components: [{ originId: origin._id }], flavorIds: [flavor._id] });
 
     const res = await request(app)
       .get(SEARCH_ENDPOINT)
@@ -131,12 +131,12 @@ describe("GET /api/search", () => {
       await createRecordFor(alice.user._id, {
         title: "家のエチオピア",
         recordType: "home",
-        originIds: [origin._id],
+        components: [{ originId: origin._id }],
       });
       await createRecordFor(alice.user._id, {
         title: "カフェのエチオピア",
         recordType: "cafe",
-        originIds: [origin._id],
+        components: [{ originId: origin._id }],
       });
 
       const res = await request(app)
@@ -152,8 +152,8 @@ describe("GET /api/search", () => {
       await seedTestMasterData();
       const ethiopia = await Origin.findOne({ normalizedName: "ethiopia" });
       const kenya = await Origin.findOne({ normalizedName: "kenya" });
-      await createRecordFor(alice.user._id, { title: "朝のコーヒー", originIds: [ethiopia._id] });
-      await createRecordFor(alice.user._id, { title: "朝のコーヒー2", originIds: [kenya._id] });
+      await createRecordFor(alice.user._id, { title: "朝のコーヒー", components: [{ originId: ethiopia._id }] });
+      await createRecordFor(alice.user._id, { title: "朝のコーヒー2", components: [{ originId: kenya._id }] });
 
       const res = await request(app)
         .get(SEARCH_ENDPOINT)

@@ -83,17 +83,17 @@ describe("validateCoffeeRecordListQuery", () => {
       expect(validateCoffeeRecordListQuery({ originIds: "abc" }).valid).toBe(false);
     });
 
-    test("originIdsを1件だけ指定すると等価条件になる", () => {
+    test("originIdsを1件だけ指定すると等価条件になる（産地はcomponents配下のドット記法になる）", () => {
       const { query } = validateCoffeeRecordListQuery({ originIds: VALID_ID });
 
-      expect(query.filter).toEqual({ originIds: VALID_ID });
+      expect(query.filter).toEqual({ "components.originId": VALID_ID });
     });
 
     test("originIdsをカンマ区切りで複数指定すると$in条件になる（複数選択フィルター）", () => {
       const otherId = "507f1f77bcf86cd799439012";
       const { query } = validateCoffeeRecordListQuery({ originIds: `${VALID_ID},${otherId}` });
 
-      expect(query.filter).toEqual({ originIds: { $in: [VALID_ID, otherId] } });
+      expect(query.filter).toEqual({ "components.originId": { $in: [VALID_ID, otherId] } });
     });
 
     test("flavorIdsは配列フィールドへの「いずれかを含む」条件になる", () => {
@@ -118,9 +118,9 @@ describe("validateCoffeeRecordListQuery", () => {
       });
 
       expect(query.filter).toEqual({
-        processId: VALID_ID,
+        "components.processId": VALID_ID,
         roastLevelId: VALID_ID,
-        varietyIds: VALID_ID,
+        "components.varietyIds": VALID_ID,
       });
     });
 

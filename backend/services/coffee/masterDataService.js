@@ -48,15 +48,8 @@ export const listAllMasterData = async () => {
  */
 export const verifyReferencesExist = async (fields = {}) => {
   // フィールド名 → マスターの種類 の対応
-  const singleRefs = [
-    ["processId", "processes"],
-    ["roastLevelId", "roastLevels"],
-  ];
-  const multiRefs = [
-    ["originIds", "origins"],
-    ["varietyIds", "varieties"],
-    ["flavorIds", "flavors"],
-  ];
+  const singleRefs = [["roastLevelId", "roastLevels"]];
+  const multiRefs = [["flavorIds", "flavors"]];
 
   const checks = [];
 
@@ -70,6 +63,28 @@ export const verifyReferencesExist = async (fields = {}) => {
     const values = fields[field];
     if (!Array.isArray(values) || values.length === 0) continue;
     checks.push({ field, type, ids: values.map(String) });
+  }
+
+  // 2026-09、ブレンドコーヒー対応で産地・品種・精製方法は「コーヒーの詳細」
+  // （components）の配列の中に入ったため、全componentを横断して集約してから
+  // まとめて確認する（個々のcomponentごとに問い合わせない）
+  const components = Array.isArray(fields.components) ? fields.components : [];
+  const isPresent = (value) => value !== undefined && value !== null && value !== "";
+
+  const componentOriginIds = components.map((component) => component?.originId).filter(isPresent);
+  const componentProcessIds = components.map((component) => component?.processId).filter(isPresent);
+  const componentVarietyIds = components.flatMap((component) =>
+    Array.isArray(component?.varietyIds) ? component.varietyIds : [],
+  );
+
+  if (componentOriginIds.length > 0) {
+    checks.push({ field: "components.originId", type: "origins", ids: componentOriginIds.map(String) });
+  }
+  if (componentProcessIds.length > 0) {
+    checks.push({ field: "components.processId", type: "processes", ids: componentProcessIds.map(String) });
+  }
+  if (componentVarietyIds.length > 0) {
+    checks.push({ field: "components.varietyIds", type: "varieties", ids: componentVarietyIds.map(String) });
   }
 
   if (checks.length === 0) return { valid: true, details: [] };

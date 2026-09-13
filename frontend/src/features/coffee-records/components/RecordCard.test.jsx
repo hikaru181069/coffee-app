@@ -17,8 +17,7 @@ const BASE_RECORD = {
   recordType: "home",
   rating: null,
   cafeName: "",
-  origins: [],
-  process: null,
+  components: [],
   flavors: [],
 };
 
@@ -54,7 +53,7 @@ describe("RecordCard", () => {
   });
 
   test("originがあれば産地名とエンティティ詳細へのリンクを表示する", () => {
-    renderCard({ ...BASE_RECORD, origins: [{ id: "o1", name: "Ethiopia" }] });
+    renderCard({ ...BASE_RECORD, components: [{ origin: { id: "o1", name: "Ethiopia" } }] });
 
     expect(screen.getByRole("link", { name: "Ethiopia" })).toHaveAttribute(
       "href",
@@ -71,7 +70,7 @@ describe("RecordCard", () => {
   test("processとflavorsはタグとして最大3件まで表示し、超過分は件数表示にする", () => {
     renderCard({
       ...BASE_RECORD,
-      process: { id: "p1", name: "Washed" },
+      components: [{ process: { id: "p1", name: "Washed" } }],
       flavors: [
         { id: "f1", name: "Berry" },
         { id: "f2", name: "Floral" },
@@ -97,7 +96,7 @@ describe("RecordCard", () => {
   });
 
   test("何か要素があればヒント文は出さない", () => {
-    renderCard({ ...BASE_RECORD, origins: [{ id: "o1", name: "Ethiopia" }] });
+    renderCard({ ...BASE_RECORD, components: [{ origin: { id: "o1", name: "Ethiopia" } }] });
     expect(
       screen.queryByText("産地やフレーバーを追加すると、ほかの記録とのつながりが見えるようになります。"),
     ).not.toBeInTheDocument();

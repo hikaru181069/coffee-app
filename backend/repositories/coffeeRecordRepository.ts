@@ -32,9 +32,11 @@ type RecordId = string | mongoose.Types.ObjectId;
  */
 const withMasterData = <T,>(query: mongoose.Query<T, CoffeeRecordDocument>) =>
   query
-    .populate("originIds", "name countryCode")
-    .populate("varietyIds", "name")
-    .populate("processId", "name")
+    // components配下（産地・品種・精製方法）は、配列に入ったサブドキュメント
+    // の中のフィールドをドット記法で指定するとMongooseがpopulateしてくれる
+    .populate("components.originId", "name countryCode")
+    .populate("components.varietyIds", "name")
+    .populate("components.processId", "name")
     .populate("roastLevelId", "name order")
     .populate("flavorIds", "name category");
 

@@ -89,7 +89,7 @@ import { getErrorMessage } from "../utils/errorMessage";
  */
 /** collectCoffeeDetails()のkeyから、対応する知識グラフのノード種別へ。roasterNameはノードに無いため含めない */
 const DETAIL_NODE_TYPE = {
-  origins: "origin",
+  origin: "origin",
   farmName: "farm",
   varieties: "variety",
   process: "process",
@@ -150,15 +150,57 @@ function RecordDetailPage() {
 
   const details = collectCoffeeDetails(record, t);
   const flavors = record.flavors ?? [];
-  const hasCoffeeInfo = details.length > 0;
+  const hasCoffeeInfo = details.components.length > 0 || details.shared.length > 0;
   // Connectionsは知識グラフのノードに対応する4種別のみ（Property Gridとは違い
   // farmName/variety/roasterNameはグラフのノードではないため含めない）
   const hasConnections = Boolean(
-    (record.origins?.length ?? 0) > 0 || record.process || record.roastLevel || flavors.length > 0,
+    (record.components ?? []).some((component) => component.origin || component.process) ||
+      record.roastLevel ||
+      flavors.length > 0,
   );
   const hasTasteRatings = TASTE_AXES.some(
     (axis) => record[axis.field] !== null && record[axis.field] !== undefined,
   );
+
+  /** collectCoffeeDetails()が返す1行分（アイコン+ラベル+pill一覧）を描画する */
+  const renderDetailRow = (detail) => {
+    const nodeType = DETAIL_NODE_TYPE[detail.key];
+    const visual = nodeType ? getNodeVisual(nodeType) : null;
+    // roasterNameは知識グラフのノード種別に該当しないため、
+    // アクセントカラーではなく中立色のバッジにする（Storeは
+    // 既にrecordType表示で使っているアイコンを流用するだけで、
+    // cafeノード=lavenderのような色の主張は持たせない）
+    const Icon = visual?.icon ?? Store;
+    const iconColorClass = visual?.colorClass ?? "text-text-tertiary";
+    const badgeBgClass = visual?.bgTintClass ?? "bg-surface-2";
+    return (
+      <div key={detail.key} className="flex min-w-36 items-start gap-3">
+        <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${badgeBgClass}`}>
+          <Icon size={16} aria-hidden="true" className={iconColorClass} strokeWidth={1.75} />
+        </span>
+        <div className="min-w-0">
+          <dt className="text-xs text-text-tertiary">{detail.label}</dt>
+          <dd className="mt-1 flex flex-wrap gap-1.5">
+            {detail.items.map((item) =>
+              nodeType && item.id ? (
+                <Link
+                  key={item.id}
+                  to={`/entities/${encodeURIComponent(`${nodeType}:${item.id}`)}`}
+                  className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary transition-colors duration-150 hover:bg-surface-2 hover:text-text"
+                >
+                  {item.name}
+                </Link>
+              ) : (
+                <span key={item.name} className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary">
+                  {item.name}
+                </span>
+              ),
+            )}
+          </dd>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={contentContainerClass}>
@@ -220,51 +262,39 @@ function RecordDetailPage() {
         {hasCoffeeInfo && (
           <section className={cardClass}>
             <h2 className="text-base font-semibold text-text">{t("records.detailsHeading")}</h2>
-            <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-6">
-              {details.map((detail) => {
-                const nodeType = DETAIL_NODE_TYPE[detail.key];
-                const visual = nodeType ? getNodeVisual(nodeType) : null;
-                // roasterNameは知識グラフのノード種別に該当しないため、
-                // アクセントカラーではなく中立色のバッジにする（Storeは
-                // 既にrecordType表示で使っているアイコンを流用するだけで、
-                // cafeノード=lavenderのような色の主張は持たせない）
-                const Icon = visual?.icon ?? Store;
-                const iconColorClass = visual?.colorClass ?? "text-text-tertiary";
-                const badgeBgClass = visual?.bgTintClass ?? "bg-surface-2";
-                return (
-                  <div key={detail.key} className="flex min-w-36 items-start gap-3">
-                    <span
-                      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${badgeBgClass}`}
-                    >
-                      <Icon size={16} aria-hidden="true" className={iconColorClass} strokeWidth={1.75} />
+            <div className="mt-5 flex flex-col gap-5">
+              {/* 2026-09、ブレンドコーヒー対応で「コーヒーの詳細」
+                  （産地・農園・品種・精製方法）はcomponentごとにグループ化
+                  して表示する。産地と精製方法の対応関係を保つのが目的なので、
+                  単一グループ（シングルオリジン）のときは以前と同じ見た目
+                  （枠なし）にし、複数グループのときだけ「コーヒーN」の
+                  見出しと枠で区切る */}
+              {details.components.map((rows, index) => (
+                <div
+                  key={index}
+                  className={
+                    details.components.length > 1 ? "rounded-xl border border-line/60 p-4" : undefined
+                  }
+                >
+                  {details.components.length > 1 && (
+                    <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+                      {t("recordForm.componentHeading", { index: index + 1 })}
                     </span>
-                    <div className="min-w-0">
-                      <dt className="text-xs text-text-tertiary">{detail.label}</dt>
-                      <dd className="mt-1 flex flex-wrap gap-1.5">
-                        {detail.items.map((item) =>
-                          nodeType && item.id ? (
-                            <Link
-                              key={item.id}
-                              to={`/entities/${encodeURIComponent(`${nodeType}:${item.id}`)}`}
-                              className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary transition-colors duration-150 hover:bg-surface-2 hover:text-text"
-                            >
-                              {item.name}
-                            </Link>
-                          ) : (
-                            <span
-                              key={item.name}
-                              className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary"
-                            >
-                              {item.name}
-                            </span>
-                          ),
-                        )}
-                      </dd>
-                    </div>
-                  </div>
-                );
-              })}
-            </dl>
+                  )}
+                  <dl className="flex flex-wrap gap-x-8 gap-y-6">{rows.map(renderDetailRow)}</dl>
+                </div>
+              ))}
+
+              {details.shared.length > 0 && (
+                <dl
+                  className={`flex flex-wrap gap-x-8 gap-y-6 ${
+                    details.components.length > 0 ? "border-t border-line/60 pt-5" : ""
+                  }`}
+                >
+                  {details.shared.map(renderDetailRow)}
+                </dl>
+              )}
+            </div>
           </section>
         )}
 
@@ -313,7 +343,7 @@ function RecordDetailPage() {
                           のため、産地がある記録のときだけ導線を出す。EntityDetailPage.jsx
                           の産地ページと同じ理由で、地図側にこの記録の産地だけへ
                           フォーカスする仕組みは無く、地図全体を開くだけ */}
-                      {(record.origins?.length ?? 0) > 0 && (
+                      {(record.components ?? []).some((component) => component.origin) && (
                         <Link
                           to="/map"
                           className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"

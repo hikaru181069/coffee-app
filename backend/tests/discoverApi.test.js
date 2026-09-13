@@ -70,7 +70,7 @@ describe("GET /api/discover/nodes/:nodeId", () => {
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
     const process = await Process.findOne({ normalizedName: "natural" });
 
-    await createRecordFor(alice.user._id, { originIds: [origin._id], processId: process._id });
+    await createRecordFor(alice.user._id, { components: [{ originId: origin._id, processId: process._id }] });
 
     const res = await request(app)
       .get(`${DISCOVER_PATH}/nodes/origin:${origin._id}`)
@@ -86,11 +86,11 @@ describe("GET /api/discover/nodes/:nodeId", () => {
     const natural = await Process.findOne({ normalizedName: "natural" });
 
     // Aliceは条件を満たすが、Bobの記録（Panamaを既に試した扱いにする）は混ざらない
-    await createRecordFor(alice.user._id, { originIds: [ethiopia._id], processId: natural._id });
-    await createRecordFor(alice.user._id, { originIds: [ethiopia._id], processId: natural._id });
+    await createRecordFor(alice.user._id, { components: [{ originId: ethiopia._id, processId: natural._id }] });
+    await createRecordFor(alice.user._id, { components: [{ originId: ethiopia._id, processId: natural._id }] });
 
     const panama = await Origin.findOne({ normalizedName: "panama" });
-    await createRecordFor(bob.user._id, { originIds: [panama._id], processId: natural._id });
+    await createRecordFor(bob.user._id, { components: [{ originId: panama._id, processId: natural._id }] });
 
     const res = await request(app)
       .get(`${DISCOVER_PATH}/nodes/origin:${ethiopia._id}`)
@@ -109,9 +109,9 @@ describe("GET /api/discover/nodes/:nodeId", () => {
     const panama = await Origin.findOne({ normalizedName: "panama" });
     const washed = await Process.findOne({ normalizedName: "washed" });
 
-    await createRecordFor(alice.user._id, { originIds: [ethiopia._id], processId: natural._id });
-    await createRecordFor(alice.user._id, { originIds: [ethiopia._id], processId: natural._id });
-    await createRecordFor(alice.user._id, { originIds: [panama._id], processId: washed._id });
+    await createRecordFor(alice.user._id, { components: [{ originId: ethiopia._id, processId: natural._id }] });
+    await createRecordFor(alice.user._id, { components: [{ originId: ethiopia._id, processId: natural._id }] });
+    await createRecordFor(alice.user._id, { components: [{ originId: panama._id, processId: washed._id }] });
 
     const res = await request(app)
       .get(`${DISCOVER_PATH}/nodes/origin:${ethiopia._id}`)
@@ -142,12 +142,12 @@ describe("GET /api/discover（Home画面用の導線）", () => {
     const ethiopia = await Origin.findOne({ normalizedName: "ethiopia" });
     const natural = await Process.findOne({ normalizedName: "natural" });
 
-    await createRecordFor(alice.user._id, { originIds: [ethiopia._id], processId: natural._id });
-    await createRecordFor(alice.user._id, { originIds: [ethiopia._id], processId: natural._id });
+    await createRecordFor(alice.user._id, { components: [{ originId: ethiopia._id, processId: natural._id }] });
+    await createRecordFor(alice.user._id, { components: [{ originId: ethiopia._id, processId: natural._id }] });
 
     // Bobが条件を満たしていても、Aliceのteaserには影響しない
-    await createRecordFor(bob.user._id, { originIds: [ethiopia._id], processId: natural._id });
-    await createRecordFor(bob.user._id, { originIds: [ethiopia._id], processId: natural._id });
+    await createRecordFor(bob.user._id, { components: [{ originId: ethiopia._id, processId: natural._id }] });
+    await createRecordFor(bob.user._id, { components: [{ originId: ethiopia._id, processId: natural._id }] });
 
     const res = await request(app).get(DISCOVER_PATH).set("Authorization", alice.authHeader);
 

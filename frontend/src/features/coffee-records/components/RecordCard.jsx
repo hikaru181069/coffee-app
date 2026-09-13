@@ -47,7 +47,8 @@ const tagClass =
 function RecordCard({ record, index = 0 }) {
   const { t, i18n } = useTranslation();
   const flavors = record.flavors ?? [];
-  const origins = record.origins ?? [];
+  const origins = (record.components ?? []).map((component) => component.origin).filter(Boolean);
+  const processes = (record.components ?? []).map((component) => component.process).filter(Boolean);
   const [ref, isVisible] = useReveal();
 
   return (
@@ -112,14 +113,14 @@ function RecordCard({ record, index = 0 }) {
         )}
       </div>
 
-      {(record.process || flavors.length > 0) && (
+      {(processes.length > 0 || flavors.length > 0) && (
         <div className="relative mt-4 flex flex-wrap items-center gap-1.5">
-          {record.process && (
-            <Link to={entityDetailPath("process", record.process.id)} className={tagClass}>
+          {processes.map((process) => (
+            <Link key={process.id} to={entityDetailPath("process", process.id)} className={tagClass}>
               <Droplets size={11} aria-hidden="true" />
-              {record.process.name}
+              {process.name}
             </Link>
-          )}
+          ))}
           {/* フレーバーは多いと横に溢れるので3件までにする */}
           {flavors.slice(0, 3).map((flavor) => (
             <Link key={flavor.id} to={entityDetailPath("flavor", flavor.id)} className={tagClass}>

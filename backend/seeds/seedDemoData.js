@@ -64,6 +64,14 @@ const resolveRoastLevelId = async (key) => {
   return doc?._id ?? null;
 };
 
+/** 「コーヒーの詳細」1グループ分（demoRecords.jsの名前指定）をIDへ変換する */
+const toCoffeeComponentDocument = async (component) => ({
+  originId: await resolveId(Origin, component.origin),
+  farmName: component.farmName ?? "",
+  varietyIds: await resolveIds(Variety, component.varieties),
+  processId: await resolveId(Process, component.process),
+});
+
 const toCoffeeRecordDocument = async (record, userId) => ({
   userId,
   title: record.title,
@@ -73,10 +81,7 @@ const toCoffeeRecordDocument = async (record, userId) => ({
   notes: record.notes ?? "",
   cafeName: record.cafeName ?? "",
   roasterName: record.roasterName ?? "",
-  farmName: record.farmName ?? "",
-  originIds: await resolveIds(Origin, record.origins),
-  varietyIds: await resolveIds(Variety, record.varieties),
-  processId: await resolveId(Process, record.process),
+  components: await Promise.all((record.components ?? []).map(toCoffeeComponentDocument)),
   roastLevelId: await resolveRoastLevelId(record.roastLevel),
   flavorIds: await resolveIds(Flavor, record.flavors),
 });

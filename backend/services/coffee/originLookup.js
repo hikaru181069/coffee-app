@@ -24,10 +24,12 @@ export const resolveOriginNameFromNodeId = async (userId, nodeId) => {
   const serialized = serializeCoffeeRecords(records);
 
   const originId = nodeId.slice(ORIGIN_NODE_PREFIX.length);
-  const originRecord = serialized.find((record) => record.origins?.some((origin) => origin.id === originId));
+  const originRecord = serialized.find((record) =>
+    (record.components ?? []).some((component) => component.origin?.id === originId),
+  );
   if (!originRecord) {
     throw notFoundError("指定されたノードが見つかりません");
   }
 
-  return originRecord.origins.find((origin) => origin.id === originId).name;
+  return originRecord.components.find((component) => component.origin?.id === originId).origin.name;
 };

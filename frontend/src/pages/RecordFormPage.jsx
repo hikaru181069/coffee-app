@@ -173,6 +173,10 @@ function RecordFormPage() {
         isSubmitting={form.isSubmitting}
         setValue={form.setValue}
         toggleValue={form.toggleValue}
+        addComponent={form.addComponent}
+        removeComponent={form.removeComponent}
+        setComponentValue={form.setComponentValue}
+        toggleComponentValue={form.toggleComponentValue}
         onSubmit={handleFormSubmit}
         onCancel={() => navigate(isEditing ? `/records/${recordId}` : "/records")}
         masterData={masterData}

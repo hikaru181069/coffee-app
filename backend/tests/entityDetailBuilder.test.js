@@ -15,6 +15,9 @@ const VARIETY_HEIRLOOM = { id: "variety-heirloom", name: "Heirloom" };
 const FLAVOR_BERRY = { id: "flavor-berry", name: "Berry" };
 const FLAVOR_FLORAL = { id: "flavor-floral", name: "Floral" };
 
+/** 「コーヒーの詳細」1グループ分のテスト用オブジェクトを作る */
+const component = (overrides = {}) => ({ origin: null, farmName: "", varieties: [], process: null, ...overrides });
+
 /** テスト用の最小限の記録を作る。必要な項目だけ上書きする */
 const buildRecord = (overrides = {}) => ({
   id: "record-1",
@@ -23,10 +26,7 @@ const buildRecord = (overrides = {}) => ({
   recordType: "home",
   rating: null,
   notes: "",
-  origins: [],
-  farmName: "",
-  varieties: [],
-  process: null,
+  components: [],
   roastLevel: null,
   flavors: [],
   cafeName: "",
@@ -35,7 +35,7 @@ const buildRecord = (overrides = {}) => ({
 
 describe("該当ノードが無い場合", () => {
   test("nullを返す", () => {
-    const records = [buildRecord({ origins: [ORIGIN_ETHIOPIA] })];
+    const records = [buildRecord({ components: [component({ origin: ORIGIN_ETHIOPIA })] })];
     const graph = buildGraph(records);
 
     expect(buildEntityDetail(graph, records, "origin:does-not-exist")).toBeNull();
@@ -45,8 +45,8 @@ describe("該当ノードが無い場合", () => {
 describe("基本情報", () => {
   test("id/type/label/recordCountを返す", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA] }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
     ];
     const graph = buildGraph(records);
     const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");
@@ -63,8 +63,8 @@ describe("基本情報", () => {
 describe("平均評価", () => {
   test("関連記録の評価を平均する（小数第2位で四捨五入）", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], rating: 5 }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], rating: 4 }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })], rating: 5 }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA })], rating: 4 }),
     ];
     const graph = buildGraph(records);
     const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");
@@ -73,7 +73,7 @@ describe("平均評価", () => {
   });
 
   test("評価が1件も無ければnull", () => {
-    const records = [buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], rating: null })];
+    const records = [buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })], rating: null })];
     const graph = buildGraph(records);
     const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");
 
@@ -84,9 +84,21 @@ describe("平均評価", () => {
 describe("最終記録日", () => {
   test("関連記録の中で最も新しいconsumedAtを返す", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], consumedAt: "2026-01-01T00:00:00.000Z" }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], consumedAt: "2026-06-01T00:00:00.000Z" }),
-      buildRecord({ id: "c", origins: [ORIGIN_ETHIOPIA], consumedAt: "2026-03-01T00:00:00.000Z" }),
+      buildRecord({
+        id: "a",
+        components: [component({ origin: ORIGIN_ETHIOPIA })],
+        consumedAt: "2026-01-01T00:00:00.000Z",
+      }),
+      buildRecord({
+        id: "b",
+        components: [component({ origin: ORIGIN_ETHIOPIA })],
+        consumedAt: "2026-06-01T00:00:00.000Z",
+      }),
+      buildRecord({
+        id: "c",
+        components: [component({ origin: ORIGIN_ETHIOPIA })],
+        consumedAt: "2026-03-01T00:00:00.000Z",
+      }),
     ];
     const graph = buildGraph(records);
     const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");
@@ -100,12 +112,10 @@ describe("関連属性", () => {
     const records = [
       buildRecord({
         id: "a",
-        origins: [ORIGIN_ETHIOPIA],
-        process: PROCESS_WASHED,
-        varieties: [VARIETY_HEIRLOOM],
+        components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_WASHED, varieties: [VARIETY_HEIRLOOM] })],
         flavors: [FLAVOR_BERRY, FLAVOR_FLORAL],
       }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], flavors: [FLAVOR_BERRY] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA })], flavors: [FLAVOR_BERRY] }),
     ];
     const graph = buildGraph(records);
     const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");
@@ -124,8 +134,8 @@ describe("関連属性", () => {
 
   test("同じ種別同士は関連属性に含めない（origin自身から見たoriginなど）", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "b", origins: [ORIGIN_KENYA] }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_KENYA })] }),
     ];
     const graph = buildGraph(records);
     const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");
@@ -134,7 +144,7 @@ describe("関連属性", () => {
   });
 
   test("共起する属性が無い種別はキー自体を含めない", () => {
-    const records = [buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] })];
+    const records = [buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })] })];
     const graph = buildGraph(records);
     const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");
 
@@ -143,7 +153,7 @@ describe("関連属性", () => {
 
   test("2026-08、種別ごと5件までの上限は撤廃済み。6件以上あってもすべて返す", () => {
     const flavors = Array.from({ length: 6 }, (_, i) => ({ id: `flavor-${i}`, name: `Flavor${i}` }));
-    const records = [buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], flavors })];
+    const records = [buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })], flavors })];
     const graph = buildGraph(records);
     const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");
 
@@ -154,8 +164,8 @@ describe("関連属性", () => {
 describe("関連記録", () => {
   test("そのノードに接続する記録だけを返す（他の記録は含めない）", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] }),
-      buildRecord({ id: "b", origins: [ORIGIN_KENYA] }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_KENYA })] }),
     ];
     const graph = buildGraph(records);
     const detail = buildEntityDetail(graph, records, "origin:origin-ethiopia");

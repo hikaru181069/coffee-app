@@ -57,8 +57,8 @@ describe("GET /api/stats", () => {
     await seedTestMasterData();
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
 
-    await createRecordFor(alice.user._id, { originIds: [origin._id], rating: 5 });
-    await createRecordFor(bob.user._id, { originIds: [origin._id], rating: 1 });
+    await createRecordFor(alice.user._id, { components: [{ originId: origin._id }], rating: 5 });
+    await createRecordFor(bob.user._id, { components: [{ originId: origin._id }], rating: 1 });
 
     const res = await request(app).get(STATS_ENDPOINT).set("Authorization", alice.authHeader);
 

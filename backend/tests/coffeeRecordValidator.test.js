@@ -196,10 +196,8 @@ describe("validateCreateCoffeeRecord", () => {
   describe("マスターデータへの参照", () => {
     test("正しいObjectId文字列を受け入れる", () => {
       const body = validBody({
-        originIds: [VALID_ID],
-        processId: VALID_ID,
+        components: [{ originId: VALID_ID, varietyIds: [VALID_ID], processId: VALID_ID }],
         roastLevelId: VALID_ID,
-        varietyIds: [VALID_ID],
         flavorIds: [VALID_ID, VALID_ID],
       });
 
@@ -208,19 +206,12 @@ describe("validateCreateCoffeeRecord", () => {
 
     test("未選択（null / 空文字 / 空配列）を許可する", () => {
       const body = validBody({
-        originIds: [],
-        processId: "",
-        varietyIds: [],
+        components: [],
+        roastLevelId: "",
         flavorIds: [],
       });
 
       expect(validateCreateCoffeeRecord(body).valid).toBe(true);
-    });
-
-    test("不正なIDは拒否する（500ではなく400にするため）", () => {
-      expect(
-        fieldsOf(validateCreateCoffeeRecord(validBody({ originIds: ["abc"] }))),
-      ).toContain("originIds");
     });
 
     test("配列の中に1つでも不正なIDがあれば拒否する", () => {
@@ -235,6 +226,75 @@ describe("validateCreateCoffeeRecord", () => {
       expect(
         fieldsOf(validateCreateCoffeeRecord(validBody({ flavorIds: VALID_ID }))),
       ).toContain("flavorIds");
+    });
+  });
+
+  describe("コーヒーの詳細（components）", () => {
+    test("正しいObjectId文字列を受け入れる", () => {
+      const body = validBody({
+        components: [{ originId: VALID_ID, farmName: "Finca X", varietyIds: [VALID_ID], processId: VALID_ID }],
+      });
+
+      expect(validateCreateCoffeeRecord(body).valid).toBe(true);
+    });
+
+    test("空のcomponents配列を許可する", () => {
+      expect(validateCreateCoffeeRecord(validBody({ components: [] })).valid).toBe(true);
+    });
+
+    test("各グループの項目が未選択（null / 空文字 / 空配列）でも許可する", () => {
+      const body = validBody({
+        components: [{ originId: null, farmName: "", varietyIds: [], processId: "" }],
+      });
+
+      expect(validateCreateCoffeeRecord(body).valid).toBe(true);
+    });
+
+    test("不正な産地IDはインデックス付きのフィールド名で拒否する（500ではなく400にするため）", () => {
+      expect(
+        fieldsOf(validateCreateCoffeeRecord(validBody({ components: [{ originId: "abc" }] }))),
+      ).toContain("components.0.originId");
+    });
+
+    test("不正な精製方法IDを拒否する", () => {
+      expect(
+        fieldsOf(validateCreateCoffeeRecord(validBody({ components: [{ processId: "abc" }] }))),
+      ).toContain("components.0.processId");
+    });
+
+    test("不正な品種IDを拒否する", () => {
+      expect(
+        fieldsOf(validateCreateCoffeeRecord(validBody({ components: [{ varietyIds: ["abc"] }] }))),
+      ).toContain("components.0.varietyIds");
+    });
+
+    test("農園名が上限文字数を超えると拒否する", () => {
+      expect(
+        fieldsOf(validateCreateCoffeeRecord(validBody({ components: [{ farmName: "a".repeat(121) }] }))),
+      ).toContain("components.0.farmName");
+    });
+
+    test("2件目のグループの不正な項目も、正しいインデックスで報告する", () => {
+      expect(
+        fieldsOf(
+          validateCreateCoffeeRecord(
+            validBody({ components: [{ originId: VALID_ID }, { originId: "abc" }] }),
+          ),
+        ),
+      ).toContain("components.1.originId");
+    });
+
+    test("componentsが配列でなければ拒否する", () => {
+      expect(
+        fieldsOf(validateCreateCoffeeRecord(validBody({ components: "not-an-array" }))),
+      ).toContain("components");
+    });
+
+    test("上限（10件）を超えるcomponentsは拒否する", () => {
+      const components = Array.from({ length: 11 }, () => ({ originId: VALID_ID }));
+      expect(
+        fieldsOf(validateCreateCoffeeRecord(validBody({ components }))),
+      ).toContain("components");
     });
   });
 
@@ -273,17 +333,22 @@ describe("validateUpdateCoffeeRecord", () => {
   });
 
   test("null を明示的に送って選択を外せる", () => {
-    expect(validateUpdateCoffeeRecord({ processId: null }).valid).toBe(true);
+    expect(validateUpdateCoffeeRecord({ roastLevelId: null }).valid).toBe(true);
     expect(validateUpdateCoffeeRecord({ rating: null }).valid).toBe(true);
     expect(validateUpdateCoffeeRecord({ tasteSweetness: null }).valid).toBe(true);
   });
 
-  test("空配列を送って複数選択を外せる", () => {
-    expect(validateUpdateCoffeeRecord({ originIds: [] }).valid).toBe(true);
+  test("空配列を送って複数選択・コーヒーの詳細を外せる", () => {
+    expect(validateUpdateCoffeeRecord({ flavorIds: [] }).valid).toBe(true);
+    expect(validateUpdateCoffeeRecord({ components: [] }).valid).toBe(true);
   });
 
   test("不正なIDは拒否する", () => {
-    expect(validateUpdateCoffeeRecord({ processId: "abc" }).valid).toBe(false);
+    expect(validateUpdateCoffeeRecord({ roastLevelId: "abc" }).valid).toBe(false);
+  });
+
+  test("componentsの中の不正なIDも拒否する", () => {
+    expect(validateUpdateCoffeeRecord({ components: [{ originId: "abc" }] }).valid).toBe(false);
   });
 
   test("味覚グラフの6軸は送られてきたものだけを検証する", () => {
@@ -383,5 +448,12 @@ describe("pickCoffeeRecordFields", () => {
     });
 
     expect(result).toEqual({ doseWeight: 18, waterWeight: 280, brewTimeSeconds: 150, pours });
+  });
+
+  test("componentsも書き込んでよい項目に含まれる", () => {
+    const components = [{ originId: VALID_ID }];
+    const result = pickCoffeeRecordFields({ components });
+
+    expect(result).toEqual({ components });
   });
 });

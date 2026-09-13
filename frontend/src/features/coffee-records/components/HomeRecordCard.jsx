@@ -30,7 +30,8 @@ import { revealDelayClass } from "../../../utils/revealDelay";
 function HomeRecordCard({ record, index = 0 }) {
   const { t } = useTranslation();
   const flavors = record.flavors ?? [];
-  const origins = record.origins ?? [];
+  const origins = (record.components ?? []).map((component) => component.origin).filter(Boolean);
+  const processes = (record.components ?? []).map((component) => component.process).filter(Boolean);
   const [ref, isVisible] = useReveal();
 
   return (
@@ -66,8 +67,10 @@ function HomeRecordCard({ record, index = 0 }) {
           )}
         </div>
 
-        {record.process && (
-          <p className="mt-1 text-sm text-text-tertiary">{record.process.name}</p>
+        {processes.length > 0 && (
+          <p className="mt-1 truncate text-sm text-text-tertiary">
+            {processes.map((process) => process.name).join(" / ")}
+          </p>
         )}
 
         {flavors.length > 0 && (

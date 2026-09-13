@@ -33,14 +33,21 @@ const MAX_LENGTH = {
   farmName: 120,
 };
 
-/** 参照が単数のフィールド（ObjectId 1つ） */
-const SINGLE_REF_FIELDS = ["processId", "roastLevelId"];
+/** 参照が単数のフィールド（ObjectId 1つ）。産地・品種・精製方法・農園は
+ * 「コーヒーの詳細」（components）へ移動したため、ここには含めない */
+const SINGLE_REF_FIELDS = ["roastLevelId"];
 
 /** 参照が複数のフィールド（ObjectIdの配列） */
-const MULTI_REF_FIELDS = ["originIds", "varietyIds", "flavorIds"];
+const MULTI_REF_FIELDS = ["flavorIds"];
 
 /** 自由入力の文字列フィールド（任意） */
-const OPTIONAL_TEXT_FIELDS = ["notes", "cafeName", "roasterName", "farmName"];
+const OPTIONAL_TEXT_FIELDS = ["notes", "cafeName", "roasterName"];
+
+/**
+ * 「コーヒーの詳細」1グループの上限件数。際限なく増やせないようにする
+ * （MAX_POURS等、他の配列項目と同じ考え方）
+ */
+const MAX_COMPONENTS = 10;
 
 /** 味覚グラフ用の6軸評価フィールド（任意、1〜5の整数） */
 const TASTE_FIELDS = [
@@ -156,6 +163,60 @@ const validateMultiRef = (field, value, details) => {
   }
 };
 
+/**
+ * 「コーヒーの詳細」1グループ（産地・農園・品種・精製方法）を検証する。
+ *
+ * フォーム側は産地・精製方法をセレクト、品種をChipMultiSelectで選ばせる
+ * ため、実際のユーザー操作からは不正なIDは来ない想定。ここでの検証は
+ * API契約としての安全網（不正なリクエストを400で弾く）という位置づけ。
+ */
+const validateComponent = (component, index, details) => {
+  const prefix = `components.${index}`;
+  const { originId, farmName, varietyIds, processId } = component ?? {};
+
+  if (!isMissing(originId) && !isObjectIdString(originId)) {
+    details.push({ field: `${prefix}.originId`, message: "産地のIDが不正です" });
+  }
+
+  if (!isMissing(farmName)) {
+    if (typeof farmName !== "string") {
+      details.push({ field: `${prefix}.farmName`, message: "文字列で指定してください" });
+    } else if (farmName.trim().length > MAX_LENGTH.farmName) {
+      details.push({
+        field: `${prefix}.farmName`,
+        message: `${MAX_LENGTH.farmName}文字以内で入力してください`,
+      });
+    }
+  }
+
+  if (!isMissing(varietyIds)) {
+    if (!Array.isArray(varietyIds)) {
+      details.push({ field: `${prefix}.varietyIds`, message: "配列で指定してください" });
+    } else if (varietyIds.some((id) => !isObjectIdString(id))) {
+      details.push({ field: `${prefix}.varietyIds`, message: "選択された項目のIDが不正です" });
+    }
+  }
+
+  if (!isMissing(processId) && !isObjectIdString(processId)) {
+    details.push({ field: `${prefix}.processId`, message: "精製方法のIDが不正です" });
+  }
+};
+
+const validateComponents = (value, details) => {
+  if (isMissing(value)) return;
+
+  if (!Array.isArray(value)) {
+    details.push({ field: "components", message: "配列で指定してください" });
+    return;
+  }
+  if (value.length > MAX_COMPONENTS) {
+    details.push({ field: "components", message: `コーヒーの詳細は${MAX_COMPONENTS}件までです` });
+    return;
+  }
+
+  value.forEach((component, index) => validateComponent(component, index, details));
+};
+
 const validateBrewNumber = (field, value, details) => {
   // 未記録を許可する（doseWeight等はdefault null）
   if (isMissing(value)) return;
@@ -244,6 +305,7 @@ export const validateCreateCoffeeRecord = (body = {}) => {
   for (const field of MULTI_REF_FIELDS) {
     validateMultiRef(field, body[field], details);
   }
+  validateComponents(body.components, details);
   for (const field of BREW_NUMERIC_FIELDS) {
     validateBrewNumber(field, body[field], details);
   }
@@ -291,6 +353,7 @@ export const validateUpdateCoffeeRecord = (body = {}) => {
   for (const field of MULTI_REF_FIELDS) {
     if (field in body) validateMultiRef(field, body[field], details);
   }
+  if ("components" in body) validateComponents(body.components, details);
   for (const field of BREW_NUMERIC_FIELDS) {
     if (field in body) validateBrewNumber(field, body[field], details);
   }
@@ -315,6 +378,7 @@ export const pickCoffeeRecordFields = (body = {}) => {
     ...TASTE_FIELDS,
     ...SINGLE_REF_FIELDS,
     ...MULTI_REF_FIELDS,
+    "components",
     ...BREW_NUMERIC_FIELDS,
     "pours",
   ];

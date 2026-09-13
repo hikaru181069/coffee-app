@@ -40,10 +40,7 @@ const BASE_RECORD = {
   rating: 4,
   notes: "",
   cafeName: "",
-  origins: [],
-  farmName: "",
-  varieties: [],
-  process: null,
+  components: [],
   roastLevel: null,
   roasterName: "",
   flavors: [],
@@ -58,8 +55,7 @@ const BASE_RECORD = {
 const FULL_RECORD = {
   ...BASE_RECORD,
   notes: "華やかでベリーのような香り。",
-  origins: [{ id: "o1", name: "Ethiopia" }],
-  process: { id: "p1", name: "Natural" },
+  components: [{ origin: { id: "o1", name: "Ethiopia" }, process: { id: "p1", name: "Natural" } }],
   roastLevel: { id: "rl1", name: "Light" },
   flavors: [{ id: "f1", name: "Berry" }],
   tasteAcidity: 4,
@@ -133,7 +129,7 @@ describe("RecordDetailPage", () => {
   });
 
   test("産地が無い記録では地図で見るリンクを表示しない", async () => {
-    fetchCoffeeRecord.mockResolvedValue({ ...FULL_RECORD, origins: [] });
+    fetchCoffeeRecord.mockResolvedValue({ ...FULL_RECORD, components: [] });
     renderRecordDetailPage();
 
     await screen.findByRole("heading", { name: "Ethiopia Guji Natural" });

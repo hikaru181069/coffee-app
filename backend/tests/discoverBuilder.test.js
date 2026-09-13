@@ -12,6 +12,9 @@ const ORIGIN_KENYA = { id: "origin-kenya", name: "Kenya" };
 const PROCESS_NATURAL = { id: "process-natural", name: "Natural" };
 const PROCESS_WASHED = { id: "process-washed", name: "Washed" };
 
+/** 「コーヒーの詳細」1グループ分のテスト用オブジェクトを作る */
+const component = (overrides = {}) => ({ origin: null, farmName: "", varieties: [], process: null, ...overrides });
+
 const buildRecord = (overrides = {}) => ({
   id: "record-1",
   title: "Test Coffee",
@@ -19,10 +22,7 @@ const buildRecord = (overrides = {}) => ({
   recordType: "home",
   rating: null,
   notes: "",
-  origins: [],
-  farmName: "",
-  varieties: [],
-  process: null,
+  components: [],
   roastLevel: null,
   flavors: [],
   ...overrides,
@@ -44,14 +44,16 @@ describe("記録が不十分なとき", () => {
   });
 
   test("対象産地の記録が1件（閾値未満）なら何も提案しない", () => {
-    const records = [buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL })];
+    const records = [
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
+    ];
     expect(buildOriginDiscovery(records, CQI_DATASET, "Ethiopia")).toEqual({ suggestions: [] });
   });
 
   test("その産地の精製方法が同率首位のときは断定しない", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], process: PROCESS_WASHED }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_WASHED })] }),
     ];
     expect(buildOriginDiscovery(records, CQI_DATASET, "Ethiopia")).toEqual({ suggestions: [] });
   });
@@ -60,8 +62,8 @@ describe("記録が不十分なとき", () => {
 describe("提案の生成", () => {
   test("同じ精製方法で品質スコアが高い、まだ試していない産地を提案する", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
     ];
 
     const { suggestions } = buildOriginDiscovery(records, CQI_DATASET, "Ethiopia");
@@ -83,9 +85,9 @@ describe("提案の生成", () => {
 
   test("最大2件までしか提案しない", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
-      buildRecord({ id: "c", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
+      buildRecord({ id: "c", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
     ];
 
     const { suggestions } = buildOriginDiscovery(records, CQI_DATASET, "Ethiopia");
@@ -94,10 +96,13 @@ describe("提案の生成", () => {
 
   test("すでに記録した産地は候補から除外する", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
       // Panamaは精製方法が違っても、一度でも記録していれば「未経験」ではない
-      buildRecord({ id: "c", origins: [{ id: "origin-panama", name: "Panama" }], process: PROCESS_WASHED }),
+      buildRecord({
+        id: "c",
+        components: [component({ origin: { id: "origin-panama", name: "Panama" }, process: PROCESS_WASHED })],
+      }),
     ];
 
     const { suggestions } = buildOriginDiscovery(records, CQI_DATASET, "Ethiopia");
@@ -107,28 +112,59 @@ describe("提案の生成", () => {
 
   test("CQIに一致する精製方法のデータが無ければ何も提案しない", () => {
     const records = [
-      buildRecord({ id: "a", origins: [ORIGIN_KENYA], process: { id: "process-honey", name: "Honey" } }),
-      buildRecord({ id: "b", origins: [ORIGIN_KENYA], process: { id: "process-honey", name: "Honey" } }),
+      buildRecord({
+        id: "a",
+        components: [component({ origin: ORIGIN_KENYA, process: { id: "process-honey", name: "Honey" } })],
+      }),
+      buildRecord({
+        id: "b",
+        components: [component({ origin: ORIGIN_KENYA, process: { id: "process-honey", name: "Honey" } })],
+      }),
     ];
 
     expect(buildOriginDiscovery(records, CQI_DATASET, "Kenya")).toEqual({ suggestions: [] });
+  });
+
+  test("ブレンド記録では、対象産地とペアになっているcomponentの精製方法だけを見る（別産地の精製方法と混同しない）", () => {
+    // 各記録は Ethiopia×Natural と Kenya×Washed の2componentを持つブレンド。
+    // Ethiopiaを見るときはNaturalだけを数え、Washedを混ぜない
+    const blendComponents = [
+      component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL }),
+      component({ origin: ORIGIN_KENYA, process: PROCESS_WASHED }),
+    ];
+    const records = [
+      buildRecord({ id: "a", components: blendComponents }),
+      buildRecord({ id: "b", components: blendComponents }),
+    ];
+
+    const { suggestions } = buildOriginDiscovery(records, CQI_DATASET, "Ethiopia");
+
+    // もしWashedと混同していたら、Ethiopia×Washedの精製方法が同率になり
+    // 断定できず空配列になってしまう。Naturalだけで正しく提案が出ることを確認
+    expect(suggestions[0]).toEqual({
+      type: "similarProcessOrigin",
+      basedOn: { originLabel: "Ethiopia", processLabel: "Natural", count: 2 },
+      suggestedOrigin: { label: "Panama", avgQualityScore: 86.1 },
+    });
   });
 });
 
 describe("buildDiscoverTeaser（Home画面用の全産地横断1件）", () => {
   test("どの産地も条件を満たさなければnull", () => {
-    const records = [buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL })];
+    const records = [
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
+    ];
     expect(buildDiscoverTeaser(records, CQI_DATASET)).toEqual({ teaser: null });
   });
 
   test("複数の産地に候補があるとき、品質スコアが最も高い1件を選ぶ", () => {
     const records = [
       // Ethiopia×Natural → 候補の最高スコアはPanama(86.1)
-      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
-      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], process: PROCESS_NATURAL }),
+      buildRecord({ id: "a", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
+      buildRecord({ id: "b", components: [component({ origin: ORIGIN_ETHIOPIA, process: PROCESS_NATURAL })] }),
       // Kenya×Washed → 候補はCQIに無い（Kenya×Washedしかエントリが無く、他産地のWashedデータが無いため空）
-      buildRecord({ id: "c", origins: [ORIGIN_KENYA], process: PROCESS_WASHED }),
-      buildRecord({ id: "d", origins: [ORIGIN_KENYA], process: PROCESS_WASHED }),
+      buildRecord({ id: "c", components: [component({ origin: ORIGIN_KENYA, process: PROCESS_WASHED })] }),
+      buildRecord({ id: "d", components: [component({ origin: ORIGIN_KENYA, process: PROCESS_WASHED })] }),
     ];
 
     const { teaser } = buildDiscoverTeaser(records, CQI_DATASET);

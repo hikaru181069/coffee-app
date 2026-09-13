@@ -65,8 +65,8 @@ describe("GET /api/graph", () => {
     await seedTestMasterData();
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
 
-    await createRecordFor(alice.user._id, { title: "Aliceの記録", originIds: [origin._id] });
-    await createRecordFor(bob.user._id, { title: "Bobの記録", originIds: [origin._id] });
+    await createRecordFor(alice.user._id, { title: "Aliceの記録", components: [{ originId: origin._id }] });
+    await createRecordFor(bob.user._id, { title: "Bobの記録", components: [{ originId: origin._id }] });
 
     const res = await request(app).get(GRAPH_ENDPOINT).set("Authorization", alice.authHeader);
 
@@ -81,7 +81,7 @@ describe("GET /api/graph", () => {
     const flavor = await Flavor.findOne({ normalizedName: "citrus" });
 
     await createRecordFor(alice.user._id, {
-      originIds: [origin._id],
+      components: [{ originId: origin._id }],
       flavorIds: [flavor._id],
     });
 
@@ -97,9 +97,9 @@ describe("GET /api/graph", () => {
     await seedTestMasterData();
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
 
-    await createRecordFor(alice.user._id, { title: "1杯目", originIds: [origin._id] });
-    await createRecordFor(alice.user._id, { title: "2杯目", originIds: [origin._id] });
-    await createRecordFor(alice.user._id, { title: "3杯目", originIds: [origin._id] });
+    await createRecordFor(alice.user._id, { title: "1杯目", components: [{ originId: origin._id }] });
+    await createRecordFor(alice.user._id, { title: "2杯目", components: [{ originId: origin._id }] });
+    await createRecordFor(alice.user._id, { title: "3杯目", components: [{ originId: origin._id }] });
 
     const res = await request(app).get(GRAPH_ENDPOINT).set("Authorization", alice.authHeader);
 
@@ -171,7 +171,7 @@ describe("GET /api/graph", () => {
       const origin = await Origin.findOne({ normalizedName: "ethiopia" });
       const flavor = await Flavor.findOne({ normalizedName: "citrus" });
 
-      await createRecordFor(alice.user._id, { originIds: [origin._id], flavorIds: [flavor._id] });
+      await createRecordFor(alice.user._id, { components: [{ originId: origin._id }], flavorIds: [flavor._id] });
 
       const res = await request(app)
         .get(GRAPH_ENDPOINT)
@@ -198,11 +198,11 @@ describe("GET /api/graph/nodes/:nodeId/records", () => {
     await seedTestMasterData();
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
 
-    await createRecordFor(alice.user._id, { title: "1杯目", originIds: [origin._id] });
-    await createRecordFor(alice.user._id, { title: "2杯目", originIds: [origin._id] });
+    await createRecordFor(alice.user._id, { title: "1杯目", components: [{ originId: origin._id }] });
+    await createRecordFor(alice.user._id, { title: "2杯目", components: [{ originId: origin._id }] });
     await createRecordFor(alice.user._id, {
       title: "無関係",
-      originIds: [(await Origin.findOne({ normalizedName: "kenya" }))._id],
+      components: [{ originId: (await Origin.findOne({ normalizedName: "kenya" }))._id }],
     });
 
     const nodeId = encodeURIComponent(`origin:${origin._id}`);
@@ -218,7 +218,7 @@ describe("GET /api/graph/nodes/:nodeId/records", () => {
     await seedTestMasterData();
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
     await createRecordFor(alice.user._id, {
-      originIds: [origin._id],
+      components: [{ originId: origin._id }],
       notes: "レモンのような明るい酸味",
     });
 
@@ -233,7 +233,7 @@ describe("GET /api/graph/nodes/:nodeId/records", () => {
   test("他ユーザーの記録から作られたノードは404（存在を教えない）", async () => {
     await seedTestMasterData();
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
-    await createRecordFor(bob.user._id, { originIds: [origin._id] });
+    await createRecordFor(bob.user._id, { components: [{ originId: origin._id }] });
 
     // Aliceは同じ産地の記録を持っていないので、Aliceのグラフにこのノードは無い
     const nodeId = encodeURIComponent(`origin:${origin._id}`);
@@ -284,14 +284,13 @@ describe("GET /api/graph/nodes/:nodeId", () => {
     const flavor = await Flavor.findOne({ normalizedName: "berry" });
 
     await createRecordFor(alice.user._id, {
-      originIds: [origin._id],
-      processId: process._id,
+      components: [{ originId: origin._id, processId: process._id }],
       flavorIds: [flavor._id],
       rating: 5,
       consumedAt: new Date("2026-06-01"),
     });
     await createRecordFor(alice.user._id, {
-      originIds: [origin._id],
+      components: [{ originId: origin._id }],
       rating: 3,
       consumedAt: new Date("2026-07-01"),
     });
@@ -320,7 +319,7 @@ describe("GET /api/graph/nodes/:nodeId", () => {
   test("他ユーザーの記録から作られたノードは404（存在を教えない）", async () => {
     await seedTestMasterData();
     const origin = await Origin.findOne({ normalizedName: "ethiopia" });
-    await createRecordFor(bob.user._id, { originIds: [origin._id] });
+    await createRecordFor(bob.user._id, { components: [{ originId: origin._id }] });
 
     const nodeId = encodeURIComponent(`origin:${origin._id}`);
     const res = await request(app)

@@ -74,7 +74,7 @@ export const validateRecordForm = (values = {}, t) => {
     }
   }
 
-  for (const field of ["notes", "cafeName", "roasterName", "farmName"]) {
+  for (const field of ["notes", "cafeName", "roasterName"]) {
     const value = (values[field] ?? "").trim();
     if (value.length > MAX_LENGTH[field]) {
       errors[field] = t("validation.maxLength", { max: MAX_LENGTH[field] });
@@ -111,10 +111,17 @@ export const toApiPayload = (values) => ({
   cafeName: values.recordType === "cafe" ? values.cafeName.trim() : "",
   roasterName: values.roasterName.trim(),
 
-  originIds: values.originIds ?? [],
-  farmName: values.farmName.trim(),
-  varietyIds: values.varietyIds ?? [],
-  processId: values.processId || null,
+  // 2026-09、ブレンドコーヒー対応で産地・農園・品種・精製方法は
+  // 「コーヒーの詳細」（components）の配列へまとめた（docs/domain-model.md参照）。
+  // 農園名の文字数チェックはここでは行わず（グループごとに行うと
+  // errorsオブジェクトのキー設計が複雑になるため）、サーバー側の検証に委ねる。
+  // 超過時はRecordForm.jsxの汎用エラーバナー（isValidationError）で気づける
+  components: (values.components ?? []).map((component) => ({
+    originId: component.originId || null,
+    farmName: component.farmName.trim(),
+    varietyIds: component.varietyIds ?? [],
+    processId: component.processId || null,
+  })),
   roastLevelId: values.roastLevelId || null,
   flavorIds: values.flavorIds ?? [],
 

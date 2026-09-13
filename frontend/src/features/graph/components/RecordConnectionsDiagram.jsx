@@ -22,8 +22,8 @@ import { buildRecordConnectionsLayout } from "../utils/recordConnectionsLayout";
 function RecordConnectionsDiagram({ record }) {
   const { t } = useTranslation();
   const layout = buildRecordConnectionsLayout({
-    origins: record.origins ?? [],
-    process: record.process,
+    origins: (record.components ?? []).map((component) => component.origin).filter(Boolean),
+    processes: (record.components ?? []).map((component) => component.process).filter(Boolean),
     roastLevel: record.roastLevel,
     flavors: record.flavors ?? [],
   });
