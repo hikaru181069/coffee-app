@@ -17,7 +17,7 @@ const BASE_RECORD = {
   recordType: "home",
   rating: null,
   cafeName: "",
-  origin: null,
+  origins: [],
   process: null,
   flavors: [],
 };
@@ -54,7 +54,7 @@ describe("RecordCard", () => {
   });
 
   test("originがあれば産地名とエンティティ詳細へのリンクを表示する", () => {
-    renderCard({ ...BASE_RECORD, origin: { id: "o1", name: "Ethiopia" } });
+    renderCard({ ...BASE_RECORD, origins: [{ id: "o1", name: "Ethiopia" }] });
 
     expect(screen.getByRole("link", { name: "Ethiopia" })).toHaveAttribute(
       "href",
@@ -97,7 +97,7 @@ describe("RecordCard", () => {
   });
 
   test("何か要素があればヒント文は出さない", () => {
-    renderCard({ ...BASE_RECORD, origin: { id: "o1", name: "Ethiopia" } });
+    renderCard({ ...BASE_RECORD, origins: [{ id: "o1", name: "Ethiopia" }] });
     expect(
       screen.queryByText("産地やフレーバーを追加すると、ほかの記録とのつながりが見えるようになります。"),
     ).not.toBeInTheDocument();

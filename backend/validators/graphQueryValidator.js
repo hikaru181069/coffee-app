@@ -6,7 +6,7 @@ import { isMissing } from "../utils/isMissing.js";
  * GET /api/graph のクエリ文字列を検証・変換する。
  *
  * docs/api.md に列挙されているクエリはnodeTypes・recordType・dateFrom・
- * dateTo・ratingMinの5つ。一覧APIと違い、originId/flavorIdでの絞り込みは
+ * dateTo・ratingMinの5つ。一覧APIと違い、originIds/flavorIdsでの絞り込みは
  * 持たない（グラフ自体がそれらのノードを探索する画面のため）。
  */
 
@@ -38,7 +38,7 @@ export const validateGraphQuery = (rawQuery = {}) => {
   }
 
   // recordType・ratingMin・期間の検証は一覧APIと共通。
-  // originId/flavorIdはgraphのクエリに含めない（このファイル冒頭の説明を参照）
+  // originIds/flavorIdsはgraphのクエリに含めない（このファイル冒頭の説明を参照）
   const filterResult = validateRecordFilterQuery(rawQuery, {
     includeReferenceFilters: false,
   });

@@ -27,7 +27,7 @@ const emptyValues = () => ({
   notes: "",
   cafeName: "",
   roasterName: "",
-  originId: "",
+  originIds: [],
   farmName: "",
   varietyIds: [],
   processId: "",
@@ -51,7 +51,7 @@ const toFormValues = (record) => ({
   notes: record.notes ?? "",
   cafeName: record.cafeName ?? "",
   roasterName: record.roasterName ?? "",
-  originId: record.origin?.id ?? "",
+  originIds: (record.origins ?? []).map((origin) => origin.id),
   farmName: record.farmName ?? "",
   varietyIds: (record.varieties ?? []).map((variety) => variety.id),
   processId: record.process?.id ?? "",
@@ -70,10 +70,11 @@ const toFormValues = (record) => ({
 /**
  * @param {object|null} record 編集対象。新規作成なら null（作成/更新どちらの
  *   APIを呼ぶかもこれで判断する）
- * @param {string|null} [prefillOriginId] 新規作成時にoriginIdへ事前入力する値
- *   （Discoverの「この産地を記録してみる」から遷移した場合。
+ * @param {string|null} [prefillOriginId] 新規作成時にoriginIdsへ事前入力する
+ *   産地1件分の値（Discoverの「この産地を記録してみる」から遷移した場合。
  *   RecordFormPage.jsxがクエリ文字列の産地名をmasterDataと突き合わせて
- *   解決した結果を渡す）
+ *   解決した結果を渡す。Discoverの提案は常に1産地のため、渡ってくる値
+ *   自体は単一のまま。originIds配列には1要素として反映する）
  */
 export const useRecordForm = (record, prefillOriginId = null) => {
   const { t } = useTranslation();
@@ -109,8 +110,8 @@ export const useRecordForm = (record, prefillOriginId = null) => {
   const [appliedPrefillOriginId, setAppliedPrefillOriginId] = useState(null);
   if (!record && prefillOriginId && prefillOriginId !== appliedPrefillOriginId) {
     setAppliedPrefillOriginId(prefillOriginId);
-    setValues((prev) => ({ ...prev, originId: prefillOriginId }));
-    setInitialValues((prev) => ({ ...prev, originId: prefillOriginId }));
+    setValues((prev) => ({ ...prev, originIds: [prefillOriginId] }));
+    setInitialValues((prev) => ({ ...prev, originIds: [prefillOriginId] }));
   }
 
   // toFormValues/emptyValuesは常に同じキー順でプレーンな文字列・配列だけを

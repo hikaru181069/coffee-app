@@ -159,7 +159,7 @@ describe("POST /api/coffee-records", () => {
       .set("Authorization", alice.authHeader)
       .send(
         buildRecordPayload({
-          originId: String(origin._id),
+          originIds: [String(origin._id)],
           flavorIds: [String(flavor._id)],
         }),
       );
@@ -167,7 +167,7 @@ describe("POST /api/coffee-records", () => {
     expect(res.status).toBe(201);
     // countryCodeはseeds/data/origins.jsの実データ（世界地図機能向け、
     // backend/repositories/coffeeRecordRepository.jsのpopulateで取得）
-    expect(res.body.data.origin).toEqual({ id: String(origin._id), name: "Ethiopia", countryCode: "ET" });
+    expect(res.body.data.origins).toEqual([{ id: String(origin._id), name: "Ethiopia", countryCode: "ET" }]);
     expect(res.body.data.flavors[0].name).toBe("Citrus");
   });
 
@@ -175,17 +175,17 @@ describe("POST /api/coffee-records", () => {
     const res = await request(app)
       .post(ENDPOINT)
       .set("Authorization", alice.authHeader)
-      .send(buildRecordPayload({ originId: NON_EXISTENT_ID }));
+      .send(buildRecordPayload({ originIds: [NON_EXISTENT_ID] }));
 
     expect(res.status).toBe(400);
-    expect(res.body.error.details[0].field).toBe("originId");
+    expect(res.body.error.details[0].field).toBe("originIds");
   });
 
   test("IDの形式が不正なら400（500にしない）", async () => {
     const res = await request(app)
       .post(ENDPOINT)
       .set("Authorization", alice.authHeader)
-      .send(buildRecordPayload({ originId: "abc" }));
+      .send(buildRecordPayload({ originIds: ["abc"] }));
 
     expect(res.status).toBe(400);
   });
@@ -358,7 +358,7 @@ describe("GET /api/coffee-records", () => {
       const origin = await Origin.findOne({ normalizedName: "kenya" });
       await createRecordFor(alice.user._id, {
         title: "ケニア",
-        originId: origin._id,
+        originIds: [origin._id],
       });
 
       const res = await request(app)
@@ -375,9 +375,9 @@ describe("GET /api/coffee-records", () => {
       const kenya = await Origin.findOne({ normalizedName: "kenya" });
       const ethiopia = await Origin.findOne({ normalizedName: "ethiopia" });
       const panama = await Origin.findOne({ normalizedName: "panama" });
-      await createRecordFor(alice.user._id, { title: "ケニア", originId: kenya._id });
-      await createRecordFor(alice.user._id, { title: "エチオピア", originId: ethiopia._id });
-      await createRecordFor(alice.user._id, { title: "パナマ", originId: panama._id });
+      await createRecordFor(alice.user._id, { title: "ケニア", originIds: [kenya._id] });
+      await createRecordFor(alice.user._id, { title: "エチオピア", originIds: [ethiopia._id] });
+      await createRecordFor(alice.user._id, { title: "パナマ", originIds: [panama._id] });
 
       const res = await request(app)
         .get(ENDPOINT)

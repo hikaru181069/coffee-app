@@ -21,7 +21,7 @@ const buildRecord = (overrides = {}) => ({
   recordType: "home",
   rating: null,
   notes: "",
-  origin: null,
+  origins: [],
   farmName: "",
   varieties: [],
   process: null,
@@ -33,7 +33,7 @@ const buildRecord = (overrides = {}) => ({
 
 describe("空・該当なし", () => {
   test("クエリが空文字なら何も返さない", () => {
-    const records = [buildRecord({ origin: ORIGIN_ETHIOPIA })];
+    const records = [buildRecord({ origins: [ORIGIN_ETHIOPIA] })];
     expect(buildSearchResults(records, "")).toEqual({ entities: [], entitiesTruncated: false, records: [] });
   });
 
@@ -42,14 +42,14 @@ describe("空・該当なし", () => {
   });
 
   test("一致するものが無ければ空配列を返す", () => {
-    const records = [buildRecord({ origin: ORIGIN_ETHIOPIA })];
+    const records = [buildRecord({ origins: [ORIGIN_ETHIOPIA] })];
     expect(buildSearchResults(records, "brazil")).toEqual({ entities: [], entitiesTruncated: false, records: [] });
   });
 });
 
 describe("属性ノードの検索", () => {
   test("産地名で部分一致・大文字小文字を区別せず検索できる", () => {
-    const records = [buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA })];
+    const records = [buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] })];
     const { entities } = buildSearchResults(records, "ETHIO");
 
     expect(entities).toHaveLength(1);
@@ -58,8 +58,8 @@ describe("属性ノードの検索", () => {
 
   test("同じ産地の記録が複数あればrecordCountに反映される", () => {
     const records = [
-      buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA }),
-      buildRecord({ id: "b", origin: ORIGIN_ETHIOPIA }),
+      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] }),
+      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA] }),
     ];
     const { entities } = buildSearchResults(records, "ethiopia");
 
@@ -78,9 +78,9 @@ describe("属性ノードの検索", () => {
 describe("関連するフレーバー・産地", () => {
   test("産地ヒット時は共起するフレーバーを登場回数順に返す", () => {
     const records = [
-      buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA, flavors: [FLAVOR_BERRY, FLAVOR_FLORAL] }),
-      buildRecord({ id: "b", origin: ORIGIN_ETHIOPIA, flavors: [FLAVOR_BERRY] }),
-      buildRecord({ id: "c", origin: ORIGIN_ETHIOPIA, flavors: [FLAVOR_CITRUS] }),
+      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], flavors: [FLAVOR_BERRY, FLAVOR_FLORAL] }),
+      buildRecord({ id: "b", origins: [ORIGIN_ETHIOPIA], flavors: [FLAVOR_BERRY] }),
+      buildRecord({ id: "c", origins: [ORIGIN_ETHIOPIA], flavors: [FLAVOR_CITRUS] }),
     ];
     const { entities } = buildSearchResults(records, "ethiopia");
 
@@ -90,8 +90,8 @@ describe("関連するフレーバー・産地", () => {
 
   test("フレーバーヒット時は共起する産地を返す", () => {
     const records = [
-      buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA, flavors: [FLAVOR_BERRY] }),
-      buildRecord({ id: "b", origin: ORIGIN_KENYA, flavors: [FLAVOR_BERRY] }),
+      buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA], flavors: [FLAVOR_BERRY] }),
+      buildRecord({ id: "b", origins: [ORIGIN_KENYA], flavors: [FLAVOR_BERRY] }),
     ];
     const { entities } = buildSearchResults(records, "berry");
 
@@ -100,7 +100,7 @@ describe("関連するフレーバー・産地", () => {
   });
 
   test("他の記録と一切共起しなければ空配列を返す", () => {
-    const records = [buildRecord({ id: "a", origin: ORIGIN_ETHIOPIA })];
+    const records = [buildRecord({ id: "a", origins: [ORIGIN_ETHIOPIA] })];
     const { entities } = buildSearchResults(records, "ethiopia");
 
     expect(entities[0].relatedLabels).toEqual([]);
@@ -121,7 +121,7 @@ describe("記録タイトルの検索", () => {
 
   test("属性ヒットと記録ヒットは同時に返ることがある", () => {
     const records = [
-      buildRecord({ id: "a", title: "My Ethiopia Cup", origin: ORIGIN_ETHIOPIA }),
+      buildRecord({ id: "a", title: "My Ethiopia Cup", origins: [ORIGIN_ETHIOPIA] }),
     ];
     const result = buildSearchResults(records, "ethiopia");
 

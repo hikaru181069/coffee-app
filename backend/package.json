@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "nodemon --exec tsx server.js",
     "start": "tsx server.js",
-    "seed": "node seeds/run.js",
-    "seed:demo": "node seeds/runDemo.js",
+    "seed": "tsx seeds/run.js",
+    "seed:demo": "tsx seeds/runDemo.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

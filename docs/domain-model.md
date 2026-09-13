@@ -11,8 +11,15 @@ userId、title、consumedAt、recordType。これらは必須項目である。
 rating、notes、産地、品種、フレーバー、6軸の味覚評価（甘み・苦み・酸味・
 コク・香り・後味）。これらは任意項目である。
 
+産地（`originIds`）は、2026-09のブレンドコーヒー対応で品種
+（`varietyIds`）・フレーバー（`flavorIds`）と同じ複数参照（配列）に
+変更した。1つの記録が複数の産地を持てるようにするためで、単一の
+豆であれば要素数1の配列として扱う（`docs/features.md`の各機能の
+「複数記録をまたいだ関係性」節も、ブレンド記録は含まれるすべての
+産地の集計へ1件としてカウントする前提へ揃えている）。
+
 6軸の味覚評価は、記録詳細ページの味覚グラフ（レーダーチャート）用に
-ユーザーが手動で1〜5評価する項目（`backend/models/CoffeeRecord.js`の
+ユーザーが手動で1〜5評価する項目（`backend/models/CoffeeRecord.ts`の
 `tasteSweetness`等）。`backend/data/tasteKeywords.json`のcategoryと
 呼び名を揃えているが、notesから自動抽出される仕組みとは独立しており、
 知識グラフのノードにもならない（下記「Knowledge Graph Terms」参照）。

@@ -186,7 +186,6 @@ describe("マスターデータへの参照", () => {
   test("未選択（null）を許可する", async () => {
     const record = buildRecord();
 
-    expect(record.originId).toBeNull();
     expect(record.processId).toBeNull();
     expect(record.roastLevelId).toBeNull();
     expect(await errorFields(record)).toEqual([]);
@@ -195,13 +194,15 @@ describe("マスターデータへの参照", () => {
   test("配列の既定値は空配列", () => {
     const record = buildRecord();
 
+    expect(record.originIds).toEqual([]);
     expect(record.varietyIds).toEqual([]);
     expect(record.flavorIds).toEqual([]);
   });
 
   test("ObjectIdとして解釈できない値は拒否する", async () => {
-    expect(await errorFields(buildRecord({ originId: "not-an-id" }))).toContain(
-      "originId",
+    // 配列要素のcastエラーは"originIds.0"のようにインデックス付きのキーになる
+    expect(await errorFields(buildRecord({ originIds: ["not-an-id"] }))).toContain(
+      "originIds.0",
     );
   });
 });
@@ -240,7 +241,7 @@ describe("インデックス", () => {
       .map(([fields]) => JSON.stringify(fields));
 
     expect(defined).toContain(JSON.stringify({ userId: 1, consumedAt: -1 }));
-    expect(defined).toContain(JSON.stringify({ userId: 1, originId: 1 }));
+    expect(defined).toContain(JSON.stringify({ userId: 1, originIds: 1 }));
     expect(defined).toContain(JSON.stringify({ userId: 1, flavorIds: 1 }));
   });
 });

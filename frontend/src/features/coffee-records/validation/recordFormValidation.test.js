@@ -22,7 +22,7 @@ const buildValues = (overrides = {}) => ({
   cafeName: "",
   roasterName: "",
   farmName: "",
-  originId: "",
+  originIds: [],
   varietyIds: [],
   processId: "",
   roastLevelId: "",
@@ -100,14 +100,14 @@ describe("toApiPayload", () => {
         title: "  Ethiopia Natural  ",
         rating: "5",
         notes: "  美味しい  ",
-        originId: "origin-1",
+        originIds: ["origin-1"],
       }),
     );
 
     expect(payload.title).toBe("Ethiopia Natural");
     expect(payload.rating).toBe(5);
     expect(payload.notes).toBe("美味しい");
-    expect(payload.originId).toBe("origin-1");
+    expect(payload.originIds).toEqual(["origin-1"]);
   });
 
   test("ratingが空文字ならnullにする（未評価）", () => {
@@ -125,11 +125,15 @@ describe("toApiPayload", () => {
     expect(payload.cafeName).toBe("Blue Bottle Coffee");
   });
 
-  test("未選択の参照項目は空文字ではなくnullにする（サーバーが選択解除として扱うため）", () => {
-    const payload = toApiPayload(buildValues({ originId: "", processId: "", roastLevelId: "" }));
-    expect(payload.originId).toBeNull();
+  test("未選択の単一参照項目は空文字ではなくnullにする（サーバーが選択解除として扱うため）", () => {
+    const payload = toApiPayload(buildValues({ processId: "", roastLevelId: "" }));
     expect(payload.processId).toBeNull();
     expect(payload.roastLevelId).toBeNull();
+  });
+
+  test("未選択の複数参照項目（originIds等）は空配列のまま送る", () => {
+    const payload = toApiPayload(buildValues({ originIds: [] }));
+    expect(payload.originIds).toEqual([]);
   });
 
   test("味覚グラフの6軸は数値へ変換し、空文字はnullにする", () => {

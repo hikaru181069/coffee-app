@@ -74,19 +74,19 @@ describe("GET /api/similar-records/:recordId", () => {
 
     const target = await createRecordFor(alice.user._id, {
       title: "対象記録",
-      originId: ethiopia._id,
+      originIds: [ethiopia._id],
       processId: natural._id,
     });
     // 産地・精製方法の2件を共有 → 候補になる
     const similar = await createRecordFor(alice.user._id, {
       title: "似た記録",
-      originId: ethiopia._id,
+      originIds: [ethiopia._id],
       processId: natural._id,
     });
     // 産地だけ共有（1件）→ 閾値未満のため候補外
     const notSimilarEnough = await createRecordFor(alice.user._id, {
       title: "産地だけ一致",
-      originId: ethiopia._id,
+      originIds: [ethiopia._id],
       processId: washed._id,
     });
 
@@ -111,11 +111,11 @@ describe("GET /api/similar-records/:recordId", () => {
     const natural = await Process.findOne({ normalizedName: "natural" });
 
     const target = await createRecordFor(alice.user._id, {
-      originId: ethiopia._id,
+      originIds: [ethiopia._id],
       processId: natural._id,
     });
     // Bobが全く同じ組み合わせを記録していても、Aliceの候補には出ない
-    await createRecordFor(bob.user._id, { originId: ethiopia._id, processId: natural._id });
+    await createRecordFor(bob.user._id, { originIds: [ethiopia._id], processId: natural._id });
 
     const res = await request(app)
       .get(`${SIMILAR_RECORDS_PATH}/${target._id}`)

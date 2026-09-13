@@ -22,7 +22,7 @@ import { buildRecordConnectionsLayout } from "../utils/recordConnectionsLayout";
 function RecordConnectionsDiagram({ record }) {
   const { t } = useTranslation();
   const layout = buildRecordConnectionsLayout({
-    origin: record.origin,
+    origins: record.origins ?? [],
     process: record.process,
     roastLevel: record.roastLevel,
     flavors: record.flavors ?? [],

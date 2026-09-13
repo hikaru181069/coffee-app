@@ -18,7 +18,7 @@ import { average, roundTo1 } from "../shared/aggregationHelpers.js";
 
 const TOP_N = 5;
 
-/** 単数の参照（origin/process）でグループ化し、stable IDをキーにする */
+/** 単数の参照（process）でグループ化し、stable IDをキーにする */
 const groupBySingleRef = (records, getRef, toNodeId) => {
   const groups = new Map();
   for (const record of records) {
@@ -31,7 +31,7 @@ const groupBySingleRef = (records, getRef, toNodeId) => {
   return groups;
 };
 
-/** 複数の参照（variety/flavor）でグループ化し、stable IDをキーにする */
+/** 複数の参照（origin/variety/flavor）でグループ化し、stable IDをキーにする */
 const groupByMultiRef = (records, getRefs, toNodeId) => {
   const groups = new Map();
   for (const record of records) {
@@ -122,7 +122,7 @@ const findFirstRecordedAt = (records) =>
  * @returns {object}
  */
 export const buildStats = (records) => {
-  const originGroups = groupBySingleRef(records, (record) => record.origin, originNodeId);
+  const originGroups = groupByMultiRef(records, (record) => record.origins, originNodeId);
   const varietyGroups = groupByMultiRef(records, (record) => record.varieties, varietyNodeId);
   const processGroups = groupBySingleRef(records, (record) => record.process, processNodeId);
   const flavorGroups = groupByMultiRef(records, (record) => record.flavors, flavorNodeId);

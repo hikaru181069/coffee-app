@@ -111,7 +111,7 @@ export const toApiPayload = (values) => ({
   cafeName: values.recordType === "cafe" ? values.cafeName.trim() : "",
   roasterName: values.roasterName.trim(),
 
-  originId: values.originId || null,
+  originIds: values.originIds ?? [],
   farmName: values.farmName.trim(),
   varietyIds: values.varietyIds ?? [],
   processId: values.processId || null,

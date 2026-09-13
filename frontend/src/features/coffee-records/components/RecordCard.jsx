@@ -47,6 +47,7 @@ const tagClass =
 function RecordCard({ record, index = 0 }) {
   const { t, i18n } = useTranslation();
   const flavors = record.flavors ?? [];
+  const origins = record.origins ?? [];
   const [ref, isVisible] = useReveal();
 
   return (
@@ -60,17 +61,20 @@ function RecordCard({ record, index = 0 }) {
         className="absolute inset-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
 
-      {record.origin && (
+      {origins.length > 0 && (
         <Link
-          to={entityDetailPath("origin", record.origin.id)}
+          to={entityDetailPath("origin", origins[0].id)}
           className="relative mb-2 inline-flex items-center gap-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50"
         >
-          <span
-            aria-hidden="true"
-            className={`h-3 w-0.5 rounded-full ${getOriginAccentClass(record.origin.name)}`}
-          />
+          {/* ブレンド（産地が複数）は産地の数だけ細いバーを並べる
+              （2026-09、ブレンドコーヒー対応。docs/design.md参照） */}
+          <span className="flex items-center gap-0.5" aria-hidden="true">
+            {origins.map((origin) => (
+              <span key={origin.id} className={`h-3 w-0.5 rounded-full ${getOriginAccentClass(origin.name)}`} />
+            ))}
+          </span>
           <span className="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary transition-colors duration-150 hover:text-text">
-            {record.origin.name}
+            {origins.map((origin) => origin.name).join(" / ")}
           </span>
         </Link>
       )}

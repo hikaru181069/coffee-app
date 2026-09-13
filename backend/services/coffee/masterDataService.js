@@ -49,11 +49,11 @@ export const listAllMasterData = async () => {
 export const verifyReferencesExist = async (fields = {}) => {
   // フィールド名 → マスターの種類 の対応
   const singleRefs = [
-    ["originId", "origins"],
     ["processId", "processes"],
     ["roastLevelId", "roastLevels"],
   ];
   const multiRefs = [
+    ["originIds", "origins"],
     ["varietyIds", "varieties"],
     ["flavorIds", "flavors"],
   ];

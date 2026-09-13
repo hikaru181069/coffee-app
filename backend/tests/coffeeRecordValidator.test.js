@@ -196,7 +196,7 @@ describe("validateCreateCoffeeRecord", () => {
   describe("マスターデータへの参照", () => {
     test("正しいObjectId文字列を受け入れる", () => {
       const body = validBody({
-        originId: VALID_ID,
+        originIds: [VALID_ID],
         processId: VALID_ID,
         roastLevelId: VALID_ID,
         varietyIds: [VALID_ID],
@@ -208,7 +208,7 @@ describe("validateCreateCoffeeRecord", () => {
 
     test("未選択（null / 空文字 / 空配列）を許可する", () => {
       const body = validBody({
-        originId: null,
+        originIds: [],
         processId: "",
         varietyIds: [],
         flavorIds: [],
@@ -219,8 +219,8 @@ describe("validateCreateCoffeeRecord", () => {
 
     test("不正なIDは拒否する（500ではなく400にするため）", () => {
       expect(
-        fieldsOf(validateCreateCoffeeRecord(validBody({ originId: "abc" }))),
-      ).toContain("originId");
+        fieldsOf(validateCreateCoffeeRecord(validBody({ originIds: ["abc"] }))),
+      ).toContain("originIds");
     });
 
     test("配列の中に1つでも不正なIDがあれば拒否する", () => {
@@ -273,9 +273,13 @@ describe("validateUpdateCoffeeRecord", () => {
   });
 
   test("null を明示的に送って選択を外せる", () => {
-    expect(validateUpdateCoffeeRecord({ originId: null }).valid).toBe(true);
+    expect(validateUpdateCoffeeRecord({ processId: null }).valid).toBe(true);
     expect(validateUpdateCoffeeRecord({ rating: null }).valid).toBe(true);
     expect(validateUpdateCoffeeRecord({ tasteSweetness: null }).valid).toBe(true);
+  });
+
+  test("空配列を送って複数選択を外せる", () => {
+    expect(validateUpdateCoffeeRecord({ originIds: [] }).valid).toBe(true);
   });
 
   test("不正なIDは拒否する", () => {

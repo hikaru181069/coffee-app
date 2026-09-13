@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { buildRecordConnectionsLayout, MAX_FLAVOR_NODES } from "./recordConnectionsLayout";
 
 const ORIGIN = { id: "origin:1", name: "Ethiopia" };
+const ORIGIN_2 = { id: "origin:2", name: "Kenya" };
 const PROCESS = { id: "process:1", name: "Washed" };
 const ROAST_LEVEL = { id: "roastLevel:1", name: "Medium" };
 const flavor = (n) => ({ id: `flavor:${n}`, name: `Flavor${n}` });
@@ -16,7 +17,7 @@ describe("buildRecordConnectionsLayout", () => {
   });
 
   test("origin/process/roastLevelはそれぞれ固定スロットに配置され、中心とedgeでつながる", () => {
-    const layout = buildRecordConnectionsLayout({ origin: ORIGIN, process: PROCESS, roastLevel: ROAST_LEVEL });
+    const layout = buildRecordConnectionsLayout({ origins: [ORIGIN], process: PROCESS, roastLevel: ROAST_LEVEL });
 
     expect(layout.nodes).toHaveLength(3);
     expect(layout.edges).toHaveLength(3);
@@ -29,8 +30,19 @@ describe("buildRecordConnectionsLayout", () => {
   });
 
   test("いずれかがnullなら、そのノード・edgeだけ作られない", () => {
-    const layout = buildRecordConnectionsLayout({ origin: ORIGIN, process: null, roastLevel: null });
+    const layout = buildRecordConnectionsLayout({ origins: [ORIGIN], process: null, roastLevel: null });
     expect(layout.nodes.map((n) => n.type)).toEqual(["origin"]);
+  });
+
+  test("産地が複数（ブレンド）なら、産地の数だけノードが横に並ぶ", () => {
+    const layout = buildRecordConnectionsLayout({ origins: [ORIGIN, ORIGIN_2] });
+
+    const originNodes = layout.nodes.filter((n) => n.type === "origin");
+    expect(originNodes).toHaveLength(2);
+    expect(originNodes.map((n) => n.label)).toEqual([ORIGIN.name, ORIGIN_2.name]);
+    // 2件なら中心(x=50)を挟んで左右対称に配置される
+    expect(originNodes[0].x).toBeLessThan(50);
+    expect(originNodes[1].x).toBeGreaterThan(50);
   });
 
   test("フレーバーは幹（中心→trunk）から扇状に分岐する", () => {
@@ -58,7 +70,7 @@ describe("buildRecordConnectionsLayout", () => {
   });
 
   test("flavorsを省略すると空配列扱いになる", () => {
-    const layout = buildRecordConnectionsLayout({ origin: ORIGIN });
+    const layout = buildRecordConnectionsLayout({ origins: [ORIGIN] });
     expect(layout.flavorOverflowCount).toBe(0);
     expect(layout.nodes.some((n) => n.type === "flavor")).toBe(false);
   });

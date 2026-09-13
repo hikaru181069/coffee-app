@@ -85,7 +85,7 @@ describe("validateGraphQuery", () => {
 
       // 一覧APIのvalidatorと違い、originIdsは無視され filter に含まれない。
       // 不正な値でもエラーにしない(そもそも見ていないフィールドのため)
-      expect(query.recordFilter).not.toHaveProperty("originId");
+      expect(query.recordFilter).not.toHaveProperty("originIds");
       expect(validateGraphQuery({ originIds: "abc" }).valid).toBe(true);
     });
   });

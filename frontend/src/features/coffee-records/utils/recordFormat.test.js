@@ -73,7 +73,7 @@ describe("formatConsumedAt / formatConsumedAtShort / formatMonthLabel", () => {
 describe("collectCoffeeDetails", () => {
   test("設定されている項目だけを{id,name}配列として返す", () => {
     const record = {
-      origin: { id: "origin:1", name: "Ethiopia" },
+      origins: [{ id: "origin:1", name: "Ethiopia" }],
       farmName: "",
       varieties: [],
       process: null,
@@ -84,7 +84,7 @@ describe("collectCoffeeDetails", () => {
 
     const details = collectCoffeeDetails(record, t);
 
-    expect(details.map((d) => d.key)).toEqual(["origin", "flavors"]);
+    expect(details.map((d) => d.key)).toEqual(["origins", "flavors"]);
     expect(details[0].items).toEqual([{ id: "origin:1", name: "Ethiopia" }]);
   });
 
@@ -110,7 +110,7 @@ describe("collectCoffeeDetails", () => {
 
 describe("hasCoffeeDetails", () => {
   test("いずれかの項目があればtrue", () => {
-    expect(hasCoffeeDetails({ origin: { name: "Ethiopia" } })).toBe(true);
+    expect(hasCoffeeDetails({ origins: [{ name: "Ethiopia" }] })).toBe(true);
     expect(hasCoffeeDetails({ flavors: [{ name: "Berry" }] })).toBe(true);
   });
 

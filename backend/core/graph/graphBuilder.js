@@ -50,8 +50,8 @@ export const ATTRIBUTE_NODE_TYPES = [
 /**
  * 1つの記録から生成される「属性の参照」を列挙する。
  *
- * record → 属性 の対応が7種類あり、単数（origin/process/roastLevel/
- * farm/cafe）と複数（variety/flavor）が混ざっている。ここで一度
+ * record → 属性 の対応が7種類あり、単数（process/roastLevel/farm/cafe）と
+ * 複数（origin/variety/flavor）が混ざっている。ここで一度
  * リストへ均すことで、buildGraph 側のループが1種類の書き方で済む。
  *
  * @param {object} record
@@ -63,15 +63,15 @@ export const ATTRIBUTE_NODE_TYPES = [
 const collectAttributeRefs = (record, flavorsByNormalizedName) => {
   const refs = [];
 
-  if (record.origin) {
+  for (const origin of record.origins ?? []) {
     refs.push({
       type: "origin",
-      id: originNodeId(record.origin.id),
-      label: record.origin.name,
+      id: originNodeId(origin.id),
+      label: origin.name,
       // countryCodeは世界地図機能（2026-08）向け。coffeeRecordSerializer.js
       // のserializeRefがOriginをpopulateしたときだけ返すフィールドなので、
       // 元々countryCodeを持たない産地（未設定のOrigin）ではnullになる
-      metadata: { originId: record.origin.id, countryCode: record.origin.countryCode ?? null },
+      metadata: { originId: origin.id, countryCode: origin.countryCode ?? null },
       edgeType: "ORIGIN",
     });
   }
