@@ -30,6 +30,7 @@
     "required": "必須",
     "optional": "任意",
     "saving": "保存中...",
+    "saved": "保存しました",
     "deleting": "削除中...",
     "deleteConfirmLabel": "削除する",
     "delete": "削除",

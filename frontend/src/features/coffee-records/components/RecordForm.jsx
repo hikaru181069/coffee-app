@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ChevronDown, Loader2, Plus } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import FormField from "./FormField";
 import RatingInput from "./RatingInput";
 import ChipMultiSelect from "./ChipMultiSelect";
 import CoffeeComponentFields from "./CoffeeComponentFields";
+import AttributeLabel from "./AttributeLabel";
 import {
   controlClass,
   textareaClass,
@@ -66,6 +67,7 @@ function RecordForm({
   masterDataError,
   submitLabel,
   prefillOriginId = null,
+  isJustSaved = false,
 }) {
   const { t } = useTranslation();
   const [isDetailsOpen, setIsDetailsOpen] = useState(() => hasExistingCoffeeDetails(values));
@@ -261,7 +263,11 @@ function RecordForm({
               </button>
             </div>
 
-            <FormField id="roastLevelId" label={t("recordForm.roastLevel")} error={errors.roastLevelId}>
+            <FormField
+              id="roastLevelId"
+              label={<AttributeLabel type="roastLevel">{t("recordForm.roastLevel")}</AttributeLabel>}
+              error={errors.roastLevelId}
+            >
               <select
                 id="roastLevelId"
                 value={values.roastLevelId}
@@ -278,7 +284,11 @@ function RecordForm({
               </select>
             </FormField>
 
-            <FormField id="flavorIds" label={t("recordForm.flavor")} hint={t("recordForm.multiSelectHint")}>
+            <FormField
+              id="flavorIds"
+              label={<AttributeLabel type="flavor">{t("recordForm.flavor")}</AttributeLabel>}
+              hint={t("recordForm.multiSelectHint")}
+            >
               <ChipMultiSelect
                 id="flavorIds"
                 options={masterData.flavors}
@@ -347,8 +357,12 @@ function RecordForm({
           {t("common.cancel")}
         </button>
         <button type="submit" disabled={isSubmitting} className={primaryButtonClass}>
-          {isSubmitting && <Loader2 size={16} aria-hidden="true" className="animate-spin" />}
-          {isSubmitting ? t("common.saving") : submitLabel}
+          {isJustSaved ? (
+            <Check size={16} aria-hidden="true" />
+          ) : (
+            isSubmitting && <Loader2 size={16} aria-hidden="true" className="animate-spin" />
+          )}
+          {isJustSaved ? t("common.saved") : isSubmitting ? t("common.saving") : submitLabel}
         </button>
       </div>
     </form>
