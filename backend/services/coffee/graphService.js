@@ -21,8 +21,10 @@ import { excerptNotes } from "../../utils/textExcerpt.js";
  * findMany("flavors")はlean docsを返すため、保存時に生成済みの
  * normalizedNameをそのままキーに使える（graphBuilder.js側で
  * normalizeName()を再計算するのと同じ正規化なので、一致条件がずれない）。
+ *
+ * coffeeRecordService.js（保存直後の「発見」検出）からも利用するためexport。
  */
-const loadFlavorsByNormalizedName = async () => {
+export const loadFlavorsByNormalizedName = async () => {
   const flavors = await masterDataRepository.findMany("flavors");
   return new Map(
     flavors.map((flavor) => [flavor.normalizedName, { id: String(flavor._id), name: flavor.name }]),

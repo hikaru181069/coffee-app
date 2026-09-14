@@ -29,9 +29,9 @@ vi.mock("../api/coffeeRecordApi", () => ({
 
 afterEach(() => {
   vi.clearAllMocks();
-  createCoffeeRecord.mockResolvedValue({ id: "1" });
+  createCoffeeRecord.mockResolvedValue({ record: { id: "1" }, discoveries: [] });
 });
-createCoffeeRecord.mockResolvedValue({ id: "1" });
+createCoffeeRecord.mockResolvedValue({ record: { id: "1" }, discoveries: [] });
 
 const EMPTY_MASTER_DATA = {
   origins: [],
@@ -177,6 +177,6 @@ describe("RecordForm", () => {
 
     expect(await screen.findByRole("button", { name: /保存中/ })).toBeDisabled();
 
-    resolveSubmit({ id: "1" });
+    resolveSubmit({ record: { id: "1" }, discoveries: [] });
   });
 });

@@ -84,7 +84,7 @@ describe("BrewDetailsCard", () => {
   });
 
   test("保存に成功すると閲覧モードへ戻り、最新の値を表示する", async () => {
-    updateCoffeeRecord.mockResolvedValue(FULL_RECORD);
+    updateCoffeeRecord.mockResolvedValue({ record: FULL_RECORD, discoveries: [] });
     const user = userEvent.setup();
     render(<BrewDetailsCard record={EMPTY_RECORD} />);
 
@@ -101,7 +101,7 @@ describe("BrewDetailsCard", () => {
   });
 
   test("抽出時間を分・秒で入力して保存すると合計秒数に変換される", async () => {
-    updateCoffeeRecord.mockResolvedValue(FULL_RECORD);
+    updateCoffeeRecord.mockResolvedValue({ record: FULL_RECORD, discoveries: [] });
     const user = userEvent.setup();
     render(<BrewDetailsCard record={EMPTY_RECORD} />);
 
@@ -114,7 +114,7 @@ describe("BrewDetailsCard", () => {
   });
 
   test("注湯の経過時間を分・秒で入力して保存すると合計秒数に変換される", async () => {
-    updateCoffeeRecord.mockResolvedValue(FULL_RECORD);
+    updateCoffeeRecord.mockResolvedValue({ record: FULL_RECORD, discoveries: [] });
     const user = userEvent.setup();
     render(<BrewDetailsCard record={EMPTY_RECORD} />);
 

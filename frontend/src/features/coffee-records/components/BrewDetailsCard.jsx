@@ -162,7 +162,7 @@ function BrewDetailsCard({ record }) {
     setErrors({});
 
     try {
-      const updated = await updateCoffeeRecord(record.id, toBrewApiPayload(values));
+      const { record: updated } = await updateCoffeeRecord(record.id, toBrewApiPayload(values));
       setBrewData(extractBrewData(updated));
       setIsEditing(false);
       setValues(null);

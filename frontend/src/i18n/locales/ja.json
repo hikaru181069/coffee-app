@@ -262,6 +262,13 @@
     "diagnosisLink": "コーヒー診断を見る",
     "mapLink": "世界地図を見る"
   },
+  "discoveries": {
+    "savedHeading": "記録しました",
+    "firstAppearance": "{{label}}を初めて記録しました",
+    "milestone": "{{label}}を含む記録が{{count}}件になりました",
+    "viewConnection": "つながりを見る →",
+    "continue": "記録を見る"
+  },
   "similarRecords": {
     "heading": "似た記録"
   },

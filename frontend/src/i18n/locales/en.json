@@ -267,6 +267,13 @@
     "diagnosisLink": "View your coffee diagnosis",
     "mapLink": "View the world map"
   },
+  "discoveries": {
+    "savedHeading": "Record saved",
+    "firstAppearance": "You recorded {{label}} for the first time",
+    "milestone": "You've now recorded {{count}} coffees with {{label}}",
+    "viewConnection": "View connection →",
+    "continue": "View record"
+  },
   "similarRecords": {
     "heading": "Similar records"
   },

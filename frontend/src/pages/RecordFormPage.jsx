@@ -7,6 +7,7 @@ import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecor
 import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
 import { useRecordForm } from "../features/coffee-records/hooks/useRecordForm";
 import RecordForm from "../features/coffee-records/components/RecordForm";
+import SaveDiscoveryReveal from "../features/coffee-records/components/SaveDiscoveryReveal";
 import RecordFormSkeleton from "../features/coffee-records/components/RecordFormSkeleton";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
@@ -73,6 +74,12 @@ function RecordFormPage() {
   // （2026-09、記録体験のUI/UX再設計）
   const [isJustSaved, setIsJustSaved] = useState(false);
 
+  // 保存直後の「発見」インタースティシャル用。nullなら非表示、
+  // { record, discoveries } なら表示する（2026-09、記録体験の再設計）。
+  // discoveriesが1件以上あるときだけセットする（0件・編集時は従来どおり
+  // isJustSavedのチェックマーク演出のみで詳細ページへ遷移する）
+  const [revealDiscoveries, setRevealDiscoveries] = useState(null);
+
   const form = useRecordForm(record, prefillOriginId);
 
   /**
@@ -88,26 +95,41 @@ function RecordFormPage() {
     const saved = await form.submit();
     if (!saved) return;
 
+    const { record: savedRecord, discoveries } = saved;
+
     addToast(isEditing ? t("records.toastUpdated") : t("records.toastCreated"), "success");
 
     // 保存後は詳細画面へ。一覧へ戻すと「保存されたか」を確認しづらい。
     // navigate()より先にフラグを立て、直後のuseBlockerの判定に確実に間に合わせる
     justSavedRef.current = true;
 
-    // 保存ボタンのスピナー→チェックマーク演出（docs/design.mdの「静かな道具」を
-    // 踏襲し、控えめな達成の合図のみ）。prefers-reduced-motionでは演出せず
-    // 従来どおり即座に遷移する
+    // 発見（discoveries）がある場合は、詳細ページへ行く前にインタース
+    // ティシャルを挟む（2026-09、記録体験の再設計）。編集時は常に
+    // discoveries: []（発見演出は作成時のみ、coffeeRecordApi.js参照）
+    if (discoveries && discoveries.length > 0) {
+      setRevealDiscoveries({ record: savedRecord, discoveries });
+      return;
+    }
+
+    // 発見が無い場合は従来どおり、保存ボタンのスピナー→チェックマーク演出
+    // （docs/design.mdの「静かな道具」を踏襲し、控えめな達成の合図のみ）。
+    // prefers-reduced-motionでは演出せず即座に遷移する
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
-      navigate(`/records/${saved.id}`, { replace: true });
+      navigate(`/records/${savedRecord.id}`, { replace: true });
       return;
     }
 
     setIsJustSaved(true);
     setTimeout(() => {
-      navigate(`/records/${saved.id}`, { replace: true });
+      navigate(`/records/${savedRecord.id}`, { replace: true });
     }, 450);
   }, [form, isEditing, addToast, navigate, t]);
+
+  const handleRevealContinue = useCallback(() => {
+    if (!revealDiscoveries) return;
+    navigate(`/records/${revealDiscoveries.record.id}`, { replace: true });
+  }, [navigate, revealDiscoveries]);
 
   const shouldBlockNavigation = useCallback(
     ({ currentLocation, nextLocation }) =>
@@ -159,6 +181,21 @@ function RecordFormPage() {
         ) : (
           <RecordsErrorState error={recordError} onRetry={reload} />
         )}
+      </div>
+    );
+  }
+
+  // 保存直後の「発見」インタースティシャル。ヘッダー（戻るリンク・
+  // ページタイトル）ごと差し替え、専用の画面として見せる
+  // （2026-09、記録体験の再設計）
+  if (revealDiscoveries) {
+    return (
+      <div className={contentContainerClass}>
+        <SaveDiscoveryReveal
+          record={revealDiscoveries.record}
+          discoveries={revealDiscoveries.discoveries}
+          onContinue={handleRevealContinue}
+        />
       </div>
     );
   }

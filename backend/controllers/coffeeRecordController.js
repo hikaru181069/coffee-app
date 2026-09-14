@@ -59,9 +59,9 @@ export const createCoffeeRecord = async (req, res) => {
   if (!valid) throw validationError(details);
 
   const fields = pickCoffeeRecordFields(req.body);
-  const record = await coffeeRecordService.createRecord(req.user._id, fields);
+  const { record, discoveries } = await coffeeRecordService.createRecord(req.user._id, fields);
 
-  res.status(201).json({ data: record });
+  res.status(201).json({ data: record, discoveries });
 };
 
 /** GET /api/coffee-records/:recordId */

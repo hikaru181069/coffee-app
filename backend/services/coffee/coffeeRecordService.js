@@ -1,6 +1,8 @@
 import * as coffeeRecordRepository from "../../repositories/coffeeRecordRepository.js";
 import { verifyReferencesExist } from "./masterDataService.js";
 import { serializeCoffeeRecord, serializeCoffeeRecords } from "./coffeeRecordSerializer.js";
+import { loadFlavorsByNormalizedName } from "./graphService.js";
+import { buildDiscoveries } from "../../core/discoveries/discoveryBuilder.js";
 import { notFoundError, validationError } from "../../utils/AppError.js";
 
 /**
@@ -25,6 +27,10 @@ import { notFoundError, validationError } from "../../utils/AppError.js";
  *
  * @param {string} userId 認証情報から渡される。リクエスト本文からは受け取らない
  * @param {object} fields validator を通した書き込み可能な項目のみ
+ * @returns {{ record: object, discoveries: Array }} 保存後の記録と、この
+ *   記録によって新しく生まれた「発見」（core/discoveries/discoveryBuilder.js
+ *   参照）。編集（updateRecord）では発見演出を出さないため、discoveriesは
+ *   作成時のみ計算する
  */
 export const createRecord = async (userId, fields) => {
   // 形式は validator が確認済み。ここでは「実在するか」だけを見る
@@ -32,6 +38,13 @@ export const createRecord = async (userId, fields) => {
   if (!references.valid) {
     throw validationError(references.details);
   }
+
+  // 発見（discoveries）の判定に使う「保存前の自分の記録すべて」を、
+  // 保存前に取得しておく（buildDiscoveriesは保存後の再取得を必要としない設計）
+  const [existingRecords, flavorsByNormalizedName] = await Promise.all([
+    coffeeRecordRepository.findAllForUser(userId),
+    loadFlavorsByNormalizedName(),
+  ]);
 
   const created = await coffeeRecordRepository.create({ ...fields, userId });
 
@@ -43,7 +56,14 @@ export const createRecord = async (userId, fields) => {
     { populate: true },
   );
 
-  return serializeCoffeeRecord(populated);
+  const record = serializeCoffeeRecord(populated);
+  const { discoveries } = buildDiscoveries(
+    serializeCoffeeRecords(existingRecords),
+    record,
+    flavorsByNormalizedName,
+  );
+
+  return { record, discoveries };
 };
 
 /**

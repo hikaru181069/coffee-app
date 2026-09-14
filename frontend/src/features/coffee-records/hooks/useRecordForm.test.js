@@ -120,7 +120,7 @@ describe("useRecordForm（新規作成）", () => {
   });
 
   test("必須項目が揃っていれば、APIへ送る形（toApiPayload相当）でcreateCoffeeRecordを呼ぶ", async () => {
-    createCoffeeRecord.mockResolvedValue({ id: "new-record-id" });
+    createCoffeeRecord.mockResolvedValue({ record: { id: "new-record-id" }, discoveries: [] });
     const { result } = renderHook(() => useRecordForm(null));
 
     act(() => result.current.setValue("title", "とりあえず買った豆"));
@@ -297,7 +297,7 @@ describe("useRecordForm（編集）", () => {
 
   test("送信するとcreateCoffeeRecordではなくupdateCoffeeRecordをrecord.idで呼ぶ", async () => {
     const recordWithId = { ...existingRecord, id: "record-1" };
-    updateCoffeeRecord.mockResolvedValue({ id: "record-1" });
+    updateCoffeeRecord.mockResolvedValue({ record: { id: "record-1" }, discoveries: [] });
     const { result } = renderHook(() => useRecordForm(recordWithId));
 
     await act(async () => {
