@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useBlocker, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -69,6 +69,10 @@ function RecordFormPage() {
   // 行うため、state更新では間に合わない（再レンダリングを待たないrefで持つ）
   const justSavedRef = useRef(false);
 
+  // 保存ボタンのスピナー→チェックマーク演出用。遷移を一瞬遅らせている間だけtrue
+  // （2026-09、記録体験のUI/UX再設計）
+  const [isJustSaved, setIsJustSaved] = useState(false);
+
   const form = useRecordForm(record, prefillOriginId);
 
   /**
@@ -89,7 +93,20 @@ function RecordFormPage() {
     // 保存後は詳細画面へ。一覧へ戻すと「保存されたか」を確認しづらい。
     // navigate()より先にフラグを立て、直後のuseBlockerの判定に確実に間に合わせる
     justSavedRef.current = true;
-    navigate(`/records/${saved.id}`, { replace: true });
+
+    // 保存ボタンのスピナー→チェックマーク演出（docs/design.mdの「静かな道具」を
+    // 踏襲し、控えめな達成の合図のみ）。prefers-reduced-motionでは演出せず
+    // 従来どおり即座に遷移する
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+      navigate(`/records/${saved.id}`, { replace: true });
+      return;
+    }
+
+    setIsJustSaved(true);
+    setTimeout(() => {
+      navigate(`/records/${saved.id}`, { replace: true });
+    }, 450);
   }, [form, isEditing, addToast, navigate, t]);
 
   const shouldBlockNavigation = useCallback(
@@ -184,6 +201,7 @@ function RecordFormPage() {
         masterDataError={masterDataError}
         submitLabel={isEditing ? t("records.submitEdit") : t("records.submitCreate")}
         prefillOriginId={prefillOriginId}
+        isJustSaved={isJustSaved}
       />
 
       <ConfirmDialog

@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 
 import FormField from "./FormField";
 import ChipMultiSelect from "./ChipMultiSelect";
+import OriginPicker from "./OriginPicker";
+import AttributeLabel from "./AttributeLabel";
 import { controlClass } from "./formStyles";
 
 /**
@@ -56,24 +58,21 @@ function CoffeeComponentFields({
       </div>
 
       <div className="flex flex-col gap-4">
-        <FormField id={`${idPrefix}-originId`} label={t("recordForm.origin")}>
-          <select
+        <FormField id={`${idPrefix}-originId`} label={<AttributeLabel type="origin">{t("recordForm.origin")}</AttributeLabel>}>
+          <OriginPicker
             id={`${idPrefix}-originId`}
-            value={value.originId}
-            onChange={(event) => onChange("originId", event.target.value)}
+            options={masterData.origins}
+            selectedId={value.originId}
+            onChange={(optionId) => onChange("originId", optionId)}
             disabled={isSubmitting || isMasterDataLoading}
-            className={controlClass(false)}
-          >
-            <option value="">{t("common.notSelected")}</option>
-            {masterData.origins.map((origin) => (
-              <option key={origin.id} value={origin.id}>
-                {origin.name}
-              </option>
-            ))}
-          </select>
+          />
         </FormField>
 
-        <FormField id={`${idPrefix}-farmName`} label={t("recordForm.farmName")} hint={t("recordForm.farmNameHint")}>
+        <FormField
+          id={`${idPrefix}-farmName`}
+          label={<AttributeLabel type="farm">{t("recordForm.farmName")}</AttributeLabel>}
+          hint={t("recordForm.farmNameHint")}
+        >
           <input
             id={`${idPrefix}-farmName`}
             type="text"
@@ -86,7 +85,11 @@ function CoffeeComponentFields({
           />
         </FormField>
 
-        <FormField id={`${idPrefix}-varietyIds`} label={t("recordForm.variety")} hint={t("recordForm.multiSelectHint")}>
+        <FormField
+          id={`${idPrefix}-varietyIds`}
+          label={<AttributeLabel type="variety">{t("recordForm.variety")}</AttributeLabel>}
+          hint={t("recordForm.multiSelectHint")}
+        >
           <ChipMultiSelect
             id={`${idPrefix}-varietyIds`}
             options={masterData.varieties}
@@ -96,7 +99,7 @@ function CoffeeComponentFields({
           />
         </FormField>
 
-        <FormField id={`${idPrefix}-processId`} label={t("recordForm.process")}>
+        <FormField id={`${idPrefix}-processId`} label={<AttributeLabel type="process">{t("recordForm.process")}</AttributeLabel>}>
           <select
             id={`${idPrefix}-processId`}
             value={value.processId}

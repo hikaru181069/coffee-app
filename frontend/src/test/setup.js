@@ -36,3 +36,15 @@ class MockIntersectionObserver {
   disconnect() {}
 }
 globalThis.IntersectionObserver = MockIntersectionObserver;
+
+// jsdomはwindow.matchMediaを実装していない。RecordFormPage.jsxの
+// prefers-reduced-motion判定（保存の瞬間の演出、2026-09）で呼ばれると
+// TypeErrorになるため、常にmatches:falseを返す最小限のダミー実装を
+// 用意する（テストの関心事はアニメーション演出の有無ではなく保存後の
+// 遷移そのものであるため、reduced-motionではない状態に固定してよい）。
+globalThis.matchMedia = (query) => ({
+  matches: false,
+  media: query,
+  addEventListener() {},
+  removeEventListener() {},
+});
