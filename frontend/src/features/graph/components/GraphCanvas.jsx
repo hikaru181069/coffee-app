@@ -422,7 +422,11 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
     if (!fgRef.current) return;
     fgRef.current.d3Force("link")?.distance(FORCE_PARAMS.linkDistance);
     fgRef.current.d3Force("charge")?.strength(FORCE_PARAMS.chargeStrength);
-    fgRef.current.d3Force("collide", forceCollide(nodeCollideRadius));
+    // iterations既定値(1)だと密なグラフ（実データで61ノード）では1tickあたりの
+    // 押し出し量が足りず、ノード同士の重なりが解消しきらないまま収束して
+    // しまっていた。増やすことでノード自体の反発力（chargeStrength）を
+    // 上げずに重なりだけを解消する
+    fgRef.current.d3Force("collide", forceCollide(nodeCollideRadius).iterations(3));
     // 他のノードと1本もつながっていない記録（例: 産地・精製方法・
     // フレーバーを何も選んでいない記録）は、リンクによる引力を一切
     // 受けないため、chargeStrengthの反発力だけで中心から際限なく
