@@ -186,7 +186,7 @@ function RecordForm({
   const roastVisual = getNodeVisual("roastLevel");
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="mx-auto flex max-w-4xl flex-col gap-8 p-1 sm:p-6">
+    <form onSubmit={handleSubmit} noValidate className="mx-auto flex flex-col gap-8 p-1 sm:p-6">
       {/* ── タイトル ─────────────────────────────── */}
       <FormField id="title" label={t("recordForm.title")} required error={errors.title}>
         <input
