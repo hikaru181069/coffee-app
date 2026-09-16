@@ -27,6 +27,8 @@
     "scoreOrMore": "{{score}} 以上",
     "notSelected": "選択しない",
     "noOptions": "選択肢がありません",
+    "searchPlaceholder": "入力して検索",
+    "noMatches": "候補がありません",
     "required": "必須",
     "optional": "任意",
     "saving": "保存中...",
@@ -172,7 +174,12 @@
     "detailsHint": "産地や品種を選ぶと、記録どうしがつながります（すべて任意）",
     "masterDataError": "選択肢を読み込めませんでした。この部分は空欄のままでも記録は保存できます。",
     "componentHeading": "コーヒー{{index}}",
-    "addComponent": "コーヒーの詳細を追加",
+    "addComponent": "ブレンドを追加",
+    "chooseOrigin": "産地を選ぶ",
+    "addFlavor": "フレーバーを追加",
+    "addDetails": "詳細を追加",
+    "blendCount": "ブレンド{{count}}件",
+    "selectedCount": "{{count}}件選択",
     "origin": "産地",
     "farmName": "農園",
     "farmNameHint": "候補が無いため自由入力です",
@@ -267,7 +274,9 @@
     "firstAppearance": "{{label}}を初めて記録しました",
     "milestone": "{{label}}を含む記録が{{count}}件になりました",
     "viewConnection": "つながりを見る →",
-    "continue": "記録を見る"
+    "continue": "記録を見る",
+    "previewFirstAppearance": "{{label}}は初めての記録になります",
+    "previewMilestone": "{{label}}を含む記録が{{count}}件になります"
   },
   "similarRecords": {
     "heading": "似た記録"

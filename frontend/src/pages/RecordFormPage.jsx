@@ -226,18 +226,20 @@ function RecordFormPage() {
         submitError={form.submitError}
         isSubmitting={form.isSubmitting}
         setValue={form.setValue}
+        validateField={form.validateField}
         toggleValue={form.toggleValue}
         addComponent={form.addComponent}
         removeComponent={form.removeComponent}
         setComponentValue={form.setComponentValue}
         toggleComponentValue={form.toggleComponentValue}
+        setPrimaryComponentValue={form.setPrimaryComponentValue}
+        togglePrimaryComponentVariety={form.togglePrimaryComponentVariety}
         onSubmit={handleFormSubmit}
         onCancel={() => navigate(isEditing ? `/records/${recordId}` : "/records")}
         masterData={masterData}
         isMasterDataLoading={isMasterDataLoading}
         masterDataError={masterDataError}
         submitLabel={isEditing ? t("records.submitEdit") : t("records.submitCreate")}
-        prefillOriginId={prefillOriginId}
         isJustSaved={isJustSaved}
       />
 

@@ -835,6 +835,35 @@ POST /api/coffee-records
 （`RecordFormPage.jsx`）。記録のタイトル・評価（★）と、発見ごとに
 知識グラフの種別アイコン・色（`nodeVisuals.js`の`getNodeVisual`）+文言+
 「つながりを見る」（該当エンティティ詳細ページへのリンク）を並べる。
-発見が無ければ、従来どおり保存ボタンのチェックマーク演出のみで記録詳細
-ページへ遷移する（docs/design.md「New / Edit Record」の「保存の瞬間の
-演出」参照）。
+発見が無ければ、従来どおり保存ボタンの演出のみで記録詳細ページへ遷移
+する（docs/design.md「New / Edit Record」の「保存の瞬間の演出」参照）。
+
+### 保存前のプレビュー（2026-09、第3弾）
+
+`POST /api/discoveries/preview`は、記録をまだ保存せずに、産地を選んだ
+時点での発見だけを計算する。`discoveryBuilder.js`の`buildDiscoveries`を
+そのまま再利用し、リクエストで指定された産地IDだけを持つ仮の記録
+（DBには保存しない）を合成して渡す。
+
+```json
+POST /api/discoveries/preview
+{ "originId": "507f..." }
+
+{
+  "data": {
+    "discoveries": [
+      { "type": "firstAppearance", "nodeType": "origin", "nodeId": "origin:507f...", "label": "Ethiopia", "recordCount": 1 }
+    ]
+  }
+}
+```
+
+対象は産地のみ（品種・精製方法・焙煎度・フレーバーは対象外。フォーム
+操作のたびにAPIを呼ぶ煩雑さを避けるため）。`originId`が無い・ID形式が
+不正なら400、存在しない産地IDなら404。
+
+`RecordForm.jsx`（正確には`CoffeeComponentFields.jsx`）が、産地チップを
+実際に選び終えた瞬間（クリック／Enter・Space。矢印キーでの選択肢間移動
+では呼ばない）にこのAPIを呼び、結果があれば新しいUIコンポーネントを
+増やさず既存のトースト（`useToast`）で1件だけ知らせる。数秒で自動的に
+消える（他のトーストと同じ挙動）。

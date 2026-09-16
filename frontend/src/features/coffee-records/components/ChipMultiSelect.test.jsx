@@ -71,6 +71,18 @@ describe("ChipMultiSelect", () => {
     expect(onToggle).toHaveBeenCalledWith("berry");
   });
 
+  test("vividを指定してもクリックの挙動は変わらない（RecordForm.jsx側の見た目強化用オプション）", async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+    render(
+      <ChipMultiSelect id="flavorIds" options={OPTIONS} selectedIds={["berry"]} onToggle={onToggle} vivid />,
+    );
+
+    await user.click(screen.getByRole("checkbox", { name: "Citrus" }));
+
+    expect(onToggle).toHaveBeenCalledWith("citrus");
+  });
+
   test("disabledのときは全チェックボックスが操作不可になる", () => {
     render(
       <ChipMultiSelect

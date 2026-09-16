@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { motion as Motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
@@ -7,8 +8,13 @@ import { formatConsumedAtShort } from "../utils/recordFormat";
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 import { entityDetailPathFromNodeId } from "../../graph/utils/entityLink";
 
-/** 発見1件ぶんの行。属性種別のアイコン・色は知識グラフと同じ対応表を使う */
-function DiscoveryRow({ discovery }) {
+/**
+ * 発見1件ぶんの行。属性種別のアイコン・色は知識グラフと同じ対応表を使う。
+ *
+ * 2026-09、記録体験の再設計・第3弾。indexに応じた遅延で、上から順に
+ * カスケード表示する（Framer Motion）
+ */
+function DiscoveryRow({ discovery, index }) {
   const { t } = useTranslation();
   const { icon: Icon, colorClass, bgTintClass } = getNodeVisual(discovery.nodeType);
 
@@ -17,11 +23,23 @@ function DiscoveryRow({ discovery }) {
       ? t("discoveries.firstAppearance", { label: discovery.label })
       : t("discoveries.milestone", { label: discovery.label, count: discovery.recordCount });
 
+  const rowDelay = 0.15 + index * 0.08;
+
   return (
-    <div className="flex items-center gap-3 py-3">
-      <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${bgTintClass}`}>
+    <Motion.div
+      className="flex items-center gap-3 py-3"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 26, delay: rowDelay }}
+    >
+      <Motion.span
+        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${bgTintClass}`}
+        initial={{ scale: 0.5, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 420, damping: 16, delay: rowDelay + 0.1 }}
+      >
         <Icon size={16} aria-hidden="true" className={colorClass} />
-      </span>
+      </Motion.span>
       <p className="flex-1 text-sm text-text">{message}</p>
       <Link
         to={entityDetailPathFromNodeId(discovery.nodeId)}
@@ -29,7 +47,7 @@ function DiscoveryRow({ discovery }) {
       >
         {t("discoveries.viewConnection")}
       </Link>
-    </div>
+    </Motion.div>
   );
 }
 
@@ -40,18 +58,26 @@ function DiscoveryRow({ discovery }) {
  * （backend/core/discoveries/discoveryBuilder.js）を見せる。
  * ゲーミフィケーション演出（バッジ・紙吹雪・効果音・数字のカウント
  * アップ等）は入れない。テキストと知識グラフの既存アイコン・色だけで
- * 構成し、「静かな道具」というトーン（docs/design.md）を保つ
- * （2026-09、記録体験の再設計）。
+ * 構成する（2026-09、記録体験の再設計）。
+ *
+ * 2026-09・第3弾: カード全体の入場、発見の各行のカスケード表示、
+ * アイコンバッジのポップにFramer Motion（本物のバネ物理）を使う。
+ * 新しい色・新しいUI要素は追加していない。
  *
  * discoveries.length === 0 のときはRecordFormPage.jsx側でこの
- * コンポーネント自体を描画しない（従来通りチェックマーク演出→
- * 即座に詳細ページへ遷移する）。
+ * コンポーネント自体を描画しない（従来通り保存演出→即座に詳細ページへ
+ * 遷移する）。
  */
 function SaveDiscoveryReveal({ record, discoveries, onContinue }) {
   const { t, i18n } = useTranslation();
 
   return (
-    <div className={`${cardClass} flex flex-col gap-5`}>
+    <Motion.div
+      className={`${cardClass} flex flex-col gap-5`}
+      initial={{ opacity: 0, y: 20, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+    >
       <div className="flex flex-col gap-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
           {t("discoveries.savedHeading")}
@@ -87,15 +113,22 @@ function SaveDiscoveryReveal({ record, discoveries, onContinue }) {
       </div>
 
       <div className="flex flex-col divide-y divide-line/60 border-y border-line/60">
-        {discoveries.map((discovery) => (
-          <DiscoveryRow key={discovery.nodeId} discovery={discovery} />
+        {discoveries.map((discovery, index) => (
+          <DiscoveryRow key={discovery.nodeId} discovery={discovery} index={index} />
         ))}
       </div>
 
-      <button type="button" onClick={onContinue} className={`${primaryButtonClass} self-end`}>
+      <Motion.button
+        type="button"
+        onClick={onContinue}
+        whileHover={{ scale: 1.04, y: -2 }}
+        whileTap={{ scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 400, damping: 22 }}
+        className={`${primaryButtonClass} self-end`}
+      >
         {t("discoveries.continue")}
-      </button>
-    </div>
+      </Motion.button>
+    </Motion.div>
   );
 }
 

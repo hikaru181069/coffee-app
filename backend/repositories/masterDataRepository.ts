@@ -95,6 +95,20 @@ export const findExistingIds = async (type: MasterType, ids: unknown[]): Promise
 };
 
 /**
+ * 指定したIDのドキュメントを、名前まで含めて取得する。
+ *
+ * findExistingIds（IDの実在確認のみ、_idだけ取得）とは違い、
+ * 保存前の発見プレビュー（discoveryPreviewService.js）のように
+ * 実際の名前・付随フィールド（産地のcountryCode等）が必要な場面で使う。
+ */
+export const findByIds = async (type: MasterType, ids: unknown[]) => {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+
+  const { model } = getConfig(type);
+  return model.find({ _id: { $in: ids } }).lean();
+};
+
+/**
  * マスターを1件 upsert する（seed用）。
  *
  * 冪等性の要: 一意キー（normalizedName / key）で検索し、

@@ -26,6 +26,26 @@ const pointOnAxis = (index, radiusFraction) => {
   };
 };
 
+/**
+ * 表示用（TasteRadarChart）・入力用（TasteRadarInput）の両方が同じ
+ * 六角形ジオメトリを使うための共有定数・関数。値はこのファイル内で
+ * 完結させ、呼び出し側が独自に三角関数を計算しないようにする
+ * （2026-09、記録体験の再設計・キャンバス化でTasteRadarInputを追加した
+ * 際にexportへ追加した）。
+ */
+export const RADAR_CENTER = CENTER;
+export const RADAR_MAX_RADIUS = MAX_RADIUS;
+export const RADAR_AXIS_COUNT = AXIS_COUNT;
+
+/** 軸インデックスから、中心を原点とした単位ベクトル（cos, sin）を返す */
+export const radarAxisUnitVector = (index) => {
+  const angle = angleForIndex(index);
+  return { x: Math.cos(angle), y: Math.sin(angle) };
+};
+
+/** 軸インデックスと半径の割合（0〜1が評価1〜5、0は中心=未評価）から座標を返す */
+export const radarPointOnAxis = pointOnAxis;
+
 const polygonPoints = (points) => points.map((point) => `${point.x},${point.y}`).join(" ");
 
 /**
