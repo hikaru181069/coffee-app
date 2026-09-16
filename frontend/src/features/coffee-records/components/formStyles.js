@@ -14,7 +14,7 @@
 const BASE_CONTROL =
   "w-full rounded-xl border bg-surface-1 px-3 py-2 text-sm text-text " +
   "placeholder:text-text-tertiary/60 transition-colors duration-150 " +
-  "focus:outline-none focus:ring-2 focus:ring-primary/50 " +
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 " +
   "disabled:cursor-not-allowed disabled:opacity-60";
 
 /** エラーのある欄は枠線でも示す（色だけに頼らないよう、文言も別途出す） */
@@ -26,19 +26,19 @@ export const textareaClass = (hasError) => `${controlClass(hasError)} min-h-24 r
 export const primaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-full bg-inverse px-4 py-2 " +
   "text-sm font-semibold text-on-inverse transition-colors duration-150 " +
-  "hover:bg-inverse/90 focus:outline-none focus:ring-2 focus:ring-primary/50 " +
+  "hover:bg-inverse/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 " +
   "disabled:cursor-not-allowed disabled:opacity-60";
 
 export const secondaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-full border border-line/60 " +
   "bg-transparent px-4 py-2 text-sm font-medium text-text-secondary " +
   "transition-colors duration-150 hover:border-line hover:text-text " +
-  "focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60";
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60";
 
 export const dangerButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-full bg-danger px-4 py-2 " +
   "text-sm font-semibold text-on-inverse transition-colors duration-150 " +
-  "hover:bg-danger/85 focus:outline-none focus:ring-2 focus:ring-danger/50 " +
+  "hover:bg-danger/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger/50 " +
   "disabled:cursor-not-allowed disabled:opacity-60";
 
 export const cardClass =

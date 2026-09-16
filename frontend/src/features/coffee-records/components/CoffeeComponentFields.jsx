@@ -55,7 +55,7 @@ function CoffeeComponentFields({
           onClick={onRemove}
           disabled={isSubmitting}
           aria-label={t("common.delete")}
-          className="rounded-full p-1 text-text-tertiary transition-colors duration-150 hover:bg-surface-2 hover:text-text focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full p-1 text-text-tertiary transition-colors duration-150 hover:bg-surface-2 hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <X size={16} aria-hidden="true" />
         </button>

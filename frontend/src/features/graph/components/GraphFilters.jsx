@@ -7,7 +7,7 @@ import { RECORD_TYPES } from "../../coffee-records/utils/recordFormat";
 // 短いスタイル文字列のため、共通コンポーネント化はせずそのまま複製している
 const compactInputClass =
   "w-auto rounded-lg border border-line/60 bg-surface-1 px-2.5 py-1.5 text-sm text-text " +
-  "transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50";
+  "transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
 
 /**
  * グラフの絞り込み。

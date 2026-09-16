@@ -30,7 +30,7 @@ function RatingInput({ id, value, onChange, disabled = false }) {
           return (
             <label
               key={score}
-              className={`cursor-pointer rounded p-1 transition-colors duration-150 focus-within:ring-2 focus-within:ring-primary/50 ${
+              className={`cursor-pointer rounded p-1 transition-colors duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/50 ${
                 disabled ? "cursor-not-allowed opacity-60" : "hover:bg-surface-2"
               }`}
             >

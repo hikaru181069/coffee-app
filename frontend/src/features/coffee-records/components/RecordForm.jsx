@@ -253,7 +253,7 @@ function RecordForm({
             {RECORD_TYPES.map((type) => (
               <label
                 key={type.value}
-                className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-primary/50 ${
+                className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-colors duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/50 ${
                   values.recordType === type.value
                     ? "border-line-strong bg-surface-2 font-semibold text-text"
                     : "border-line/60 text-text-secondary hover:border-line"
@@ -484,7 +484,7 @@ function RecordForm({
           type="button"
           onClick={handleAddBlend}
           disabled={isSubmitting}
-          className="inline-flex items-center justify-center gap-1.5 self-start rounded-xl border border-dashed border-line/60 px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors duration-150 hover:border-line hover:text-text focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-1.5 self-start rounded-xl border border-dashed border-line/60 px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors duration-150 hover:border-line hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Plus size={16} aria-hidden="true" />
           {t("recordForm.addComponent")}
