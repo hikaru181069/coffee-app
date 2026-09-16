@@ -171,6 +171,15 @@ const truncateToWidth = (ctx, text, maxWidth) => {
 const isNodeDimmed = (node, { interactive, focusId, adjacency }) =>
   Boolean(interactive && focusId && node.id !== focusId && !adjacency.get(focusId)?.has(node.id));
 
+// ラベルは常時表示せず、フォーカス中（ホバー/選択）のノードとその隣接
+// ノードだけに絞る。フォーカスが無いアイドル状態では誰のラベルも出さない
+// （2026-09、実データ（61ノード）でラベル同士が重なって読めなくなる問題への
+// 対応。アイコン・色は常に描くため、種別の判別自体は引き続き可能）
+const isNodeLabelVisible = (node, { interactive, focusId, adjacency }) => {
+  if (!interactive || !focusId) return false;
+  return node.id === focusId || Boolean(adjacency.get(focusId)?.has(node.id));
+};
+
 function drawNode(node, ctx, globalScale, { selectedNodeId, focusId, adjacency, interactive }) {
   const visual = getNodeVisual(node.type);
   // 産地ノードだけは種別共通のaccent-skyではなく、産地ごとの個別色
@@ -258,20 +267,24 @@ function drawNode(node, ctx, globalScale, { selectedNodeId, focusId, adjacency, 
     shapeBottom = node.y + halfHeight;
   }
 
-  // ラベルは形（チップ）の内側へ詰め込まず、下へ出す。
-  // 収束後は多くのノードが小さく表示され、内側に収めようとすると
-  // 「Pin...」のように大半が省略されて何のノードか分からなくなる
+  // ラベルは常時出さず、フォーカス中（ホバー/選択）のノード本人と
+  // その隣接ノードだけに絞る（isNodeLabelVisible参照）。アイドル状態では
+  // 誰のラベルも描かない。形（チップ）の内側へ詰め込まず下へ出す方針は
+  // 従来通り。収束後は多くのノードが小さく表示され、内側に収めようと
+  // すると「Pin...」のように大半が省略されて何のノードか分からなくなる
   // という指摘を受けた。Obsidianのグラフを参考に、チップ下へ出す
   // ことで省略の必要がある場面自体を減らす
-  ctx.font = `${fontSize}px Inter, sans-serif`;
-  ctx.fillStyle = CTP.text;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillText(
-    truncateToWidth(ctx, node.label ?? "", LABEL_MAX_WIDTH),
-    node.x,
-    shapeBottom + LABEL_GAP / globalScale,
-  );
+  if (isNodeLabelVisible(node, { interactive, focusId, adjacency })) {
+    ctx.font = `${fontSize}px Inter, sans-serif`;
+    ctx.fillStyle = CTP.text;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(
+      truncateToWidth(ctx, node.label ?? "", LABEL_MAX_WIDTH),
+      node.x,
+      shapeBottom + LABEL_GAP / globalScale,
+    );
+  }
 
   ctx.restore();
 }
