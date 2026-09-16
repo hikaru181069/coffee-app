@@ -21,6 +21,7 @@ import similarRecordsRoutes from "./routes/similarRecordsRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
 import diagnosisRoutes from "./routes/diagnosisRoutes.js";
+import discoveryPreviewRoutes from "./routes/discoveryPreviewRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
@@ -55,6 +56,7 @@ app.use("/api/similar-records", similarRecordsRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/diagnosis", diagnosisRoutes);
+app.use("/api/discoveries", discoveryPreviewRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 

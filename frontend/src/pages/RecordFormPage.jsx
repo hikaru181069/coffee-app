@@ -7,11 +7,12 @@ import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecor
 import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
 import { useRecordForm } from "../features/coffee-records/hooks/useRecordForm";
 import RecordForm from "../features/coffee-records/components/RecordForm";
+import SaveDiscoveryReveal from "../features/coffee-records/components/SaveDiscoveryReveal";
 import RecordFormSkeleton from "../features/coffee-records/components/RecordFormSkeleton";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
-import { contentContainerClass } from "../styles/pageContainer";
+import { wideContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
 import BackLink from "../components/BackLink";
 
@@ -73,6 +74,12 @@ function RecordFormPage() {
   // （2026-09、記録体験のUI/UX再設計）
   const [isJustSaved, setIsJustSaved] = useState(false);
 
+  // 保存直後の「発見」インタースティシャル用。nullなら非表示、
+  // { record, discoveries } なら表示する（2026-09、記録体験の再設計）。
+  // discoveriesが1件以上あるときだけセットする（0件・編集時は従来どおり
+  // isJustSavedのチェックマーク演出のみで詳細ページへ遷移する）
+  const [revealDiscoveries, setRevealDiscoveries] = useState(null);
+
   const form = useRecordForm(record, prefillOriginId);
 
   /**
@@ -88,26 +95,41 @@ function RecordFormPage() {
     const saved = await form.submit();
     if (!saved) return;
 
+    const { record: savedRecord, discoveries } = saved;
+
     addToast(isEditing ? t("records.toastUpdated") : t("records.toastCreated"), "success");
 
     // 保存後は詳細画面へ。一覧へ戻すと「保存されたか」を確認しづらい。
     // navigate()より先にフラグを立て、直後のuseBlockerの判定に確実に間に合わせる
     justSavedRef.current = true;
 
-    // 保存ボタンのスピナー→チェックマーク演出（docs/design.mdの「静かな道具」を
-    // 踏襲し、控えめな達成の合図のみ）。prefers-reduced-motionでは演出せず
-    // 従来どおり即座に遷移する
+    // 発見（discoveries）がある場合は、詳細ページへ行く前にインタース
+    // ティシャルを挟む（2026-09、記録体験の再設計）。編集時は常に
+    // discoveries: []（発見演出は作成時のみ、coffeeRecordApi.js参照）
+    if (discoveries && discoveries.length > 0) {
+      setRevealDiscoveries({ record: savedRecord, discoveries });
+      return;
+    }
+
+    // 発見が無い場合は従来どおり、保存ボタンのスピナー→チェックマーク演出
+    // （docs/design.mdの「静かな道具」を踏襲し、控えめな達成の合図のみ）。
+    // prefers-reduced-motionでは演出せず即座に遷移する
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
-      navigate(`/records/${saved.id}`, { replace: true });
+      navigate(`/records/${savedRecord.id}`, { replace: true });
       return;
     }
 
     setIsJustSaved(true);
     setTimeout(() => {
-      navigate(`/records/${saved.id}`, { replace: true });
+      navigate(`/records/${savedRecord.id}`, { replace: true });
     }, 450);
   }, [form, isEditing, addToast, navigate, t]);
+
+  const handleRevealContinue = useCallback(() => {
+    if (!revealDiscoveries) return;
+    navigate(`/records/${revealDiscoveries.record.id}`, { replace: true });
+  }, [navigate, revealDiscoveries]);
 
   const shouldBlockNavigation = useCallback(
     ({ currentLocation, nextLocation }) =>
@@ -134,7 +156,7 @@ function RecordFormPage() {
   // ── 編集対象の読み込みに関わる状態 ──────────────────
   if (isEditing && isRecordLoading) {
     return (
-      <div className={contentContainerClass}>
+      <div className={wideContainerClass}>
         <RecordFormSkeleton />
       </div>
     );
@@ -145,7 +167,7 @@ function RecordFormPage() {
     const isNotFound = recordError.isNotFound;
 
     return (
-      <div className={contentContainerClass}>
+      <div className={wideContainerClass}>
         {isNotFound ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
             <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
@@ -163,8 +185,23 @@ function RecordFormPage() {
     );
   }
 
+  // 保存直後の「発見」インタースティシャル。ヘッダー（戻るリンク・
+  // ページタイトル）ごと差し替え、専用の画面として見せる
+  // （2026-09、記録体験の再設計）
+  if (revealDiscoveries) {
+    return (
+      <div className={wideContainerClass}>
+        <SaveDiscoveryReveal
+          record={revealDiscoveries.record}
+          discoveries={revealDiscoveries.discoveries}
+          onContinue={handleRevealContinue}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className={contentContainerClass}>
+    <div className={wideContainerClass}>
       <header className="mb-5">
         {/* 2026-08、EntityDetail/Diagnosis/WorldMap/RecordDetailと同じ
             BackLink（navigate(-1)）へ統一した。編集中に離脱しようとした
@@ -189,18 +226,20 @@ function RecordFormPage() {
         submitError={form.submitError}
         isSubmitting={form.isSubmitting}
         setValue={form.setValue}
+        validateField={form.validateField}
         toggleValue={form.toggleValue}
         addComponent={form.addComponent}
         removeComponent={form.removeComponent}
         setComponentValue={form.setComponentValue}
         toggleComponentValue={form.toggleComponentValue}
+        setPrimaryComponentValue={form.setPrimaryComponentValue}
+        togglePrimaryComponentVariety={form.togglePrimaryComponentVariety}
         onSubmit={handleFormSubmit}
         onCancel={() => navigate(isEditing ? `/records/${recordId}` : "/records")}
         masterData={masterData}
         isMasterDataLoading={isMasterDataLoading}
         masterDataError={masterDataError}
         submitLabel={isEditing ? t("records.submitEdit") : t("records.submitCreate")}
-        prefillOriginId={prefillOriginId}
         isJustSaved={isJustSaved}
       />
 

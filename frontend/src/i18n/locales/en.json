@@ -27,6 +27,8 @@
     "scoreOrMore": "{{score}}+",
     "notSelected": "Not selected",
     "noOptions": "No options available",
+    "searchPlaceholder": "Type to search",
+    "noMatches": "No matches",
     "required": "Required",
     "optional": "Optional",
     "saving": "Saving...",
@@ -176,7 +178,12 @@
     "detailsHint": "Selecting an origin or variety connects your records (all optional)",
     "masterDataError": "Could not load options. You can still save the record with this section left blank.",
     "componentHeading": "Coffee {{index}}",
-    "addComponent": "Add Coffee Details",
+    "addComponent": "Add Blend",
+    "chooseOrigin": "Choose an origin",
+    "addFlavor": "Add Flavor",
+    "addDetails": "Add Details",
+    "blendCount": "{{count}} blend(s)",
+    "selectedCount": "{{count}} selected",
     "origin": "Origin",
     "farmName": "Farm",
     "farmNameHint": "Free text, as there is no preset list",
@@ -266,6 +273,15 @@
     "teaserLink": "You haven't tried {{suggestedLabel}} coffee yet",
     "diagnosisLink": "View your coffee diagnosis",
     "mapLink": "View the world map"
+  },
+  "discoveries": {
+    "savedHeading": "Record saved",
+    "firstAppearance": "You recorded {{label}} for the first time",
+    "milestone": "You've now recorded {{count}} coffees with {{label}}",
+    "viewConnection": "View connection →",
+    "continue": "View record",
+    "previewFirstAppearance": "This will be your first record of {{label}}",
+    "previewMilestone": "This will be your {{count}} record with {{label}}"
   },
   "similarRecords": {
     "heading": "Similar records"

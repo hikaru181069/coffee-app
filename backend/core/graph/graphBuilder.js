@@ -60,8 +60,12 @@ export const ATTRIBUTE_NODE_TYPES = [
  *   notesのキーワードをflavorへ統合するためのFlavorマスター索引
  *   （normalizeName(flavor.name) → {id, name}）。未指定ならkeywordは
  *   すべてkeywordノードのままになる（後方互換のため任意引数にしている）。
+ *
+ * buildGraph以外に、core/discoveries/discoveryBuilder.js（保存直後の
+ * 「発見」検出）からも呼ばれる。属性参照を正規化する唯一の場所であり、
+ * グラフ生成と発見検出でrefの形・recordCountの数え方がずれないようにするため。
  */
-const collectAttributeRefs = (record, flavorsByNormalizedName) => {
+export const collectAttributeRefs = (record, flavorsByNormalizedName) => {
   const refs = [];
 
   // 2026-09、ブレンドコーヒー対応で産地・農園・品種・精製方法を

@@ -12,7 +12,7 @@
  * それぞれfetchCoffeeRecord/fetchAllMasterDataというAPI関数だけに依存する
  * ため、フックそのものではなくAPI層をモックする（実装の詳細に依存しすぎない）。
  */
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, RouterProvider, createMemoryRouter, createRoutesFromElements } from "react-router-dom";
@@ -37,6 +37,13 @@ vi.mock("../features/coffee-records/api/coffeeRecordApi", () => ({
 }));
 
 import RecordFormPage from "./RecordFormPage";
+
+// createCoffeeRecordはモジュールスコープのvi.fn()（テストファイル間で
+// 使い回す）のため、呼び出し回数を検証するテストが複数あると前のテストの
+// 呼び出しを引き継いでしまう。テストごとにリセットする
+beforeEach(() => {
+  createCoffeeRecord.mockReset();
+});
 
 /** router.jsxの本番構成を、このテストに必要な範囲だけ縮小したもの */
 const renderAtNewRecordForm = () => {
@@ -97,7 +104,7 @@ describe("RecordFormPage（保存忘れ確認）", () => {
   });
 
   test("保存に成功すると確認無しに詳細ページへ遷移する（justSavedRefによるスキップ）", async () => {
-    createCoffeeRecord.mockResolvedValue({ id: "new-record-id" });
+    createCoffeeRecord.mockResolvedValue({ record: { id: "new-record-id" }, discoveries: [] });
     const user = userEvent.setup();
     renderAtNewRecordForm();
 
@@ -107,5 +114,44 @@ describe("RecordFormPage（保存忘れ確認）", () => {
     await waitFor(() => expect(createCoffeeRecord).toHaveBeenCalledTimes(1));
     expect(await screen.findByText("Record Detail Page")).toBeInTheDocument();
     expect(screen.queryByText("変更を破棄しますか？")).not.toBeInTheDocument();
+  });
+});
+
+describe("RecordFormPage（保存直後の発見）", () => {
+  test("discoveriesがあれば発見インタースティシャルを表示し、「記録を見る」で詳細ページへ遷移する", async () => {
+    createCoffeeRecord.mockResolvedValue({
+      record: { id: "new-record-id", title: "Ethiopia Gotiti", consumedAt: "2026-09-14T09:00:00.000Z", rating: 4 },
+      discoveries: [
+        { type: "firstAppearance", nodeType: "origin", nodeId: "origin:eth-1", label: "Ethiopia", recordCount: 1 },
+      ],
+    });
+    const user = userEvent.setup();
+    renderAtNewRecordForm();
+
+    await user.type(await screen.findByLabelText(/^タイトル/), "Ethiopia Gotiti");
+    await user.click(screen.getByRole("button", { name: "記録する" }));
+
+    await waitFor(() => expect(createCoffeeRecord).toHaveBeenCalledTimes(1));
+
+    // 詳細ページへはまだ遷移せず、発見画面が表示される
+    expect(screen.queryByText("Record Detail Page")).not.toBeInTheDocument();
+    expect(await screen.findByText("Ethiopia Gotiti")).toBeInTheDocument();
+    expect(screen.getByText("Ethiopiaを初めて記録しました")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "記録を見る" }));
+
+    expect(await screen.findByText("Record Detail Page")).toBeInTheDocument();
+  });
+
+  test("discoveriesが空なら発見インタースティシャルを出さず、そのまま詳細ページへ遷移する", async () => {
+    createCoffeeRecord.mockResolvedValue({ record: { id: "new-record-id" }, discoveries: [] });
+    const user = userEvent.setup();
+    renderAtNewRecordForm();
+
+    await user.type(await screen.findByLabelText(/^タイトル/), "とりあえず買った豆");
+    await user.click(screen.getByRole("button", { name: "記録する" }));
+
+    expect(await screen.findByText("Record Detail Page")).toBeInTheDocument();
+    expect(screen.queryByText("記録しました")).not.toBeInTheDocument();
   });
 });

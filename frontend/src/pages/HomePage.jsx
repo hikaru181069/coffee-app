@@ -136,7 +136,7 @@ function HomePage() {
         )}
         <Link
           to="/records/new"
-          className={`flex items-center justify-center gap-2 rounded-2xl border border-surface-2 bg-raised text-text shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+          className={`flex items-center justify-center gap-2 rounded-2xl border border-surface-2 bg-raised text-text shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
             isRepeatVisitor ? "py-3" : "flex-col py-10"
           }`}
         >

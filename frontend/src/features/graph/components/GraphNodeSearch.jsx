@@ -80,7 +80,7 @@ function GraphNodeSearch({ graph, onSelectNode }) {
           }}
           placeholder={t("graph.nodeSearchPlaceholder")}
           aria-label={t("graph.nodeSearchAriaLabel")}
-          className="w-full rounded-lg border border-line/60 bg-surface-1 py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-tertiary/60 transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="w-full rounded-lg border border-line/60 bg-surface-1 py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-tertiary/60 transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         />
       </div>
 

@@ -8,3 +8,11 @@
  */
 export const entityNodeId = (type, id) => `${type}:${id}`;
 export const entityDetailPath = (type, id) => `/entities/${encodeURIComponent(entityNodeId(type, id))}`;
+
+/**
+ * 既に{type}:{id}の形になっているnodeIdからリンクを組み立てる版。
+ * backend/core/discoveries/discoveryBuilder.jsの発見（discoveries）は
+ * nodeType/nodeIdを分けて返さず、既に組み立て済みのnodeIdを返すため
+ * （SaveDiscoveryReveal.jsx参照）。
+ */
+export const entityDetailPathFromNodeId = (nodeId) => `/entities/${encodeURIComponent(nodeId)}`;

@@ -15,6 +15,7 @@ MVP完成後に追加した個別機能の仕様。もともとは機能ごと�
 - **Coffee Diagnosis**: 記録から「コーヒータイプ」を判定し、Insight・Statsの要約とあわせて1画面で見せる
 - **World Map**: 自分が記録した産地を世界地図上でハイライトする
 - **Similar Records**: 知識グラフの共起関係を使い、ある記録と属性を共有する他の記録を提示する
+- **Save Discoveries**: 記録を保存した直後、その記録によって新しく生まれたつながり・達成したマイルストーンを見せる
 
 ---
 
@@ -755,3 +756,114 @@ Actionable」）。候補が無い・読み込み中・エラー時は何も表�
 docs/design.mdにある「関連ノード」（1つの属性ノードに紐づく記録一覧を
 詳細画面に埋め込む案）とは異なる機能のため、重複にはあたらない
 （`frontend/src/pages/RecordDetailPage.jsx`のコメント参照）。
+
+---
+
+## Save Discoveries
+
+### Purpose
+
+Insight・Discover・Similar Recordsはいずれも「既存の記録データ全体」を
+対象にした発見だった。Save Discoveriesは、**1件の記録を保存したその
+瞬間**にだけ意味を持つ発見（この記録によって初めて登場した属性、
+区切りの良い件数への到達）を、保存直後のインタースティシャル画面
+（`SaveDiscoveryReveal.jsx`、docs/design.md「New / Edit Record」参照）
+で見せる機能。中心体験（Record → Connect → Discover）のうち、記録した
+「その場」でDiscoverが起きることを目指した、2026-09の記録体験再設計の
+一部として追加した。
+
+### なぜAI推薦ではないか
+
+保存前の自分の記録群から属性ごとの登録回数を集計し、今回の記録が持つ
+属性についてその回数へ+1した値を、区切りの良い数値（2, 3, 5, 10）と
+比較するだけの閾値判定。機械学習・自然言語処理は使わない
+（docs/product.md「MVP Before Intelligence」）。
+
+### 閾値
+
+| type               | 内容                   | 条件                             |
+| ------------------ | ---------------------- | -------------------------------- |
+| `firstAppearance`  | 属性の初登場           | 保存前の登録回数が0件            |
+| `milestone`        | 区切りの良い件数への到達 | 保存後の登録回数が2/3/5/10のいずれか |
+
+1回の保存で検出される発見は最大3件（firstAppearance優先、milestoneは
+recordCount降順）。keyword型（notesの自由記述からの自動抽出）は対象外
+（ユーザーが選んだ値ではなく、誤検出を「発見」として祝うと信頼を損なう
+ため）。
+
+具体的な計算は`backend/core/discoveries/discoveryBuilder.js`を参照。
+
+### 対象範囲
+
+記録の**作成時のみ**。編集（PATCH）では計算しない。編集は「過去の記録を
+直す」行為で「新しい体験を記録した」文脈ではなく、`docs/design.md`の
+「実績表示で惹きつけない」というトーンにも合わないため。
+
+### Source of Truth
+
+MongoDBのCoffeeRecordとマスターデータを正とする。専用のコレクションは
+持たず、保存前の自分の記録群から都度計算する
+（`backend/core/graph/graphBuilder.js`の`collectAttributeRefs`を、
+グラフ生成と同じ形のまま再利用する）。
+
+### Response Shape
+
+```json
+POST /api/coffee-records
+
+{
+  "data": { "id": "...", "title": "Ethiopia Gotiti", "...": "..." },
+  "discoveries": [
+    {
+      "type": "firstAppearance",
+      "nodeType": "origin",
+      "nodeId": "origin:507f...",
+      "label": "Ethiopia",
+      "recordCount": 1
+    }
+  ]
+}
+```
+
+発見が無ければ`discoveries: []`。PATCHのレスポンスには`discoveries`を
+含めない。
+
+### 表示
+
+記録作成フォームの保存後、`discoveries`が1件以上あるときだけ、記録詳細
+ページへ遷移する前に`SaveDiscoveryReveal.jsx`を表示する
+（`RecordFormPage.jsx`）。記録のタイトル・評価（★）と、発見ごとに
+知識グラフの種別アイコン・色（`nodeVisuals.js`の`getNodeVisual`）+文言+
+「つながりを見る」（該当エンティティ詳細ページへのリンク）を並べる。
+発見が無ければ、従来どおり保存ボタンの演出のみで記録詳細ページへ遷移
+する（docs/design.md「New / Edit Record」の「保存の瞬間の演出」参照）。
+
+### 保存前のプレビュー（2026-09、第3弾）
+
+`POST /api/discoveries/preview`は、記録をまだ保存せずに、産地を選んだ
+時点での発見だけを計算する。`discoveryBuilder.js`の`buildDiscoveries`を
+そのまま再利用し、リクエストで指定された産地IDだけを持つ仮の記録
+（DBには保存しない）を合成して渡す。
+
+```json
+POST /api/discoveries/preview
+{ "originId": "507f..." }
+
+{
+  "data": {
+    "discoveries": [
+      { "type": "firstAppearance", "nodeType": "origin", "nodeId": "origin:507f...", "label": "Ethiopia", "recordCount": 1 }
+    ]
+  }
+}
+```
+
+対象は産地のみ（品種・精製方法・焙煎度・フレーバーは対象外。フォーム
+操作のたびにAPIを呼ぶ煩雑さを避けるため）。`originId`が無い・ID形式が
+不正なら400、存在しない産地IDなら404。
+
+`RecordForm.jsx`（正確には`CoffeeComponentFields.jsx`）が、産地チップを
+実際に選び終えた瞬間（クリック／Enter・Space。矢印キーでの選択肢間移動
+では呼ばない）にこのAPIを呼び、結果があれば新しいUIコンポーネントを
+増やさず既存のトースト（`useToast`）で1件だけ知らせる。数秒で自動的に
+消える（他のトーストと同じ挙動）。

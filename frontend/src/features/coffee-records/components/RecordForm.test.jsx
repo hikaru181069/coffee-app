@@ -1,19 +1,22 @@
 /**
- * RecordForm.jsxのテスト。
+ * RecordForm.jsx（コーヒーキャンバス）のテスト。
  *
- * このコンポーネント自体は状態を持たない（Coffee Detailsの開閉を除く）ため、
+ * このコンポーネント自体は状態を持たない（発見バッジの一時状態を除く）ため、
  * useRecordFormと組み合わせた小さなHarnessで、実際にRecordFormPage.jsxが
- * 行っているのと同じ配線（values/errors/setValue/onSubmit=フォーム送信の
- * ラッパー）でレンダーする。フィールドを1つ1つモックするより、実際の
- * 使われ方に近い形で「主要な正常系・重要な異常系」（CLAUDE.mdのテスト方針）
- * を検証できる。
+ * 行っているのと同じ配線でレンダーする。フィールドを1つ1つモックするより、
+ * 実際の使われ方に近い形で「主要な正常系・重要な異常系」
+ * （CLAUDE.mdのテスト方針）を検証できる。
+ *
+ * 2026-09、記録体験の作り直し（コーヒーキャンバス）にあわせて全面書き換え。
+ * フレーバー・農園・品種・精製方法・焙煎度・ロースター名・店名・メモは
+ * PropertyButton（小さいボタン＋クリックで開くポップオーバー）になった。
+ * 産地バッジ・味覚レーダー（キーボード操作）・ブレンド追加とあわせて
+ * 検証する。
  *
  * useRecordForm自体がAPI（createCoffeeRecord/updateCoffeeRecord）を呼ぶため、
- * ここではそのAPIモジュールをモックする（RecordFormPage.jsxが実際に
- * useRecordFormへ渡すのと同じ、record===nullなのでcreateCoffeeRecordが
- * 呼ばれる想定）。
+ * ここではそのAPIモジュールをモックする。
  */
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -21,17 +24,37 @@ import userEvent from "@testing-library/user-event";
 import RecordForm from "./RecordForm";
 import { useRecordForm } from "../hooks/useRecordForm";
 import { createCoffeeRecord } from "../api/coffeeRecordApi";
+import { previewOriginDiscovery } from "../api/discoveriesApi";
 
 vi.mock("../api/coffeeRecordApi", () => ({
   createCoffeeRecord: vi.fn(),
   updateCoffeeRecord: vi.fn(),
 }));
 
+// 産地バッジを選んだときに呼ばれる（保存前の発見プレビュー）。
+// この画面の主目的（記録フォームの操作）とは無関係なので、
+// 何も発見が無い状態を既定にする（個別のテストで上書きする）
+vi.mock("../api/discoveriesApi", () => ({
+  previewOriginDiscovery: vi.fn().mockResolvedValue({ discoveries: [] }),
+}));
+
 afterEach(() => {
   vi.clearAllMocks();
-  createCoffeeRecord.mockResolvedValue({ id: "1" });
+  createCoffeeRecord.mockResolvedValue({ record: { id: "1" }, discoveries: [] });
+  previewOriginDiscovery.mockResolvedValue({ discoveries: [] });
 });
-createCoffeeRecord.mockResolvedValue({ id: "1" });
+createCoffeeRecord.mockResolvedValue({ record: { id: "1" }, discoveries: [] });
+
+const MASTER_DATA_WITH_ORIGINS = {
+  origins: [
+    { id: "origin-eth", name: "Ethiopia", countryCode: "ET" },
+    { id: "origin-ken", name: "Kenya", countryCode: "KE" },
+  ],
+  varieties: [],
+  processes: [],
+  roastLevels: [],
+  flavors: [],
+};
 
 const EMPTY_MASTER_DATA = {
   origins: [],
@@ -42,34 +65,18 @@ const EMPTY_MASTER_DATA = {
 };
 
 /**
- * prefillRoasterName: マウント直後に強制的にroasterNameへ121文字を
- * 入れる。「Coffee Detailsを開かないまま、隠れた項目でエラーが出た
- * 場合に自動で開く」（RecordForm.jsxのhasHiddenError）を、実際に
- * ユーザーが未入力のまま開いていない状態から検証するためのテスト専用の
- * 抜け道（本来のユーザー操作では起こらない、DOM外からの直接書き込み）。
- *
  * onSubmit: 送信が成功（バリデーション・API呼び出しの両方を通過）した
  * ときだけ、保存された記録付きで呼ばれる。RecordFormPage.jsxの
  * handleFormSubmitと同じ「form.submit()を呼び、truthyな戻り値のときだけ
  * 反応する」という薄いラッパー経由で配線する。
  */
-function Harness({
-  onSubmit = vi.fn(),
-  record = null,
-  prefillRoasterName = false,
-  prefillOriginId = null,
-}) {
-  const form = useRecordForm(record, prefillOriginId);
+function Harness({ onSubmit = vi.fn(), record = null, masterData = EMPTY_MASTER_DATA }) {
+  const form = useRecordForm(record);
 
   const handleSubmit = useCallback(async () => {
     const saved = await form.submit();
     if (saved) onSubmit(saved);
   }, [form, onSubmit]);
-
-  useEffect(() => {
-    if (prefillRoasterName) form.setValue("roasterName", "a".repeat(121));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <RecordForm
@@ -78,14 +85,20 @@ function Harness({
       submitError={form.submitError}
       isSubmitting={form.isSubmitting}
       setValue={form.setValue}
+      validateField={form.validateField}
       toggleValue={form.toggleValue}
+      addComponent={form.addComponent}
+      removeComponent={form.removeComponent}
+      setComponentValue={form.setComponentValue}
+      toggleComponentValue={form.toggleComponentValue}
+      setPrimaryComponentValue={form.setPrimaryComponentValue}
+      togglePrimaryComponentVariety={form.togglePrimaryComponentVariety}
       onSubmit={handleSubmit}
       onCancel={vi.fn()}
-      masterData={EMPTY_MASTER_DATA}
+      masterData={masterData}
       isMasterDataLoading={false}
       masterDataError={null}
       submitLabel="保存する"
-      prefillOriginId={prefillOriginId}
     />
   );
 }
@@ -97,30 +110,34 @@ describe("RecordForm", () => {
     expect(screen.getByLabelText(/^タイトル/)).toBeInTheDocument();
     expect(screen.getByLabelText(/^飲んだ日時/)).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "家で" })).toBeChecked();
-    expect(screen.queryByLabelText(/^店名/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /店名/ })).not.toBeInTheDocument();
   });
 
-  test("記録タイプをカフェに切り替えると店名欄が表示される", async () => {
+  test("記録タイプをカフェに切り替えると店名のプロパティボタンが表示される", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
     await user.click(screen.getByRole("radio", { name: "カフェで" }));
 
-    expect(screen.getByLabelText(/^店名/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /店名/ })).toBeInTheDocument();
   });
 
-  test("Coffee Detailsは新規作成では初期状態で閉じており、クリックで開閉できる", async () => {
+  test("コーヒーの詳細はプロパティボタンとして常時表示され、クリックすると編集できる", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    const toggle = screen.getByRole("button", { name: /コーヒーの詳細/ });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByLabelText(/^焙煎者・ロースター/)).not.toBeInTheDocument();
+    // 産地・味覚以外の任意項目は、値の有無に関わらずボタンとして並ぶ
+    expect(screen.getByRole("button", { name: /^農園/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^焙煎度/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /ロースター/ })).toBeInTheDocument();
 
-    await user.click(toggle);
+    // クリックするとその場にポップオーバーが開き、中の入力欄が使える
+    await user.click(screen.getByRole("button", { name: /^農園/ }));
+    const farmInput = await screen.findByLabelText(/^農園/);
+    await user.type(farmInput, "Konga Washing Station");
 
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByLabelText(/^焙煎者・ロースター/)).toBeInTheDocument();
+    // 入力した値がボタン自体の表示にも反映される
+    expect(screen.getByRole("button", { name: /Konga Washing Station/ })).toBeInTheDocument();
   });
 
   test("タイトルが空のまま送信すると必須エラーが表示され、onSubmitは呼ばれない", async () => {
@@ -134,31 +151,53 @@ describe("RecordForm", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  test("Coffee Detailsを開いていなくても、隠れた項目にエラーがあれば自動的に開く", async () => {
+  test("産地バッジを選ぶと選択状態になり、保存前の発見プレビューが呼ばれる", async () => {
     const user = userEvent.setup();
-    render(<Harness prefillRoasterName />);
+    previewOriginDiscovery.mockResolvedValue({
+      discoveries: [{ type: "firstAppearance", nodeType: "origin", nodeId: "origin:origin-eth", label: "Ethiopia", recordCount: 1 }],
+    });
+    render(<Harness masterData={MASTER_DATA_WITH_ORIGINS} />);
 
-    // 送信前はまだ閉じたまま（バリデーションはsubmit時にしか走らないため）
-    const toggle = screen.getByRole("button", { name: /コーヒーの詳細/ });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await user.click(screen.getByRole("radio", { name: "Ethiopia" }));
 
-    await user.click(screen.getByRole("button", { name: "保存する" }));
-
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByLabelText(/^焙煎者・ロースター/)).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Ethiopia" })).toBeChecked();
+    expect(previewOriginDiscovery).toHaveBeenCalledWith("origin-eth");
+    expect(await screen.findByRole("status")).toHaveTextContent("初めての記録になります");
   });
 
-  test("Discoverからの産地事前入力（prefillOriginId）が後から届くと、Coffee Detailsが自動的に開く", () => {
-    const { rerender } = render(<Harness prefillOriginId={null} />);
+  test("味覚レーダーの頂点は矢印キーで値を変更できる", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
 
-    const toggle = screen.getByRole("button", { name: /コーヒーの詳細/ });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    const sweetness = screen.getByRole("slider", { name: "甘み" });
+    expect(sweetness).toHaveAttribute("aria-valuenow", "0");
 
-    // masterData読み込み待ちで、originNameの解決が後から届く想定
-    // （RecordFormPage.jsxのuseMemo経由）を再レンダーで再現する
-    rerender(<Harness prefillOriginId="origin-123" />);
+    sweetness.focus();
+    await user.keyboard("{ArrowUp}{ArrowUp}");
 
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(sweetness).toHaveAttribute("aria-valuenow", "2");
+
+    await user.keyboard("{ArrowDown}");
+    expect(sweetness).toHaveAttribute("aria-valuenow", "1");
+
+    await user.keyboard("{End}");
+    expect(sweetness).toHaveAttribute("aria-valuenow", "5");
+
+    await user.keyboard("{Home}");
+    expect(sweetness).toHaveAttribute("aria-valuenow", "0");
+  });
+
+  test("「＋ブレンドを追加」で2グループ目が表示され、削除ボタンで消える", async () => {
+    const user = userEvent.setup();
+    render(<Harness masterData={MASTER_DATA_WITH_ORIGINS} />);
+
+    expect(screen.queryByText("コーヒー2")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /ブレンドを追加/ }));
+    expect(screen.getByText("コーヒー2")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "削除" }));
+    expect(screen.queryByText("コーヒー2")).not.toBeInTheDocument();
   });
 
   test("送信中は保存ボタンが無効化され「保存中...」と表示される", async () => {
@@ -177,6 +216,6 @@ describe("RecordForm", () => {
 
     expect(await screen.findByRole("button", { name: /保存中/ })).toBeDisabled();
 
-    resolveSubmit({ id: "1" });
+    resolveSubmit({ record: { id: "1" }, discoveries: [] });
   });
 });

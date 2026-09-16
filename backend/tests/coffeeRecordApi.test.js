@@ -191,6 +191,70 @@ describe("POST /api/coffee-records", () => {
 
     expect(res.status).toBe(400);
   });
+
+  describe("discoveries（保存直後の発見）", () => {
+    test("初めての産地で記録するとfirstAppearanceが返る", async () => {
+      await seedTestMasterData();
+      const origin = await Origin.findOne({ normalizedName: "ethiopia" });
+
+      const res = await request(app)
+        .post(ENDPOINT)
+        .set("Authorization", alice.authHeader)
+        .send(buildRecordPayload({ components: [{ originId: String(origin._id) }] }));
+
+      expect(res.status).toBe(201);
+      expect(res.body.discoveries).toEqual([
+        expect.objectContaining({ type: "firstAppearance", nodeType: "origin", label: "Ethiopia" }),
+      ]);
+    });
+
+    test("既に2件記録済みの産地で3件目を作成するとmilestone（3件目）が返る", async () => {
+      await seedTestMasterData();
+      const origin = await Origin.findOne({ normalizedName: "ethiopia" });
+
+      await createRecordFor(alice.user._id, { components: [{ originId: origin._id }] });
+      await createRecordFor(alice.user._id, { components: [{ originId: origin._id }] });
+
+      const res = await request(app)
+        .post(ENDPOINT)
+        .set("Authorization", alice.authHeader)
+        .send(buildRecordPayload({ components: [{ originId: String(origin._id) }] }));
+
+      expect(res.status).toBe(201);
+      expect(res.body.discoveries).toEqual([
+        expect.objectContaining({ type: "milestone", nodeType: "origin", label: "Ethiopia", recordCount: 3 }),
+      ]);
+    });
+
+    test("発見が無い保存ではdiscoveries: []が返る", async () => {
+      const res = await request(app)
+        .post(ENDPOINT)
+        .set("Authorization", alice.authHeader)
+        .send(buildRecordPayload());
+
+      expect(res.status).toBe(201);
+      expect(res.body.discoveries).toEqual([]);
+    });
+
+    test("他ユーザーの記録は自分のdiscoveries集計に影響しない", async () => {
+      await seedTestMasterData();
+      const origin = await Origin.findOne({ normalizedName: "ethiopia" });
+
+      // Bobが同じ産地を既に2件記録していても、Aliceにとっては初登場
+      await createRecordFor(bob.user._id, { components: [{ originId: origin._id }] });
+      await createRecordFor(bob.user._id, { components: [{ originId: origin._id }] });
+
+      const res = await request(app)
+        .post(ENDPOINT)
+        .set("Authorization", alice.authHeader)
+        .send(buildRecordPayload({ components: [{ originId: String(origin._id) }] }));
+
+      expect(res.status).toBe(201);
+      expect(res.body.discoveries).toEqual([
+        expect.objectContaining({ type: "firstAppearance", nodeType: "origin", label: "Ethiopia" }),
+      ]);
+    });
+  });
 });
 
 // ── 一覧 ──────────────────────────────────────────────────────
@@ -494,6 +558,18 @@ describe("PATCH /api/coffee-records/:recordId", () => {
     expect(res.body.data.rating).toBe(5);
     // 送っていない項目は変わらない
     expect(res.body.data.title).toBe("変更前");
+  });
+
+  test("更新のレスポンスにdiscoveriesは含まれない（発見演出は作成時のみ）", async () => {
+    const record = await createRecordFor(alice.user._id, { title: "変更前" });
+
+    const res = await request(app)
+      .patch(`${ENDPOINT}/${record._id}`)
+      .set("Authorization", alice.authHeader)
+      .send({ title: "変更後" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.discoveries).toBeUndefined();
   });
 
   test("他ユーザーの記録は更新できない", async () => {

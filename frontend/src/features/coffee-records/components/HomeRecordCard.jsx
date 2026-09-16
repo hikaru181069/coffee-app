@@ -39,7 +39,7 @@ function HomeRecordCard({ record, index = 0 }) {
       <Link
         ref={ref}
         to={`/records/${record.id}`}
-        className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} block h-full rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50 sm:p-5`}
+        className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} block h-full rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:p-5`}
       >
         {origins.length > 0 && (
           <div className="flex items-center gap-2">

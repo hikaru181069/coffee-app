@@ -13,11 +13,11 @@ import ChipMultiSelect from "./ChipMultiSelect";
  */
 const compactSelectClass =
   "w-auto rounded-lg border border-line/60 bg-surface-1 py-1.5 pl-2.5 pr-7 text-sm text-text " +
-  "transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50";
+  "transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
 
 const compactInputClass =
   "w-auto rounded-lg border border-line/60 bg-surface-1 px-2.5 py-1.5 text-sm text-text " +
-  "transition-colors duration-150 hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/50";
+  "transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
 
 /** 産地・品種・精製方法・焙煎度・フレーバーの複数選択フィールド一覧。詳細フィルターのレンダリングとhasActiveFiltersの判定で共有する */
 const REFERENCE_FIELDS = [

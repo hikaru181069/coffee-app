@@ -25,8 +25,16 @@ import { createCoffeeRecord, updateCoffeeRecord } from "../api/coffeeRecordApi";
 /** 現在時刻を datetime-local の形で返す（新規作成の初期値） */
 const nowForInput = () => toDateTimeLocalValue(new Date().toISOString());
 
-/** 「コーヒーの詳細」1グループぶんの空の値 */
-const emptyComponent = () => ({ originId: "", farmName: "", varietyIds: [], processId: "" });
+/**
+ * 「コーヒーの詳細」1グループぶんの空の値。
+ *
+ * RecordForm.jsx（コーヒーキャンバス）が、まだcomponentsが1件も無い
+ * 状態でも「1グループ目」の入力欄（産地バッジ・農園名・品種・精製方法）
+ * を常時表示するため、表示用の既定値としてもそのままexportする
+ * （docs/design.md「New / Edit Record」参照。この画面はProgressive
+ * Disclosureを意図的に適用せず、任意項目も含め常時表示にしている）。
+ */
+export const emptyComponent = () => ({ originId: "", farmName: "", varietyIds: [], processId: "" });
 
 const emptyValues = () => ({
   title: "",
@@ -140,6 +148,27 @@ export const useRecordForm = (record, prefillOriginId = null) => {
     });
   }, []);
 
+  /**
+   * 1つの欄だけをその場で検証する（インライン検証、2026-09の記録体験
+   * 再設計・第3弾）。送信時の検証（validateRecordForm）と同じ判定基準を
+   * 使い、ロジックを重複させない。他の欄の既存エラーはそのまま保つ
+   */
+  const validateField = useCallback(
+    (field) => {
+      const validationErrors = validateRecordForm(values, t);
+      setErrors((prev) => {
+        if (!validationErrors[field]) {
+          if (!prev[field]) return prev;
+          const next = { ...prev };
+          delete next[field];
+          return next;
+        }
+        return { ...prev, [field]: validationErrors[field] };
+      });
+    },
+    [values, t],
+  );
+
   /** 複数選択（フレーバー）の1件をトグルする */
   const toggleValue = useCallback((field, id) => {
     setValues((prev) => {
@@ -173,6 +202,39 @@ export const useRecordForm = (record, prefillOriginId = null) => {
         i === index ? { ...component, [field]: value } : component,
       ),
     }));
+  }, []);
+
+  /**
+   * 「コーヒーの詳細」1グループ目（産地キャンバスが直接操作する対象）の
+   * 1つの欄を変更する。componentsがまだ1件も無い（Record First、
+   * 新規作成の初期状態）ときは、この呼び出しで初めて1グループ目を
+   * 作る。addComponent()を別途呼ぶ必要が無いよう、この関数の中で
+   * 「無ければ作る」を吸収する
+   */
+  const setPrimaryComponentValue = useCallback((field, value) => {
+    setValues((prev) => {
+      const components = prev.components.length > 0 ? prev.components : [emptyComponent()];
+      return {
+        ...prev,
+        components: components.map((component, i) => (i === 0 ? { ...component, [field]: value } : component)),
+      };
+    });
+  }, []);
+
+  /** 1グループ目の複数選択（品種）の1件をトグルする。無ければ作る */
+  const togglePrimaryComponentVariety = useCallback((id) => {
+    setValues((prev) => {
+      const components = prev.components.length > 0 ? prev.components : [emptyComponent()];
+      return {
+        ...prev,
+        components: components.map((component, i) => {
+          if (i !== 0) return component;
+          const current = component.varietyIds ?? [];
+          const next = current.includes(id) ? current.filter((value) => value !== id) : [...current, id];
+          return { ...component, varietyIds: next };
+        }),
+      };
+    });
   }, []);
 
   /** 「コーヒーの詳細」の指定グループの複数選択（品種）の1件をトグルする */
@@ -234,11 +296,14 @@ export const useRecordForm = (record, prefillOriginId = null) => {
     isSubmitting,
     isDirty,
     setValue,
+    validateField,
     toggleValue,
     addComponent,
     removeComponent,
     setComponentValue,
     toggleComponentValue,
+    setPrimaryComponentValue,
+    togglePrimaryComponentVariety,
     submit,
   };
 };
