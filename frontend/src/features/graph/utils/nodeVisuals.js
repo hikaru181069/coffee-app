@@ -1,13 +1,32 @@
-import { Coffee, Droplets, Flame, Globe, Leaf, Quote, Sparkles, Sprout, Store } from "lucide-react";
+import {
+  BarnIcon,
+  CoffeeIcon,
+  FireIcon,
+  MapPinIcon,
+  PlantIcon,
+  SparkleIcon,
+  StorefrontIcon,
+  TagIcon,
+} from "@phosphor-icons/react";
+import CherryToBeanIcon from "../components/CherryToBeanIcon";
 import { getCanvasColor } from "./canvasColors";
 
 /**
  * ノード種別ごとの見た目（アイコン・色）とラベルの翻訳キー。
  *
  * docs/design.md の「Graph Visual Semantics」に対応する:
- *   record: card/circle, origin: globe, farm: leaf, variety: seed,
- *   process: droplets, roastLevel: flame, flavor: sparkle, cafe: store,
- *   keyword: quote
+ *   record: coffee cup, origin: map pin, farm: barn, variety: plant(芽),
+ *   process: cherry→bean（精製=果実から豆を取り出す工程）, roastLevel: fire,
+ *   flavor: sparkle, cafe: storefront, keyword: tag
+ *
+ * 2026-09、lucide-reactの汎用アイコンでは種別が覚えにくい・気に入らない
+ * というフィードバックを受け、実在の@phosphor-icons/react本体のアイコンへ
+ * 全面差し替えた（docs/design.md「Iconography」の「lucide-reactのみを
+ * 使う」というルールを、ユーザーの明示的な指示でこの9種類に限り上書き
+ * している）。processだけはPhosphor本体に「チェリーから豆を取り出す
+ * 工程」に対応する単体アイコンが無いため、Phosphor本体のCherries/
+ * CoffeeBeanのパスを合成した専用コンポーネント
+ * （components/CherryToBeanIcon.jsx）を使う。
  *
  * 色だけで種別を区別しない（docs/design.md の UI Rules）ため、
  * 種別ごとに異なるアイコンも必ず割り当てる。GraphLegend と
@@ -48,7 +67,7 @@ import { getCanvasColor } from "./canvasColors";
  */
 export const NODE_VISUALS = {
   record: {
-    icon: Coffee,
+    icon: CoffeeIcon,
     labelKey: "graph.nodeTypes.record",
     colorClass: "text-accent-moss",
     bgTintClass: "bg-accent-moss/15",
@@ -58,7 +77,7 @@ export const NODE_VISUALS = {
     },
   },
   origin: {
-    icon: Globe,
+    icon: MapPinIcon,
     labelKey: "graph.nodeTypes.origin",
     colorClass: "text-accent-sky",
     bgTintClass: "bg-accent-sky/15",
@@ -68,7 +87,7 @@ export const NODE_VISUALS = {
     },
   },
   farm: {
-    icon: Leaf,
+    icon: BarnIcon,
     labelKey: "graph.nodeTypes.farm",
     colorClass: "text-accent-teal",
     bgTintClass: "bg-accent-teal/15",
@@ -78,7 +97,7 @@ export const NODE_VISUALS = {
     },
   },
   variety: {
-    icon: Sprout,
+    icon: PlantIcon,
     labelKey: "graph.nodeTypes.variety",
     colorClass: "text-accent-yellow",
     bgTintClass: "bg-accent-yellow/15",
@@ -88,7 +107,7 @@ export const NODE_VISUALS = {
     },
   },
   process: {
-    icon: Droplets,
+    icon: CherryToBeanIcon,
     labelKey: "graph.nodeTypes.process",
     colorClass: "text-accent-sapphire",
     bgTintClass: "bg-accent-sapphire/15",
@@ -98,7 +117,7 @@ export const NODE_VISUALS = {
     },
   },
   roastLevel: {
-    icon: Flame,
+    icon: FireIcon,
     labelKey: "graph.nodeTypes.roastLevel",
     colorClass: "text-accent-peach",
     bgTintClass: "bg-accent-peach/15",
@@ -108,7 +127,7 @@ export const NODE_VISUALS = {
     },
   },
   flavor: {
-    icon: Sparkles,
+    icon: SparkleIcon,
     labelKey: "graph.nodeTypes.flavor",
     colorClass: "text-accent-pink",
     bgTintClass: "bg-accent-pink/15",
@@ -118,7 +137,7 @@ export const NODE_VISUALS = {
     },
   },
   cafe: {
-    icon: Store,
+    icon: StorefrontIcon,
     labelKey: "graph.nodeTypes.cafe",
     colorClass: "text-accent-lavender",
     bgTintClass: "bg-accent-lavender/15",
@@ -128,7 +147,7 @@ export const NODE_VISUALS = {
     },
   },
   keyword: {
-    icon: Quote,
+    icon: TagIcon,
     labelKey: "graph.nodeTypes.keyword",
     colorClass: "text-accent-mauve",
     bgTintClass: "bg-accent-mauve/15",

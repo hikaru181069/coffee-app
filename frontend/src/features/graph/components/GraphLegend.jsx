@@ -28,7 +28,7 @@ function GraphLegend() {
 
           return (
             <span key={type} className="inline-flex items-center gap-1 text-[11px] text-text-tertiary">
-              <Icon size={12} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
+              <Icon size={12} aria-hidden="true" className={visual.colorClass} />
               {t(visual.labelKey)}
             </span>
           );

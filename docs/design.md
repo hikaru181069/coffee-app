@@ -307,19 +307,33 @@ Similar Recordsと同じ）を踏襲している（docs/features.md
 
 ノード種別は色だけでなく、ラベルまたは形状でも判別可能にします。
 
-例:
+2026-09、lucide-reactの汎用アイコンでは種別が覚えにくい・気に入らない
+というフィードバックを受け、実在の`@phosphor-icons/react`本体のアイコンへ
+9種類全て差し替えた（ユーザーの明示的な指示により、下記Iconography節の
+「lucide-reactのみを使う」ルールをこの9種類に限り上書きしている）。
+手描きの曲線パスは一切使わず、Phosphor本体が実際に持つパスデータのみで
+構成する。
 
-- record: card/circle
-- origin: globe
-- farm: leaf
-- variety: seed
-- process: droplets
-- roastLevel: flame
-- flavor: sparkle
-- cafe: store
-- keyword: quote
+- record: `CoffeeIcon`（コーヒーカップ）
+- origin: `MapPinIcon`（地図ピン）
+- farm: `BarnIcon`（納屋。「農地・施設」を表す。Phosphorの`Plant`は
+  IT文脈で「サーバーファーム」を意味する図柄のため使わない）
+- variety: `PlantIcon`（芽。生豆の品種という「まだ育つ途中のもの」を表す）
+- process: `CherryToBeanIcon`（`frontend/src/features/graph/components/
+  CherryToBeanIcon.jsx`。精製方法＝コーヒーチェリーから豆を取り出す工程を
+  表現するため、Phosphor本体にはない専用の合成アイコン。Phosphor本体の
+  `Cherries`と`CoffeeBean`のパスを縮小配置し矢印でつないでいる。12px程度の
+  小サイズでは3要素が潰れて判別しづらいことを確認済みだが、ユーザーとの
+  相談の上でそのまま採用した）
+- roastLevel: `FireIcon`（炎）
+- flavor: `SparkleIcon`（きらめき）
+- cafe: `StorefrontIcon`（店舗）
+- keyword: `TagIcon`（タグ）
 
-具体的なアイコンライブラリは既存依存関係を確認して決定してください。
+対応表の実体は`frontend/src/features/graph/utils/nodeVisuals.js`（DOM用）と
+`frontend/src/features/graph/utils/canvasIcons.js`（canvas描画用、同じ
+パスデータを別形式で保持）の2箇所。両者がずれないよう、値を変更する際は
+必ず両方を更新すること。
 
 ## Design Tokens
 
@@ -432,7 +446,10 @@ mobbin.com側に対応する概念が無いため今回のスコープ外とし�
 
 ### Iconography
 
-- アイコンは`lucide-react`のみを使う。
+- アイコンは`lucide-react`のみを使う。ただし知識グラフのノード種別
+  アイコン（9種類）だけは例外で、2026-09にユーザーの明示的な指示により
+  `@phosphor-icons/react`へ差し替えた（詳細は上記「Graph Visual
+  Semantics」参照）。この例外を他の画面のアイコンへ広げない。
 - 知識グラフのノード種別ごとのアイコンは上記「Graph Visual Semantics」で
   定義済み（色だけで種別を区別しない）。
 - strokeWidthは既定値(2)で統一する。個別のアイコンだけ太さを変えない。

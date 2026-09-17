@@ -52,7 +52,7 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Icon size={18} aria-hidden="true" className={iconColorClass} strokeWidth={1.75} />
+          <Icon size={18} aria-hidden="true" className={iconColorClass} />
           <div>
             <p className="text-xs text-text-tertiary">{t(visual.labelKey)}</p>
             <h2 className="text-sm font-semibold text-text">{node.data.label}</h2>
