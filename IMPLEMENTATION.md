@@ -3482,6 +3482,39 @@ C: 諸島マップ＝種別ごとに領域を分ける／D: 一覧＋ミニグ�
 
 ---
 
+### 2026-09-17: グラフのノードアイコンをPhosphor Icons本体へ全面差し替え
+
+lucide-reactの汎用アイコン（地球儀・水滴・きらめき等）では種別が覚えにくい
+というフィードバックを受け、Artifactでの試作（手描きの曲線→崩れて表示が
+壊れる不具合を2回踏んだ）を経て、最終的にユーザー提供の参考画像
+（Phosphor Icons参考）をもとに、実在の`@phosphor-icons/react`本体の
+アイコンへ9種類全て差し替えた。
+
+**対応**: `record: CoffeeIcon` / `origin: MapPinIcon` / `farm: BarnIcon`
+（Phosphorの`Plant`はIT文脈で「サーバーファーム」を意味する図柄のため
+使わず、文字通り納屋を表す`Barn`を採用） / `variety: PlantIcon`（芽） /
+`process: CherryToBeanIcon`（新規コンポーネント。精製方法＝コーヒー
+チェリーから豆を取り出す工程を表現するため、Phosphor本体には対応する
+単体アイコンが無く、`Cherries`と`CoffeeBean`のパスを縮小配置し矢印で
+つないだ合成アイコンを作った） / `roastLevel: FireIcon` /
+`flavor: SparkleIcon` / `cafe: StorefrontIcon` / `keyword: TagIcon`。
+`canvasIcons.js`（canvas描画用）と`nodeVisuals.js`（DOM用）の両方を
+Phosphor本体の実際のパスデータで更新した。docs/design.mdの「アイコンは
+lucide-reactのみを使う」ルールも、この9種類に限る例外として明記した。
+
+**未解決事項**: `CherryToBeanIcon`は凡例（12px相当）では3要素（チェリー・
+矢印・豆）が潰れて判別しづらいことを実機で確認済み。グラフ本体の
+ノードサイズ（48px前後）では問題ないため、ユーザーと相談のうえ
+そのまま採用した。将来さらに手を入れる場合は、矢印を省く／
+チェリーかbeanどちらか一方に絞るなどの簡略化が候補になる。
+
+**実行したテストと結果**: `cd frontend && npm run lint && npm run build`
+（0エラー）。claude-in-chromeで`/graph`（凡例・キャンバス・検索・
+選択パネル）と`/entities/process:xxx`（見出しアイコン・関連属性の
+アイコン一覧）を実機確認し、9種類とも崩れずに表示されることを確認済み。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
