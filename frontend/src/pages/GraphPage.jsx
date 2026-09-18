@@ -10,10 +10,10 @@ import GraphFilters from "../features/graph/components/GraphFilters";
 import GraphLegend from "../features/graph/components/GraphLegend";
 import GraphNodeSearch from "../features/graph/components/GraphNodeSearch";
 import NodeDetailPanel from "../features/graph/components/NodeDetailPanel";
+import CoffeeLoader from "../components/CoffeeLoader";
 import {
   GraphEmptyState,
   GraphErrorState,
-  GraphLoadingState,
   GraphNoMatchState,
 } from "../features/graph/components/GraphStates";
 
@@ -102,7 +102,7 @@ function GraphPage() {
   }
 
   const renderBody = () => {
-    if (isLoading) return <GraphLoadingState />;
+    if (isLoading) return <CoffeeLoader size="lg" fillHeight />;
     if (error) return <GraphErrorState error={error} onRetry={reload} />;
 
     if (!graph || graph.summary.recordCount === 0) {

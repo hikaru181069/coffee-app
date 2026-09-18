@@ -16,17 +16,17 @@ import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
  * 統合するのは見せ方だけで、裏側のデータ・ロジックは今まで通り完全に
  * 独立している:
  *   - Insight行は useInsights（core/insights/insightBuilder.js、
- *     MongoDBのCoffeeRecordのみが正、docs/insights.md）
+ *     MongoDBのCoffeeRecordのみが正、docs/features.md「Insights」）
  *   - Discover行は useDiscoverTeaser（core/discover/discoverBuilder.js、
  *     CoffeeRecord + 静的CQIデータが正、docs/features.md「Discover」）
- * `docs/insights.md`の「Source of Truth: MongoDBのCoffeeRecordとマスター
+ * `docs/features.md`「Insights」の「Source of Truth: MongoDBのCoffeeRecordとマスター
  * データを正とする」という記述は、あくまでInsightの6種別の計算ロジック
  * （insightBuilder.js）についての記述であり、この2つを画面上どこに
  * 並べて表示するかとは別の話のため、矛盾しない。
  *
  * 見出し「Discover」は、LandingPageの「Record / Connect / Discover」と
  * 同じ言語非依存のブランド語として扱い、翻訳しない
- * （IMPLEMENTATION.mdのi18n対応エントリ参照）。docs/vision.mdの3本柱の
+ * （IMPLEMENTATION.mdのi18n対応エントリ参照）。docs/product.md「Vision」の3本柱の
  * うち、認証後の画面に一度も出てこなかった"Discover"という言葉を、
  * ここで初めて可視化する狙いもある。
  *
@@ -43,13 +43,23 @@ import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
  * 2026-08、UI/UXレビューで「3行がテキストを読まないと区別できない」
  * という指摘を受け、行ごとに別のアクセントカラーを割り当てた
  * （Discover行のtext-successは既存のまま）。Diagnosis行は、記録から
- * 診断が生まれるという一貫性のためrecordと同じ`accent-moss`にした。
+ * 診断が生まれるという一貫性のためrecordと同じ色にした。
  *
  * 2026-08、World Map機能（docs/features.md「World Map」）の導線が
  * Statsページの小さなテキストリンク1箇所しか無く弱いという指摘を受け、
  * Diagnosis行と同じ扱い（データ取得なしの静的リンク）で4行目として
- * 追加した。色はGraphのoriginノードと同じ`accent-sky`にし、産地の
+ * 追加した。色はGraphのoriginノードと同じ色にし、産地の
  * ノード種別との一貫性を持たせた。
+ *
+ * 2026-09、「デザイン・テーマの統一」レビューで、この3行が旧
+ * `--color-accent-*`（Catppuccin Mocha由来。Discover・WorldMapLegend・
+ * OverviewStats・Diagnosisで共有）のままで、Graph画面作り直しで新設した
+ * `--color-graph-*`と無関係になっていたことが分かった。「記録から生まれる
+ * 一貫性」「originノードとの一貫性」という元の意図を保ったまま、参照先を
+ * `--color-graph-*`（record・origin）へ差し替えた。Insight行（Sparkles）は
+ * 元々あった`accent-sapphire`の代わりに、同じスロットに対応する
+ * `graph-process`を使う（他の2行と違い「どの種別に合わせるか」の意図が
+ * 明記されていなかったため、旧トークンの対応スロットをそのまま踏襲した）。
  *
  * 2026-08、一時期はDiscover行のリンク先を専用の一覧ページ（`/discover`）
  * にしていたが、実データで検証したところ条件を満たす産地グループは
@@ -80,7 +90,7 @@ function DiscoverCard() {
             to="/graph"
             className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
-            <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-accent-sapphire" />
+            <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-graph-process" />
             <p className="text-base text-text">{insightText}</p>
           </Link>
         )}
@@ -101,7 +111,7 @@ function DiscoverCard() {
           to="/diagnosis"
           className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
         >
-          <Coffee size={22} aria-hidden="true" className="flex-shrink-0 text-accent-moss" />
+          <Coffee size={22} aria-hidden="true" className="flex-shrink-0 text-graph-record" />
           <p className="text-base text-text">{t("discover.diagnosisLink")}</p>
         </Link>
 
@@ -109,7 +119,7 @@ function DiscoverCard() {
           to="/map"
           className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
         >
-          <Globe size={22} aria-hidden="true" className="flex-shrink-0 text-accent-sky" />
+          <Globe size={22} aria-hidden="true" className="flex-shrink-0 text-graph-origin" />
           <p className="text-base text-text">{t("discover.mapLink")}</p>
         </Link>
       </div>

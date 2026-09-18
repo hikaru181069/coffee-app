@@ -11,8 +11,9 @@ import { getNodeVisual } from "../../graph/utils/nodeVisuals";
  *
  * 2026-08、カードの空白を埋めるアイコンバッジを追加した
  * （CollectionStats.jsxと同じ意図）。記録数はGraphのrecordノードと
- * 同じ色（accent-moss）、平均評価は他画面の評価表示と同じ`warn`色、
- * 記録を始めてからの日数はどのノード種別にも該当しないため中立色にした。
+ * 同じ色（`getNodeVisual("record")`、`--color-graph-record`）、
+ * 平均評価は他画面の評価表示と同じ`warn`色、記録を始めてからの日数は
+ * どのノード種別にも該当しないため中立色にした。
  *
  * 2026-08、アイコンバッジを足しても広い画面ではまだ余白が目立つという
  * 指摘を再度受けた。`grid`の均等割りをやめ`flex flex-wrap`にし、

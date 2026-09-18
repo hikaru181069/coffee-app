@@ -1,6 +1,7 @@
 /**
- * バックエンドの知識グラフ応答（{nodes, edges}）を、react-force-graph-2dが
- * 期待する形（{nodes, links}）へ変換する純粋関数。GraphCanvas.jsxから切り出した。
+ * バックエンドの知識グラフ応答（{nodes, edges}）を、GraphCanvas.jsxの
+ * 物理演算が扱う形（{nodes, links}）へ変換する純粋関数。GraphCanvas.jsxから
+ * 切り出した。
  *
  * degree（そのノードにつながっているエッジの数。属性ノードなら
  * 実質「つながっている記録の数」と同じ）をノードごとに数え、

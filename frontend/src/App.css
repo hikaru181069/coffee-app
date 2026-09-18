@@ -401,23 +401,6 @@ input {
 /* Empty state */
 
 
-.future-star-card--loading .skeleton-block {
-  height: 18px;
-  border-radius: 6px;
-}
-
-.future-star-card--loading .skeleton-block:nth-child(1) {
-  width: 45%;
-}
-
-.future-star-card--loading .skeleton-block:nth-child(2) {
-  width: 78%;
-}
-
-.future-star-card--loading .skeleton-block:nth-child(3) {
-  width: 58%;
-}
-
 /* Feature cards (guest landing) */
 
 
@@ -1109,44 +1092,6 @@ button:active {
   .toast,
   .toast--leaving {
     animation: none;
-  }
-}
-
-/* ── [Phase 10] Shimmer skeleton loading ────────────────────────────────────
-   animate-pulse（フェードのみ）より本物らしいローディング感を出す。
-   光が左から右へ流れるグラデーションアニメーション。
-   Facebook / LinkedIn の skeleton loader と同じ手法。
-
-   仕組み:
-   - background を "暗い → 明るい → 暗い" の3色グラデーションで作る
-   - background-size を要素幅より大きくして「光の帯」を作る
-   - background-position を左から右へ移動させることで光が流れる
-   ─────────────────────────────────────────────────────────────────────────── */
-@keyframes shimmer {
-  0% {
-    background-position: -600px 0;
-  }
-  100% {
-    background-position: 600px 0;
-  }
-}
-
-.skeleton-block {
-  display: inline-block;
-  background: linear-gradient(
-    90deg,
-    var(--color-surface-1) 25%,
-    rgba(255, 255, 255, 0.08) 50%,
-    /* 白のグローで光の帯を見えやすくする */ var(--color-surface-1) 75%
-  );
-  background-size: 600px 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton-block {
-    animation: none;
-    background: var(--color-surface-2);
   }
 }
 

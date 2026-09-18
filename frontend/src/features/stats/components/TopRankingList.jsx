@@ -2,13 +2,14 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
+import { getNodeSolidBgClass } from "../../graph/utils/nodeColor";
 import { computeRanks } from "../utils/rankings";
 import { useReveal } from "../../../hooks/useReveal";
 import { revealDelayClass } from "../../../utils/revealDelay";
 
 /**
  * 産地・品種・精製方法・フレーバー・カフェ、いずれか1種別分の
- * 上位ランキング。項目はエンティティ詳細ページ（docs/entity-detail.md）
+ * 上位ランキング。項目はエンティティ詳細ページ（docs/features.md「Entity Detail」）
  * へのLinkにする（知識グラフをナビゲーションにする方針。
  * 検索結果・Insight・GraphのNodeDetailPanelと同じ考え方）。
  *
@@ -31,15 +32,22 @@ function TopRankingList({ type, items }) {
       </div>
       <ul className="flex flex-col gap-0.5">
         {items.map((item, index) => (
-          <RankingRow key={item.id} item={item} rank={ranks[index]} index={index} />
+          <RankingRow key={item.id} type={type} item={item} rank={ranks[index]} index={index} />
         ))}
       </ul>
     </div>
   );
 }
 
-/** ランキング1行分。スクロールインで段階的にカスケード表示する */
-function RankingRow({ item, rank, index }) {
+/**
+ * ランキング1行分。スクロールインで段階的にカスケード表示する。
+ *
+ * 2026-09、「デザイン・テーマの統一」レビューで、ランキング項目自体には
+ * 色が一切付いていない（見出しのアイコンだけが種別共通色）ことが分かった。
+ * Record一覧のタグ・Graph画面と同じ配色（origin・flavorは値ごとの個別色、
+ * 他は種別共通色）の小さいドットを項目ごとに添えて揃えた
+ */
+function RankingRow({ type, item, rank, index }) {
   const [ref, isVisible] = useReveal();
 
   return (
@@ -50,6 +58,10 @@ function RankingRow({ item, rank, index }) {
       >
         <span className="flex min-w-0 items-center gap-2 text-text">
           <span className="font-mono text-xs text-text-tertiary">{rank}</span>
+          <span
+            className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${getNodeSolidBgClass({ type, label: item.label })}`}
+            aria-hidden="true"
+          />
           <span className="truncate">{item.label}</span>
         </span>
         <span className="flex-shrink-0 font-mono text-xs text-text-tertiary">{item.count}</span>

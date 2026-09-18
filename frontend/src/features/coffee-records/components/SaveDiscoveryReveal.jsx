@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { cardClass, primaryButtonClass } from "./formStyles";
 import { formatConsumedAtShort } from "../utils/recordFormat";
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
+import { getNodeSolidBgClass } from "../../graph/utils/nodeColor";
 import { entityDetailPathFromNodeId } from "../../graph/utils/entityLink";
 
 /**
@@ -16,7 +17,11 @@ import { entityDetailPathFromNodeId } from "../../graph/utils/entityLink";
  */
 function DiscoveryRow({ discovery, index }) {
   const { t } = useTranslation();
-  const { icon: Icon, colorClass, bgTintClass } = getNodeVisual(discovery.nodeType);
+  const { icon: Icon } = getNodeVisual(discovery.nodeType);
+  // 2026-09、「デザイン・テーマの統一」レビューで、DiscoveryBadge.jsxと
+  // 同じ理由（旧スタイル・種別共通色のまま）が見つかったため、同じ対応
+  // （塗りつぶした円+暗色アイコン、origin・flavorは値ごとの個別色）にした
+  const badgeBgClass = getNodeSolidBgClass({ type: discovery.nodeType, label: discovery.label });
 
   const message =
     discovery.type === "firstAppearance"
@@ -33,12 +38,12 @@ function DiscoveryRow({ discovery, index }) {
       transition={{ type: "spring", stiffness: 300, damping: 26, delay: rowDelay }}
     >
       <Motion.span
-        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${bgTintClass}`}
+        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${badgeBgClass}`}
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 420, damping: 16, delay: rowDelay + 0.1 }}
       >
-        <Icon size={16} aria-hidden="true" className={colorClass} />
+        <Icon size={16} aria-hidden="true" className="text-on-inverse" />
       </Motion.span>
       <p className="flex-1 text-sm text-text">{message}</p>
       <Link

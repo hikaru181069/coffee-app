@@ -10,7 +10,7 @@ const ORIGIN_NODE_PREFIX = "origin:";
  * discoverService.jsが使う。Origin.findByIdのようにIDを直接Mongoへ渡さず、
  * 必ず自分のCoffeeRecordを経由する。理由は2つ:
  *   - 他ユーザーの産地・存在しないIDを弾ける
- *     （docs/entity-detail.mdの404方針「存在の有無を漏らさない」と同じ）
+ *     （docs/features.md「Entity Detail」の404方針「存在の有無を漏らさない」と同じ）
  *   - 不正な形式のIDを渡されてもMongooseのCastErrorにならない
  *     （serializedのorigin.idとの単純な文字列比較のため）
  *

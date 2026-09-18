@@ -7,7 +7,7 @@ import CollectionStats from "../features/stats/components/CollectionStats";
 import MonthlyTrendChart from "../features/stats/components/MonthlyTrendChart";
 import RatingDistributionChart from "../features/stats/components/RatingDistributionChart";
 import TopRankingList from "../features/stats/components/TopRankingList";
-import StatsSkeleton from "../features/stats/components/StatsSkeleton";
+import CoffeeLoader from "../components/CoffeeLoader";
 import StatsEmptyState from "../features/stats/components/StatsEmptyState";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
@@ -56,7 +56,7 @@ function StatsPage() {
   if (isLoading) {
     return (
       <div className={wideContainerClass}>
-        <StatsSkeleton />
+        <CoffeeLoader size="lg" />
       </div>
     );
   }

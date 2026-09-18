@@ -1,157 +1,113 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import ForceGraph2D from "react-force-graph-2d";
-import { forceCollide, forceX, forceY } from "d3-force";
 
-import { getNodeVisual } from "../utils/nodeVisuals";
 import { getNodeIconImage } from "../utils/canvasIcons";
 import { getCanvasColor } from "../utils/canvasColors";
-import { getOriginHex } from "../../coffee-records/utils/originAccent";
-import {
-  recordRadius,
-  attributeHalfWidth,
-  attributeHalfHeight,
-  nodeCollideRadius,
-} from "../utils/graphNodeSizing";
+import { getNodeColorHex } from "../utils/nodeColor";
+import { nodeRadius, nodeCollideRadius } from "../utils/graphNodeSizing";
 import { findNodeAtGraphPoint } from "../utils/graphHitTest";
 import { buildForceGraphData } from "../utils/graphAdapter";
 
 /**
  * 知識グラフの描画本体。
  *
- * 2026-08、React Flow + 自前d3-force統合（ドラッグ中にカメラが競合して
- * ちらつく、座標更新がReact Flow自身のドラッグ描画と競合するなど）を
- * 2度修正しても解消しなかったため、canvas描画・物理演算を内蔵した
- * 専用ライブラリ react-force-graph-2d へ置き換えた。
- * ドラッグ中のノードのピン留め・再加熱はライブラリ内部の実装に任せる
- * （前回はここを自前実装してReact Flowの描画と競合するバグを作っていた）。
- * canvasは仮想DOMの外で自分のrequestAnimationFrameループを持つため、
- * 物理演算が収束した後もホバー・ズーム・パンは重い再レンダーを介さず
- * 滑らかに動く。
+ * 2026-09、「グラフを直接操作している体験が感じられない」という指摘を受け、
+ * react-force-graph-2d（d3-force）への依存をやめ、canvas 2D + 自前の物理演算
+ * （反発・バネ・減衰・ポインタへのバネ追従ドラッグ）へ全面書き換えた。
+ * Artifactでの対話的なプロトタイプ（反発・バネ・ドラッグの効き方を実際に
+ * 触りながら調整）でユーザーの承認を得た定数・アルゴリズムをそのまま移植
+ * している。
+ *
+ * react-force-graph-2d時代は、ライブラリ内部のクリック判定・カメラ制御の
+ * 癖に合わせて自前のクリック検出やカメラ追従ループを足す必要があった
+ * （旧バージョンのコメント参照、git履歴に残る）。物理演算・描画・
+ * ポインタ処理のすべてを自前で持つようになったことで、ライブラリの内部
+ * 実装に合わせた回避策は不要になった。
  *
  * ノードサイズ計算・クリックの当たり判定・{nodes,links}への変換は、
  * 2026-08の「Graph画面の作り込み」で features/graph/utils/ の
- * graphNodeSizing.js・graphHitTest.js・graphAdapter.js へ切り出した
- * （CLAUDE.md「1ファイルへ複数の責務を集中させないでください」。
- * DB/HTTP/canvasに依存しない純粋関数なので、初めてユニットテストも
- * 追加した）。このファイルは物理演算の適用・カメラ追従・イベント配線・
- * canvas描画（drawNode/paintNodePointerAreaはcanvas contextに強く依存する
- * ためここに残す）のオーケストレーションに専念する。
- *
- * FORCE_PARAMSは元々adapters/forceLayout.js（Phase 5時点、削除済み）と
- * 同じ値（linkDistance: 90, chargeStrength: -220, collideRadius: 58）を
- * 使っていたが、react-force-graph-2d（内部ではd3-force-3dを使用）では
- * 同じ値でも収束後のレイアウトが明らかに詰まって見えたため、
- * chargeStrengthだけ強めに調整していた（原因はまだ特定できていない。
- * d3-force-3dとd3-forceで内部実装が違う可能性がある）。2026-08、
- * collideRadiusを全ノード一律の固定値からノードごとの実サイズ＋ラベル分の
- * 余白に連動する関数（graphNodeSizing.jsのnodeCollideRadius）に変更した
- * ことで、chargeStrengthも穏やかな値に調整し直した。
- *
- * 既知の不具合と対処（force-graph.mjs本体を読んで原因を特定した）:
- *
- * 1. onNodeClick / onBackgroundClickが発火しない
- *    force-graphは`pointermove`のたびに「onBackgroundClickが設定されて
- *    いれば、pointerType==='mouse'の移動量を一切問わずisPointerDragging=true
- *    にする」ヒューリスティックを持つ（ズーム操作と誤検知させないための
- *    実装）。実際のマウスクリックはpointerdown→pointerupの間にほぼ必ず
- *    1px以上動くため、このヒューリスティックが常に発火し、pointerup側で
- *    「ドラッグ後なのでクリックとして扱わない」と判定されてしまう。
- *    さらにパン操作（enablePanInteraction）自体もd3-zoomの'zoom'イベントで
- *    同じisPointerDragging=trueを立てるため、onBackgroundClickを外すだけ
- *    では解決しない。
- *    → ライブラリ側のクリック判定に頼らず、pointerdown/pointerupの座標を
- *      自前で比較し、閾値以内ならscreen2GraphCoordsで求めたグラフ座標に
- *      対してdrawNodeと同じ当たり判定（円・角丸矩形）を自前で行う
- *      （findNodeAtClientPoint、当たり判定本体はgraphHitTest.js参照）。
- *      2026-08、クリック判定が不安定という指摘を受け、閾値
- *      （CLICK_TOLERANCE_PX）を緩和し、当たり判定自体にも視覚サイズより
- *      少し広いヒットパディングを追加した。
- *
- * 2. width/heightを明示的に渡すとズーム・ドラッグが効かなくなる
- *    width/heightのonChangeはadjustCanvasSizeを呼び、その中で
- *    zoom.translateBy(...)を実行する。これはd3-zoomの'zoom'ハンドラを
- *    発火させ、上記1と同じ理由でisPointerDragging=trueを立てる。
- *    2026-08、これを理由にcanvasサイズを初回計測値のまま恒久的に固定して
- *    いたが、リサイズに一切追従しないのは副作用が大きいと判断し見直した。
- *    クリック判定は既にisPointerDraggingへ依存しない自前実装（上記1）に
- *    なっているため、ResizeObserverの発火をデバウンスした上でsizeを
- *    更新できるようにし、サイズ変更直後にfitCameraで視点のずれを補正する
- *    方式にした（下記のuseEffect参照）。純粋なズーム・パン操作への影響は
- *    実機で確認する。
- *
- * 3. onEngineTick / onEngineStopが一度も発火しない
- *    当初はカメラ追従をこの2つのコールバック（毎tick呼ばれる想定）で
- *    駆動していたが、実際にはbounding box（getGraphBbox）を見るとノードは
- *    確かに力学シミュレーションで広がっているにもかかわらず、
- *    onEngineTick/onEngineStopのどちらも一度も呼ばれないことをカウンタを
- *    仕込んで確認した。react-force-graph-2d（react-kapsule経由）と
- *    force-graph本体のプロパティ連携（linkKapsule／linkProp）を読んでも
- *    明確な原因までは特定できなかった（2026-08、react-force-graph-2d/
- *    force-graphとも公開されている最新バージョンで確認済みだが解消して
- *    いない）。
- *    → ライブラリのtickコールバックに依存せず、グラフデータが変わる
- *      （＝新しく開いた）たびに自前のrequestAnimationFrameループを
- *      一定時間（FOLLOW_DURATION_MS）走らせ、その間毎フレームfitCameraを
- *      呼んでカメラを追従させる方式に置き換えた（下記のuseEffect参照）。
- *
- * なお、「収束中に一瞬ノードが巨大化して見える」という2026-08の報告は、
- * 当初はここでのカメラ追従（fitCameraのbounding boxがまだ小さいうちに
- * ズームが寄りすぎるフラッシュ）が原因と考え、アニメーション時間を
- * 持たせる対処をしていた。しかし実際にはこれとは別の不具合で、
- * 「グラフ画面を開いたまま他のタブ・アプリへ切り替えて放置すると発生し、
- * リロードすると直る」という条件だったと判明した（ユーザーへの
- * ヒアリングで判明）。force-graph.mjs本体を読み直したところ、
- * canvasの内部解像度（devicePixelRatio依存）がwidth/heightのprop変化時
- * にしか再計算されない一方、毎フレームの再描画はその時点の
- * devicePixelRatioを読み直すため、バックグラウンドのタブでOS/ブラウザの
- * 挙動によりdevicePixelRatioがずれるとノードが実際より大きく描かれる、
- * という仕組みだと特定した。発生条件が特殊でリロードという回避策も
- * あるため、ユーザーと相談のうえ今回は修正を見送り、IMPLEMENTATION.mdへ
- * 既知の問題として記録するにとどめている（旧来の「カメラのフラッシュ」
- * という診断は誤りだったため、対応するズームクランプ等の対処は行わない）。
+ * graphNodeSizing.js・graphHitTest.js・graphAdapter.js へ切り出した構成を
+ * そのまま踏襲する（CLAUDE.md「1ファイルへ複数の責務を集中させないで
+ * ください」）。このファイルは物理演算のループ・canvas描画・ポインタ
+ * イベントの配線・カメラ制御のオーケストレーションに専念する。
  */
-const FORCE_PARAMS = {
-  linkDistance: 100,
-  chargeStrength: -450,
-};
 
-const CLICK_TOLERANCE_PX = 8;
+// ---------- physics constants ----------
+// graph-physics-mock.htmlでユーザーが実際にドラッグ・ズームして確認し、
+// 「動きはこれで合格です」と承認を得た値（DAMPING・CENTER_K・
+// DRAG_SPRING・DRAG_DAMPING・SCALE_LERP・SPRING_K）はそのまま使う。
+//
+// 2026-09-18、ノードを大きく塗りつぶす構図（Q案）へ変更した際、ノードの
+// 半径だけ大きくしてこの間隔まわりの定数を据え置いたため、実データ
+// （61ノード、記録ノードで最大degree 10＝半径76px前後）で隣接ノード同士が
+// 重なって見える不具合が出た（ユーザー報告）。モックは13ノード・
+// 固定サイズ（record半径30px・チップ40〜60px幅）の小規模データでしか
+// 検証しておらず、実データのノード数・degreeに応じた可変サイズという
+// 条件では同じ定数が通用しないと判明した。
+//
+// 1度目の対処（REPULSION 2600→5200、固定のSPRING_LEN 95→170）でも
+// なお「間隔が狭い」という指摘を受けたため、固定長のバネ（SPRING_LEN）
+// 自体を、つながる2ノードの実際の半径から動的に決める方式
+// （`restLength = nodeRadius(a) + nodeRadius(b) + SPRING_GAP`、
+// step()内）へ変更した。degreeが高く半径が大きいノード同士が繋がっても
+// 自然長が常に実サイズに追従するため、衝突解消との綱引きが起きない。
+const REPULSION = 10000;
+const SPRING_K = 0.02;
+// バネの自然長 = 2ノードの半径の合計 + この余白（step()参照）。
+// 2026-09-18、2度目の対処（70px）でもなお「もっと余裕が欲しい」との
+// 指摘を受け、承認済みのQ構図モック（graph-theme-concepts.html）と
+// 同程度の余裕感を目指して大幅に引き上げた
+const SPRING_GAP = 220;
+const DAMPING = 0.86;
+const CENTER_K = 0.00015;
+const DRAG_SPRING = 0.32; // ポインタへ追従するバネの強さ（高いほど硬い）
+const DRAG_DAMPING = 0.72; // ドラッグ中の減衰（低いほどよく揺れる）
+const SCALE_LERP = 0.22;
+
+// 初期配置から安定するまでを画面に映さず、裏側で先に計算する。
+// 「読み込むたびにノードが弾け飛んで収まる」という、必然性のない
+// アニメーションを見せないための対応（モック検討時にユーザー指摘）。
+// データが変わる（フィルター変更等）たびに同じだけ先読みし、常に
+// 「既に収まった状態」から見せる
+const PRE_CONVERGE_STEPS = 1500;
+
+const MIN_ZOOM = 0.3;
+const MAX_ZOOM = 3;
+// pointerdown→pointerupの移動量がこれ以内なら「クリック」（ドラッグでは
+// ない）とみなす。物理エンジンをモックから移植したのと同じ値
+const MOVE_THRESHOLD_PX = 6;
+
+// フォーカス対象+隣接ノードをカメラに収める際の余白（screen px）。
+// 2026-09-18、「グラフ全体を常に画面に収める」という前提自体をやめた
+// （下記fitCamera・COMFORTABLE_SCALE参照）ため、フォーカスが無い場合の
+// 余白は使わなくなった
+const FIT_PADDING_FOCUSED = 80;
+const CAMERA_ANIM_MS = 400;
+// 何もフォーカスしていない既定状態のズーム倍率。以前は全ノードが収まる
+// scaleへ自動フィットしていたが、ノード数が多いとその分ノードが小さく・
+// 間隔も詰まって見え、「グラフを直接操作している感覚」を損なっていた
+// （ユーザーとの相談で決定）。ノードをほぼ実寸で見せ、画面外の部分は
+// パン操作で探索してもらう
+const COMFORTABLE_SCALE = 0.7;
 
 // ラベルはチップの下に出す（Obsidianのグラフを参考に、チップ内へ
-// 詰め込んで過度に省略されるのを避ける）。省略が必要になる場面
-// 自体を減らすため、チップの幅より大きく余裕を持たせる
+// 詰め込んで過度に省略されるのを避ける）
 const LABEL_MAX_WIDTH = 100;
-const LABEL_GAP = 4;
-
-// カメラの自動フィットを止める「クールダウン」時間。ユーザーが操作した
-// 瞬間から一定時間はフィットをスキップするが、恒久的には止めない
-// （下記のuseEffect参照。以前はここが恒久ラッチだった）
-const REFIT_COOLDOWN_MS = 600;
+const LABEL_GAP = 6;
 
 // canvasはTailwindクラスもCSSカスタムプロパティも直接解釈できないため、
 // index.cssの@themeが生成する--color-*から動的に解決する
-// （utils/nodeVisuals.jsのcanvasColorと同じ仕組み。utils/canvasColors.js参照）
 const CTP = {
+  get base() {
+    return getCanvasColor("--color-base");
+  },
   get mantle() {
     return getCanvasColor("--color-raised");
-  },
-  get surface1() {
-    return getCanvasColor("--color-surface-2");
   },
   get text() {
     return getCanvasColor("--color-text");
   },
-  get subtext0() {
-    return getCanvasColor("--color-text-tertiary");
-  },
-  get yellow() {
-    return getCanvasColor("--color-rating");
-  },
 };
-
-/** linkのsource/targetは、シミュレーション開始後は文字列IDからノード本体への参照へ差し替わる */
-const linkEndpointId = (endpoint) => (typeof endpoint === "object" ? endpoint.id : endpoint);
 
 const truncateToWidth = (ctx, text, maxWidth) => {
   if (ctx.measureText(text).width <= maxWidth) return text;
@@ -162,246 +118,493 @@ const truncateToWidth = (ctx, text, maxWidth) => {
   return `${result}…`;
 };
 
+/**
+ * ノードの塗り色。origin・flavorだけは種別共通色ではなく値ごとの個別色を
+ * 使うという判定は、他画面（EntityDetail等）とも共有するutils/nodeColor.js
+ * （2026-09新設）へ集約した
+ */
+const nodeFillColor = (node) => getNodeColorHex(node);
+
 // ホバー中のノードだけでなく、選択中のノード（クリック・GraphNodeSearchの
-// どちらでも）でも同じ「関連ノード以外を薄くする」見せ方をする。
-// ホバーは一時的な注目、選択は持続する注目という違いはあるが、
-// 「関連を目立たせる」という目的自体は同じため、ホバー中はホバー対象を
-// 優先しつつ（マウスが離れれば選択中ノードの強調へ戻る）、どちらも
-// 同じfocusIdとして扱う
+// どちらでも）でも同じ「関連ノード以外を薄くする」見せ方をする
 const isNodeDimmed = (node, { interactive, focusId, adjacency }) =>
   Boolean(interactive && focusId && node.id !== focusId && !adjacency.get(focusId)?.has(node.id));
 
-// ラベルは常時表示せず、フォーカス中（ホバー/選択）のノードとその隣接
-// ノードだけに絞る。フォーカスが無いアイドル状態では誰のラベルも出さない
-// （2026-09、実データ（61ノード）でラベル同士が重なって読めなくなる問題への
-// 対応。アイコン・色は常に描くため、種別の判別自体は引き続き可能）
+// 2026-09、記録ノード（一杯の記録）のタイトルは常時表示に変更した。
+// 属性ノード（産地・フレーバー等）は引き続き、フォーカス中（ホバー/選択）
+// のノード本人と直接つながる隣接ノードだけに絞る（実データ・61ノードで
+// ラベル同士が重なって読めなくなる問題への対応を維持しつつ、「今どの
+// コーヒーの記録か」だけは常に分かるようにする）
 const isNodeLabelVisible = (node, { interactive, focusId, adjacency }) => {
+  if (node.type === "record") return true;
   if (!interactive || !focusId) return false;
   return node.id === focusId || Boolean(adjacency.get(focusId)?.has(node.id));
 };
 
-function drawNode(node, ctx, globalScale, { selectedNodeId, focusId, adjacency, interactive }) {
-  const visual = getNodeVisual(node.type);
-  // 産地ノードだけは種別共通のaccent-skyではなく、産地ごとの個別色
-  // （originAccent.js。Records一覧・World Mapと同じ対応表）を使う。
-  // record・variety等の他の種別は今まで通りvisual.canvasColorのまま
-  const nodeColor = node.type === "origin" ? getOriginHex(node.label) : visual.canvasColor;
-  const isRecord = node.type === "record";
+/** エッジの色。record⇔属性の2端点のうち、属性側ノードの色を使う */
+const edgeColor = (link) => {
+  const attributeNode = link.source.type !== "record" ? link.source : link.target;
+  return nodeFillColor(attributeNode);
+};
+
+function drawNode(ctx, node, viewScale, { selectedNodeId, focusId, adjacency, interactive }) {
+  const color = nodeFillColor(node);
   const selected = node.id === selectedNodeId;
   const dimmed = isNodeDimmed(node, { interactive, focusId, adjacency });
+  // 選択中でもnodeRadiusのSELECTED_SCALE倍率は使わない（node.scaleの
+  // バネ追従アニメーションと二重に掛かり合い、衝突判定（nodeCollideRadius、
+  // 常に非選択時サイズ基準）と描画サイズがずれて重なって見える不具合の
+  // 原因になっていた。選択の見た目上の強調はnode.scaleの拡大＋白いリングで
+  // 十分に表現できる）
+  const radius = nodeRadius(node);
 
   ctx.save();
+  ctx.translate(node.x, node.y);
+  ctx.scale(node.scale, node.scale);
   ctx.globalAlpha = dimmed ? 0.25 : 1;
 
-  const fontSize = Math.max(11 / globalScale, 3);
-  const borderWidth = (selected ? 2.5 : 1.5) / globalScale;
-  let shapeBottom;
+  const totalScale = viewScale * node.scale;
+  const fontSize = Math.max(11 / totalScale, 3);
 
-  if (isRecord) {
-    const radius = recordRadius(node, selected);
+  // 塗りつぶした円（Q構図: 輪郭線ではなく種別色そのもので塗る）
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+  ctx.shadowBlur = (node.id === selectedNodeId ? 18 : 10) / totalScale;
+  ctx.shadowOffsetY = 3 / totalScale;
+  ctx.fill();
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
 
+  // 選択中ノードだけ、白いリング（外側の輪郭線）で対応関係を示す
+  if (selected) {
+    ctx.lineWidth = 3 / totalScale;
+    ctx.strokeStyle = CTP.text;
     ctx.beginPath();
-    ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
-    ctx.fillStyle = CTP.mantle;
-    // mobbin.com準拠の柔らかい影（他要素と質感を揃える、付随的な適用）。
-    // 描画後は必ずリセットする。canvasのshadowはfill/stroke/drawImage/
-    // fillTextすべてに掛かり続けるため、リセットし忘れると以降のアイコン・
-    // 文字にも影が付いてしまう
-    ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
-    ctx.shadowBlur = 10 / globalScale;
-    ctx.shadowOffsetY = 3 / globalScale;
-    ctx.fill();
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.lineWidth = borderWidth;
-    ctx.strokeStyle = selected ? visual.canvasColor : CTP.surface1;
+    ctx.arc(0, 0, radius + 3 / totalScale, 0, Math.PI * 2);
     ctx.stroke();
-
-    const hasRating = node.metadata?.rating != null;
-    const icon = getNodeIconImage(node.type, visual.canvasColor);
-    const iconSize = radius * 0.8;
-    const iconCenterY = hasRating ? node.y - radius * 0.3 : node.y;
-    if (icon) ctx.drawImage(icon, node.x - iconSize / 2, iconCenterY - iconSize / 2, iconSize, iconSize);
-
-    if (hasRating) {
-      ctx.font = `${fontSize * 0.85}px "Space Mono", monospace`;
-      ctx.fillStyle = CTP.yellow;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(`★${node.metadata.rating}`, node.x, node.y + radius * 0.4);
-    }
-
-    shapeBottom = node.y + radius;
-  } else {
-    const halfWidth = attributeHalfWidth(node, selected);
-    const halfHeight = attributeHalfHeight(selected);
-
-    ctx.beginPath();
-    ctx.roundRect(node.x - halfWidth, node.y - halfHeight, halfWidth * 2, halfHeight * 2, 6);
-    ctx.fillStyle = CTP.mantle;
-    ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
-    ctx.shadowBlur = 10 / globalScale;
-    ctx.shadowOffsetY = 3 / globalScale;
-    ctx.fill();
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.lineWidth = borderWidth;
-    ctx.strokeStyle = selected ? nodeColor : CTP.surface1;
-    ctx.stroke();
-
-    const icon = getNodeIconImage(node.type, nodeColor);
-    const iconSize = Math.min(halfWidth, halfHeight) * 1.15;
-    if (icon) ctx.drawImage(icon, node.x - iconSize / 2, node.y - iconSize / 2, iconSize, iconSize);
-
-    const recordCount = node.metadata?.recordCount ?? 0;
-    if (recordCount > 1) {
-      ctx.font = `${fontSize * 0.75}px "Space Mono", monospace`;
-      ctx.fillStyle = CTP.subtext0;
-      ctx.textAlign = "right";
-      ctx.textBaseline = "top";
-      ctx.fillText(String(recordCount), node.x + halfWidth - 2, node.y - halfHeight + 1);
-    }
-
-    shapeBottom = node.y + halfHeight;
   }
 
-  // ラベルは常時出さず、フォーカス中（ホバー/選択）のノード本人と
-  // その隣接ノードだけに絞る（isNodeLabelVisible参照）。アイドル状態では
-  // 誰のラベルも描かない。形（チップ）の内側へ詰め込まず下へ出す方針は
-  // 従来通り。収束後は多くのノードが小さく表示され、内側に収めようと
-  // すると「Pin...」のように大半が省略されて何のノードか分からなくなる
-  // という指摘を受けた。Obsidianのグラフを参考に、チップ下へ出す
-  // ことで省略の必要がある場面自体を減らす
+  // アイコンは常に暗色（塗りつぶした円の上に乗せるため、種別色ではなく
+  // 背景の暗色を使う。以前は種別色のアイコンを暗い背景に乗せていたが、
+  // Q構図では地と図が入れ替わる）
+  const hasRating = node.type === "record" && node.metadata?.rating != null;
+  const icon = getNodeIconImage(node.type, CTP.base);
+  const iconSize = radius * (hasRating ? 0.7 : 0.85);
+  const iconCenterY = hasRating ? -radius * 0.28 : 0;
+  if (icon) ctx.drawImage(icon, -iconSize / 2, iconCenterY - iconSize / 2, iconSize, iconSize);
+
+  if (hasRating) {
+    ctx.font = `${fontSize * 0.8}px "Space Mono", monospace`;
+    ctx.fillStyle = CTP.base;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`★${node.metadata.rating}`, 0, radius * 0.42);
+  }
+
+  const recordCount = node.type !== "record" ? (node.metadata?.recordCount ?? 0) : 0;
+  if (recordCount > 1) {
+    ctx.font = `${fontSize * 0.7}px "Space Mono", monospace`;
+    ctx.fillStyle = CTP.base;
+    ctx.globalAlpha = (dimmed ? 0.25 : 1) * 0.75;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+    ctx.fillText(String(recordCount), radius - 3 / totalScale, -radius + 2 / totalScale);
+    ctx.globalAlpha = dimmed ? 0.25 : 1;
+  }
+
+  // ラベルはチップ風の背景付きで、形の下に出す（isNodeLabelVisible参照）
   if (isNodeLabelVisible(node, { interactive, focusId, adjacency })) {
     ctx.font = `${fontSize}px Inter, sans-serif`;
+    const label = truncateToWidth(ctx, node.label ?? "", LABEL_MAX_WIDTH);
+    const textWidth = ctx.measureText(label).width;
+    const padX = 6 / totalScale;
+    const padY = 3 / totalScale;
+    const labelY = radius + LABEL_GAP / totalScale;
+
+    ctx.fillStyle = CTP.mantle;
+    ctx.beginPath();
+    ctx.roundRect(
+      -textWidth / 2 - padX,
+      labelY,
+      textWidth + padX * 2,
+      fontSize + padY * 2,
+      (fontSize + padY * 2) / 2,
+    );
+    ctx.fill();
+
     ctx.fillStyle = CTP.text;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillText(
-      truncateToWidth(ctx, node.label ?? "", LABEL_MAX_WIDTH),
-      node.x,
-      shapeBottom + LABEL_GAP / globalScale,
-    );
+    ctx.fillText(label, 0, labelY + padY);
   }
 
   ctx.restore();
 }
 
-/**
- * onNodeClick等の当たり判定用。drawNodeと同じ形をベタ塗りするだけ。
- * 選択中ノードは表示上も拡大しているので、当たり判定もそれに合わせる
- * （見た目だけ大きくして、クリック領域が元のサイズのままだと
- * 「拡大された部分をクリックしても反応しない」ズレが生まれるため）。
- * 実際のクリック判定はfindNodeAtGraphPoint（graphHitTest.js）が自前で
- * 行っており、こちらはforce-graph自身が使う内部の当たり判定キャンバス用
- */
-function paintNodePointerArea(node, color, ctx, isSelected) {
-  ctx.fillStyle = color;
-  if (node.type === "record") {
-    const radius = recordRadius(node, isSelected);
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
-    ctx.fill();
-  } else {
-    const halfWidth = attributeHalfWidth(node, isSelected);
-    const halfHeight = attributeHalfHeight(isSelected);
-    ctx.beginPath();
-    ctx.roundRect(node.x - halfWidth, node.y - halfHeight, halfWidth * 2, halfHeight * 2, 6);
-    ctx.fill();
-  }
-}
-
 function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, interactive = true }) {
   const { t } = useTranslation();
   const containerRef = useRef(null);
-  const fgRef = useRef(null);
-  const isDraggingRef = useRef(false);
-  // 自前のrequestAnimationFrameループ（下記fitCamera呼び出し箇所参照）が
-  // 毎フレーム最新のselectedNodeIdを参照できるようにするためのref。
-  // ループを開始するuseEffectの依存配列には入れていない（selectedNodeId
-  // だけが変わった＝ノードクリックのたびに追従ループを再始動させたくない）
+  const canvasRef = useRef(null);
+  const canvasSizeRef = useRef({ width: 0, height: 0 });
+
+  // 物理演算の可変状態。Reactの再レンダーとは独立して毎フレーム
+  // 直接書き換える（Reactのstateにすると毎フレーム再レンダーが走ってしまう）
+  const nodesRef = useRef([]);
+  const linksRef = useRef([]); // {source: nodeObj, target: nodeObj}
+  const adjacencyRef = useRef(new Map());
+  const viewRef = useRef({ x: 0, y: 0, scale: 1 });
+  const cameraAnimRef = useRef(null); // {from, to, start, duration} | null
+  const hasFittedOnceRef = useRef(false);
+
+  const pointerRef = useRef({ x: 0, y: 0 });
+  const draggingIdRef = useRef(null);
+  const panStateRef = useRef(null);
+  const downInfoRef = useRef(null);
+  const hoveredIdRef = useRef(null);
+
+  // selectedNodeId/onSelectNodeはpropなので、rAFループのクロージャから
+  // 常に最新値を読めるようrefへ写す
   const selectedNodeIdRef = useRef(selectedNodeId);
   useEffect(() => {
     selectedNodeIdRef.current = selectedNodeId;
   }, [selectedNodeId]);
-  const [size, setSize] = useState({ width: 0, height: 0 });
-  const [hoveredNodeId, setHoveredNodeId] = useState(null);
+  const onSelectNodeRef = useRef(onSelectNode);
+  useEffect(() => {
+    onSelectNodeRef.current = onSelectNode;
+  }, [onSelectNode]);
+  const interactiveRef = useRef(interactive);
+  useEffect(() => {
+    interactiveRef.current = interactive;
+  }, [interactive]);
 
   const { nodes, links } = useMemo(() => buildForceGraphData(graph), [graph]);
 
-  // ホバー中のノードの直接のつながりだけを目立たせるための隣接表
-  const adjacency = useMemo(() => {
-    const map = new Map();
-    links.forEach((link) => {
-      if (!map.has(link.source)) map.set(link.source, new Set());
-      if (!map.has(link.target)) map.set(link.target, new Set());
-      map.get(link.source).add(link.target);
-      map.get(link.target).add(link.source);
-    });
-    return map;
-  }, [links]);
+  /** 1物理ステップぶん進める（反発→バネ→衝突解消→中心引力+積分） */
+  const step = () => {
+    const list = nodesRef.current;
+    const draggingId = draggingIdRef.current;
 
-  // fitCameraはリサイズ用のuseEffect（依存配列が[]で、マウント時に一度だけ
-  // 作られるクロージャ）からも呼ばれるため、隣接表はrefから読む。
-  // useMemoの結果を直接クロージャで捕まえると、グラフデータが変わって
-  // adjacencyが更新されたあともリサイズ側は古い隣接表を見続けてしまう
-  const adjacencyRef = useRef(adjacency);
-  useEffect(() => {
-    adjacencyRef.current = adjacency;
-  }, [adjacency]);
-
-  /**
-   * 収束時にカメラをどこへ合わせるか。
-   *
-   * ?focus=（RecordDetailPageの「Graphで見る」等）でノードが指定されて
-   * いる場合、グラフ全体ではなく「そのノード＋直接つながるノードだけ」
-   * にフィットさせる。全体にフィットすると、記録数が多いグラフでは
-   * フォーカス対象が豆粒のように小さくなり、周辺が見えないという
-   * 指摘を受けた（選択中ノードの拡大表示だけでは、カメラ自体が
-   * 引きすぎていると効果が薄い）。
-   *
-   * force-graph本体のzoomToFit(duration, padding, nodeFilter)は、
-   * 第3引数のnodeFilterをそのままgetGraphBbox（bounding box計算）へ
-   * 渡す設計になっている（node_modules/force-graph/dist/force-graph.mjs
-   * で確認）。これを使い、対象を絞り込んだ上でズーム倍率を計算させる。
-   */
-  const fitCamera = (duration, padding, focusId) => {
-    if (!focusId) {
-      fgRef.current?.zoomToFit(duration, padding);
-      return;
+    for (let i = 0; i < list.length; i += 1) {
+      for (let j = i + 1; j < list.length; j += 1) {
+        const a = list[i];
+        const b = list[j];
+        let dx = a.x - b.x;
+        let dy = a.y - b.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 1) d2 = 1;
+        const d = Math.sqrt(d2);
+        const f = REPULSION / d2;
+        const fx = (dx / d) * f;
+        const fy = (dy / d) * f;
+        if (a.id !== draggingId) {
+          a.vx += fx;
+          a.vy += fy;
+        }
+        if (b.id !== draggingId) {
+          b.vx -= fx;
+          b.vy -= fy;
+        }
+      }
     }
-    const neighborIds = adjacencyRef.current.get(focusId);
-    fgRef.current?.zoomToFit(
-      duration,
-      padding,
-      (node) => node.id === focusId || (neighborIds?.has(node.id) ?? false),
-    );
+
+    linksRef.current.forEach(({ source: a, target: b }) => {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const d = Math.hypot(dx, dy) || 1;
+      // バネの自然長は固定値ではなく、つながる2ノードの実サイズ+一定の
+      // 余白（SPRING_GAP）から動的に決める。degreeに応じてノード半径が
+      // 大きく変わる（最大で基準サイズの3倍近くになる）ため、固定長だと
+      // 次数の高いノード同士が繋がった場合に自然長より実サイズの方が
+      // 大きくなり、常に衝突解消と綱引きして詰まって見える不具合になる
+      const restLength = nodeRadius(a) + nodeRadius(b) + SPRING_GAP;
+      const f = (d - restLength) * SPRING_K;
+      const fx = (dx / d) * f;
+      const fy = (dy / d) * f;
+      if (a.id !== draggingId) {
+        a.vx += fx;
+        a.vy += fy;
+      }
+      if (b.id !== draggingId) {
+        b.vx -= fx;
+        b.vy -= fy;
+      }
+    });
+
+    for (let iter = 0; iter < 10; iter += 1) {
+      for (let i = 0; i < list.length; i += 1) {
+        for (let j = i + 1; j < list.length; j += 1) {
+          const a = list[i];
+          const b = list[j];
+          const minDist = nodeCollideRadius(a) + nodeCollideRadius(b);
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const d = Math.hypot(dx, dy) || 0.01;
+          if (d < minDist) {
+            const push = (minDist - d) / 2;
+            const nx = dx / d;
+            const ny = dy / d;
+            if (a.id !== draggingId) {
+              a.x -= nx * push;
+              a.y -= ny * push;
+            }
+            if (b.id !== draggingId) {
+              b.x += nx * push;
+              b.y += ny * push;
+            }
+          }
+        }
+      }
+    }
+
+    const focusId = hoveredIdRef.current ?? selectedNodeIdRef.current;
+    list.forEach((n) => {
+      if (n.id !== draggingId) {
+        n.vx += (0 - n.x) * CENTER_K;
+        n.vy += (0 - n.y) * CENTER_K;
+        n.vx *= DAMPING;
+        n.vy *= DAMPING;
+        n.x += n.vx;
+        n.y += n.vy;
+      } else {
+        const target = screenToWorld(pointerRef.current.x, pointerRef.current.y);
+        n.vx += (target.x - n.x) * DRAG_SPRING;
+        n.vy += (target.y - n.y) * DRAG_SPRING;
+        n.vx *= DRAG_DAMPING;
+        n.vy *= DRAG_DAMPING;
+        n.x += n.vx;
+        n.y += n.vy;
+      }
+      const isFocus = n.id === hoveredIdRef.current || n.id === draggingId || n.id === focusId;
+      n.targetScale = draggingId === n.id ? 1.28 : isFocus ? 1.14 : 1;
+      n.scale += (n.targetScale - n.scale) * SCALE_LERP;
+    });
   };
 
+  const screenToWorld = (sx, sy) => {
+    const view = viewRef.current;
+    return { x: (sx - view.x) / view.scale, y: (sy - view.y) / view.scale };
+  };
+
+  /**
+   * カメラを合わせる。animate=trueなら現在位置から滑らかに遷移させ、
+   * falseなら即座に合わせる（初回ロード・リサイズ用）。
+   *
+   * 2026-09-18、「グラフ全体を常に画面に収める」という前提自体を
+   * やめた（ユーザーとの相談で決定）。ノード数が多いほどその分ノードが
+   * 小さく・間隔も詰まって見え、このグラフ画面の作り直しの出発点だった
+   * 「直接操作している感覚」を損なっていたため。
+   *
+   * - focusIdがある場合（?focus=・GraphNodeSearchでの選択・ノード
+   *   クリック時の再フォーカス）: 対象+直接の隣接ノードだけが収まる
+   *   位置・倍率へ寄せる。これは「このノードを見たい」という明確な
+   *   意図への応答なので、引き続き対象を画面いっぱいに収める
+   * - focusIdが無い場合（初回ロード・フィルター変更直後など）:
+   *   全ノードを収めようとはせず、ノードがほぼ実寸で見える
+   *   COMFORTABLE_SCALEで、全ノードの重心を画面中央に置く。画面外に
+   *   はみ出た部分はパン操作で探索してもらう
+   */
+  const fitCamera = (padding, focusId, animate) => {
+    const list = nodesRef.current;
+    const { width, height } = canvasSizeRef.current;
+    if (list.length === 0 || width === 0 || height === 0) return;
+
+    let target;
+    if (focusId) {
+      const neighborIds = adjacencyRef.current.get(focusId);
+      const filtered = list.filter((n) => n.id === focusId || neighborIds?.has(n.id));
+      const targets = filtered.length > 0 ? filtered : list;
+
+      const xs = targets.map((n) => n.x);
+      const ys = targets.map((n) => n.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const bboxW = Math.max(maxX - minX, 1);
+      const bboxH = Math.max(maxY - minY, 1);
+
+      const scale = Math.max(
+        MIN_ZOOM,
+        Math.min(MAX_ZOOM, Math.min((width - padding * 2) / bboxW, (height - padding * 2) / bboxH)),
+      );
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+      target = { x: width / 2 - cx * scale, y: height / 2 - cy * scale, scale };
+    } else {
+      const cx = list.reduce((sum, n) => sum + n.x, 0) / list.length;
+      const cy = list.reduce((sum, n) => sum + n.y, 0) / list.length;
+      target = { x: width / 2 - cx * COMFORTABLE_SCALE, y: height / 2 - cy * COMFORTABLE_SCALE, scale: COMFORTABLE_SCALE };
+    }
+
+    if (animate) {
+      cameraAnimRef.current = { from: { ...viewRef.current }, to: target, start: performance.now(), duration: CAMERA_ANIM_MS };
+    } else {
+      cameraAnimRef.current = null;
+      viewRef.current = target;
+    }
+  };
+
+  /** カメラのアニメーション遷移を1フレームぶん進める */
+  const applyCameraAnim = () => {
+    const anim = cameraAnimRef.current;
+    if (!anim) return;
+    const elapsed = performance.now() - anim.start;
+    const progress = Math.min(1, elapsed / anim.duration);
+    // mobbin.com準拠のsignatureイージングと近い、素早く動き出して滑らかに
+    // 減速するカーブ（cubic ease-out）
+    const eased = 1 - (1 - progress) ** 3;
+    viewRef.current = {
+      x: anim.from.x + (anim.to.x - anim.from.x) * eased,
+      y: anim.from.y + (anim.to.y - anim.from.y) * eased,
+      scale: anim.from.scale + (anim.to.scale - anim.from.scale) * eased,
+    };
+    if (progress >= 1) cameraAnimRef.current = null;
+  };
+
+  const draw = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!ctx) return;
+    const { width, height } = canvasSizeRef.current;
+    if (width === 0 || height === 0) return;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = CTP.base;
+    ctx.fillRect(0, 0, width, height);
+
+    const view = viewRef.current;
+    ctx.save();
+    ctx.translate(view.x, view.y);
+    ctx.scale(view.scale, view.scale);
+
+    const focusId = hoveredIdRef.current ?? selectedNodeIdRef.current;
+    const visualContext = {
+      selectedNodeId: selectedNodeIdRef.current,
+      focusId,
+      adjacency: adjacencyRef.current,
+      interactive: interactiveRef.current,
+    };
+
+    linksRef.current.forEach((link) => {
+      const touchesFocused =
+        focusId && (link.source.id === focusId || link.target.id === focusId);
+      const dimmed = interactiveRef.current && focusId && !touchesFocused;
+      ctx.strokeStyle = edgeColor(link);
+      ctx.globalAlpha = dimmed ? 0.15 : 0.55;
+      ctx.lineWidth = 2 / view.scale;
+      ctx.beginPath();
+      ctx.moveTo(link.source.x, link.source.y);
+      ctx.lineTo(link.target.x, link.target.y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+
+    nodesRef.current.forEach((node) => drawNode(ctx, node, view.scale, visualContext));
+
+    ctx.restore();
+  };
+
+  const setCursor = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (draggingIdRef.current || panStateRef.current) {
+      el.style.cursor = "grabbing";
+    } else {
+      el.style.cursor = hoveredIdRef.current ? "grab" : "default";
+    }
+  };
+
+  /**
+   * バックエンドから新しいグラフデータが来るたび（初回ロード・フィルター
+   * 変更等）、物理演算の内部状態を作り直す。既にあるノードは位置・速度を
+   * 引き継ぎ（フィルター変更で一部のノードが増減しても、残るノードの
+   * 位置が飛ばない）、新規ノードだけ中心付近へ乱数で種を撒く。
+   */
+  useEffect(() => {
+    const prevById = new Map(nodesRef.current.map((n) => [n.id, n]));
+    const nextNodes = nodes.map((n, i) => {
+      const prev = prevById.get(n.id);
+      if (prev) return { ...prev, type: n.type, label: n.label, metadata: n.metadata, degree: n.degree };
+      const angle = (i / Math.max(nodes.length, 1)) * Math.PI * 2;
+      const radius = 40 + Math.random() * 60;
+      return {
+        ...n,
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+        vx: 0,
+        vy: 0,
+        scale: 1,
+        targetScale: 1,
+      };
+    });
+    const nodeById = new Map(nextNodes.map((n) => [n.id, n]));
+    const nextLinks = links
+      .map((l) => ({ source: nodeById.get(l.source), target: nodeById.get(l.target) }))
+      .filter((l) => l.source && l.target);
+
+    const adjacency = new Map();
+    nextLinks.forEach((l) => {
+      if (!adjacency.has(l.source.id)) adjacency.set(l.source.id, new Set());
+      if (!adjacency.has(l.target.id)) adjacency.set(l.target.id, new Set());
+      adjacency.get(l.source.id).add(l.target.id);
+      adjacency.get(l.target.id).add(l.source.id);
+    });
+
+    nodesRef.current = nextNodes;
+    linksRef.current = nextLinks;
+    adjacencyRef.current = adjacency;
+
+    for (let i = 0; i < PRE_CONVERGE_STEPS; i += 1) step();
+    // 収束後も速度をゼロへ明示的にリセットする（graph-physics-mock.htmlの
+    // 承認済み実装にはこの1行があったが、移植時に見落としていた）。
+    // これが無いと、収束しきらずわずかに残った速度が毎フレーム積分され
+    // 続け、実データではグラフ全体がゆっくり回転して見える不具合になる
+    nextNodes.forEach((n) => {
+      n.vx = 0;
+      n.vy = 0;
+    });
+
+    fitCamera(FIT_PADDING_FOCUSED, selectedNodeIdRef.current, hasFittedOnceRef.current);
+    hasFittedOnceRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stepとfitCameraはrefのみを参照する安定した関数
+  }, [nodes, links]);
+
+  /**
+   * RecordDetailPageの「Graphで見る」から ?focus=record:xxx で開かれた場合や
+   * GraphNodeSearchでの選択など、明示的にノードを指定されたときにカメラを
+   * 合わせる
+   */
+  useEffect(() => {
+    if (!focusRequest) return;
+    fitCamera(FIT_PADDING_FOCUSED, focusRequest.nodeId, true);
+  }, [focusRequest]);
+
+  // canvasの実サイズをコンテナに追従させる（dpr込み）。サイズが変わったら
+  // カメラも合わせ直す
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return undefined;
+    const canvas = canvasRef.current;
+    if (!el || !canvas) return undefined;
 
     let timeoutId;
-    // 表示エリアの実測値を取り、変わっていればsizeを更新してカメラの
-    // ずれを補正する。以前は初回計測値で恒久的に固定していたが（詳細は
-    // ファイル冒頭コメントの既知の不具合2参照）、クリック判定が
-    // isPointerDraggingに依存しない自前実装になったことで、リサイズに
-    // 追従しても安全になったと判断した
     const applySize = () => {
-      const next = { width: el.clientWidth, height: el.clientHeight };
-      if (next.width > 0 && next.height > 0) {
-        setSize((prev) => (prev.width === next.width && prev.height === next.height ? prev : next));
-        fitCamera(200, selectedNodeIdRef.current ? 80 : 40, selectedNodeIdRef.current);
-      }
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      canvasSizeRef.current = { width: rect.width, height: rect.height };
+      fitCamera(FIT_PADDING_FOCUSED, selectedNodeIdRef.current, false);
     };
     applySize();
 
-    // ウィンドウのドラッグリサイズ中に何度も発火してその都度サイズを
-    // 適用すると、内部でズーム位置の再計算が連続して走ってしまうため
-    // デバウンスする
     const observer = new ResizeObserver(() => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(applySize, 200);
@@ -413,200 +616,124 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
     };
   }, []);
 
+  // ポインタ操作（ドラッグ・パン・ホバー・クリック）とホイールズーム。
+  // canvas要素へ直接addEventListenerする（wheelをpassive:falseで
+  // 受けるにはReactのonWheelではなく素のリスナーが必要なため、
+  // 他のポインタイベントも合わせてここへ集約している）
   useEffect(() => {
-    // 初回レンダーはsizeがまだ0のためForceGraph2D自体が描画されておらず
-    // fgRef.currentがnull。sizeも依存配列に入れて、canvasが実際に
-    // マウントされたあとにも改めて力を設定し直す
-    // （このガードだけだとnodes/linksが変わらない限り二度と実行されず、
-    // 独自のFORCE_PARAMSが一生適用されないまま、というバグを実際に踏んだ）
-    if (!fgRef.current) return;
-    fgRef.current.d3Force("link")?.distance(FORCE_PARAMS.linkDistance);
-    fgRef.current.d3Force("charge")?.strength(FORCE_PARAMS.chargeStrength);
-    // iterations既定値(1)だと密なグラフ（実データで61ノード）では1tickあたりの
-    // 押し出し量が足りず、ノード同士の重なりが解消しきらないまま収束して
-    // しまっていた。増やすことでノード自体の反発力（chargeStrength）を
-    // 上げずに重なりだけを解消する
-    fgRef.current.d3Force("collide", forceCollide(nodeCollideRadius).iterations(3));
-    // 他のノードと1本もつながっていない記録（例: 産地・精製方法・
-    // フレーバーを何も選んでいない記録）は、リンクによる引力を一切
-    // 受けないため、chargeStrengthの反発力だけで中心から際限なく
-    // 離れていってしまう。カメラの自動フィットは全ノードを画面に
-    // 収めようとするため、この1つの孤立ノードのせいでグラフ全体が
-    // 大きくズームアウトして見づらくなる不具合を実際に踏んだ。
-    // 中心(0,0)へ引き戻す力を加えることで、孤立ノードが離れすぎない
-    // ようにする。最初はstrength 0.3で試したが、開いてから収束するまでの
-    // 広がり方が、反発力とせめぎ合ってぎこちなく見える（実機フィードバック）
-    // ため、0.05まで弱めた
-    fgRef.current.d3Force("x", forceX(0).strength(0.05));
-    fgRef.current.d3Force("y", forceY(0).strength(0.05));
-  }, [nodes, links, size.width, size.height]);
+    const canvas = canvasRef.current;
+    if (!canvas) return undefined;
 
-  // GraphNodeSearchでの選択など、クリック以外の経緯でノードが指定された
-  // ときは、収束後で下の追従ループが既に止まっていても明示的にカメラを
-  // 合わせる。canvas上のクリック選択（handlePointerUp）はこれまで通り
-  // カメラを動かさない（既存の見た目を変えないため、focusRequestが
-  // 発行されたときだけ反応する）
-  useEffect(() => {
-    if (!focusRequest) return;
-    fitCamera(400, 80, focusRequest.nodeId);
-  }, [focusRequest]);
-
-  // 開いた瞬間からユーザーが操作するまでの経過時間を見て、カメラの
-  // 自動フィットを一時的にスキップする「クールダウン」。以前は一度でも
-  // 操作すると以後永久にフィットしない恒久ラッチだったが、追従アニメ中に
-  // 一度ホイールを触っただけで、以後ずっと窮屈なレイアウトのまま固定
-  // されてしまうという指摘を受けた。最後の操作から一定時間経てば
-  // 自動フィットを再開するようにする
-  const lastInteractionAtRef = useRef(0);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return undefined;
-
-    // wheel/pointerdownはここでは観測するだけ（preventDefault等はしない）。
-    // force-graph自身のズーム・パン・ドラッグ処理はそのまま動かしつつ、
-    // 「ユーザーが最後に触れたのはいつか」だけを記録する。
-    //
-    // captureフェーズで登録するのが必須: d3-zoom自身のwheel/mousedown
-    // ハンドラ（canvas要素に直接登録されている）は内部で
-    // event.stopImmediatePropagation()を呼ぶため、bubbleフェーズで
-    // 親要素（このコンテナ）に登録したリスナーには一切イベントが
-    // 届かない。captureフェーズはDOMツリーを上から下へ辿る際に先に
-    // 発火するため、canvas側の後続のstopPropagationの影響を受けない
-    // （実際に踏んだ不具合: wheelでのズームが「初回だけ効かず、
-    // 待てば効く」ように見えた原因）
-    const markInteracted = () => {
-      lastInteractionAtRef.current = performance.now();
+    const handlePointerDown = (event) => {
+      if (!interactiveRef.current) return;
+      const rect = canvas.getBoundingClientRect();
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      const world = screenToWorld(sx, sy);
+      const hit = findNodeAtGraphPoint(nodesRef.current, world.x, world.y, selectedNodeIdRef.current);
+      downInfoRef.current = { x: sx, y: sy, nodeId: hit?.id ?? null };
+      if (hit) {
+        draggingIdRef.current = hit.id;
+        pointerRef.current = { x: sx, y: sy };
+      } else {
+        panStateRef.current = { startX: sx, startY: sy, viewX: viewRef.current.x, viewY: viewRef.current.y };
+      }
+      canvas.setPointerCapture(event.pointerId);
+      setCursor();
     };
-    el.addEventListener("wheel", markInteracted, { passive: true, capture: true });
-    el.addEventListener("pointerdown", markInteracted, { capture: true });
+
+    const handlePointerMove = (event) => {
+      if (!interactiveRef.current) return;
+      const rect = canvas.getBoundingClientRect();
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      pointerRef.current = { x: sx, y: sy };
+      if (draggingIdRef.current) {
+        // 物理ステップ側がpointerRefを毎フレーム読むため、ここでは何もしない
+      } else if (panStateRef.current) {
+        const pan = panStateRef.current;
+        viewRef.current = { ...viewRef.current, x: pan.viewX + (sx - pan.startX), y: pan.viewY + (sy - pan.startY) };
+      } else {
+        const world = screenToWorld(sx, sy);
+        const hit = findNodeAtGraphPoint(nodesRef.current, world.x, world.y, selectedNodeIdRef.current);
+        hoveredIdRef.current = hit?.id ?? null;
+        setCursor();
+      }
+    };
+
+    const endInteraction = (event) => {
+      if (!interactiveRef.current) return;
+      const rect = canvas.getBoundingClientRect();
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      const downInfo = downInfoRef.current;
+      if (downInfo) {
+        const moved = Math.hypot(sx - downInfo.x, sy - downInfo.y);
+        if (moved < MOVE_THRESHOLD_PX && downInfo.nodeId) {
+          const node = nodesRef.current.find((n) => n.id === downInfo.nodeId);
+          onSelectNodeRef.current(node ? { id: node.id, data: node } : null);
+        }
+      }
+      draggingIdRef.current = null;
+      panStateRef.current = null;
+      downInfoRef.current = null;
+      setCursor();
+    };
+
+    const handleWheel = (event) => {
+      if (!interactiveRef.current) return;
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      const worldBefore = screenToWorld(sx, sy);
+      const factor = Math.exp(-event.deltaY * 0.001);
+      const nextScale = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, viewRef.current.scale * factor));
+      cameraAnimRef.current = null;
+      viewRef.current = {
+        scale: nextScale,
+        x: sx - worldBefore.x * nextScale,
+        y: sy - worldBefore.y * nextScale,
+      };
+    };
+
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointermove", handlePointerMove);
+    canvas.addEventListener("pointerup", endInteraction);
+    canvas.addEventListener("pointercancel", endInteraction);
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
-      el.removeEventListener("wheel", markInteracted, { capture: true });
-      el.removeEventListener("pointerdown", markInteracted, { capture: true });
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      canvas.removeEventListener("pointermove", handlePointerMove);
+      canvas.removeEventListener("pointerup", endInteraction);
+      canvas.removeEventListener("pointercancel", endInteraction);
+      canvas.removeEventListener("wheel", handleWheel);
     };
   }, []);
 
-  // グラフのデータそのものが変わったら（フィルター変更や新しく開いた直後など）、
-  // 一定時間だけ自前でrequestAnimationFrameを回してfitCameraを毎フレーム
-  // 呼び続け、カメラを追従させる（ファイル冒頭の既知の不具合3参照。
-  // onEngineTick/onEngineStopが発火しないため代替した）。
-  // FOLLOW_DURATION_MSはd3AlphaDecayの既定値（0.0228）から、alphaが
-  // 実用上ほぼ0になるまでのおおよそのフレーム数を目安に、余裕を持たせて決めた。
+  // 物理演算+描画のメインループ。マウント中は常時回り続ける
+  // （承認済みのgraph-physics-mock.htmlと同じ、減衰はするが完全停止は
+  // しないバネ物理のため。react-force-graph-2d時代のalpha減衰による
+  // 自動停止とは異なる挙動だが、モック検討時に確認済みの動きそのもの）
   useEffect(() => {
-    lastInteractionAtRef.current = 0;
-
-    const FOLLOW_DURATION_MS = 2000;
-    const startTime = performance.now();
-    let rafId = null;
-
-    const step = (now) => {
-      const cooledDown = now - lastInteractionAtRef.current > REFIT_COOLDOWN_MS;
-      if (cooledDown && !isDraggingRef.current) {
-        fitCamera(80, 40, selectedNodeIdRef.current);
-      }
-      if (now - startTime < FOLLOW_DURATION_MS) {
-        rafId = requestAnimationFrame(step);
-      } else if (cooledDown && !isDraggingRef.current) {
-        // フォーカスありのときは、少し狭めに絞った分だけ余白を広めにして
-        // （padding 80）、対象ノードだけがぎりぎり収まって窮屈にならないようにする
-        fitCamera(400, selectedNodeIdRef.current ? 80 : 40, selectedNodeIdRef.current);
-      }
-    };
-    rafId = requestAnimationFrame(step);
-    return () => {
-      if (rafId != null) cancelAnimationFrame(rafId);
-    };
-  }, [nodes, links]);
-
-  // ホバー中はホバー対象を優先し（マウスが離れれば選択中ノードの強調へ
-  // 戻る）、ホバーが無ければ選択中ノードを「関連ノード以外を薄くする」
-  // 対象にする。検索で選んだノードも枠線の強調だけでなく、クリック・
-  // ホバーと同じ見せ方（関連ノードのフォーカス）にする、という指摘への対応
-  const focusNodeId = hoveredNodeId ?? selectedNodeId;
-  const visualContext = { selectedNodeId, focusId: focusNodeId, adjacency, interactive };
-  // { nodes, links } をJSX内で直接書くと、hoverなど無関係な再描画のたびに
-  // 新しいオブジェクト参照になり、ライブラリがグラフデータそのものが
-  // 変わったと誤解してシミュレーションを最初からやり直してしまう
-  // （実際に踏んだ不具合。ホバーするたびにレイアウトが再抽選されていた）
-  const graphData = useMemo(() => ({ nodes, links }), [nodes, links]);
-
-  // onNodeClick/onBackgroundClickが機能しないためのクリック代替実装。
-  // pointerdown→pointerupの移動量が閾値以内なら「クリック」とみなし、
-  // screen2GraphCoordsで求めたグラフ座標に対する当たり判定をgraphHitTest.js
-  // （findNodeAtGraphPoint）へ委譲する。ホバー状態（hoveredNodeId）には
-  // 頼らない——isPointerDragging誤検知（ファイル冒頭コメント参照）と
-  // 同じ理由で、クリックの瞬間にホバーがnullへリセットされることがあるため
-  const pointerDownRef = useRef(null);
-
-  const handlePointerDown = (event) => {
-    if (!interactive) return;
-    pointerDownRef.current = { x: event.clientX, y: event.clientY };
-  };
-
-  const handlePointerUp = (event) => {
-    if (!interactive || !pointerDownRef.current) return;
-    const dx = event.clientX - pointerDownRef.current.x;
-    const dy = event.clientY - pointerDownRef.current.y;
-    pointerDownRef.current = null;
-    if (Math.sqrt(dx * dx + dy * dy) > CLICK_TOLERANCE_PX) return;
-
-    const canvas = containerRef.current?.querySelector("canvas");
-    if (!canvas || !fgRef.current) return;
-    const rect = canvas.getBoundingClientRect();
-    const { x, y } = fgRef.current.screen2GraphCoords(event.clientX - rect.left, event.clientY - rect.top);
-    const node = findNodeAtGraphPoint(nodes, x, y, selectedNodeId);
-    onSelectNode(node ? { id: node.id, data: node } : null);
-  };
+    let rafId = requestAnimationFrame(function loop() {
+      step();
+      applyCameraAnim();
+      draw();
+      rafId = requestAnimationFrame(loop);
+    });
+    return () => cancelAnimationFrame(rafId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- step/applyCameraAnim/drawはいずれもrefのみを参照する安定した実装
+  }, []);
 
   return (
-    <div
-      ref={containerRef}
-      role="img"
-      aria-label={t("graph.canvasAriaLabel", { nodeCount: nodes.length, edgeCount: links.length })}
-      className="h-full w-full"
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-    >
-      {size.width > 0 && size.height > 0 && (
-        <ForceGraph2D
-          ref={fgRef}
-          graphData={graphData}
-          width={size.width}
-          height={size.height}
-          backgroundColor="#08090a"
-          nodeCanvasObject={(node, ctx, globalScale) => drawNode(node, ctx, globalScale, visualContext)}
-          nodePointerAreaPaint={(node, color, ctx) => paintNodePointerArea(node, color, ctx, node.id === selectedNodeId)}
-          linkColor={(link) => {
-            const touchesFocused =
-              focusNodeId &&
-              (linkEndpointId(link.source) === focusNodeId || linkEndpointId(link.target) === focusNodeId);
-            const dimmed = interactive && focusNodeId && !touchesFocused;
-            return dimmed ? "rgba(62, 62, 68, 0.25)" : "rgba(62, 62, 68, 0.9)";
-          }}
-          linkWidth={1}
-          onNodeHover={(node) => {
-            if (!interactive) return;
-            setHoveredNodeId(node?.id ?? null);
-          }}
-          onNodeDrag={() => {
-            isDraggingRef.current = true;
-          }}
-          onNodeDragEnd={() => {
-            isDraggingRef.current = false;
-          }}
-          enableNodeDrag={interactive}
-          enableZoomInteraction={interactive}
-          enablePanInteraction={interactive}
-          minZoom={0.2}
-          maxZoom={3}
-          // cooldownTimeは壁時計時間なので指定しない（既定15000ms）。
-          // canvas描画（アイコン・テキスト測定など）はSVGより1フレームの
-          // コストが重く、短く区切ると実際のtick数が足りないまま収束前に
-          // 打ち切られ、詰まったレイアウトで固まってしまう不具合を実際に踏んだ。
-          // alpha減衰によるtick回数ベースの自動停止（cooldownTicksの既定は
-          // Infinity）に任せる
-        />
-      )}
+    <div ref={containerRef} className="h-full w-full">
+      <canvas
+        ref={canvasRef}
+        role="img"
+        aria-label={t("graph.canvasAriaLabel", { nodeCount: nodes.length, edgeCount: links.length })}
+        className="h-full w-full touch-none"
+      />
     </div>
   );
 }

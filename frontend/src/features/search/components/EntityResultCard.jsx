@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
+import { getNodeTextColorClass } from "../../graph/utils/nodeColor";
 import { useReveal } from "../../../hooks/useReveal";
 import { revealDelayClass } from "../../../utils/revealDelay";
 
@@ -9,9 +10,9 @@ import { revealDelayClass } from "../../../utils/revealDelay";
  * 検索でヒットした属性（産地・農園・品種・精製方法・焙煎度・フレーバー・
  * カフェ）1件のカード。
  *
- * docs/search.md参照。「エチオピア / 8件の記録 / よく関連するフレーバー：
+ * docs/features.md「Search」参照。「エチオピア / 8件の記録 / よく関連するフレーバー：
  * ベリー、フローラル」のように、件数と共起する属性を添えて知識ベース感を
- * 出す。エンティティ詳細ページ（docs/entity-detail.md）へのLinkにする。
+ * 出す。エンティティ詳細ページ（docs/features.md「Entity Detail」）へのLinkにする。
  * 知識グラフをただの可視化ではなくナビゲーションにする方針
  * （2026-08、`/graph?focus=`から変更）。
  */
@@ -28,7 +29,7 @@ function EntityResultCard({ entity, index = 0 }) {
       className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} block rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
     >
       <div className="flex items-center gap-2">
-        <Icon size={16} aria-hidden="true" className={visual.colorClass} />
+        <Icon size={16} aria-hidden="true" className={getNodeTextColorClass({ type: entity.type, label: entity.label })} />
         <span className="text-xs text-text-tertiary">{t(visual.labelKey)}</span>
       </div>
 

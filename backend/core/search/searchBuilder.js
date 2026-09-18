@@ -3,7 +3,7 @@ import { buildGraph } from "../graph/graphBuilder.js";
 /**
  * 記録・属性を横断して検索する純粋関数。
  *
- * docs/search.md 参照。graphBuilder.js（DB/HTTP非依存の純粋関数）を
+ * docs/features.md「Search」参照。graphBuilder.js（DB/HTTP非依存の純粋関数）を
  * そのまま使い、グラフのノード・エッジから検索結果を組み立てる。
  * 産地・農園・品種・精製方法・焙煎度・フレーバー・カフェは属性ノードから、
  * コーヒー名（記録のtitle）は記録自体から、それぞれ検索する

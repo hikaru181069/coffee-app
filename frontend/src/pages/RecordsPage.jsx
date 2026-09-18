@@ -8,8 +8,8 @@ import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeReco
 import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
 import RecordCard from "../features/coffee-records/components/RecordCard";
 import RecordFilters from "../features/coffee-records/components/RecordFilters";
+import CoffeeLoader from "../components/CoffeeLoader";
 import {
-  RecordListSkeleton,
   RecordsEmptyState,
   RecordsErrorState,
   RecordsNoMatchState,
@@ -31,7 +31,7 @@ import { useSearch } from "../features/search/hooks/useSearch";
  * （CLAUDE.md: pageコンポーネントにAPI通信・フォーム状態・変換ロジック・
  * 巨大なJSXをすべて置かない）。
  *
- * 2026-08、横断検索（docs/search.md）を追加した。検索クエリが入力されて
+ * 2026-08、横断検索（docs/features.md「Search」）を追加した。検索クエリが入力されて
  * いる間は、一覧・ページ送りを検索結果表示へ丸ごと差し替える。検索結果
  * （属性の集計カード＋記録タイトルの一致）は通常の絞り込み結果と
  * 見た目・意味が異なるため、同じ一覧に混ぜて出すと状態がわかりにくくなる
@@ -91,7 +91,7 @@ function RecordsPage() {
    * JSXの中に三項演算子を重ねると読めなくなるので関数へ切り出す。
    */
   const renderList = () => {
-    if (isLoading) return <RecordListSkeleton />;
+    if (isLoading) return <CoffeeLoader size="lg" />;
     if (error) return <RecordsErrorState error={error} onRetry={reload} />;
 
     if (records.length === 0) {

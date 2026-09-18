@@ -11,11 +11,16 @@
  * なるようにした。線形のまま倍率だけ上げると、記録が多い産地（例:
  * よく飲むEthiopia）のノードが際限なく巨大化し、混雑を悪化させて
  * しまうため。
+ *
+ * 2026-09、「グラフを直接操作する体験」の作り直しでノードを塗りつぶした
+ * 円へ変更した際、属性ノードも角丸矩形から円へ統一した（以前の
+ * half-width=15/half-height=15は実質正方形に近い見た目だったため、
+ * 形状変更による見た目の変化は小さい）。ベースサイズ自体も、塗りつぶし
+ * 表現が小さいと潰れて見えるため引き上げている。
  */
 
-export const RECORD_BASE_RADIUS = 16;
-export const ATTRIBUTE_BASE_HALF_WIDTH = 15;
-export const ATTRIBUTE_HALF_HEIGHT = 15;
+export const RECORD_BASE_RADIUS = 26;
+export const ATTRIBUTE_BASE_RADIUS = 20;
 
 // 選択中（?focus=やクリック）のノードは、枠線の色・太さだけでなく
 // 形そのものも拡大する。密集したグラフの中でも「今フォーカスしている
@@ -38,28 +43,23 @@ export const recordRadius = (node, isSelected = false) => {
   return isSelected ? base * SELECTED_SCALE : base;
 };
 
-export const attributeHalfWidth = (node, isSelected = false) => {
-  const base = ATTRIBUTE_BASE_HALF_WIDTH + sizeForDegree(node.degree);
+export const attributeRadius = (node, isSelected = false) => {
+  const base = ATTRIBUTE_BASE_RADIUS + sizeForDegree(node.degree);
   return isSelected ? base * SELECTED_SCALE : base;
 };
 
-export const attributeHalfHeight = (isSelected = false) =>
-  isSelected ? ATTRIBUTE_HALF_HEIGHT * SELECTED_SCALE : ATTRIBUTE_HALF_HEIGHT;
+/** ノードの種類を問わない共通の半径取得（円統一につき record/attribute で分岐不要） */
+export const nodeRadius = (node, isSelected = false) =>
+  node.type === "record" ? recordRadius(node, isSelected) : attributeRadius(node, isSelected);
 
 // forceCollideに渡す、ノードごとの衝突半径に足すラベル分の余白。
 // ラベル（チップの下に最大100px幅で表示）の実際の幅を毎回測るのではなく、
 // 経験的な固定値で十分な余白を確保する
-const LABEL_CLEARANCE = 20;
+const LABEL_CLEARANCE = 60;
 
 /**
- * d3-forceのforceCollideへ渡す、ノードごとの衝突半径。
+ * ノードごとの衝突半径（物理演算の反発・重なり解消に使う）。
  * 選択状態は問わない（選択のたびに衝突半径が変わるとシミュレーションが
  * 無用に揺れ動くため、非選択時のサイズで固定する）。
  */
-export const nodeCollideRadius = (node) => {
-  const shapeRadius =
-    node.type === "record"
-      ? recordRadius(node)
-      : Math.hypot(attributeHalfWidth(node), attributeHalfHeight());
-  return shapeRadius + LABEL_CLEARANCE;
-};
+export const nodeCollideRadius = (node) => nodeRadius(node) + LABEL_CLEARANCE;

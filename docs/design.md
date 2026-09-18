@@ -79,13 +79,39 @@ LoginとRegisterは同じCSS（`.auth-page` / `.auth-card` / `.auth-form`）を�
 - 新しい記録を始める
 - 小さな発見を得る
 
-構成例:
+構成（`HomePage.jsx`。2026-08にFigmaでの再設計・Insight/Discover機能の
+追加を経て現在の形になった。以前この節にあった「Your Coffee
+Connections」「よく登場する産地・フレーバーの簡易表示」という項目名は、
+実装が進む過程で下記のDiscoverカード・GraphPreviewへ統合されており、
+現在は存在しない。同じ情報をGraph画面のノードrecordCountで既に見られる
+ため重複させず、Graphへの導線だけを置くという方針は変わっていない）:
 
-- Welcome / Todayセクション
-- New Record CTA
-- Recent Records
-- Your Coffee Connections
-- よく登場する産地・フレーバーの簡易表示
+- **挨拶**: 時間帯に応じた挨拶文（朝/昼/夕）
+- **New Record CTA**: 記録が1件も無い最初の訪問時だけ大きく表示し、
+  記録が既にあるリピーターには小さいボタンへ縮小する
+  （Progressive Disclosure）
+- **Recent Records**: 直近6件を横並びグリッドで（`HomeRecordCard.jsx`）。
+  産地・銘柄・評価・精製方法・フレーバーに絞って表示し、日付・記録タイプは
+  一覧画面（`RecordCard.jsx`）に譲る
+- **Discoverカード**（`DiscoverCard.jsx`）: Insightの一文（例:
+  「あなたはEthiopia産かつWashed精製のコーヒーを高く評価する傾向が
+  あります。」）と、Discoverの提案・コーヒー診断・世界地図への導線を
+  1枚に統合したカード。2026-08、別々に置いていたInsightBannerと
+  Discoverへのリンクが「見つけにくい」という指摘を受けて統合した
+  （裏側のデータ・ロジックはInsight/Discoverそれぞれ独立したまま、
+  見せ方だけを統合している）
+- **知識グラフカード**（`GraphPreview.jsx`）: 静的なイラスト+ノード数・
+  つながり数の実数字。「グラフが育っている」という実感をHomeでも見せる
+  ための導線。実データを縮小描画すると小さすぎて読めなかったため、
+  2026-08に静的イラストへ変更した（詳細は`GraphPreview.jsx`のコメント
+  参照）
+
+DiscoverカードとGraphPreviewは`lg`以上の画面幅では横並び（比率2:5）、
+それ未満では縦積みにする。
+
+Recent Recordsの精製方法・フレーバーの配色（Graph画面と揃えた種別共通色・
+値ごとの個別色）は「Records」節の「タグの配色」参照（`HomeRecordCard.jsx`
+にも同じ配色を適用しているが、タグ形式ではなく文字色のみで軽く付けている）。
 
 ### Records
 
@@ -95,6 +121,27 @@ LoginとRegisterは同じCSS（`.auth-page` / `.auth-card` / `.auth-form`）を�
 - 空状態
 - ローディング
 - エラー状態
+
+**タグの配色（Graph画面との統一）**: 2026-09、「記録一覧・Homeの記録
+カードにGraph画面の配色の雰囲気を適用してほしい」という要望を受け、
+`RecordCard.jsx`のタグ（精製方法・フレーバー）に色を付けた。精製方法は
+Graph画面と同じ種別共通色（`nodeVisuals.js`の`process`、紫）、フレーバーは
+産地（`originAccent.js`）と同様に、フレーバーごとの個別色
+（`frontend/src/features/coffee-records/utils/flavorAccent.js`、新設）を
+使う。種別共通色と個別色を使い分けている理由: 精製方法・焙煎度は選択肢の
+種類数が少なく個別色にする実益が薄いのに対し、産地・フレーバーは
+「具体的に何を選んだか」を色だけでも大まかに掴めた方が実用的なため
+（例: 記録一覧を眺めたときに「これはBerry系、これはChocolate系」と
+判別しやすくなる）。`HomeRecordCard.jsx`（Home画面の記録カード）にも
+同じ配色を適用しているが、Homeはタグ形式ではないため文字色のみで軽く
+付けている。
+
+`flavorAccent.js`は`backend/seeds/data/flavors.js`の全42種それぞれに、
+そのキーワードを連想させる個別のHEX値を手動で割り当てた対応表
+（`originAccent.js`の産地ごと個別対応表と同じ考え方。ハッシュ割り当てでは
+なく決め打ち）。Artifactでのモック確認を経てユーザー承認を得た配色。
+新しいフレーバーをマスターデータへ追加する際は、この対応表にも1行
+追加すること（追加し忘れても中立グレーになるだけでエラーにはならない）。
 
 ### New / Edit Record
 
@@ -129,7 +176,7 @@ Artifactでのモックアップ検討を先行させた作り直し（「コー
 
 各項目を`PropertyButton.jsx`（現在値を示す小さいボタン）にし、
 クリックしたときだけその場にポップオーバーを開いて編集する。実データの
-件数（産地20件・フレーバー約41種等）でも、ボタンの帯は折り返すだけで
+件数（産地20件・フレーバー42種等）でも、ボタンの帯は折り返すだけで
 キャンバス本体の高さに影響しない。ポップオーバーはボタンの実座標
 （`getBoundingClientRect`）を基準に`position:fixed`で置き、画面右端・
 下端に収まらない場合は自動で左寄せ／上向きへ反転する。フレーバー・
@@ -190,8 +237,12 @@ Similar Recordsと同じ）を踏襲している（docs/features.md
 インタースティシャルに、CSSの疑似的なイージングではなく実際のバネ
 物理計算（`type: "spring"`）を使う。この画面（`RecordForm.jsx`・
 `SaveDiscoveryReveal.jsx`）に限り、他画面が踏襲する「静かな道具」と
-いう既定方針をユーザーの明示的な指示で意図的に上書きしている
-（他の画面には広げない）。
+いう既定方針をユーザーの明示的な指示で意図的に上書きしている。
+
+2026-09、ローディング表示（ボタンのスピナー・ページ全体のスケルトン）
+はコーヒーのドリップを模した`CoffeeLoader.jsx`に統一し、全画面へ
+展開した（`Loader2`・shimmerスケルトンを置き換え）。Framer Motionの
+バネ物理計算自体は引き続きこの画面限定。
 
 書体は既存方針（Interのみ、画面ごとに増やさない）を維持している
 （装飾的な書体の組み合わせは、作り直しの検討時に一度候補に上がったが、
@@ -221,6 +272,78 @@ Similar Recordsと同じ）を踏襲している（docs/features.md
 - 選択中ノードのサイドパネル
 - 関連記録一覧
 - 記録詳細へのリンク
+
+2026-09、「グラフを直接操作している体験が感じられない」という指摘を受け、
+既存コード（react-force-graph-2d／d3-force）を捨てて作り直した
+（`GraphCanvas.jsx`）。Artifactでの対話的なプロトタイプ検討を経て、以下を
+決定した。
+
+**物理演算**: react-force-graph-2d（d3-force）への依存をやめ、canvas 2D +
+自前の反発・バネ・減衰による物理演算へ全面置き換えた。ドラッグ中は
+ポインタへバネで追従し（瞬間移動ではなく少し遅れて・少しオーバーシュート
+しながら追いかける）、離すと慣性で流れて減衰する。開いた瞬間に
+ノードが弾け飛んで収まる、という必然性のないアニメーションを見せない
+ため、初期配置から安定するまでを画面に映さず裏側で先に計算してから
+最初の描画を行う（フィルター変更等でデータが変わるたびに同様）。
+
+**ノードの見た目**: 「輪郭線+小さいアイコン」から「種別色で塗りつぶした
+円+暗色アイコン」へ変更した。属性ノードも角丸矩形から円へ統一している。
+サイズはdegree（つながっている記録の数）に応じて大きくなる方針を維持し、
+ベースサイズ自体を底上げして密度感を上げた。エッジ（つながりの線）も
+1px灰色の細線から、つながる属性ノードの色を帯びた太めの線へ変更した。
+
+**配色**: グラフ専用の9トークン（`--color-graph-*`、index.css）を新設し、
+寒色〜暖色にまたがる配色にした（産地=青・農園=緑・品種=黄・精製方法=紫・
+焙煎度=橙・フレーバー=マゼンタ・カフェ=ティール・キーワード=シアン・
+記録=赤）。この9色は`GraphLegend.jsx`の凡例スウォッチと、値ごとの個別色を
+持たない種別（farm・variety・process・roastLevel・cafe・keyword・record）の
+実際のノード色。産地・フレーバーは下記の通り値ごとの個別色で描画される
+ため、凡例の色（青・マゼンタ）はあくまで「産地・フレーバーという種別」を
+代表する色であり、個々のノードの実際の色とは一致しない。以前はDiscover・
+WorldMapLegend・OverviewStats・Diagnosisの
+archetype色と共有の`--color-accent-*`（Catppuccin Mocha）を使っていたが、
+グラフの見た目を変えるたびに無関係な4画面の配色まで変わってしまうため、
+専用トークンへ分離した。origin・flavorノードだけは種別共通色ではなく、
+値ごとの個別色（`originAccent.js`・`flavorAccent.js`）を使う（2026-09、
+記録カードのタグ配色と統一する形でflavorも個別色化した。`NodeDetailPanel.jsx`
+のバッジも同様）。他の種別（process・roastLevel等）は選択肢の種類数が
+少なく個別色にする実益が薄いため、種別共通色のまま。
+
+**ラベル**: 2026-08に導入した「フォーカス中（ホバー/選択）のノードと
+その隣接ノードだけラベルを出す」というルール自体は維持しつつ、
+記録（一杯の記録）のタイトルだけは常時表示にした。属性ノード
+（産地・フレーバー等）は引き続きインタラクション時のみ、フォーカス中の
+ノード本人と直接つながる隣接ノードだけに絞る。
+
+**選択中ノードのサイドパネル**: `NodeDetailPanel.jsx`の見出しを、
+グラフのノードと同じ塗りつぶし円バッジ（種別色+暗色アイコン）へ揃えた。
+中身の構成（属性: 種別・ラベル・記録数・関連記録一覧、記録: 記録日・
+評価・メモの抜粋）や、デスクトップ=右固定パネル／モバイル=bottom sheet
+という出し分けは変更していない。
+
+**カメラ（既定表示でグラフ全体を画面に収めない）**: 以前は開いた瞬間・
+フィルター変更直後に、全ノードが画面へ収まるようカメラを自動フィット
+させていた。ノードを大きく塗りつぶす構図（上記）へ変更したことで、
+記録数が増えるほど「全部を収める」ためにズームアウトが必要になり、
+結局ノード自体も縮小され、間隔も詰まって見える、という問題が生じた
+（実データ・61ノードで発覚）。ノード間の間隔を広げる物理定数の調整
+だけでは、ノード数が増えるほど原理的に解決しない（間隔を広げるほど
+bounding boxが大きくなり、収めるためのズームアウトで結局ノードが縮小
+される）と判断し、「グラフ全体を常に画面に収める」という前提自体を
+やめた（ユーザーとの相談で決定。参照: Obsidianのグラフビューも既定では
+全体フィットしない）。
+
+- 既定表示（フォーカス無し）: ノードがほぼ実寸で見える固定倍率
+  （`COMFORTABLE_SCALE`、`GraphCanvas.jsx`）を使い、全ノードの重心を
+  画面中央に置く。画面外にはみ出た部分はパン操作で探索する
+- フォーカスがある場合（`?focus=`・`GraphNodeSearch`での選択・ノード
+  クリックでの再フォーカス）: 従来通り、対象ノード+直接の隣接ノードが
+  画面に収まるようカメラを寄せる（「このノードを見たい」という明確な
+  意図への応答のため、こちらは維持）
+
+「グラフが育っている感じ」（記録・つながりが増えるほど豊かに見える
+演出）は、この変更とは別の関心事として今後検討する（Home画面の
+グラフプレビュー`GraphPreview.jsx`が現状その役割の一部を担っている）。
 
 ### Stats
 
@@ -305,7 +428,12 @@ Similar Recordsと同じ）を踏襲している（docs/features.md
 
 ## Graph Visual Semantics
 
-ノード種別は色だけでなく、ラベルまたは形状でも判別可能にします。
+ノード種別は色だけでなく、アイコンでも判別可能にします。
+
+2026-09、記録ノード・属性ノードの形状を統一した（下記「Graph」節参照。
+以前はrecord=円・属性=角丸矩形の2形状で「記録か属性か」を区別していたが、
+Q構図（塗りつぶした円）採用に伴いどちらも円になった）。記録と属性の
+区別は、サイズ（記録の方が大きい）とアイコン・色で引き続き判別できる。
 
 2026-09、lucide-reactの汎用アイコンでは種別が覚えにくい・気に入らない
 というフィードバックを受け、実在の`@phosphor-icons/react`本体のアイコンへ
@@ -334,6 +462,63 @@ Similar Recordsと同じ）を踏襲している（docs/features.md
 `frontend/src/features/graph/utils/canvasIcons.js`（canvas描画用、同じ
 パスデータを別形式で保持）の2箇所。両者がずれないよう、値を変更する際は
 必ず両方を更新すること。
+
+### 値ごとの個別色（origin・flavor）と型共通色（他7種別）の一貫性
+
+産地・フレーバーは`nodeVisuals.js`の型共通色ではなく、値（例:
+「Ethiopia」「Berry」）ごとに個別の色を持つ（産地は`originAccent.js`の
+`ORIGIN_NAME_TO_HEX`20件、フレーバーは`flavorAccent.js`の
+`FLAVOR_NAME_TO_HEX`42件）。残り7種別（farm/variety/process/roastLevel/
+cafe/keyword/record）は型共通色のみ。
+
+2026-09、「デザイン・テーマの統一」レビューで、この「値ごとの個別色」が
+Graph画面（`GraphCanvas.jsx`・`NodeDetailPanel.jsx`）と一部の記録系画面
+（`RecordCard.jsx`・`HomeRecordCard.jsx`）にしか適用されておらず、
+Entity Detail・Record Detail・Stats・横断検索・Graphのノード検索欄・
+記録詳細の「つながり」図・発見バッジ等では、同じ産地・フレーバーでも
+型共通色のまま（＝画面によって色が変わって見える）だったことが分かった
+（ユーザーからの指摘、「それ以外にもあるはずです。丁寧に確認してください」）。
+
+この2つの色系統（型共通色・値ごとの個別色）を1箇所から解決する共有
+ヘルパー`frontend/src/features/graph/utils/nodeColor.js`
+（`getNodeColorHex`/`getNodeSolidBgClass`/`getNodeTintBgClass`/
+`getNodeTextColorClass`）を新設し、`{ type, label }`を渡すとorigin・
+flavorなら個別色、それ以外は`nodeVisuals.js`の型共通色を自動で返すように
+した。以下の箇所をこのヘルパー経由へ統一した:
+`EntityDetailPage.jsx`（ヘッダーアイコン・関連属性チップ）、
+`RecordDetailPage.jsx`（産地・フレーバー等のリンク付きピル）、
+`TopRankingList.jsx`（Statsのランキング行、ドットを新規追加）、
+`EntityResultCard.jsx`（横断検索結果）、`GraphNodeSearch.jsx`
+（グラフのノード検索欄）、`RecordConnectionsDiagram.jsx`（記録詳細の
+「つながり」図）、`GraphCanvas.jsx`・`NodeDetailPanel.jsx`
+（既存のGraph画面側も同じヘルパーへ差し替え、二重管理を解消）。
+
+一方、フィールドラベル（`AttributeLabel.jsx`。例:「産地」という項目名
+自体のアイコン）、集計件数（`CollectionStats.jsx`・`WorldMapPage.jsx`
+の「7/20産地」等）、複数選択の要約（`RecordForm.jsx`のPropertyButton、
+選んだ件数や連結した名前のテキストのみ）、装飾的なグラフイラスト
+（`GraphPreview.jsx`・`GraphIllustration.jsx`）、フィルター・凡例
+（`GraphFilters.jsx`・`GraphLegend.jsx`）は、1つの具体的な値を指して
+いない（フィールド名・合計・複数値の集合・非実データ）ため、意図的に
+型共通色のまま据え置いている。
+
+2026-09、ユーザーから「records/newページが変更されていない」という
+指摘を受けて確認したところ、上記のPropertyButton要約テキストとは別に、
+ポップオーバーを開いたときに見える「選択済みタグ」自体（`TagCombo.jsx`。
+フレーバー・品種の検索式タグ入力、`RecordForm.jsx`・
+`CoffeeComponentFields.jsx`で使用）は、選んだ後の個別の値を示す表示に
+もかかわらず無色（`bg-surface-2`固定）のままだったことが分かった。
+これはPropertyButtonの要約とは性質が異なり、記録カード等と同じ
+「1つの具体的な値の表示」に当たるため、型共通色・個別色の対象に含める
+べき見落としだった。`TagCombo`が呼び出し側から`type`（ノード種別）を
+受け取り、`nodeColor.js`経由で選択済みタグへ色を付けるよう修正した
+（フレーバーは個別色、品種は型共通色になる）。
+
+あわせて、この2画面のバッジは他画面（Graph・NodeDetailPanel・記録カード）
+と異なる旧スタイル（薄い塗り+種別共通アイコン色）のまま残っていたため、
+`DiscoveryBadge.jsx`・`SaveDiscoveryReveal.jsx`のバッジも「塗りつぶした
+円+暗色（`text-on-inverse`）アイコン」という新スタイルへ揃えた
+（`getNodeSolidBgClass`を使用）。
 
 ## Design Tokens
 
@@ -393,26 +578,43 @@ text-text-inverse rounded-full`という、色を使わない反転配色（明�
   別名2つ）: `warn`=トースト警告、`rating`=評価（★）
 - `success`（#aff976、mobbin.com実測のgreen系相当）: トースト成功
 
-知識グラフのノード種別カラー（`features/graph/utils/nodeVisuals.js`）と
-産地アクセントバー（`features/coffee-records/utils/originAccent.js`）は、
-mobbin.com側に対応する概念が無いため今回のスコープ外とし、値を変更して
-いない。モスの濃淡2段階＋彩度を落とした5色（ミュートな多色）の共有
-パレットのまま:
+知識グラフのノード種別カラーは、2026-09の「グラフを直接操作している
+体験」の作り直しに伴い、当時Discover・WorldMapLegend・OverviewStats・
+Diagnosisのarchetype色と共有していた旧`--color-accent-*`（Catppuccin
+Mochaの9色）から独立した専用9トークン（`--color-graph-*`）へ切り出した
+上で値も刷新した（「Graph」節・`GraphCanvas.jsx`参照）。グラフの見た目を
+変えるたびに、共有している他画面の配色まで変わってしまうのを避けるための
+分離だった。
 
-- `accent-moss`（#7c8363、新設）: グラフの`record`ノード専用。
-  `primary`がフォーカスリング用の青に変わったため切り離した
-  （旧`primary`と同じ値で、見た目は変えていない）
-- `accent-moss-light` / `accent-moss-dark`: モスの明暗（グラフの`origin`/
-  `roastLevel`ノード）
-- `accent-slate` / `accent-clay` / `accent-ochre` / `accent-rose` /
-  `accent-mist`: モスと彩度を揃えたブルーグレー/テラコッタ/黄土色/ローズ/
-  ラベンダーグレー（グラフの`process`/`farm`/`variety`/`flavor`/`cafe`
-  ノード）
+2026-09、「デザイン・テーマの統一」レビューで、上記の分離が裏目に出て
+「画面によって同じ概念（record・origin等）の色が違う」という矛盾を
+生んでいたことが分かった（ユーザーからの指摘: 「デザインや、テーマに
+ページによって差があります。統一させるべきでは？graphを作り込んだ際の
+ことを思い出してください。それをベースにします。」）。Discover・
+WorldMapLegend・Diagnosis（archetypeVisuals.js、下記「元のスロット対応」
+参照）を、`--color-graph-*`を直接参照する形へ移行し、参照元が無くなった
+旧`--color-accent-*`（9色）自体を削除した（OverviewStats.jsxは元々
+`getNodeVisual("record")`経由で既に`--color-graph-record`を参照していた
+ため対応不要だった）。archetypeVisuals.jsは元々「どのノード種別の色に
+寄せたか」という対応（fruity→flavor、light→origin等）をコメントで明記
+していたため、対応する`--color-graph-*`へ機械的に差し替えるだけで済んだ
+（見た目の色自体は変えていない。`--color-graph-*`の9色は元々
+`--color-accent-*`の同じ9スロットを踏襲して新設したため）。
 
-産地アクセントバー（`getOriginAccentClass`）は、上記の差し色7色から
-産地名のハッシュ値で決定的に選ぶ（同じ産地は常に同じ色になる）。
-`primary`と`danger`は他の箇所で意味を持たせているためパレットから
-除外している。
+産地アクセントバー（`features/coffee-records/utils/originAccent.js`の
+`getOriginAccentClass`/`getOriginHex`）は、上記のいずれとも独立した
+20産地ぶんの個別対応表（`ORIGIN_NAME_TO_HEX`）で管理している
+（ハッシュ割り当てではなく手動の決め打ち。詳細はファイル内コメント参照）。
+`primary`と`danger`は他の箇所で意味を持たせているため、いずれのパレットからも
+意図的に除外している。
+
+同じ考え方で、フレーバーのアクセント色（`features/coffee-records/utils/
+flavorAccent.js`の`getFlavorAccentClass`/`getFlavorHex`）も、
+`backend/seeds/data/flavors.js`の42種ぶんの個別対応表
+（`FLAVOR_NAME_TO_HEX`）を独立して持つ（2026-09新設。詳細は「Records」・
+「Graph」節参照）。産地・フレーバーのどちらも、キーワードやブランド
+イメージから連想される色を手動で割り当てている（産地は地域ごとの
+色相グループ、フレーバーは個々の単語からの連想）。
 
 2026-09、ブレンドコーヒー対応（1記録が複数の産地を持てるようになった）
 にあわせ、記録カード（`RecordCard.jsx` / `HomeRecordCard.jsx`）の産地

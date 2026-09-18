@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion as Motion } from "framer-motion";
-import { Building2, Loader2, Plus, StickyNote, Store } from "lucide-react";
+import { Building2, Plus, StickyNote, Store } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import CoffeeLoader from "../../../components/CoffeeLoader";
 import FormField from "./FormField";
 import RatingInput from "./RatingInput";
 import TagCombo from "./TagCombo";
@@ -300,6 +301,7 @@ function RecordForm({
             <FormField id="flavorIds" label={t("recordForm.flavor")} hint={t("recordForm.multiSelectHint")}>
               <TagCombo
                 id="flavorIds"
+                type="flavor"
                 options={masterData.flavors}
                 selectedIds={values.flavorIds}
                 onToggle={(optionId) => toggleValue("flavorIds", optionId)}
@@ -339,6 +341,7 @@ function RecordForm({
             <FormField id="component-primary-varietyIds" label={t("recordForm.variety")} hint={t("recordForm.multiSelectHint")}>
               <TagCombo
                 id="component-primary-varietyIds"
+                type="variety"
                 options={masterData.varieties}
                 selectedIds={primaryComponent.varietyIds}
                 onToggle={togglePrimaryComponentVariety}
@@ -519,7 +522,7 @@ function RecordForm({
           {isJustSaved ? (
             <PourIcon />
           ) : (
-            isSubmitting && <Loader2 size={16} aria-hidden="true" className="animate-spin" />
+            isSubmitting && <CoffeeLoader size="sm" />
           )}
           {isJustSaved ? t("common.saved") : isSubmitting ? t("common.saving") : submitLabel}
         </Motion.button>

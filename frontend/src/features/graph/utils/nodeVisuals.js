@@ -37,21 +37,16 @@ import { getCanvasColor } from "./canvasColors";
  * 形で翻訳する（DOM・i18nextに依存しない純粋関数のままにするため）。
  *
  * 色の設計（docs/design.md「Design Tokens」のColor参照）:
- * 2026-08、実機レビューで「全属性が同程度にミュートで見分けづらい・
- * 地味」という指摘を受け、Catppuccin Mochaの9色（record=`accent-moss`
- * 含む）へ全面刷新した。以前は「色は識別性より階層表現（主役=モス、
- * 属性=ミュートな色）に使う」という方針だったが、実際の値は主役も
- * 含めて全属性が同程度に低彩度で、狙い通りに機能していなかった。
- * 今はアイコンに加えて色でも種別を識別できるようにしている
- * （色だけで状態を表現しないというdocs/design.mdの方針自体は、
- * どの種別も引き続きアイコン・形の違いを併せ持つため変わらない）。
- * 2026-08、配色をmobbin.com準拠へ刷新した際、`primary`が
- * フォーカスリング専用の青へ変わったため、recordノードは独立した
- * `accent-moss`トークン（旧primaryと同じ値）へ切り離した。グラフの
- * 見た目自体は変えていない。
+ * 2026-09、「グラフを直接操作する体験」の作り直しに伴い、寒色〜暖色に
+ * またがる塗りつぶしノード用の専用パレット（`--color-graph-*`、
+ * index.css）へ全面刷新した。以前はDiscover・WorldMapLegend・
+ * OverviewStats・Diagnosisのarchetype色と共有の`--color-accent-*`を
+ * 使っていたが、グラフの見た目を変えるたびに無関係な4画面の配色まで
+ * 変わってしまうため、グラフ専用のトークンへ分離した
+ * （index.cssの`--color-graph-*`コメント参照）。
  *
  * canvasColorは、Tailwindのcolor-*クラスもCSSカスタムプロパティも
- * 解釈できないcanvas描画（react-force-graph-2dのnodeCanvasObject）向けの
+ * 解釈できないcanvas描画（GraphCanvas.jsxの塗りつぶしノード）向けの
  * 実際の色コード。getterにして、初回アクセス時に`getComputedStyle`経由で
  * index.cssの@themeが生成する--color-*から動的に解決する
  * （utils/canvasColors.js参照。以前はhexを手打ちして@theme側と手動
@@ -59,101 +54,113 @@ import { getCanvasColor } from "./canvasColors";
  *
  * bgTintClassは、2026-08にRecordDetailPage.jsxの「コーヒーの詳細」を
  * アイコンバッジ付きのタイル表示へ変更した際に追加した、薄い塗り
- * （15%不透明度）の背景色クラス。`colorClass`から`.replace("text-","bg-")`
- * で動的に導出せず、ここへ literal な文字列として持たせているのは、
- * Tailwindのビルドがソースコード中に実際に書かれたクラス名の文字列だけを
- * 検出するため（実行時に文字列結合で作った"bg-accent-sky/15"はビルドの
+ * （15%不透明度）の背景色クラス。solidBgClassは2026-09、
+ * NodeDetailPanel.jsxの見出しをQ構図と揃えた塗りつぶし円バッジへ
+ * 変更した際に追加した、不透明度なしの塗り（badge本体用）。
+ * どちらも`colorClass`から`.replace("text-","bg-")`で動的に導出せず、
+ * ここへ literal な文字列として持たせているのは、Tailwindのビルドが
+ * ソースコード中に実際に書かれたクラス名の文字列だけを検出するため
+ * （実行時に文字列結合で作った"bg-accent-sky/15"はビルドの
  * スキャン対象にならずCSSが生成されない）。
  */
 export const NODE_VISUALS = {
   record: {
     icon: CoffeeIcon,
     labelKey: "graph.nodeTypes.record",
-    colorClass: "text-accent-moss",
-    bgTintClass: "bg-accent-moss/15",
-    ringClass: "ring-accent-moss/50",
+    colorClass: "text-graph-record",
+    bgTintClass: "bg-graph-record/15",
+    solidBgClass: "bg-graph-record",
+    ringClass: "ring-graph-record/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-moss");
+      return getCanvasColor("--color-graph-record");
     },
   },
   origin: {
     icon: MapPinIcon,
     labelKey: "graph.nodeTypes.origin",
-    colorClass: "text-accent-sky",
-    bgTintClass: "bg-accent-sky/15",
-    ringClass: "ring-accent-sky/50",
+    colorClass: "text-graph-origin",
+    bgTintClass: "bg-graph-origin/15",
+    solidBgClass: "bg-graph-origin",
+    ringClass: "ring-graph-origin/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-sky");
+      return getCanvasColor("--color-graph-origin");
     },
   },
   farm: {
     icon: BarnIcon,
     labelKey: "graph.nodeTypes.farm",
-    colorClass: "text-accent-teal",
-    bgTintClass: "bg-accent-teal/15",
-    ringClass: "ring-accent-teal/50",
+    colorClass: "text-graph-farm",
+    bgTintClass: "bg-graph-farm/15",
+    solidBgClass: "bg-graph-farm",
+    ringClass: "ring-graph-farm/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-teal");
+      return getCanvasColor("--color-graph-farm");
     },
   },
   variety: {
     icon: PlantIcon,
     labelKey: "graph.nodeTypes.variety",
-    colorClass: "text-accent-yellow",
-    bgTintClass: "bg-accent-yellow/15",
-    ringClass: "ring-accent-yellow/50",
+    colorClass: "text-graph-variety",
+    bgTintClass: "bg-graph-variety/15",
+    solidBgClass: "bg-graph-variety",
+    ringClass: "ring-graph-variety/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-yellow");
+      return getCanvasColor("--color-graph-variety");
     },
   },
   process: {
     icon: CherryToBeanIcon,
     labelKey: "graph.nodeTypes.process",
-    colorClass: "text-accent-sapphire",
-    bgTintClass: "bg-accent-sapphire/15",
-    ringClass: "ring-accent-sapphire/50",
+    colorClass: "text-graph-process",
+    bgTintClass: "bg-graph-process/15",
+    solidBgClass: "bg-graph-process",
+    ringClass: "ring-graph-process/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-sapphire");
+      return getCanvasColor("--color-graph-process");
     },
   },
   roastLevel: {
     icon: FireIcon,
     labelKey: "graph.nodeTypes.roastLevel",
-    colorClass: "text-accent-peach",
-    bgTintClass: "bg-accent-peach/15",
-    ringClass: "ring-accent-peach/50",
+    colorClass: "text-graph-roastlevel",
+    bgTintClass: "bg-graph-roastlevel/15",
+    solidBgClass: "bg-graph-roastlevel",
+    ringClass: "ring-graph-roastlevel/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-peach");
+      return getCanvasColor("--color-graph-roastlevel");
     },
   },
   flavor: {
     icon: SparkleIcon,
     labelKey: "graph.nodeTypes.flavor",
-    colorClass: "text-accent-pink",
-    bgTintClass: "bg-accent-pink/15",
-    ringClass: "ring-accent-pink/50",
+    colorClass: "text-graph-flavor",
+    bgTintClass: "bg-graph-flavor/15",
+    solidBgClass: "bg-graph-flavor",
+    ringClass: "ring-graph-flavor/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-pink");
+      return getCanvasColor("--color-graph-flavor");
     },
   },
   cafe: {
     icon: StorefrontIcon,
     labelKey: "graph.nodeTypes.cafe",
-    colorClass: "text-accent-lavender",
-    bgTintClass: "bg-accent-lavender/15",
-    ringClass: "ring-accent-lavender/50",
+    colorClass: "text-graph-cafe",
+    bgTintClass: "bg-graph-cafe/15",
+    solidBgClass: "bg-graph-cafe",
+    ringClass: "ring-graph-cafe/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-lavender");
+      return getCanvasColor("--color-graph-cafe");
     },
   },
   keyword: {
     icon: TagIcon,
     labelKey: "graph.nodeTypes.keyword",
-    colorClass: "text-accent-mauve",
-    bgTintClass: "bg-accent-mauve/15",
-    ringClass: "ring-accent-mauve/50",
+    colorClass: "text-graph-keyword",
+    bgTintClass: "bg-graph-keyword/15",
+    solidBgClass: "bg-graph-keyword",
+    ringClass: "ring-graph-keyword/50",
     get canvasColor() {
-      return getCanvasColor("--color-accent-mauve");
+      return getCanvasColor("--color-graph-keyword");
     },
   },
 };

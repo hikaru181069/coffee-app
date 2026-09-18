@@ -24,7 +24,7 @@ export const flavorNodeId = (flavorId) => `flavor:${flavorId}`;
  * 正規化は utils/normalizeName.js と同じ関数を使う必要がある。
  * ここで独自に文字列操作をすると、"Konga Washing Station" と
  * " konga washing station " が別ノードに分かれてしまう
- * （docs/product-principles.md「One Source of Truth」）。
+ * （docs/product.md「One Source of Truth」）。
  */
 export const farmNodeId = (normalizedFarmName) => `farm:${normalizedFarmName}`;
 

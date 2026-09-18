@@ -3,9 +3,16 @@ import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { getOriginAccentClass } from "../utils/originAccent";
+import { getFlavorTextClass } from "../utils/flavorAccent";
+import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 import { hasCoffeeDetails } from "../utils/recordFormat";
 import { useReveal } from "../../../hooks/useReveal";
 import { revealDelayClass } from "../../../utils/revealDelay";
+
+// 2026-09、Graph画面で確立した「種別ごとの塗り色」の雰囲気をHomeの
+// 記録カードにも適用した。詳しい理由はRecordCard.jsx・flavorAccent.jsの
+// コメント参照。Homeはタグ形式ではないため、色は文字色のみで軽く付ける
+const processVisual = getNodeVisual("process");
 
 /**
  * Home画面専用の記録カード。
@@ -68,14 +75,19 @@ function HomeRecordCard({ record, index = 0 }) {
         </div>
 
         {processes.length > 0 && (
-          <p className="mt-1 truncate text-sm text-text-tertiary">
+          <p className={`mt-1 truncate text-sm font-medium ${processVisual.colorClass}`}>
             {processes.map((process) => process.name).join(" / ")}
           </p>
         )}
 
         {flavors.length > 0 && (
-          <p className="mt-2 truncate text-xs text-text-secondary">
-            {flavors.map((flavor) => flavor.name).join(" • ")}
+          <p className="mt-2 truncate text-xs">
+            {flavors.map((flavor, i) => (
+              <span key={flavor.id}>
+                {i > 0 && <span className="text-text-tertiary"> • </span>}
+                <span className={`font-medium ${getFlavorTextClass(flavor.name)}`}>{flavor.name}</span>
+              </span>
+            ))}
           </p>
         )}
 

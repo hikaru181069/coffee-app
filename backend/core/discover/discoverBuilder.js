@@ -7,14 +7,14 @@
  * 静的なCQI（Coffee Quality Institute）参照データの両方を受け取る。
  *
  * CQIデータは「Country of Origin × Processing Method」の品質スコア集計
- * だけを使う（docs/product-principles.md「Personal Knowledge Over Global
+ * だけを使う（docs/product.md「Personal Knowledge Over Global
  * Completeness」に沿い、アプリ側に対応する概念が無い項目までは広げない）。
  *
  * insightBuilder.jsと同じ理由（統計的に意味の無い偶然を断定しない）で
  * 閾値を設ける。同率首位のときに断定しない、というパターンも合わせている。
  *
  * Insight機能（core/insights/insightBuilder.js）とは完全に独立したモジュール。
- * docs/insights.mdの「Source of Truth: MongoDBのCoffeeRecordとマスター
+ * docs/features.md「Insights」の「Source of Truth: MongoDBのCoffeeRecordとマスター
  * データを正とする」と矛盾させないため、既存6種別・PRIORITY配列には
  * 一切混ぜない。
  */

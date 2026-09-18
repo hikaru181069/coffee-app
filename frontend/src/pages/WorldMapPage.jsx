@@ -10,7 +10,7 @@ import { getOriginAccentClass } from "../features/coffee-records/utils/originAcc
 import { buildVisitedByNumericId } from "../features/map/utils/visitedOrigins";
 import WorldMap from "../features/map/components/WorldMap";
 import WorldMapLegend from "../features/map/components/WorldMapLegend";
-import WorldMapSkeleton from "../features/map/components/WorldMapSkeleton";
+import CoffeeLoader from "../components/CoffeeLoader";
 import BackLink from "../components/BackLink";
 import StatCard from "../components/StatCard";
 import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
@@ -54,8 +54,10 @@ const MAP_FILTERS = { nodeTypes: ["origin"], recordType: "", ratingMin: "" };
  * 2026-08、読み込み中の表示はGraph画面の`GraphLoadingState`（円+線を
  * 模した知識グラフ専用の骨格）を流用していたが、地図・サマリー・産地
  * 一覧という実際の構成と見た目が違いすぎるという指摘を受け、専用の
- * `WorldMapSkeleton`を新設した。エラー表示（`GraphErrorState`）はグラフ
- * 形状に依存しない汎用的な見た目のため、そのまま流用している。
+ * `WorldMapSkeleton`を新設した（2026-09、ローディング表示の統一に伴い
+ * `CoffeeLoader`へ置き換え、`WorldMapSkeleton`自体は削除した）。
+ * エラー表示（`GraphErrorState`）はグラフ形状に依存しない汎用的な
+ * 見た目のため、そのまま流用している。
  *
  * 2026-09、「品質スコアで色分け」モード（Origin Quality機能）は、CQIの
  * 概算スコアが「その国のコーヒーは常にこの点数」という誤解を招く懸念が
@@ -85,7 +87,7 @@ function WorldMapPage() {
   const totalOriginCount = !isMasterDataLoading && masterData.origins.length > 0 ? masterData.origins.length : null;
 
   const renderBody = () => {
-    if (isLoading) return <WorldMapSkeleton />;
+    if (isLoading) return <CoffeeLoader size="lg" />;
     if (error) return <GraphErrorState error={error} onRetry={reload} />;
 
     if (visitedByNumericId.size === 0) {

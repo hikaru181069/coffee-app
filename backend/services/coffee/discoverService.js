@@ -23,7 +23,7 @@ import { resolveOriginNameFromNodeId } from "./originLookup.js";
  * Processingの1軸しか持たないため対象外とし、空の提案を返す（404には
  * しない。「対応していない種別」であって「存在しない」わけではないため）。
  * origin:のIDでも、自分の記録に無い産地IDなら404にする
- * （docs/entity-detail.mdの404方針と同じ: 存在の有無を漏らさない。
+ * （docs/features.md「Entity Detail」の404方針と同じ: 存在の有無を漏らさない。
  * resolveOriginNameFromNodeIdが担う）。
  */
 export const getOriginDiscovery = async (userId, nodeId) => {

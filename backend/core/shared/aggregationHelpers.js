@@ -20,8 +20,9 @@ export const roundTo1 = (value) => (value == null ? null : Math.round(value * 10
 /**
  * 候補（count を持つオブジェクト）の中から最も多いものを1つ選ぶ。
  * 最多のものがminCount未満、または同率首位のときは1つに絞れないため
- * 断定せずnullを返す（docs/product-principles.md「偶然の一致を断定
- * しない」）。
+ * 断定せずnullを返す（Insight・Discover・Coffee Diagnosis等、
+ * docs/features.md全体で共通する「閾値未満・同率首位なら断定しない」
+ * というルールベース判定パターン。特定の1見出しへの参照ではない）。
  *
  * 「対象データが十分に集まっているか」を候補プール全体の件数（最多の
  * ものの件数ではなく）で判定したい場合（diagnosisBuilder.jsの
