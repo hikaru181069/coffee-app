@@ -48,6 +48,15 @@ const CUP_FILL_CLIP_PATH = "M5.9 11h9.2v7a3.1 3.1 0 0 1-3.1 3.1H9a3.1 3.1 0 0 1-
  * コンテナで囲み、削除した各スケルトンのルート要素と同じアクセシビリティ
  * 水準にする。`fillHeight`はGraph画面の全キャンバスローディングなど、
  * 親の高さいっぱいに中央表示したい場合に使う。
+ *
+ * 2026-09、ページごとに呼び出し側の余白・周辺chromeの有無がバラバラで、
+ * `size="lg"`が「ページの上のほうに寄って見える」「セクションによって
+ * 位置が違って見える」というユーザー指摘を受けた。原因は、`fillHeight`
+ * を渡さない呼び出し（12箇所中11箇所）が`py-16`という余白だけで高さの
+ * 最低保証を持たず、周辺に何が描画されているか次第で見た目の位置が
+ * 決まっていたこと。`fillHeight`の有無に関わらず`min-h-64`
+ * （`EmptyState.jsx`の`fillHeight`と同じ値）を常に適用し、どの呼び出しも
+ * 最低256pxの中央寄せ領域を持つようにして揃えた。
  */
 function CoffeeLoader({ size = "sm", label, fillHeight = false, className = "" }) {
   const { t } = useTranslation();
@@ -86,7 +95,7 @@ function CoffeeLoader({ size = "sm", label, fillHeight = false, className = "" }
     <div
       aria-busy="true"
       aria-label={label ?? t("common.loading")}
-      className={`flex items-center justify-center ${styles.lgColor} ${fillHeight ? "h-full min-h-64" : "py-16"} ${className}`}
+      className={`flex min-h-64 items-center justify-center ${styles.lgColor} ${fillHeight ? "h-full" : ""} ${className}`}
     >
       {icon}
     </div>

@@ -4146,6 +4146,58 @@ Empty/NoMatch/Error系のstateは変更していない
 
 ---
 
+### 2026-09-19: CoffeeLoaderの表示位置統一とDiscoverカードへのローディング表示追加（branch `feat/graph-tactile-interaction`継続）
+
+ユーザーから「ページによってローディングの表示位置がバラバラ」
+「Homeの Discover カードだけローディング表示が無いのはなぜ」という
+指摘を受けた。Explore agentで`CoffeeLoader size="lg"`の全12箇所の
+呼び出しコンテキストを監査した結果、以下が判明した。
+
+- 12箇所中11箇所は`fillHeight`を渡しておらず、`py-16`という余白のみで
+  高さの最低保証を持たなかった。実際の表示位置は「ページ本体を丸ごと
+  ローディング表示に置き換える」パターン（見出し等のchromeが一切無い
+  状態でコンテナ最上部から始まる）と、「見出し・フィルター等のchromeは
+  残したままセクション内にインラインで表示する」パターンの2系統に
+  分かれており、どちらに該当するかはページごとに異なるため、周辺に
+  何が描画されているか次第で見た目の位置が変わっていた
+- `DiscoverCard.jsx`（Home画面）は、`useInsights`/`useDiscoverTeaser`の
+  `isLoading`を「行を表示するかどうか」の判定にしか使っておらず、
+  読み込み中は何も表示しない実装のままだった（コメント上は「読み込み中も
+  含めて何も無ければカード自体を隠す」という設計だったが、実際には
+  Diagnosis/Map行が常時表示のため、カード自体は最初から見えている状態で
+  Insight/Discover行だけが前触れなく出現する形になっていた）
+
+**変更ファイル**:
+- `frontend/src/components/CoffeeLoader.jsx`: `size="lg"`の高さ指定を
+  `fillHeight`の有無に関わらず常に`min-h-64`（`EmptyState.jsx`の
+  `fillHeight`と同じ値）を適用する形に統一した。`fillHeight`は追加で
+  `h-full`を与える（Graph画面のような実際に高さを持つ親でのみ意味を
+  持つ）役割のみに整理し、12箇所すべてが最低256pxの中央寄せ領域を
+  持つようにした
+- `frontend/src/features/discover/components/DiscoverCard.jsx`:
+  Insight行・Discover行それぞれについて、`insightsLoading`/
+  `teaserLoading`のあいだは`CoffeeLoader size="sm"`+`t("common.loading")`
+  の仮行を表示し、解決したら実際の行へ置き換えるようにした（常時表示の
+  Diagnosis/Map行はfetchを持たないため対象外）
+
+**データフロー**: 変更なし（表示ロジックのみ）。
+
+**実行したテストと結果**: `npm run lint`（0エラー）、`npm run test`
+（356件、0エラー）、`npm run build`（0エラー）。claude-in-chromeで
+ローカルMongoDBへ一時切り替えのうえHome・Statsページの解決後の表示に
+崩れが無いことを確認、コンソールエラー無し。ローカルネットワークが
+速すぎてローディング中フレームは今回も目視確認できていない（前回
+エントリと同じ既知の制約）。
+
+**未解決事項**: 「ページ本体を丸ごと置き換える」5〜7ページと
+「chromeを残したままインライン表示する」ページとで、`min-h-64`という
+最低保証は揃えたが、前者は依然としてページ上部寄りに、後者は見出し等の
+下に表示される、という構造的な違いまでは解消していない（呼び出し側の
+JSX構造を全ページで揃えるにはより大きな変更が必要なため、今回は
+「最低限の高さを揃える」範囲に留めた）。気になる場合は次の対応候補。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証

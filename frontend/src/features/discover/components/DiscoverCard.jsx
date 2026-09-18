@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Sparkles, Compass, Coffee, Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import CoffeeLoader from "../../../components/CoffeeLoader";
 import { useInsights } from "../../insights/hooks/useInsights";
 import { describeInsight } from "../../insights/utils/describeInsight";
 import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
@@ -70,6 +71,13 @@ import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
  * のEntity Detailページ（`/entities/${teaser.nodeId}`）へ戻し、そこに
  * 既に埋め込み表示されている`DiscoverSuggestions`で同じ提案を見せる形に
  * 一本化した。
+ *
+ * 2026-09、Insight行・Discover行が読み込み中のあいだ何も表示せず、
+ * データが揃った瞬間に前触れなく出現していたことが、ローディング表示を
+ * `CoffeeLoader`へ統一した他画面と比べて「このカードだけ何もしていない
+ * ように見える」という指摘につながった。読み込み中は`CoffeeLoader
+ * size="sm"`を添えた行を仮表示し、解決したら実際の行へ置き換える
+ * （常時表示のDiagnosis/Map行は元々fetchを持たないため対象外）。
  */
 function DiscoverCard() {
   const { t } = useTranslation();
@@ -85,6 +93,12 @@ function DiscoverCard() {
       <span className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">Discover</span>
 
       <div className="flex flex-1 flex-col justify-center gap-3">
+        {insightsLoading && (
+          <div className="flex items-center gap-3 p-2">
+            <CoffeeLoader size="sm" className="flex-shrink-0 text-text-tertiary" />
+            <p className="text-base text-text-tertiary">{t("common.loading")}</p>
+          </div>
+        )}
         {insightText && (
           <Link
             to="/graph"
@@ -95,6 +109,12 @@ function DiscoverCard() {
           </Link>
         )}
 
+        {teaserLoading && (
+          <div className="flex items-center gap-3 p-2">
+            <CoffeeLoader size="sm" className="flex-shrink-0 text-text-tertiary" />
+            <p className="text-base text-text-tertiary">{t("common.loading")}</p>
+          </div>
+        )}
         {hasTeaser && (
           <Link
             to={`/entities/${encodeURIComponent(teaser.nodeId)}`}
