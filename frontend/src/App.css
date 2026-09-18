@@ -1095,6 +1095,53 @@ button:active {
   }
 }
 
+/* ── Shimmer skeleton loading ────────────────────────────────────────────────
+   animate-pulse（フェードのみ）より本物らしいローディング感を出す。
+   光が左から右へ流れるグラデーションアニメーション。
+   Facebook / LinkedIn の skeleton loader と同じ手法。
+
+   2026-09、ローディング表示を一度CoffeeLoader（コーヒーのドリップ
+   アニメーション）へ統一したが、一覧・グリッド系（本来複数のカードが
+   並ぶ場所）に大きな単一アイコンを置くと、実際のコンテンツと形が
+   違いすぎて浮いて見える、という指摘を受けて復活させた。CoffeeLoader
+   自体は他の箇所（ボタン・フルページの状態・Graphキャンバス・
+   DiscoverCard）では引き続き使う。カードの枠と同じ形のプレースホルダーで
+   出すことで、読み込み完了時のレイアウトジャンプを防ぐ（一覧・グリッド系
+   限定の使い分け）。
+
+   仕組み:
+   - background を "暗い → 明るい → 暗い" の3色グラデーションで作る
+   - background-size を要素幅より大きくして「光の帯」を作る
+   - background-position を左から右へ移動させることで光が流れる
+   ─────────────────────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -600px 0;
+  }
+  100% {
+    background-position: 600px 0;
+  }
+}
+
+.skeleton-block {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-1) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    /* 白のグローで光の帯を見えやすくする */ var(--color-surface-1) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-block {
+    animation: none;
+    background: var(--color-surface-2);
+  }
+}
+
 /* ── League Page ──────────────────────────────────────────────────────────── */
 
 /* Standings: AL / NL を横に分け、地区カードは各リーグ内で縦並び */

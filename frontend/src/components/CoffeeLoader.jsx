@@ -57,6 +57,19 @@ const CUP_FILL_CLIP_PATH = "M5.9 11h9.2v7a3.1 3.1 0 0 1-3.1 3.1H9a3.1 3.1 0 0 1-
  * 決まっていたこと。`fillHeight`の有無に関わらず`min-h-64`
  * （`EmptyState.jsx`の`fillHeight`と同じ値）を常に適用し、どの呼び出しも
  * 最低256pxの中央寄せ領域を持つようにして揃えた。
+ *
+ * 2026-09、上記の対応後、Home「最近の記録」・Records一覧・検索結果という
+ * 一覧/グリッド系の3箇所については、`size="lg"`をやめて元の
+ * shimmerスケルトン（App.cssの`.skeleton-block`、各コンポーネントの
+ * `*Skeleton`）へ戻した。これらの箇所は本来カードが複数枚（3〜6枚）
+ * 並ぶ場所で、そこに形も大きさも無関係な単一の大きいアイコンを置くと
+ * 「実際のコンテンツと違いすぎて浮いて見える」というユーザー指摘を
+ * 受けたため（Web開発では一覧/グリッドの読み込み中はカードと同じ形の
+ * プレースホルダーを使うのが一般的、というFacebook/LinkedIn由来の
+ * skeleton screenパターンに合わせた）。ボタン・フルページの状態
+ * （Stats/Profile/RecordDetail/RecordForm/EntityDetail等）・Graph
+ * キャンバス・DiscoverCardのような「単一のまとまり」を待つ箇所では
+ * 引き続きこのコンポーネントを使う。
  */
 function CoffeeLoader({ size = "sm", label, fillHeight = false, className = "" }) {
   const { t } = useTranslation();

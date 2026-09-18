@@ -6,7 +6,7 @@ import "../features/coffee-records/coffee-records.css";
 import { useProfile } from "../features/profile/hooks/useProfile";
 import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeRecords";
 import HomeRecordCard from "../features/coffee-records/components/HomeRecordCard";
-import CoffeeLoader from "../components/CoffeeLoader";
+import HomeRecordCardSkeleton from "../features/coffee-records/components/HomeRecordCardSkeleton";
 import { getErrorMessage } from "../utils/errorMessage";
 // GraphPreviewは以前はreact-force-graph-2dを縮小描画しておりlazy importが
 // 必要だったが、静的なイラスト+件数表示へ変更した際に依存が無くなった
@@ -156,7 +156,7 @@ function HomePage() {
           </Link>
         </div>
 
-        {isLoading && <CoffeeLoader size="lg" />}
+        {isLoading && <HomeRecordCardSkeleton count={3} />}
         {!isLoading && error && (
           <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>
         )}

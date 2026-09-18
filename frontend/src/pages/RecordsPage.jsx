@@ -8,8 +8,8 @@ import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeReco
 import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
 import RecordCard from "../features/coffee-records/components/RecordCard";
 import RecordFilters from "../features/coffee-records/components/RecordFilters";
-import CoffeeLoader from "../components/CoffeeLoader";
 import {
+  RecordListSkeleton,
   RecordsEmptyState,
   RecordsErrorState,
   RecordsNoMatchState,
@@ -91,7 +91,7 @@ function RecordsPage() {
    * JSXの中に三項演算子を重ねると読めなくなるので関数へ切り出す。
    */
   const renderList = () => {
-    if (isLoading) return <CoffeeLoader size="lg" />;
+    if (isLoading) return <RecordListSkeleton />;
     if (error) return <RecordsErrorState error={error} onRetry={reload} />;
 
     if (records.length === 0) {

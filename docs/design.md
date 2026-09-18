@@ -244,6 +244,16 @@ Similar Recordsと同じ）を踏襲している（docs/features.md
 展開した（`Loader2`・shimmerスケルトンを置き換え）。Framer Motionの
 バネ物理計算自体は引き続きこの画面限定。
 
+2026-09、上記の直後、一覧・グリッド系（Home「最近の記録」・Records
+一覧・検索結果）については、本来カードが複数枚並ぶ場所に形も大きさも
+無関係な単一の大きいアイコンを置くと浮いて見える、という指摘を受け、
+これら3箇所だけ元のshimmerスケルトン（`App.css`の`.skeleton-block`）へ
+戻した。Web開発の慣例（Facebook/LinkedIn発祥のskeleton screenパターン。
+一覧の読み込み中はカードと同じ形のプレースホルダーを使う）に合わせた
+判断。`CoffeeLoader`はボタン・フルページの状態（Stats/Profile/
+RecordDetail/RecordForm/EntityDetail等）・Graphキャンバス・
+DiscoverCardのような「単一のまとまりを待つ」箇所では引き続き使う。
+
 書体は既存方針（Interのみ、画面ごとに増やさない）を維持している
 （装飾的な書体の組み合わせは、作り直しの検討時に一度候補に上がったが、
 実務のプロダクトUI（Linear・Notion・Vercel・Stripe等）は単一の

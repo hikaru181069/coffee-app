@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 
 import RecordCard from "../../coffee-records/components/RecordCard";
-import CoffeeLoader from "../../../components/CoffeeLoader";
+import { RecordListSkeleton } from "../../coffee-records/components/RecordListStates";
 import { getErrorMessage } from "../../../utils/errorMessage";
 import EntityResultCard from "./EntityResultCard";
 
@@ -16,7 +16,7 @@ import EntityResultCard from "./EntityResultCard";
 function SearchResults({ query, entities, entitiesTruncated = false, records, isLoading, error }) {
   const { t } = useTranslation();
 
-  if (isLoading) return <CoffeeLoader size="lg" />;
+  if (isLoading) return <RecordListSkeleton count={3} />;
   if (error) return <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>;
 
   if (entities.length === 0 && records.length === 0) {

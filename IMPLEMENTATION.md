@@ -4287,6 +4287,65 @@ Diagnosis/Map行を含む最大4行をまとめて表示する形にした（「
 
 ---
 
+### 2026-09-19: 一覧・グリッド系のローディングをshimmerスケルトンへ戻す（branch `feat/graph-tactile-interaction`継続）
+
+本番（Vercel）でユーザーが実際にローディング中の状態を確認できたところ、
+「Discoverカード・CTAは静的ですぐ表示されるのに、'最近の記録'だけ
+大きいCoffeeLoaderアイコンが表示されるのは不自然」という指摘を受けた。
+議論の結果、以下が判明・合意した:
+
+1. 静的な要素（データ取得不要なCTA・リンク）が先に表示されること自体は
+   Web開発の標準的な作法（progressive rendering。GitHub/Gmail/Notion等
+   実務プロダクトの一般的な挙動）であり、問題ではない
+2. 問題の実体は、一覧・グリッド系（本来カードが複数枚並ぶ場所）に、
+   形も大きさも無関係な単一の大きいCoffeeLoaderアイコンを置いていた
+   ことによる視覚的な不釣り合い。Web開発ではこの場面、
+   Facebook/LinkedIn発祥の「カードと同じ形のプレースホルダーを出す」
+   skeleton screenパターンが標準
+3. ユーザーからは当初「ゲームのようなNow Loading画面（全データが揃う
+   until何も出さない）」という別のイメージも提示されたが、これは
+   Web開発の慣例ではない（ネイティブアプリ/ゲーム機の作法）ことを
+   説明し、不採用とした
+4. CoffeeLoaderのドリップアニメーション自体は気に入っているため
+   「無駄にしたくない」という要望があり、一覧・グリッド系だけ
+   shimmerスケルトンへ戻し、CoffeeLoaderは他の箇所（ボタン・フルページの
+   状態・Graphキャンバス・DiscoverCard）でそのまま使い続けることで
+   合意した。ドリップアニメーション自体の他箇所への転用（空状態・
+   コーヒー診断の結果発表・Landingページ等）は次の検討候補として提示済み
+   （ユーザーからの返答待ち）
+
+**変更ファイル**（git履歴から4b62788の1つ前のコミットの内容を復元）:
+- `frontend/src/features/coffee-records/components/HomeRecordCardSkeleton.jsx`
+  （復元、新規作成扱い）
+- `frontend/src/features/coffee-records/components/RecordListStates.jsx`:
+  `RecordListSkeleton`エクスポートを復元
+- `frontend/src/App.css`: `@keyframes shimmer` / `.skeleton-block`
+  （`prefers-reduced-motion`ブロック含む）を復元
+- `frontend/src/pages/HomePage.jsx`・`frontend/src/pages/RecordsPage.jsx`・
+  `frontend/src/features/search/components/SearchResults.jsx`:
+  `CoffeeLoader size="lg"`を元のスケルトンコンポーネントへ戻した
+- `frontend/src/components/CoffeeLoader.jsx`・`docs/design.md`:
+  この使い分け（一覧/グリッド系はスケルトン、それ以外はCoffeeLoader）を
+  コメント・ドキュメントに追記
+
+**データフロー**: 変更なし。
+
+**実行したテストと結果**: `npm run lint`（0エラー）、`npm run test`
+（356件、0エラー）、`npm run build`（0エラー）。claude-in-chromeで
+ローカルMongoDBへ一時切り替えのうえHome/Records一覧/横断検索結果の
+解決後表示に崩れが無いことを確認、コンソールエラー無し。
+
+**未解決事項**:
+- ドリップアニメーションの他箇所への転用（空状態・コーヒー診断結果・
+  Landingページ等）はユーザーへ提案済みだが、着手するかは未確定
+- 本番での「Insight行が以前表示されていたのに今回は表示されなかった」
+  という点（このエントリの直前のやり取りで気づいた）は、今回の
+  ローディング表示の変更とは無関係な可能性が高いが、原因を調査して
+  いない（ユーザーへ確認を投げたが、この対応の間に本題（ローディングの
+  不自然さ）へ話が移ったため未解決のまま）
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
