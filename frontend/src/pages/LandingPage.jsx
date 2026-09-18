@@ -7,10 +7,10 @@ import AuthNav from "../components/AuthNav";
 import GraphIllustration from "./GraphIllustration";
 import heroStyles from "./LandingHero.module.css";
 
-// Record → Connect → Discover の3ステップ（docs/vision.md の Core
+// Record → Connect → Discover の3ステップ（docs/product.md の Core
 // Experience）。リンクは持たせない（未ログインで機能ページへ飛んでも
 // ProtectedRouteに/landingへ戻されるだけの壊れたループになるため）。
-// タイトルは docs/vision.md の英語表記をそのまま使う（Record/Connect/
+// タイトルは docs/product.md の英語表記をそのまま使う（Record/Connect/
 // Discoverは言語を問わずブランド語として扱う）。
 //
 // 2026-09、シンプルな1画面構成へ再設計した際、各ステップの説明文

@@ -96,7 +96,7 @@ export const getRelatedRecords = async (userId, nodeId, { recordFilter } = {}) =
  * 画面側の絞り込み状態を引き継ぐ性質のものではないため。
  *
  * 知識グラフをただの可視化ではなくナビゲーションにする機能
- * （docs/entity-detail.md）。産地・農園・品種・精製方法・焙煎度・
+ * （docs/features.md「Entity Detail」）。産地・農園・品種・精製方法・焙煎度・
  * フレーバー・カフェのどの種別でも同じ関数で扱える。
  */
 export const getNodeDetail = async (userId, nodeId) => {

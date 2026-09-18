@@ -1,7 +1,7 @@
 /**
  * 産地の初期候補。
  *
- * 世界中の産地を網羅するのが目的ではない（docs/product-principles.md
+ * 世界中の産地を網羅するのが目的ではない（docs/product.md
  * 「Personal Knowledge Over Global Completeness」）。
  * スペシャルティコーヒーで見かける頻度が高い国を最初の選択肢として用意し、
  * 足りないぶんは記録が増えるにつれて追加していく。

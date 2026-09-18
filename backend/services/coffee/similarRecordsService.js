@@ -16,7 +16,7 @@ import { notFoundError } from "../../utils/AppError.js";
  * （GET /similar-records/:recordId）。
  *
  * 自分の記録に無いrecordId（存在しない・他ユーザーの記録）は404にする
- * （docs/entity-detail.mdの404方針と同じ: 存在の有無を漏らさない）。
+ * （docs/features.md「Entity Detail」の404方針と同じ: 存在の有無を漏らさない）。
  */
 export const getSimilarRecords = async (userId, recordId) => {
   const records = await coffeeRecordRepository.findAllForUser(userId);

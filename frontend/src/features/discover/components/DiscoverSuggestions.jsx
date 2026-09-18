@@ -20,7 +20,7 @@ import { cardClass } from "../../coffee-records/components/formStyles";
  * （GraphPreview.jsxと同じ「静かな道具」の方針。この要素が無くても
  * Entity Detailページとして成立する）。
  *
- * docs/product-principles.md「Discovery Must Be Actionable」に従い、
+ * docs/product.md「Discovery Must Be Actionable」に従い、
  * 提案を出すだけで終わらせず、次の記録（/records/new）への導線にする。
  * 提案された産地はまだ自分のグラフにノードが無いため、Graph/Entity
  * Detailへは遷移できない（提案の性質上「まだ知らない産地」であるため）。

@@ -1,13 +1,13 @@
 /**
  * 記録データからルールベースでInsight（傾向）を検出する純粋関数。
  *
- * docs/insights.md 参照。graphBuilder.js と同じ方針でDB・HTTPに依存しない。
+ * docs/features.md「Insights」参照。graphBuilder.js と同じ方針でDB・HTTPに依存しない。
  * 入力は services/coffee/coffeeRecordSerializer.js が返す形と同じ配列。
  *
  * 「自然言語による味覚分析」（docs/mvp.md Out of Scope）とは異なり、
  * notes などの自由記述は一切読まない。産地・精製方法・フレーバー・評価・
  * 記録タイプ・日付という構造化データの集計・閾値判定だけで組み立てる
- * （docs/product-principles.md「MVP Before Intelligence」参照）。
+ * （docs/product.md「MVP Before Intelligence」参照）。
  *
  * データが少ないうちに断定的な一文を出すと、統計的に意味の無い偶然を
  * 「傾向」と誤って伝えてしまう。種類ごとに最低件数・評価差などの閾値を

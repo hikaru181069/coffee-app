@@ -3,7 +3,7 @@
  *
  * 一番の関心事は「同じ概念が重複登録されないか」。
  * name の表記が違っても normalizedName が一致すれば、
- * unique index が2件目の挿入を防ぐ（docs/product-principles.md
+ * unique index が2件目の挿入を防ぐ（docs/product.md
  * 「One Source of Truth」）。
  */
 

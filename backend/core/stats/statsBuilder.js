@@ -5,7 +5,7 @@ import { average, roundTo1 } from "../shared/aggregationHelpers.js";
 /**
  * 記録全体を通した統計を組み立てる純粋関数。
  *
- * docs/stats.md参照。core/insights/insightBuilder.jsと同じ集計パターン
+ * docs/features.md「Stats」参照。core/insights/insightBuilder.jsと同じ集計パターン
  * （グループ化→件数）を使うが、Insightが「1つの傾向を一文で見せる」のに
  * 対し、こちらは「記録全体を通した数字を一望できる」ことが目的で
  * 別モジュールにしている。
@@ -13,7 +13,7 @@ import { average, roundTo1 } from "../shared/aggregationHelpers.js";
  * ランキング項目のidは、graphBuilder.jsが使うstable ID
  * （docs/knowledge-graph.mdの「Stable IDs」）と同じ形式にしている。
  * これにより、Stats画面のランキングからエンティティ詳細ページ
- * （docs/entity-detail.md、/entities/:nodeId）へそのままリンクできる。
+ * （docs/features.md「Entity Detail」、/entities/:nodeId）へそのままリンクできる。
  */
 
 const TOP_N = 5;

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
  * 横断検索の入力欄。
  *
  * コーヒー名だけでなく産地・品種・フレーバー・カフェ・精製方法も
- * 横断して検索できることをplaceholderで伝える（docs/search.md）。
+ * 横断して検索できることをplaceholderで伝える（docs/features.md「Search」）。
  */
 function SearchBox({ value, onChange }) {
   const { t } = useTranslation();

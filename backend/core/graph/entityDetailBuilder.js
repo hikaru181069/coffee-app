@@ -4,7 +4,7 @@ import { average, roundTo1 } from "../shared/aggregationHelpers.js";
 /**
  * 属性ノード1件の詳細（統計・関連属性・関連記録）を組み立てる純粋関数。
  *
- * docs/entity-detail.md参照。graphBuilder.js（DB/HTTP非依存の純粋関数）が
+ * docs/features.md「Entity Detail」参照。graphBuilder.js（DB/HTTP非依存の純粋関数）が
  * 作ったグラフと、元になった記録の配列（services/coffee/coffeeRecordSerializer.js
  * と同じ形）の両方を受け取る。recordCountや関連属性はグラフのエッジから
  * 求まるが、平均評価・最終記録日は記録本体（rating/consumedAt）を
