@@ -136,7 +136,9 @@ describe("RecordFormPage（保存直後の発見）", () => {
     // 詳細ページへはまだ遷移せず、発見画面が表示される。
     // SaveDiscoveryReveal.jsxの「淹れている」演出（CoffeeLoaderを1サイクル
     // =4.6秒再生してから本体を表示する）ぶん、既定のfindByタイムアウト
-    // （1000ms）より長く待つ必要がある
+    // （1000ms）より長く待つ必要がある。findByの個別タイムアウトだけでは
+    // vitestのテスト全体の既定タイムアウト（5000ms）に収まらずCIで
+    // タイムアウトしたため、このtest自体にも10000msを指定している
     expect(screen.queryByText("Record Detail Page")).not.toBeInTheDocument();
     expect(await screen.findByText("Ethiopia Gotiti", {}, { timeout: 6000 })).toBeInTheDocument();
     expect(screen.getByText("Ethiopiaを初めて記録しました")).toBeInTheDocument();
@@ -144,7 +146,7 @@ describe("RecordFormPage（保存直後の発見）", () => {
     await user.click(screen.getByRole("button", { name: "記録を見る" }));
 
     expect(await screen.findByText("Record Detail Page")).toBeInTheDocument();
-  });
+  }, 10000);
 
   test("discoveriesが空なら発見インタースティシャルを出さず、そのまま詳細ページへ遷移する", async () => {
     createCoffeeRecord.mockResolvedValue({ record: { id: "new-record-id" }, discoveries: [] });
