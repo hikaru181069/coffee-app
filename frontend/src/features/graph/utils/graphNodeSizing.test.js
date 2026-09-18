@@ -1,12 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
   RECORD_BASE_RADIUS,
-  ATTRIBUTE_BASE_HALF_WIDTH,
-  ATTRIBUTE_HALF_HEIGHT,
+  ATTRIBUTE_BASE_RADIUS,
   SELECTED_SCALE,
   recordRadius,
-  attributeHalfWidth,
-  attributeHalfHeight,
+  attributeRadius,
+  nodeRadius,
   nodeCollideRadius,
 } from "./graphNodeSizing";
 
@@ -42,18 +41,31 @@ describe("recordRadius", () => {
   });
 });
 
-describe("attributeHalfWidth / attributeHalfHeight", () => {
-  test("degreeが0ならベースの半幅のまま", () => {
-    expect(attributeHalfWidth({ degree: 0 })).toBe(ATTRIBUTE_BASE_HALF_WIDTH);
+describe("attributeRadius", () => {
+  test("degreeが0ならベースの半径のまま", () => {
+    expect(attributeRadius({ degree: 0 })).toBe(ATTRIBUTE_BASE_RADIUS);
   });
 
-  test("degreeが増えるほど半幅が大きくなる", () => {
-    expect(attributeHalfWidth({ degree: 6 })).toBeGreaterThan(attributeHalfWidth({ degree: 1 }));
+  test("degreeが増えるほど半径が大きくなる", () => {
+    expect(attributeRadius({ degree: 6 })).toBeGreaterThan(attributeRadius({ degree: 1 }));
   });
 
-  test("半高さはdegreeに依存せず、選択時のみ拡大する", () => {
-    expect(attributeHalfHeight(false)).toBe(ATTRIBUTE_HALF_HEIGHT);
-    expect(attributeHalfHeight(true)).toBeCloseTo(ATTRIBUTE_HALF_HEIGHT * SELECTED_SCALE);
+  test("選択中はSELECTED_SCALE倍になる", () => {
+    const base = attributeRadius({ degree: 4 }, false);
+    const selected = attributeRadius({ degree: 4 }, true);
+    expect(selected).toBeCloseTo(base * SELECTED_SCALE);
+  });
+});
+
+describe("nodeRadius", () => {
+  test("record nodeはrecordRadiusと同じ", () => {
+    const node = { type: "record", degree: 3 };
+    expect(nodeRadius(node)).toBe(recordRadius(node));
+  });
+
+  test("attribute nodeはattributeRadiusと同じ", () => {
+    const node = { type: "flavor", degree: 3 };
+    expect(nodeRadius(node)).toBe(attributeRadius(node));
   });
 });
 
@@ -63,10 +75,9 @@ describe("nodeCollideRadius", () => {
     expect(nodeCollideRadius(node)).toBeGreaterThan(recordRadius(node));
   });
 
-  test("attribute nodeはattributeHalfWidth/Heightの対角線相当に、ラベル分の余白が上乗せされる", () => {
+  test("attribute nodeはattributeRadius相当に、ラベル分の余白が上乗せされる", () => {
     const node = { type: "flavor", degree: 3 };
-    const diagonal = Math.hypot(attributeHalfWidth(node), attributeHalfHeight());
-    expect(nodeCollideRadius(node)).toBeGreaterThan(diagonal);
+    expect(nodeCollideRadius(node)).toBeGreaterThan(attributeRadius(node));
   });
 
   test("degreeが多いノードほど衝突半径も大きくなる（サイズと連動する）", () => {

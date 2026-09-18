@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { findNodeAtGraphPoint } from "./graphHitTest";
-import { recordRadius, attributeHalfWidth, attributeHalfHeight } from "./graphNodeSizing";
+import { recordRadius, attributeRadius } from "./graphNodeSizing";
 
 const RECORD_NODE = { id: "record-1", type: "record", x: 100, y: 100, degree: 0 };
 const FLAVOR_NODE = { id: "flavor-1", type: "flavor", x: 300, y: 300, degree: 0 };
@@ -25,19 +25,19 @@ describe("findNodeAtGraphPoint - record（円）", () => {
   });
 });
 
-describe("findNodeAtGraphPoint - attribute（角丸矩形）", () => {
+describe("findNodeAtGraphPoint - attribute（円）", () => {
   test("中心をクリックすると見つかる", () => {
     expect(findNodeAtGraphPoint([FLAVOR_NODE], 300, 300, null)).toBe(FLAVOR_NODE);
   });
 
-  test("半幅のすぐ外側でも、ヒットパディング分は反応する", () => {
-    const halfWidth = attributeHalfWidth(FLAVOR_NODE);
-    expect(findNodeAtGraphPoint([FLAVOR_NODE], 300 + halfWidth + 2, 300, null)).toBe(FLAVOR_NODE);
+  test("視覚半径のすぐ外側でも、ヒットパディング分は反応する", () => {
+    const radius = attributeRadius(FLAVOR_NODE);
+    expect(findNodeAtGraphPoint([FLAVOR_NODE], 300 + radius + 2, 300, null)).toBe(FLAVOR_NODE);
   });
 
-  test("半高さを縦方向に超えると見つからない", () => {
-    const halfHeight = attributeHalfHeight();
-    expect(findNodeAtGraphPoint([FLAVOR_NODE], 300, 300 + halfHeight + 20, null)).toBeNull();
+  test("ヒットパディングを超えた外側では見つからない", () => {
+    const radius = attributeRadius(FLAVOR_NODE);
+    expect(findNodeAtGraphPoint([FLAVOR_NODE], 300, 300 + radius + 20, null)).toBeNull();
   });
 });
 

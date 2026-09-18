@@ -1,5 +1,5 @@
 /**
- * canvas描画（react-force-graph-2dのnodeCanvasObject）はTailwindクラスも
+ * canvas描画（GraphCanvas.jsx）はTailwindクラスも
  * CSSカスタムプロパティも直接解釈できないため、実際に描画で使う色は
  * `getComputedStyle`経由でCSS変数の値を読み取って解決する。
  *

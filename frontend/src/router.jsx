@@ -15,7 +15,7 @@ import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
-// GraphPageはreact-force-graph-2d（canvas描画・物理演算）を含み、
+// GraphPageはcanvas描画・自前の物理演算（GraphCanvas.jsx）を含み、
 // 他の画面より明確に重い。このルートを開かないユーザーにその分を
 // 読み込ませないよう、遅延読み込みにする。
 const GraphPage = lazy(() => import("./pages/GraphPage"));

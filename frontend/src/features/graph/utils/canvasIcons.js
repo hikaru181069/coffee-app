@@ -1,5 +1,5 @@
 /**
- * canvas描画（react-force-graph-2dのnodeCanvasObject）でノード種別ごとの
+ * canvas描画（GraphCanvas.jsx）でノード種別ごとの
  * アイコンを出すためのユーティリティ。
  *
  * 2026-09、lucide-reactの汎用アイコンから、実在の@phosphor-icons/react
