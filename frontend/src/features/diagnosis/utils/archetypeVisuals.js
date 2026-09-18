@@ -1,31 +1,40 @@
 /**
  * コーヒータイプ（archetype.type）ごとのアクセントカラー。
  *
- * features/graph/utils/nodeVisuals.jsと同じCatppuccin Mochaパレットを
- * 再利用する。診断はGraphの知識グラフ（roastLevel.order・
- * flavors[].category）から導かれるため、色もGraphの語彙をそのまま
- * 引き継ぎ、「診断はグラフから生まれている」という一貫性を持たせる
- * （新しい色は増やさない。docs/product.md「One Source of Truth」）。
+ * features/graph/utils/nodeVisuals.jsと同じ色の語彙を再利用する。診断は
+ * Graphの知識グラフ（roastLevel.order・flavors[].category）から導かれる
+ * ため、色もGraphの語彙をそのまま引き継ぎ、「診断はグラフから生まれて
+ * いる」という一貫性を持たせる（新しい色は増やさない。docs/product.md
+ * 「One Source of Truth」）。
  *
  * light/dark/mediumの一般則（category不明時のフォールバック）は、
  * 対応するroastLevel自体の色を使う。組み合わせ型は、flavorのcategory
  * ごとに固定の色を割り当てる（2026-08、診断タイプを5種類から
  * 焙煎度3×category6の全18種類へ拡張した際、色数が増えても管理しやすい
  * よう「categoryが同じなら常に同じ色」というルールへ整理した）。
+ *
+ * 2026-09、「デザイン・テーマの統一」レビューで、ここが旧
+ * `--color-accent-*`（Catppuccin Mocha）のままで、Graph画面作り直しで
+ * 新設した`--color-graph-*`（features/graph/utils/nodeVisuals.js）と
+ * 無関係になっていたことが分かった。下記コメント（`// origin`等）が
+ * 示す通り「どのノード種別の色に寄せたか」という意図は元々1:1で決まって
+ * いたため、対応する`--color-graph-*`へ機械的に差し替えた
+ * （見た目の色自体は変えていない。`--color-graph-*`の9色は元々
+ * `--color-accent-*`の同じ9スロットを踏襲して新設したため）。
  */
 const CATEGORY_COLOR_CLASS = {
-  fruity: "text-accent-pink",
-  floral: "text-accent-lavender",
-  nutty: "text-accent-teal", // farm（木の実=植物系の色に寄せる）
-  sweet: "text-accent-yellow",
-  spicy: "text-accent-mauve",
-  other: "text-accent-moss", // record色を転用（archetypeでは未使用だったため）
+  fruity: "text-graph-flavor",
+  floral: "text-graph-cafe",
+  nutty: "text-graph-farm", // farm（木の実=植物系の色に寄せる）
+  sweet: "text-graph-variety",
+  spicy: "text-graph-keyword",
+  other: "text-graph-record", // record色を転用（archetypeでは未使用だったため）
 };
 
 const ROAST_ONLY_COLOR_CLASS = {
-  light: "text-accent-sky", // origin
-  dark: "text-accent-peach", // roastLevel（暖色。Flameアイコンとも合う）
-  medium: "text-accent-sapphire", // process
+  light: "text-graph-origin", // origin
+  dark: "text-graph-roastlevel", // roastLevel（暖色。Flameアイコンとも合う）
+  medium: "text-graph-process", // process
 };
 
 const ARCHETYPE_COLOR_CLASS = {

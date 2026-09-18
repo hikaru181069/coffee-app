@@ -61,7 +61,12 @@ describe("HomeRecordCard", () => {
       ],
     });
 
-    expect(screen.getByText("Berry • Floral")).toBeInTheDocument();
+    // 2026-09、フレーバーごとに個別の色（flavorAccent.js）を付けるため、
+    // 1つのテキストノードではなくフレーバーごとに別のspanへ分けた
+    // （docs/design.md「Graph」参照）。区切り文字とあわせて別々に確認する
+    expect(screen.getByText("Berry")).toBeInTheDocument();
+    expect(screen.getByText("Floral")).toBeInTheDocument();
+    expect(screen.getByText("•")).toBeInTheDocument();
   });
 
   test("コーヒーの要素が何も無ければヒント文を表示する", () => {

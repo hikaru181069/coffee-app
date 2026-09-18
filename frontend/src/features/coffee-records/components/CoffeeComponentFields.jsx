@@ -96,6 +96,7 @@ function CoffeeComponentFields({
         >
           <TagCombo
             id={`${idPrefix}-varietyIds`}
+            type="variety"
             options={masterData.varieties}
             selectedIds={value.varietyIds}
             onToggle={onToggleVariety}

@@ -46,26 +46,37 @@
   --color-rating: #ffdf52;
   --color-success: #aff976;
 
-  /* グラフノード・産地アクセント専用の差し色パレット。
-     2026-08、実機レビューで「全属性が同程度にミュートで見分けづらい・
-     地味」という指摘を受け、Catppuccin Mocha（暗い背景向けの定番パレット。
-     このアプリが元々参考にしていた配色）の値へ全面刷新した。
-     以前のトークン名（clay/ochre/slate等）は色の見た目と対応しない
-     ハードコードされた識別名だったため、Catppuccinの色名にリネームして
-     名前と値を一致させた（accent-mossのみ、record用のGreen系のまま
-     名前を変えていない）。値の変更に伴い、参照元
-     （features/graph/utils/nodeVisuals.js、
-     features/coffee-records/utils/originAccent.js）のクラス名も
-     あわせて更新済み。 */
-  --color-accent-moss: #a6e3a1;
-  --color-accent-sky: #89dceb;
-  --color-accent-peach: #fab387;
-  --color-accent-teal: #94e2d5;
-  --color-accent-yellow: #f9e2af;
-  --color-accent-sapphire: #74c7ec;
-  --color-accent-pink: #f5c2e7;
-  --color-accent-lavender: #b4befe;
-  --color-accent-mauve: #cba6f7;
+  /* グラフ画面（GraphCanvas.jsx・NodeDetailPanel.jsx等）専用のノード種別色。
+     2026-09、「グラフを直接操作する体験」の作り直しの一環でArtifactモック
+     検討を重ね、寒色〜暖色にまたがる塗りつぶしノード用の配色として承認を
+     得た。導入時は、旧`--color-accent-*`（Catppuccin Mochaの9色。
+     Discover・WorldMapLegend・OverviewStats・Diagnosisのarchetype色でも
+     共有されていた）とは意図的に別トークンにしていた。同じ値を再利用すると、
+     グラフの見た目を変えるたびに無関係な4画面の配色まで一緒に変わって
+     しまうため（影響範囲をグラフ画面に閉じるための分離）。
+     farmだけはモック検討時に一度も例示されなかった種別のため、他の8色の
+     並びから外れない緑（農園=植物を連想）を新たに選んでいる。
+     originノードだけは個別の産地色（originAccent.jsのORIGIN_NAME_TO_HEX）
+     で上書きされるため、ここでの--color-graph-originは凡例・フォール
+     バック用の代表色としてのみ使う（旧accent-skyと同じ役割）。
+
+     2026-09、「デザイン・テーマの統一」レビューで、上記のグラフ専用分離が
+     裏目に出て「画面によって同じ概念（record/origin等）の色が違う」という
+     矛盾を生んでいたことが分かった（ユーザーからの指摘）。Discover・
+     WorldMapLegend・Diagnosis（archetypeVisuals.js）を、既存の
+     `--color-accent-*`参照からすべてこの`--color-graph-*`へ移行し、
+     旧`--color-accent-*`（9色）は参照元が無くなったため削除した
+     （OverviewStats.jsxは元々`getNodeVisual("record")`経由で既にこちらを
+     参照していたため対応不要だった）。 */
+  --color-graph-record: #e2432f;
+  --color-graph-origin: #3d7ef3;
+  --color-graph-farm: #3dbf5c;
+  --color-graph-variety: #f3c23d;
+  --color-graph-process: #8b5cf6;
+  --color-graph-roastlevel: #f3873a;
+  --color-graph-flavor: #e2437a;
+  --color-graph-cafe: #1a9c7c;
+  --color-graph-keyword: #3dc7e8;
 
   /* 奥行き（影・すりガラス）。mobbin.comのCSS実測値
      （0 12px 80px rgba(0,0,0,0.16)相当）を、暗い背景でも見えるよう

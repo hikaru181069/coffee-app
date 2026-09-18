@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
+import { getNodeSolidBgClass } from "../../graph/utils/nodeColor";
 
 const AUTO_DISMISS_MS = 4200;
 
@@ -41,7 +42,13 @@ function DiscoveryBadge({ discovery }) {
 
   if (!discovery) return null;
 
-  const { icon: Icon, colorClass, bgTintClass } = getNodeVisual(discovery.nodeType);
+  const { icon: Icon } = getNodeVisual(discovery.nodeType);
+  // 2026-09、「デザイン・テーマの統一」レビューで、この小さいバッジだけ
+  // Graph画面・NodeDetailPanel.jsx・記録カードのタグと違う旧スタイル
+  // （薄い塗り+種別共通の色付きアイコン）のまま残っていたことが分かった。
+  // 塗りつぶした円+暗色アイコンという新スタイルへ揃え、origin・flavorは
+  // 値ごとの個別色（utils/nodeColor.js）にする
+  const badgeBgClass = getNodeSolidBgClass({ type: discovery.nodeType, label: discovery.label });
   const message =
     discovery.type === "firstAppearance"
       ? t("discoveries.previewFirstAppearance", { label: discovery.label })
@@ -58,8 +65,8 @@ function DiscoveryBadge({ discovery }) {
           transition={{ type: "spring", stiffness: 420, damping: 26 }}
           className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface-2 py-1.5 pl-1.5 pr-3 text-xs text-text"
         >
-          <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${bgTintClass}`}>
-            <Icon size={12} aria-hidden="true" className={colorClass} />
+          <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${badgeBgClass}`}>
+            <Icon size={12} aria-hidden="true" className="text-on-inverse" />
           </span>
           {message}
         </Motion.div>

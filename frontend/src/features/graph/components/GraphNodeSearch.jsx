@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ATTRIBUTE_NODE_TYPES, getNodeVisual } from "../utils/nodeVisuals";
+import { getNodeTextColorClass } from "../utils/nodeColor";
 
 const MAX_RESULTS_PER_TYPE = 8;
 
@@ -107,7 +108,12 @@ function GraphNodeSearch({ graph, onSelectNode }) {
                       onClick={() => handleSelect({ id: node.id, data: node })}
                       className="inline-flex items-center gap-1 rounded-full border border-line/40 px-2.5 py-1 text-xs text-text transition-colors duration-150 hover:border-line hover:bg-surface-2"
                     >
-                      <Icon size={12} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
+                      <Icon
+                        size={12}
+                        aria-hidden="true"
+                        className={getNodeTextColorClass({ type, label: node.label })}
+                        strokeWidth={1.75}
+                      />
                       {node.label}
                     </button>
                   ))}

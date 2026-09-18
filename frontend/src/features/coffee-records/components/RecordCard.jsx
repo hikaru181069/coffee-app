@@ -4,13 +4,26 @@ import { useTranslation } from "react-i18next";
 
 import { formatConsumedAtShort, hasCoffeeDetails, recordTypeLabel } from "../utils/recordFormat";
 import { getOriginAccentClass } from "../utils/originAccent";
+import { getFlavorAccentClass, getFlavorTintClass, getFlavorTextClass } from "../utils/flavorAccent";
+import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 import { entityDetailPath } from "../../graph/utils/entityLink";
 import { useReveal } from "../../../hooks/useReveal";
 import { revealDelayClass } from "../../../utils/revealDelay";
 
-/** タグ1個分の共通見た目。エンティティ詳細ページへのLinkとして使う */
-const tagClass =
-  "inline-flex items-center gap-1 rounded-full border border-transparent bg-surface-1 px-2 py-0.5 text-[11px] text-text-secondary transition-all duration-150 hover:-translate-y-px hover:border-line/60 hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
+/**
+ * タグ1個分の共通見た目（色クラスは呼び出し側で足す）。
+ * エンティティ詳細ページへのLinkとして使う。
+ *
+ * 2026-09、Graph画面で確立した「種別ごとの塗り色」の雰囲気を記録カードにも
+ * 適用した。精製方法はGraph画面と同じ種別共通色（`nodeVisuals.js`の
+ * `process`）、フレーバーは産地と同様にフレーバーごとの個別色
+ * （`flavorAccent.js`）を使う。種別共通色と個別色を使い分ける理由は
+ * `flavorAccent.js`のコメント参照。
+ */
+const tagBaseClass =
+  "inline-flex items-center gap-1.5 rounded-full border border-transparent px-2 py-0.5 text-[11px] font-medium transition-all duration-150 hover:-translate-y-px hover:border-line/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
+const tagDotClass = "h-1.5 w-1.5 flex-shrink-0 rounded-full";
+const processVisual = getNodeVisual("process");
 
 /**
  * 一覧に並ぶ記録1件のカード。
@@ -116,14 +129,23 @@ function RecordCard({ record, index = 0 }) {
       {(processes.length > 0 || flavors.length > 0) && (
         <div className="relative mt-4 flex flex-wrap items-center gap-1.5">
           {processes.map((process) => (
-            <Link key={process.id} to={entityDetailPath("process", process.id)} className={tagClass}>
+            <Link
+              key={process.id}
+              to={entityDetailPath("process", process.id)}
+              className={`${tagBaseClass} ${processVisual.bgTintClass} ${processVisual.colorClass}`}
+            >
               <Droplets size={11} aria-hidden="true" />
               {process.name}
             </Link>
           ))}
           {/* フレーバーは多いと横に溢れるので3件までにする */}
           {flavors.slice(0, 3).map((flavor) => (
-            <Link key={flavor.id} to={entityDetailPath("flavor", flavor.id)} className={tagClass}>
+            <Link
+              key={flavor.id}
+              to={entityDetailPath("flavor", flavor.id)}
+              className={`${tagBaseClass} ${getFlavorTintClass(flavor.name)} ${getFlavorTextClass(flavor.name)}`}
+            >
+              <span className={`${tagDotClass} ${getFlavorAccentClass(flavor.name)}`} aria-hidden="true" />
               {flavor.name}
             </Link>
           ))}

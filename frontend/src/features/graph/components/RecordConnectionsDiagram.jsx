@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../utils/nodeVisuals";
+import { getNodeTextColorClass } from "../utils/nodeColor";
 import { entityDetailPath } from "../utils/entityLink";
 import { buildRecordConnectionsLayout } from "../utils/recordConnectionsLayout";
 
@@ -109,7 +110,12 @@ function ConnectionNode({ node }) {
       </span>
 
       <span className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-surface-1 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:border-line/60 group-hover:bg-surface-2 group-focus-visible:ring-2 group-focus-visible:ring-primary/50">
-        <Icon size={14} aria-hidden="true" className={visual.colorClass} strokeWidth={1.75} />
+        <Icon
+          size={14}
+          aria-hidden="true"
+          className={getNodeTextColorClass({ type: node.type, label: node.label })}
+          strokeWidth={1.75}
+        />
       </span>
       <span className="max-w-[4.5rem] truncate text-[10px] text-text-secondary transition-colors duration-150 group-hover:text-text">
         {node.label}

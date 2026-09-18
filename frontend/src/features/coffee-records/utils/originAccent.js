@@ -143,8 +143,38 @@ const ORIGIN_TEXT_CLASS_BY_NAME = {
   India: "text-[#b56cea]",
 };
 
+// タグの背景に使う、薄い塗り（15%不透明度）版。flavorAccent.jsの
+// FLAVOR_TINT_CLASS_BY_NAMEと同じ理由でリテラルに書き出す
+// （2026-09、記録カードのタグ・エンティティ詳細のチップ等、産地も
+// フレーバーと同じ「値ごとの個別色」の塗りタグで表示する箇所向けに追加）
+const ORIGIN_TINT_CLASS_BY_NAME = {
+  Ethiopia: "bg-[#ead8c8]/15",
+  Kenya: "bg-[#e8cdb5]/15",
+  Rwanda: "bg-[#e7bf9d]/15",
+  Burundi: "bg-[#e8b487]/15",
+  Tanzania: "bg-[#eaa76c]/15",
+  Colombia: "bg-[#d3eac8]/15",
+  Brazil: "bg-[#c6e8b5]/15",
+  Peru: "bg-[#b6e79d]/15",
+  Bolivia: "bg-[#a7e887]/15",
+  Ecuador: "bg-[#96ea6c]/15",
+  Guatemala: "bg-[#c8deea]/15",
+  "Costa Rica": "bg-[#bad9e8]/15",
+  Panama: "bg-[#acd3e7]/15",
+  "El Salvador": "bg-[#9dcee7]/15",
+  Honduras: "bg-[#8dc9e7]/15",
+  Nicaragua: "bg-[#7dc4e8]/15",
+  Mexico: "bg-[#6cc0ea]/15",
+  Indonesia: "bg-[#dcc8ea]/15",
+  Yemen: "bg-[#c89de7]/15",
+  India: "bg-[#b56cea]/15",
+};
+
 /** 産地名から、その産地専用のアクセントカラー（Tailwindのbg-*クラス）を返す */
 export const getOriginAccentClass = (originName) => ORIGIN_BG_CLASS_BY_NAME[originName] ?? "bg-surface-2";
+
+/** 産地名から、その産地専用のアクセントカラー（薄い塗り、15%不透明度のTailwindのbg-*クラス）を返す */
+export const getOriginTintClass = (originName) => ORIGIN_TINT_CLASS_BY_NAME[originName] ?? "bg-surface-1";
 
 /** 産地名から、その産地専用のアクセントカラー（Tailwindのfill-*クラス。SVG用）を返す */
 export const getOriginFillClass = (originName) => ORIGIN_FILL_CLASS_BY_NAME[originName] ?? "fill-surface-2";
