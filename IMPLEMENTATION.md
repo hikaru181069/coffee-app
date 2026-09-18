@@ -4248,6 +4248,45 @@ chromeは先に出し、中身だけをローディング/エラー/本体で出
 
 ---
 
+### 2026-09-19: DiscoverCardのローディングをカード単位の二択へ統一（branch `feat/graph-tactile-interaction`継続）
+
+前回、`DiscoverCard.jsx`のInsight行・Discover行に個別の
+`CoffeeLoader size="sm"`を添える対応をしたが、ユーザーから
+「Diagnosis/Map行（常時表示・fetch無し）だけ先に表示され、
+Insight/Discover行（fetchあり）だけ後から個別に出現するのが非対称で
+違和感がある」という指摘を受けた（本文チャットでの往復で、Home画面の
+CTA・Discoverカードだけ「早く表示される」ように見える、という指摘から
+実際の原因を特定した）。
+
+**原因**: `DiscoverCard.jsx`は`useInsights`/`useDiscoverTeaser`という
+独立した2つのhookを1枚のカードにまとめているが、Diagnosis/Map行は
+そもそもfetchを持たない完全に静的なリンクのため「早く表示される」
+のではなく最初から待つものが無かった。同じカード内で「待つ理由が無い
+行」と「待って個別に出現する行」が混在していたことが非対称さの原因
+だった。`GraphPreview.jsx`・`DiscoverSuggestions.jsx`・
+`SimilarRecords.jsx`はいずれも単一hookのみで、`isLoading`時は
+コンポーネント全体を`return null`する二択のみのため、この非対称は
+存在しない（監査して確認済み）。複数の独立したhookを1枚のカードに
+まとめているのは`DiscoverCard.jsx`だけだった。
+
+**変更**: `insightsLoading || teaserLoading`のあいだはカード全体を
+`CoffeeLoader size="lg"`1つに差し替え、両方解決してから常時表示の
+Diagnosis/Map行を含む最大4行をまとめて表示する形にした（「最近の記録」
+セクションと同じ「読み込み中 or 全部表示」の二択）。行ごとの個別
+`CoffeeLoader size="sm"`は削除。
+
+**データフロー**: 変更なし。
+
+**実行したテストと結果**: `npm run lint`（0エラー）、`npm run test`
+（356件、0エラー）、`npm run build`（0エラー）。claude-in-chromeで
+ローカルMongoDBへ一時切り替えのうえHome画面の解決後表示に崩れが
+無いことを確認、コンソールエラー無し。
+
+**未解決事項**: 今回もローカルネットワークが速すぎて読み込み中の
+カード全体ローダー表示を実機のスクリーンショットで確認できていない。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証

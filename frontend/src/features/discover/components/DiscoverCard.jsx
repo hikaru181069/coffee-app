@@ -72,18 +72,27 @@ import { useDiscoverTeaser } from "../hooks/useDiscoverTeaser";
  * 既に埋め込み表示されている`DiscoverSuggestions`で同じ提案を見せる形に
  * 一本化した。
  *
- * 2026-09、Insight行・Discover行が読み込み中のあいだ何も表示せず、
- * データが揃った瞬間に前触れなく出現していたことが、ローディング表示を
- * `CoffeeLoader`へ統一した他画面と比べて「このカードだけ何もしていない
- * ように見える」という指摘につながった。読み込み中は`CoffeeLoader
- * size="sm"`を添えた行を仮表示し、解決したら実際の行へ置き換える
- * （常時表示のDiagnosis/Map行は元々fetchを持たないため対象外）。
+ * 2026-09、Insight行・Discover行だけが読み込み中のあいだ何も表示せず、
+ * 常時表示のDiagnosis/Map行だけ最初から見えている状態だったため、
+ * 「一部の行だけ先に表示され、一部だけ後から出現する」非対称さが
+ * 「このカードだけ他画面のローディングと足並みが揃っていない」という
+ * 指摘につながった（当初、行ごとに`CoffeeLoader size="sm"`を添える
+ * 対応をしたが、それでも常時表示の2行と個別ローディングの2行が混在する
+ * 非対称さ自体は解消しなかった）。「最近の記録」セクションと同じ
+ * 「読み込み中 or 全部表示」の二択にするため、Insight・Discoverの
+ * どちらかがまだ読み込み中のあいだはカード全体を`CoffeeLoader`
+ * 1つに差し替え、両方解決してから常時表示の2行を含む4行をまとめて
+ * 出す形にした（`GraphPreview.jsx`・`DiscoverSuggestions.jsx`・
+ * `SimilarRecords.jsx`は元々1つのhookしか持たずこの非対称は起きない
+ * ため対象外。複数の独立したhookを1枚のカードにまとめているのは
+ * このコンポーネントだけ）。
  */
 function DiscoverCard() {
   const { t } = useTranslation();
   const { insights, isLoading: insightsLoading, error: insightsError } = useInsights();
   const { teaser, isLoading: teaserLoading, error: teaserError } = useDiscoverTeaser();
 
+  const isLoading = insightsLoading || teaserLoading;
   const insightText =
     !insightsLoading && !insightsError && insights.length > 0 ? describeInsight(insights[0], t) : null;
   const hasTeaser = !teaserLoading && !teaserError && Boolean(teaser);
@@ -92,57 +101,49 @@ function DiscoverCard() {
     <div className="flex h-full flex-col gap-4 rounded-2xl border border-surface-2 bg-raised p-6 shadow-elevated">
       <span className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">Discover</span>
 
-      <div className="flex flex-1 flex-col justify-center gap-3">
-        {insightsLoading && (
-          <div className="flex items-center gap-3 p-2">
-            <CoffeeLoader size="sm" className="flex-shrink-0 text-text-tertiary" />
-            <p className="text-base text-text-tertiary">{t("common.loading")}</p>
-          </div>
-        )}
-        {insightText && (
+      {isLoading ? (
+        <CoffeeLoader size="lg" className="flex-1" />
+      ) : (
+        <div className="flex flex-1 flex-col justify-center gap-3">
+          {insightText && (
+            <Link
+              to="/graph"
+              className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
+            >
+              <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-graph-process" />
+              <p className="text-base text-text">{insightText}</p>
+            </Link>
+          )}
+
+          {hasTeaser && (
+            <Link
+              to={`/entities/${encodeURIComponent(teaser.nodeId)}`}
+              className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
+            >
+              <Compass size={22} aria-hidden="true" className="flex-shrink-0 text-success" />
+              <p className="text-base text-text">
+                {t("discover.teaserLink", { suggestedLabel: teaser.suggestedOrigin.label })}
+              </p>
+            </Link>
+          )}
+
           <Link
-            to="/graph"
+            to="/diagnosis"
             className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
-            <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-graph-process" />
-            <p className="text-base text-text">{insightText}</p>
+            <Coffee size={22} aria-hidden="true" className="flex-shrink-0 text-graph-record" />
+            <p className="text-base text-text">{t("discover.diagnosisLink")}</p>
           </Link>
-        )}
 
-        {teaserLoading && (
-          <div className="flex items-center gap-3 p-2">
-            <CoffeeLoader size="sm" className="flex-shrink-0 text-text-tertiary" />
-            <p className="text-base text-text-tertiary">{t("common.loading")}</p>
-          </div>
-        )}
-        {hasTeaser && (
           <Link
-            to={`/entities/${encodeURIComponent(teaser.nodeId)}`}
+            to="/map"
             className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
-            <Compass size={22} aria-hidden="true" className="flex-shrink-0 text-success" />
-            <p className="text-base text-text">
-              {t("discover.teaserLink", { suggestedLabel: teaser.suggestedOrigin.label })}
-            </p>
+            <Globe size={22} aria-hidden="true" className="flex-shrink-0 text-graph-origin" />
+            <p className="text-base text-text">{t("discover.mapLink")}</p>
           </Link>
-        )}
-
-        <Link
-          to="/diagnosis"
-          className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
-        >
-          <Coffee size={22} aria-hidden="true" className="flex-shrink-0 text-graph-record" />
-          <p className="text-base text-text">{t("discover.diagnosisLink")}</p>
-        </Link>
-
-        <Link
-          to="/map"
-          className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
-        >
-          <Globe size={22} aria-hidden="true" className="flex-shrink-0 text-graph-origin" />
-          <p className="text-base text-text">{t("discover.mapLink")}</p>
-        </Link>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
