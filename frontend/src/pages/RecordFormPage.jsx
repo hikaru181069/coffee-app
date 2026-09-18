@@ -8,7 +8,7 @@ import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
 import { useRecordForm } from "../features/coffee-records/hooks/useRecordForm";
 import RecordForm from "../features/coffee-records/components/RecordForm";
 import SaveDiscoveryReveal from "../features/coffee-records/components/SaveDiscoveryReveal";
-import RecordFormSkeleton from "../features/coffee-records/components/RecordFormSkeleton";
+import CoffeeLoader from "../components/CoffeeLoader";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { secondaryButtonClass } from "../features/coffee-records/components/formStyles";
@@ -157,7 +157,7 @@ function RecordFormPage() {
   if (isEditing && isRecordLoading) {
     return (
       <div className={wideContainerClass}>
-        <RecordFormSkeleton />
+        <CoffeeLoader size="lg" />
       </div>
     );
   }

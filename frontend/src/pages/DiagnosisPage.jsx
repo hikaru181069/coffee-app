@@ -4,7 +4,7 @@ import BackLink from "../components/BackLink";
 import { useDiagnosis } from "../features/diagnosis/hooks/useDiagnosis";
 import ArchetypeCard from "../features/diagnosis/components/ArchetypeCard";
 import InsightList from "../features/diagnosis/components/InsightList";
-import DiagnosisSkeleton from "../features/diagnosis/components/DiagnosisSkeleton";
+import CoffeeLoader from "../components/CoffeeLoader";
 import OverviewStats from "../features/stats/components/OverviewStats";
 import HomeVsCafeCard from "../features/stats/components/HomeVsCafeCard";
 import TopRankingList from "../features/stats/components/TopRankingList";
@@ -54,7 +54,7 @@ function DiagnosisPage() {
       <div className={wideContainerClass}>
         <BackLink />
         <div className="mt-3">
-          <DiagnosisSkeleton />
+          <CoffeeLoader size="lg" />
         </div>
       </div>
     );

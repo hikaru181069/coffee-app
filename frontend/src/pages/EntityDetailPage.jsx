@@ -5,11 +5,13 @@ import { Calendar, ChevronRight, Star } from "lucide-react";
 
 import { useEntityDetail } from "../features/graph/hooks/useEntityDetail";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
+import { getNodeTextColorClass, getNodeTintBgClass } from "../features/graph/utils/nodeColor";
 import { formatConsumedAtShort } from "../features/coffee-records/utils/recordFormat";
 import { getErrorMessage } from "../utils/errorMessage";
 import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import DiscoverSuggestions from "../features/discover/components/DiscoverSuggestions";
 import BackLink from "../components/BackLink";
+import CoffeeLoader from "../components/CoffeeLoader";
 import StatCard from "../components/StatCard";
 import { contentContainerClass } from "../styles/pageContainer";
 import { useReveal } from "../hooks/useReveal";
@@ -18,7 +20,7 @@ import { revealDelayClass } from "../utils/revealDelay";
 /**
  * エンティティ詳細ページ。
  *
- * docs/entity-detail.md参照。産地・農園・品種・精製方法・焙煎度・
+ * docs/features.md「Entity Detail」参照。産地・農園・品種・精製方法・焙煎度・
  * フレーバー・カフェのどの種別でも同じページで表示する（typeで見た目を
  * 切り替えるgetNodeVisualと同じパターン。種別ごとに個別ページは作らない）。
  *
@@ -60,7 +62,7 @@ function EntityDetailPage() {
   if (isLoading) {
     return (
       <div className={contentContainerClass}>
-        <EntityDetailSkeleton hasTrail={trail.length > 0} />
+        <CoffeeLoader size="lg" />
       </div>
     );
   }
@@ -78,6 +80,12 @@ function EntityDetailPage() {
 
   const visual = getNodeVisual(detail.type);
   const Icon = visual.icon;
+  // このエンティティ自身（detail.type + detail.label）の色。産地・
+  // フレーバーは値ごとの個別色を使う（utils/nodeColor.js参照。Graph画面で
+  // 見るこのノードと同じ色にするため、種別共通のvisual.colorClassでは
+  // なくこちらを使う）
+  const entityColorClass = getNodeTextColorClass({ type: detail.type, label: detail.label });
+  const entityTintBgClass = getNodeTintBgClass({ type: detail.type, label: detail.label });
   const relatedTypes = Object.keys(detail.relatedAttributes);
   const nextTrail = [...trail, { id: detail.id, label: detail.label }];
 
@@ -86,7 +94,7 @@ function EntityDetailPage() {
       {trail.length > 0 ? <EntityTrail trail={trail} current={detail.label} t={t} /> : <BackLink />}
       <header className="mt-3 mb-6">
         <div className="flex items-center gap-2">
-          <Icon size={16} aria-hidden="true" className={visual.colorClass} />
+          <Icon size={16} aria-hidden="true" className={entityColorClass} />
           <span className="text-xs text-text-tertiary">{t(visual.labelKey)}</span>
         </div>
         <h1 className="mt-1 text-xl font-bold text-text">{detail.label}</h1>
@@ -111,8 +119,8 @@ function EntityDetailPage() {
             label={t("entityDetail.recordCount")}
             value={t("search.recordCount", { count: detail.recordCount })}
             icon={Icon}
-            iconColorClass={visual.colorClass}
-            iconBgClass={visual.bgTintClass}
+            iconColorClass={entityColorClass}
+            iconBgClass={entityTintBgClass}
             flat
           />
           <StatCard
@@ -250,7 +258,7 @@ function RelatedAttributeGroup({ type, items, t, trail }) {
             to={`/entities/${encodeURIComponent(item.id)}`}
             state={{ trail }}
             replace
-            className="inline-flex items-center gap-1.5 rounded-full border border-transparent bg-surface-1 px-3.5 py-1.5 text-sm text-text-secondary transition-all duration-150 hover:-translate-y-px hover:border-line/60 hover:bg-surface-2 hover:text-text"
+            className={`inline-flex items-center gap-1.5 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium transition-all duration-150 hover:-translate-y-px hover:border-line/60 ${getNodeTintBgClass({ type, label: item.label })} ${getNodeTextColorClass({ type, label: item.label })}`}
           >
             {item.label}
             <span className="font-mono text-xs text-text-tertiary">{item.count}</span>
@@ -293,75 +301,6 @@ function EntityTrail({ trail, current, t }) {
       ))}
       <span className="truncate text-text-secondary">{current}</span>
     </nav>
-  );
-}
-
-/**
- * 読み込み中のエンティティ詳細ページ。実際の構成
- * （header→統計カード3枚→グラフで見るボタン→関連属性チップ→関連記録一覧）
- * と同じ形の骨格を出す（RelatedAttributeGroupと同じくページローカルな
- * ヘルパー。entity-detail専用のfeatureディレクトリが無いため）。
- * 統計カードは共有のcomponents/StatCard.jsxを使うようになった
- * （flex-wrap＋アイコンバッジ）ため、骨格もそれに合わせた形にしている。
- *
- * 2026-08、チップをたどって来た場合はパンくず（EntityTrail）が表示される。
- * `location.state.trail`はデータ読み込み前から分かっているため、
- * その有無だけこのスケルトンにも反映し、読み込み完了時に一番上の行の
- * 形が変わってしまわないようにする。
- */
-function EntityDetailSkeleton({ hasTrail = false }) {
-  const { t } = useTranslation();
-  return (
-    <div aria-busy="true" aria-label={t("common.loading")}>
-      <div className="mb-6 flex flex-col gap-2">
-        {hasTrail ? (
-          <div className="flex items-center gap-1.5">
-            <div className="skeleton-block h-3 w-16 rounded" />
-            <div className="skeleton-block h-3 w-3 rounded-full" />
-            <div className="skeleton-block h-3 w-16 rounded" />
-          </div>
-        ) : (
-          <div className="skeleton-block h-3 w-16 rounded" />
-        )}
-        <div className="skeleton-block h-6 w-40 rounded" />
-      </div>
-
-      <div className={`${cardClass} mb-6`}>
-        <div className="flex flex-wrap gap-3">
-          {Array.from({ length: 3 }, (_, index) => (
-            <div key={index} className="min-w-44 rounded-2xl border border-surface-2 bg-raised p-4">
-              <div className="flex items-center gap-3">
-                <div className="skeleton-block h-9 w-9 flex-shrink-0 rounded-full" />
-                <div>
-                  <div className="skeleton-block h-3 w-14 rounded" />
-                  <div className="skeleton-block mt-2 h-4 w-10 rounded" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="skeleton-block mb-6 h-9 w-36 rounded-lg" />
-
-      <div className={`${cardClass} mb-6`}>
-        <div className="skeleton-block h-4 w-32 rounded" />
-        <div className="mt-5 flex flex-wrap gap-2">
-          {Array.from({ length: 3 }, (_, index) => (
-            <div key={index} className="skeleton-block h-8 w-24 rounded-full" />
-          ))}
-        </div>
-      </div>
-
-      <div className={cardClass}>
-        <div className="skeleton-block h-4 w-28 rounded" />
-        <div className="mt-4 flex flex-col gap-3">
-          {Array.from({ length: 3 }, (_, index) => (
-            <div key={index} className="skeleton-block h-14 w-full rounded-lg" />
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }
 

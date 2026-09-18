@@ -3515,12 +3515,643 @@ lucide-reactのみを使う」ルールも、この9種類に限る例外とし�
 
 ---
 
+### 2026-09-18: グラフを「直接操作している体験」へ作り直し（branch `feat/graph-tactile-interaction`）
+
+「グラフを直接操作しているという体験が感じられない」という指摘を受け、
+グラフ画面（構図・物理演算・配色・サイドパネル）をArtifactでの対話的な
+プロトタイプ検討（複数ラウンド、物理エンジン単体のモック・配色4案・
+高密度塗りつぶし構図・サイドパネル4レイアウト案）を経て、承認を得た内容を
+本番コードへ実装した。CLAUDE.mdの規定通り、実装前に実装対象・変更予定
+ファイル・データフロー・影響範囲・テスト方法を提示し、特に規模の大きい
+「物理エンジンの置き換え」については、react-force-graph-2d（d3-force）
+からの全面置き換えとチューニングに留める案の2択を提示した上で、
+ユーザーの判断で全面置き換えを選んだ。
+
+**対応**:
+
+1. **物理演算をreact-force-graph-2d（d3-force）から自前実装へ全面置き換え**
+   （`GraphCanvas.jsx`）。graph-physics-mock.htmlで承認済みの定数
+   （`REPULSION` `SPRING_K` `SPRING_LEN` `DAMPING` `CENTER_K`
+   `DRAG_SPRING` `DRAG_DAMPING`）とアルゴリズム（反発→バネ→位置ベースの
+   衝突解消(3反復)→中心引力+積分、ドラッグ中はポインタへバネで追従し
+   離すと慣性で流れる）をそのまま移植した。react-force-graph-2d時代に
+   ライブラリの内部実装の癖へ合わせて積み上げていた回避策（クリック
+   判定の自前実装、`onEngineTick`/`onEngineStop`が発火しない問題への
+   対処、リサイズ時のズーム誤爆対策）は、物理演算・描画・ポインタ処理を
+   すべて自前で持つようになったことで不要になった。初期表示は
+   400ステップぶん物理演算を裏側で先に収束させてから最初の描画を行い、
+   「開くたびにノードが弾け飛んで収まる」アニメーションを見せない
+   （データ変更時も同様）。カメラのフィット（全体／フォーカス対象+隣接
+   ノード）はease-out（400ms）で遷移する自前実装に置き換えた。
+   `react-force-graph-2d`・`d3-force`は`package.json`・node_modules
+   （ホスト＋Dockerコンテナ双方）から削除した。
+2. **ノードの見た目を「輪郭線+小さいアイコン」から「種別色で塗りつぶした
+   円+暗色アイコン」へ変更**。属性ノードも角丸矩形から円へ統一した
+   （`graphNodeSizing.js`の`attributeHalfWidth`/`attributeHalfHeight`を
+   `attributeRadius`へ統合、`graphHitTest.js`の当たり判定も円1本化）。
+   ベースサイズを拡大（record: 16→26px、attribute: 15→20px）。エッジも
+   1px灰色の細線から、つながる属性ノードの色を帯びた太めの線へ変更した。
+3. **配色をグラフ専用の9トークンへ刷新**（`--color-graph-*`、
+   index.css）。寒色〜暖色にまたがる配色（産地=青・農園=緑・品種=黄・
+   精製方法=紫・焙煎度=橙・フレーバー=マゼンタ・カフェ=ティール・
+   キーワード=シアン・記録=赤）。**調査で判明**: 以前`nodeVisuals.js`が
+   使っていた`--color-accent-*`は、Discover・WorldMapLegend・
+   OverviewStats・Diagnosisのarchetype色とも共有されているトークンだった
+   （事前に把握していた「影響範囲は/graph画面に閉じる」という説明と
+   矛盾することが実装中に判明）。値を直接上書きすると無関係な4画面の
+   配色まで変わってしまうため、グラフ専用の新規トークンへ分離した
+   （既存の`--color-accent-*`・4画面は変更していない）。originノードは
+   従来通り種別共通色ではなく産地ごとの個別色（`originAccent.js`）を使う。
+4. **ラベルの既定表示を「記録は常時、属性はインタラクション時のみ」に
+   変更**（`isNodeLabelVisible`）。属性ノードは2026-08から実装済みの
+   「フォーカス中のノード+直接の隣接ノードだけ表示」ルールをそのまま
+   維持し、記録（一杯の記録）のタイトルだけ常時表示にする条件を追加した。
+5. **選択中ノードのサイドパネル（`NodeDetailPanel.jsx`）の見出しを、
+   グラフのノードと同じ塗りつぶし円バッジへ変更**。`nodeVisuals.js`へ
+   `solidBgClass`（不透明度なしの塗りクラス）を追加。中身の構成（属性:
+   種別・ラベル・記録数・関連記録一覧、記録: 記録日・評価・メモの抜粋）や
+   デスクトップ=右固定パネル／モバイル=bottom sheetという出し分けは
+   変更していない（Artifact検討中に「P1: 現行の固定サイドカラム案」を
+   ユーザーが選んだ結果、既存の情報構成をほぼそのまま活かせた）。
+
+**副次的に対応したこと**: `docs/design.md`「Design Tokens」節の
+グラフノード配色の記述が実際のコードと乖離していた、2026-08から続く
+既知の未解決事項（多数のエントリで「次に実装すべき最小単位」として
+持ち越されていた）を、今回グラフの配色自体を書き直すのにあわせて解消した
+（`--color-accent-*`の実際の値・命名をCatppuccin Mocha準拠に修正し、
+グラフ専用トークンへの分離も明記）。あわせて、"Graph Visual Semantics"
+節冒頭の「ラベルまたは形状でも判別可能」という記述も、record/属性の
+形状統一に合わせて更新した。
+
+**データの流れ・影響範囲**: バックエンドAPI・`graphAdapter.js`の
+`{nodes, links}`形状は変更していない。`GraphCanvas`の呼び出し側
+（`GraphPage.jsx`）のprops（`graph` `selectedNodeId` `onSelectNode`
+`focusRequest` `interactive`）も変更していない。影響は`/graph`画面と、
+そこから遷移する`/entities/:nodeId`のNodeDetailPanel相当部分に閉じる。
+
+**実行したテストと結果**: `cd frontend && npm run lint`（0エラー）、
+`npm run test`（356件全て成功）、`npm run build`（0エラー。GraphPageの
+バンドルサイズはreact-force-graph-2d/d3-force削除により縮小）。
+`graphNodeSizing.test.js`・`graphHitTest.test.js`は、属性ノードの
+角丸矩形→円統一に合わせて既存テストを書き換えた。claude-in-chromeで
+実データ（記録数18件・ノード61件）の`/graph`を確認し、塗りつぶし円・
+寒色〜暖色の配色・記録ラベルの常時表示・ノードクリックでの選択（リング表示
++側面パネル、record/属性どちらも確認）・隣接ノードのラベル開示・
+非関連ノードのダイミングが、いずれも意図通り動作することを確認した。
+Home画面のグラフプレビュー（`GraphPreview.jsx`）にも新配色が問題なく
+反映されていることを確認した。コンソールエラーは無し。
+
+**未解決事項**: ドラッグ操作そのもの（ポインタへバネで追従し離すと
+慣性で流れる感触）は、Artifactモック上でユーザーに確認いただいた挙動を
+コードとして忠実に移植したが、claude-in-chromeの自動操作では単発の
+`left_click_drag`アクションでは挙動の細部（追従の遅れ・慣性）までは
+確認しきれなかった（自動操作の制約であり、実装ロジック自体はモックと
+同一）。実際にブラウザで触っての確認をお願いしたい。モバイル・タッチ
+操作での動作（`touch-action:none`は設定済みだが実機未確認）も未検証。
+
+**次に実装すべき最小単位**: ユーザーに実機（ドラッグの感触・モバイル
+タッチ操作）を確認してもらい、問題があれば`GraphCanvas.jsx`冒頭の
+物理定数（`REPULSION` `SPRING_K` `DAMPING`等）を調整する。それ以外は
+MVPの完了条件を満たしているため、下記「次に実装すべき最小単位」の
+候補から次のテーマを選ぶ。
+
+**追記（同日）**: 実機確認したユーザーから「ノードの感覚が狭すぎる」との
+指摘を受けた（`?focus=`付きで開いた際、選択ノード周辺の複数ノードが
+はっきり重なって見える状態）。原因は2つ。(1) ノードの半径を拡大した際
+（上記2.）、間隔を決める物理定数（`REPULSION` `SPRING_LEN`）と衝突解消の
+反復回数をモックの値（小さいデモ用ノードサイズ前提）のまま据え置いていた。
+(2) `drawNode`が選択中ノードの描画半径に`nodeRadius(node, true)`
+（`SELECTED_SCALE`＝1.35倍）を使う一方、`node.scale`（フォーカス時の
+バネ追従アニメーション、最大1.14倍）も`ctx.scale`で重ねて適用しており、
+選択中ノードだけ実際の当たり判定・衝突半径（常に非選択時サイズ基準）より
+大幅に大きく描かれ、周囲のノードに食い込んで見えていた。
+`REPULSION: 2600→5200`・`SPRING_LEN: 95→170`・衝突解消の反復回数
+`3→5`に引き上げ、`drawNode`の描画半径から`SELECTED_SCALE`の二重適用を
+外した（選択の強調は`node.scale`の拡大＋白いリングのみで表現）。
+`npm run lint`/`npm run test`（356件）/`npm run build`は引き続き
+0エラー。claude-in-chromeで同じ`?focus=`URLと通常表示の両方を再確認し、
+重なりが解消していることを確認した。
+
+**追記2（同日）**: 上記の対処後も「そもそも間隔が狭い。モックと全然違う」
+という指摘を受けた。デバッグログを一時的に仕込んで調査したところ、
+以下が判明した。
+
+- `fitCamera`のズーム倍率はクランプされておらず（実測: 61ノードで
+  scale 0.516、`MIN_ZOOM`の0.3には達していない）、カメラのフィット
+  ロジック自体は疑わしくないと分かった
+- 実データの記録ノードの最大degreeは10（`sizeForDegree`で+57px、
+  半径にして約83px＝直径166px）。モックは13ノード・固定サイズ
+  （record半径30px固定）でしか検証されておらず、実データの
+  ノード数（61）・degreeに応じた可変サイズという組み合わせでは、
+  1度目の対処で引き上げた固定長のバネ（`SPRING_LEN`）でも
+  「大きいノード同士が繋がると自然長より実サイズの方が大きく、
+  常に衝突解消と綱引きする」という構造的な問題が残っていた
+
+**根本対応**: バネの自然長を固定値（`SPRING_LEN`）から、つながる2ノード
+の実際の半径+ 一定の余白（`SPRING_GAP`、70px）で動的に決める方式へ
+変更した（`restLength = nodeRadius(a) + nodeRadius(b) + SPRING_GAP`）。
+degreeが高く半径が大きいノード同士が繋がっても自然長が常に実サイズに
+追従するため、衝突解消との綱引きが起きなくなる。あわせて`REPULSION`を
+5200→7000、`CENTER_K`を0.0012→0.0009（中心への引き戻しを弱め、
+クラスタが自然に広がれる余地を増やす）に調整した。
+
+`npm run lint`/`npm run test`（356件）/`npm run build`は引き続き0
+エラー（調査用の一時的な`console.log`は削除済み）。claude-in-chromeで
+実データの通常表示・`?focus=`表示の両方を再確認し、1度目の対処より
+明確にノード間の余白が広がったことを確認した。
+
+**追記3（同日）**: それでも「そもそも間隔が狭い。モックと全然違うのはなぜ」
+という指摘を受けた。今度はモック（`graph-theme-concepts.html`のQタブ、
+10ノードの手配置イラスト）の実際の座標を計算し、記録ノード半径に対する
+隣接ノードとの間隔が実測でおよそ4〜5倍（余白 300px超／半径38px程度）と、
+自分が設定した値（当時のSPRING_GAP 70px）とは一桁近く違う水準だったと
+判明した。
+
+デバッグログでbounding box・実際のscaleを計測しながら調査したところ、
+以下が分かった。
+
+- `fitCamera`のズーム倍率は都度クランプされておらず、疑わしくない
+  （実測: 61ノードでscale 0.3〜0.5程度）
+- SPRING_GAPやREPULSIONを引き上げても、bounding box自体はあまり
+  大きくならなかった（例: SPRING_GAP 70→220でもbboxはわずかな増加）。
+  原因は`CENTER_K`（中心への引き戻し力）が支配的だったこと。反発力は
+  距離の2乗に反比例して弱まるのに対し、`CENTER_K`は常に一定の力で
+  引き戻し続けるため、ノード数を増やしたりSPRING_GAPを伸ばしたりしても、
+  最終的な釣り合いの半径はほぼ`REPULSION`と`CENTER_K`の比で決まって
+  しまい、他の定数を動かしても収束後の広がりにはあまり効かなかった
+- このグラフは1つの記録が複数の属性（産地・精製方法・焙煎度・
+  フレーバー複数等）を共有する密な構造のため、共通の属性ノードへ
+  複数の記録が同時に引っ張られる「ハブ」ができやすく、そこだけ
+  ばねの自然長を伸ばしても局所的に詰まったまま残りやすい
+
+**対応**: `CENTER_K`を0.0012→0.00015（8分の1）まで大幅に弱め、孤立ノードが
+際限なく漂流しない範囲でクラスタ全体が広がれる余地を最大化した。加えて
+衝突解消の反復回数を5→10、衝突半径に足す余白（`LABEL_CLEARANCE`、
+`graphNodeSizing.js`）を20→60pxに引き上げ、ばね（ソフトな力）だけでなく
+衝突解消（毎ステップ必ず満たされるハード制約）でも最低限の間隔を保証する
+ようにした。`PRE_CONVERGE_STEPS`も400→1500へ増やし、この新しい釣り合いに
+確実に収束させている。
+
+`npm run lint`/`npm run test`（356件）/`npm run build`は引き続き0エラー
+（調査用の一時的な`console.log`は削除済み）。claude-in-chromeで実データの
+通常表示・`?focus=`表示を再確認し、モックに近い余白感になったことを
+確認した（ハブ状に密集する一部の記録同士は、グラフの構造上どうしても
+やや近くなるが、以前のような明確な重なりは解消した）。
+
+**未解決事項として残った点**: 61ノード全体を常に画面へ収めるという
+既存の前提（`fitCamera`が全ノードをbounding boxに収める）と、
+「モック並みに余裕のある間隔」という要望は、ノード数が増えるほど
+本質的に両立しづらくなる（間隔を伸ばすほどbounding boxが大きくなり、
+収めるためにズームアウトすると結局ノード自体も縮小して見える）。
+今回は物理定数の調整（ハブの詰まりを軽減する方向）で対応したが、
+記録数がさらに増えた場合は、既定表示で全ノードを収めることに拘らず
+一部だけを表示して残りはパン操作で探索する、といった設計変更が
+必要になる可能性がある（次に実装すべき最小単位の候補として残す）。
+
+**追記4（同日）**: 上記の「未解決事項として残った点」について、
+ユーザーへ「そもそもグラフ全体を見せるメリットはあるのか」を確認した。
+検討の結果、以下の理由で「グラフ全体を常に画面に収める」という前提
+自体をやめる判断になった。
+
+- 61ノード規模で全体を収めると、ラベルはほぼ読めず「色のついた丸の
+  集まり」以上の情報は得られない。実際の「発見」はInsight・Stats・
+  Discoverや、ノードをクリックしての局所的な探索が担っており、
+  ズームアウトした全体像そのものに強い実用的価値は無かった
+- 今回のグラフ作り直しの出発点だった「直接操作している感覚」と、
+  「全部を無理やり画面に収める」（＝ノードを小さく・間隔を詰めて
+  でも収めようとする）という前提は、本質的に矛盾していた
+- 参考にしているObsidianのグラフビューも、既定では全体フィットせず
+  ある程度zoomされた状態から始まり、ユーザーが自由にパン/ズームする
+  設計になっている
+
+**対応**: `fitCamera`を、フォーカス対象がある場合（`?focus=`・検索での
+選択・ノードクリック）と無い場合で挙動を分けた。フォーカスが無い
+既定表示では、全ノードのbounding boxに合わせてズームするのをやめ、
+ノードがほぼ実寸で見える固定倍率（`COMFORTABLE_SCALE = 1`）で全ノードの
+重心を画面中央に置くだけにした。画面外にはみ出た部分はパン操作で
+探索してもらう。フォーカスがある場合は、対象+隣接ノードへズームする
+従来の挙動をそのまま維持した（`?focus=`・検索からの遷移は「このノードを
+見たい」という明確な意図への応答のため）。あわせて、この変更により
+「間隔を無理に広げてbounding boxを縮める」必要が無くなったため、
+未使用になった`FIT_PADDING`定数を削除した（`FIT_PADDING_FOCUSED`は
+フォーカス時の余白として引き続き使用）。
+
+「グラフが育っている感じ」（記録・つながりが増えるほど豊かに見える
+演出）は今回のスコープから切り離し、別途検討することにした
+（ユーザーとの合意）。Home画面のグラフプレビュー（`GraphPreview.jsx`、
+記録数・つながり数の表示）が現状その役割の一部を担っている。
+
+`npm run lint`/`npm run test`（356件）/`npm run build`は引き続き
+0エラー。claude-in-chromeで実データの通常表示・`?focus=`表示を再確認し、
+ノードがほぼ実寸・生き生きとした密度感で表示され、はみ出た部分は画面外へ
+延びる（パンで見に行く）ことを確認した。これまでの3回の物理定数調整
+（追記1〜3）による間隔の広さもそのまま活きている。
+
+**追記5（同日）**: 「デカすぎる」との指摘を受け、`COMFORTABLE_SCALE`を
+1→0.7へ調整した。`npm run lint`/`npm run test`（356件）/`npm run build`
+は引き続き0エラー。claude-in-chromeで再確認し、1画面によりまとまった数の
+ノードが収まりつつ、個々のノードも引き続き読み取れるサイズであることを
+確認した。
+
+**追記6（同日）**: 「グラフ全体が回転している。止まっていてほしい」と
+いう指摘を受けた。原因は、承認済みのgraph-physics-mock.htmlにあった
+「事前収束後、速度を明示的にゼロへリセットする」という1行
+（`nodes.forEach(n => { n.vx=0; n.vy=0; ... })`）を、本番実装へ移植する
+際に見落としていたことだった。この行が無いと、1500ステップの事前収束で
+完全にはゼロになりきらないわずかな残留速度が、マウント後も毎フレーム
+（step()は永続ループで回り続ける設計）積分され続け、実データ（61ノード・
+今回引き上げた強めの物理定数）ではその蓄積が「グラフ全体がゆっくり
+回転している」ように見えるレベルになっていた（モックは13ノード・
+穏やかな定数だったため目立たなかったと考えられる）。
+
+**対応**: 事前収束ループの直後に`nextNodes.forEach(n => { n.vx=0;
+n.vy=0; })`を追加した。`npm run lint`/`npm run test`（356件）/
+`npm run build`は引き続き0エラー。claude-in-chromeで`/graph`を開いた
+まま10秒以上待機し、同じノードのスクリーンショット上の座標が実質的に
+変化しない（回転・ドリフトが解消した）ことを確認した。
+
+---
+
+### 2026-09-18: 記録カードのタグへGraph画面の配色を適用（branch `feat/graph-tactile-interaction`継続）
+
+「Graph画面の雰囲気を記録ページとHomeにも適用してほしい」という要望を
+受け、Artifactでのモック確認（Before/After比較・フレーバー42種の配色案）
+を経て、`RecordCard.jsx`（記録一覧）・`HomeRecordCard.jsx`（Home）の
+タグ（精製方法・フレーバー）にGraph画面の色を反映した。
+
+**対応**:
+
+1. 精製方法タグ: Graph画面と同じ種別共通色（`nodeVisuals.js`の
+   `getNodeVisual("process")`、紫の`--color-graph-process`）を、
+   一覧では塗りタグ（`bgTintClass`+`colorClass`）、Homeではテキスト色
+   （`colorClass`）として適用した。
+2. フレーバータグ: 産地（`originAccent.js`）と同じ「値ごとの個別色」の
+   考え方で、新規`frontend/src/features/coffee-records/utils/
+   flavorAccent.js`を追加した。`backend/seeds/data/flavors.js`の
+   全42種それぞれに、そのキーワードを連想させる個別のHEX値を手動で
+   割り当てている（例: Lemon=黄緑、Blueberry=青、Chocolate=茶、
+   Honey=黄金）。Artifactで全42種の配色を一覧表示してユーザー確認を
+   得てから実装した。一覧では塗りタグ+色付きドット、Homeでは
+   フレーバーごとに色分けしたテキスト（区切りの「•」は無色）で表示する。
+3. 精製方法とフレーバーで「種別共通色」と「値ごとの個別色」を使い分けて
+   いる理由: 精製方法・焙煎度は選択肢の種類数が少なく個別色にする実益が
+   薄いのに対し、産地・フレーバーは「具体的に何を選んだか」を色だけでも
+   大まかに掴めた方が実用的なため（詳細は`docs/design.md`「Records」節
+   参照）。
+
+**データの流れ・影響範囲**: バックエンドのマスターデータ・APIは変更して
+いない。配色はフロントエンドの静的対応表（`flavorAccent.js`）のみで
+完結する（`originAccent.js`と同じ設計）。影響は`RecordCard.jsx`・
+`HomeRecordCard.jsx`のタグ表示に閉じる。
+
+**実行したテストと結果**: `cd frontend && npm run lint`（0エラー）、
+`npm run test`（356件）。`HomeRecordCard.test.jsx`の「flavorsは中黒で
+まとめて表示する」テストは、フレーバーごとに個別の色を付けるため1つの
+テキストノードではなく別々のspanへ分けた実装に合わせて、各フレーバー名・
+区切り文字を個別に確認する形へ更新した。`npm run build`（0エラー）。
+claude-in-chromeで実データの`/records`・`/`（Home）を確認し、精製方法が
+紫、フレーバーがそれぞれ異なる色（Berry=マゼンタ系、Citrus=オレンジ系、
+Chocolate=茶、Honey=金など）で表示されることを確認した。コンソール
+エラーは無し。
+
+**未解決事項**: `flavorAccent.js`の対応表はマスターデータの追加に自動で
+追従しない（`originAccent.js`と同じ制約）。`backend/seeds/data/
+flavors.js`へ新しいフレーバーを追加する際は、この対応表にも1行手動で
+追加する必要がある（忘れても中立グレーになるだけでエラーにはならない）。
+
+---
+
+### 2026-09-18: Graph画面のflavorノードにもフレーバー個別配色を適用（branch `feat/graph-tactile-interaction`継続）
+
+「（記録カードのタグに適用したフレーバー個別配色を）Graph画面のノードにも
+適用してほしい」という要望を受け、`GraphCanvas.jsx`のflavorノードの塗り色を、
+種別共通色（マゼンタ、`--color-graph-flavor`）から`flavorAccent.js`の
+値ごとの個別色へ変更した。originノードが`originAccent.js`の個別色を使う
+のと同じパターン。
+
+**対応**: `nodeFillColor`関数（`GraphCanvas.jsx`）に`node.type ===
+"flavor"`の分岐を追加し、`getFlavorHex(node.label)`を返すようにした。
+エッジの色（`edgeColor`）は`nodeFillColor`を再利用しているため、
+flavorノードにつながるエッジも自動的に個別色になる。`NodeDetailPanel.jsx`
+のバッジ背景色（`badgeBgClass`）にも同様の分岐を追加した
+（`getFlavorAccentClass`）。Home画面のグラフプレビュー
+（`GraphPreview.jsx`の装飾イラスト）は、origin個別色化の際も変更して
+いなかったのと同じ理由（読めることを目的としない縮小イラストのため）で
+今回も種別共通色のまま変更していない。
+
+**実行したテストと結果**: `cd frontend && npm run lint`（0エラー）、
+`npm run test`（356件）、`npm run build`（0エラー）。claude-in-chromeで
+`/graph`を確認し、flavorノード（例: Floral）が対応表通りの個別色で
+塗られ、つながるエッジ・選択時のサイドパネルバッジも同じ色で揃うことを
+確認した。
+
+---
+
+### 2026-09-18: デザイン・テーマの矛盾レビュー（branch `feat/graph-tactile-interaction`継続）
+
+「デザインやテーマに矛盾がないか一度レビューしてほしい」という依頼を
+受け、`docs/design.md`を全文読み直し、今回のセッションで加えた記述同士の
+矛盾と、コード側の古いdocs参照を確認した。
+
+**見つけた矛盾・古い記述と対応**:
+
+1. Graph節の配色一覧（「産地=青・フレーバー=マゼンタ」）が、すぐ下の
+   「origin・flavorノードは値ごとの個別色を使う」という記述と矛盾して
+   見えた → 配色一覧の色は「`GraphLegend.jsx`の凡例スウォッチ・値ごとの
+   個別色を持たない種別の実際のノード色」であり、産地・フレーバーの
+   凡例色は代表色に過ぎず個々のノードの実際の色とは一致しない旨を
+   明記した。
+2. フレーバーの件数表記が「New / Edit Record」節で「約41種」、
+   「Records」節で「全42種」と食い違っていた → 42種に統一した。
+3. `flavorAccent.js`（フレーバー個別色）が中央の「Design Tokens >
+   Color」節に載っておらず、機能別の節でしか触れられていなかった →
+   `originAccent.js`と並べて中央のColor節にも追記した。
+4. 「Home」節の「構成例」が古く、実際には無い「Your Coffee
+   Connections」「よく登場する産地・フレーバーの簡易表示」という項目名の
+   ままだった（実際は2026-08にDiscoverカード+GraphPreviewへ統合済み） →
+   ユーザー確認のうえ、`HomePage.jsx`の現在の構成・コメント履歴に基づいて
+   書き直した。
+
+**副次的に見つけたコード側の問題**: `docs/design.md`のレビュー中に、
+`docs/insights.md`・`docs/search.md`・`docs/entity-detail.md`・
+`docs/stats.md`・`docs/discover.md`（すべて`docs/features.md`へ統合済み）・
+`docs/vision.md`・`docs/product-principles.md`（すべて`docs/product.md`へ
+統合済み）という、実際には存在しないdocsファイルへの参照が、frontend
+13ファイル・backend 13ファイルの計26ファイルのコメント内に残っている
+ことを`grep`で発見した。ユーザー確認のうえ、全26ファイルの該当箇所を
+現在のファイル名・見出しへ一括修正した（内容の変更は無く、パス参照の
+修正のみ）。
+
+**実行したテストと結果**: `cd frontend && npm run lint`（0エラー）、
+`npm run test`（356件）、`npm run build`（0エラー）。`cd backend &&
+npm run test`（573件、0エラー）。docsとコードコメントのみの変更のため、
+挙動への影響は無い。
+
+**未解決事項**: 今回の一括修正は「存在しないファイルへの参照」という
+機械的に検出できる問題に絞った。`docs/product.md`「偶然の一致を断定
+しない」のような、引用符付きで参照されている見出し文言そのものが
+実在の見出しと一致するかまでは検証していない（`docs/product.md`の
+Product Principlesは7項目あるが、この特定の文言は見出しとして存在しない
+可能性がある）。
+
+---
+
+### 2026-09-18: デザイン・テーマの統一 — 値ごとの個別色と旧パレットの一本化（branch `feat/graph-tactile-interaction`継続）
+
+上記レビューの直後、ユーザーから「デザインや、テーマにページによって
+差があります。統一させるべきでは？graphを作り込んだ際のことを思い
+出してください。それをベースにします。」という、より本質的な指摘を
+受けた。さらに一度提示した範囲（A: 値ごとの個別色の抜け漏れ、B: 旧
+`--color-accent-*`パレットの残存）に対しても「それ以外にもあるはずです。
+丁寧に確認してください」という追加指摘があり、grepとファイル全文読み込み
+による28ファイル規模の再監査を行った上で実装した。
+
+**実装対象**: Graph画面で先行導入していた「産地・フレーバーは値ごとの
+個別色、他7種別は型共通色」というルールを、記録詳細・エンティティ詳細・
+統計・横断検索・発見バッジなど、記録系画面全体へ一貫して適用する。あわせて
+旧`--color-accent-*`（Catppuccin Mochaの9色）をまだ使っていた
+Discover・WorldMapLegend・Diagnosis（archetypeVisuals.js）を、Graph画面
+作り直しで新設した`--color-graph-*`へ移行し、旧パレット自体を削除する。
+
+**なぜ今実装するのか**: `docs/design.md`「Product Principles」的な観点
+ではなく、「同じ産地・フレーバーの色が画面によって違って見える」という
+一貫性の欠如そのものがユーザー指摘の対象だった。原因は、Graph画面の
+色解決ロジック（型共通色 or 値ごとの個別色）を呼び出し側ごとに個別実装
+していたため、新しい画面を作るたびに「値ごとの個別色を使う」判断が
+漏れうる構造だったこと。
+
+**新規作成ファイル**: `frontend/src/features/graph/utils/nodeColor.js`
+（`{ type, label }`から型共通色・値ごとの個別色のどちらを使うべきかを
+一元的に解決する共有ヘルパー。`getNodeColorHex`/`getNodeSolidBgClass`/
+`getNodeTintBgClass`/`getNodeTextColorClass`の4関数）。
+
+**変更ファイル**:
+- `features/coffee-records/utils/originAccent.js`: `getOriginTintClass`
+  （15%不透明度版、タグ用）を追加
+- `features/graph/components/GraphCanvas.jsx` /
+  `features/graph/components/NodeDetailPanel.jsx`: 既存の個別実装を
+  `nodeColor.js`経由へ差し替え（二重管理の解消）
+- `pages/EntityDetailPage.jsx`: ヘッダーアイコン・記録数StatCard・
+  関連属性チップを`nodeColor.js`経由の色へ
+- `pages/RecordDetailPage.jsx`: 産地・フレーバー等のリンク付きピルを
+  同様に
+- `features/stats/components/TopRankingList.jsx`: ランキング行に色付き
+  ドットを新規追加（従来は見出しアイコンのみに色があり、個別行は無色
+  だった）
+- `features/search/components/EntityResultCard.jsx`: 横断検索結果の
+  ヘッダーアイコン
+- `features/graph/components/GraphNodeSearch.jsx`: グラフのノード検索欄
+  （従来は種別グループ内の全ノードが同じ色で、Graph画面のキャンバス側と
+  食い違っていた）
+- `features/graph/components/RecordConnectionsDiagram.jsx`: 記録詳細の
+  「つながり」図のノードアイコン
+- `features/coffee-records/components/DiscoveryBadge.jsx` /
+  `SaveDiscoveryReveal.jsx`: バッジを「薄い塗り+種別共通色アイコン」の
+  旧スタイルから「塗りつぶした円+`text-on-inverse`アイコン」の新スタイル
+  （Graph・NodeDetailPanel・記録カードと同じ）へ統一。`getNodeSolidBgClass`
+  を使用
+- `features/discover/components/DiscoverCard.jsx`: Insight/Diagnosis/
+  World Map行のアイコン色を`text-accent-sapphire`/`accent-moss`/
+  `accent-sky`から`text-graph-process`/`graph-record`/`graph-origin`へ
+  （Discover行の`text-success`は元々セマンティック色のため対象外）
+- `features/map/components/WorldMapLegend.jsx`: 「訪問済み」凡例の3つの
+  点を、無関係な`accent-sky`/`accent-pink`/`accent-yellow`から、実際に
+  3地域の産地色を示す`getOriginAccentClass("Ethiopia"/"Colombia"/
+  "Guatemala")`へ（「産地ごとに色が異なる」という凡例の趣旨に忠実にした）
+- `features/diagnosis/utils/archetypeVisuals.js`: 9つの`text-accent-*`を
+  対応する`text-graph-*`へ（ファイル自身のコメントが「どのノード種別の
+  色に寄せたか」を1:1で明記していたため、機械的な置き換えで済んだ）
+- `features/stats/components/OverviewStats.jsx`: コメントのみ修正
+  （コード自体は元々`getNodeVisual("record")`経由で`--color-graph-record`
+  を参照していたが、コメントが旧トークン名`accent-moss`のままだった）
+- `frontend/src/index.css`: 参照元が無くなった旧`--color-accent-*`
+  （9色）を削除
+- `docs/design.md`: 「Graph Visual Semantics」節に値ごとの個別色と
+  型共通色の使い分けルールを明文化。「Design Tokens > Color」節の
+  旧パレット分離の説明を、削除後の実態にあわせて更新
+
+**意図的にスコープ外とした箇所**（型共通色のままが正しいと判断）:
+`AttributeLabel.jsx`（フィールドラベル自体のアイコン、特定の値を
+指さない）、`CollectionStats.jsx`・`WorldMapPage.jsx`の集計件数表示、
+`RecordForm.jsx`の複数選択サマリー（PropertyButton）、装飾用の
+`GraphPreview.jsx`・`GraphIllustration.jsx`、`GraphFilters.jsx`・
+`GraphLegend.jsx`のフィルター・凡例。
+
+**データフロー**: 変更なし（表示ロジックのみ。APIレスポンス形状・DBの
+読み書きには影響しない）。
+
+**実行したテストと結果**: `cd frontend && npm run lint`（0エラー）、
+`npm run test`（356件、0エラー。事前に存在した`logout`時の
+`Not implemented: navigation`というjsdomの警告出力は無関係な既知の
+ノイズ）、`npm run build`（0エラー。1.3MB超のチャンクサイズ警告は
+本変更と無関係の既存事象）。
+
+**視覚確認**: `backend/.env`の`MONGO_URI`を一時的にAtlas（`bad auth`で
+接続失敗。下記「未解決事項」参照）からローカルMongoDB（`mongodb://
+127.0.0.1:27017/coffeeApp`）へ切り替え、`npm run seed:demo`でデモ
+データを投入した上で、claude-in-chromeでHome・Stats・Entity Detail
+（origin:Ethiopia）・Graph（キャンバス・ノード検索）・Record Detail
+（つながり図）・World Map（凡例）・Diagnosisの各画面を実機確認した。
+産地・フレーバーの値ごとの個別色、農園/品種/精製方法/焙煎度/カフェ/
+キーワードの型共通色、Diagnosisのarchetypeアイコン色がいずれも意図通り
+表示されることを確認済み。確認後、`.env`はAtlas接続へ戻し、ローカルの
+frontend/backend開発サーバーは停止済み。
+
+**未解決事項**:
+- 今回のヒアリングで確認した`backend/.env`の`MONGO_URI`（Atlas）は
+  `MongoDB connection error: bad auth : Authentication failed`で
+  引き続き接続できない（2026-08-30に既知の環境課題として記録済み、
+  下記の既存項目参照）。認証情報のローテーションまたはネットワーク
+  （IPアクセスリスト）側の問題と思われるが、Atlas側の管理画面へは
+  アクセス権が無いため、ユーザー自身の確認が必要
+- `originAccent.js`（20産地、L67〜85%のパステル寄り明度）と
+  `flavorAccent.js`（42フレーバー、彩度の高い個別色）は、それぞれ別の
+  時期に別のトーンで設計されたため、同じ画面に並んだときに産地色が
+  フレーバー色より視覚的に弱く見える（Graph画面のノードで顕著）。
+  今回のスコープ（値ごとの個別色を「適用する画面」を揃える作業）には
+  含まれない「色自体の見直し」であり、着手するかはユーザーとの別途の
+  判断が必要
+
+---
+
+### 2026-09-18: デザイン・テーマの統一・追補 — `records/new`の選択済みタグが無色のまま残っていた件（branch `feat/graph-tactile-interaction`継続）
+
+上記の統一作業を報告した直後、ユーザーから「records/newページが
+変更されていない」という指摘を受けた。
+
+**原因**: 記録作成フォーム（`RecordForm.jsx`・`CoffeeComponentFields.jsx`）
+のフレーバー・品種選択は、ポップオーバー内の検索式タグ入力
+`TagCombo.jsx`を使う。前回の監査では、フォーム側の色表示として
+PropertyButtonの要約テキスト（「2件選択」等、複数値の集合を示すだけ）
+だけを確認し、「型共通色すら不要」と判断してスコープ外にしていた。
+しかし実際にポップオーバーを開くと見える「選択済みタグ」自体
+（1つずつの具体的な値。例:「Berry」「Almond」）は、この要約テキストとは
+別物で、記録カード等と同じ「1つの具体的な値の表示」に該当し、無色
+（`bg-surface-2`固定）のまま見落としていた。
+
+**変更ファイル**:
+- `features/coffee-records/components/TagCombo.jsx`: `type`（ノード
+  種別）propを追加。指定時は選択済みタグへ`nodeColor.js`経由の色
+  （tint背景+文字色+個別色ドット、`RecordCard.jsx`と同じ見た目）を
+  付ける。未指定時は従来の無色のままフォールバック
+- `features/coffee-records/components/RecordForm.jsx`:
+  `TagCombo`呼び出し2箇所（flavorIds、primary component の
+  varietyIds）に`type="flavor"`/`type="variety"`を追加
+- `features/coffee-records/components/CoffeeComponentFields.jsx`:
+  同様に`type="variety"`を追加（2グループ目以降のブレンド用）
+- `docs/design.md`: 「値ごとの個別色と型共通色の一貫性」節に追記
+
+**実行したテストと結果**: `npm run lint`（0エラー）、`npm run test`
+（356件、0エラー。`TagCombo.jsx`自体の専用テストは無し）、`npm run
+build`（0エラー）。claude-in-chromeで`/records/new`を開き、産地
+（Ethiopia）選択後にフレーバーで「Berry」（個別色・マゼンタ系）と
+「Almond」（個別色・茶系）、品種で「Geisha」（型共通色・黄）を選択し、
+選択済みタグがそれぞれ意図した色で表示されることを実機確認した。
+
+**未解決事項**: 同じ監査の抜け漏れが他にも残っている可能性がある
+（今回は「フォームのポップオーバーを実際に開いて確認する」という
+実機確認をしていなかったことが原因のため、次回同種の監査では
+ポップオーバー・モーダル等インタラクションで初めて見える表示も
+含めて確認する）。
+
+---
+
+### 2026-09-19: ローディング表示をコーヒーのドリップアニメーションへ統一（`CoffeeLoader`、branch `feat/graph-tactile-interaction`継続）
+
+「ローディングにこだわりたい。コーヒーが注がれる/ドリップするアニメーション
+を付けたい」という依頼を受けた。既存のローディング表示は2系統あった:
+①ボタン内の小さいスピナー（記録の保存ボタン・抽出詳細の保存ボタン、
+`Loader2`アイコン）②ページ全体のスケルトン（Stats/Graph/Records等13箇所、
+内容の形を模したシマー演出）。両方に適用することをユーザーに確認した。
+
+実装前に、Artifactで動くモックを作り、ユーザーと何度かやり取りしながら
+デザインを詰めた（本文チャットではなくArtifact上で「注ぐ案」「ドリップ案」
+「ドリッパーを追加」「液面が満ちる感じを追加」「液面がマグの線と重なって
+いる」「色がコーヒーではなくトマトジュースに見える」「液面の形をマグの
+輪郭に合わせる」という順で反復修正し、最終的に「ドリッパーの注ぎ口から
+一滴ずつ落ち、落ちるたびにマグの液面が一段ずつ満ちていく」デザインで
+承認を得た）。このモック検討の過程で、**同じSVG要素へ`clip-path`と
+`transform-box: fill-box`を伴う`transform`アニメーションの両方を乗せると、
+クリップ領域がtransformに追従せずズレる**というChromeの挙動を実機で発見した
+（液面の底がマグの丸みからはみ出して見える不具合として現れた）。`clip-path`
+を動かない親`<g>`要素へ移し、アニメーションする`<rect>`をその中に入れる
+構成に分離して解消した。この対応はモックだけでなく本実装のコンポーネント
+設計にもそのまま反映している。
+
+**新規作成ファイル**:
+- `frontend/src/components/CoffeeLoader.jsx`: `size="sm"`（18px、ボタン内、
+  `aria-hidden`のみで`Loader2`と同じ扱い）／`size="lg"`（72px、
+  `aria-busy`+`aria-label`付き、ページ/セクション全体用）の2バリエーションを
+  持つ共有ローディングコンポーネント。ドリップ（1.15秒）4回でちょうど
+  液面サイクル（4.6秒）と揃えているため、一滴落ちるごとに液面が一段
+  上がって見える。カップの輪郭パスは保存ボタンの完了演出
+  （`RecordForm.jsx`の`PourIcon`、変更なし）と同じものを再利用している
+- `frontend/src/components/CoffeeLoader.module.css`: アニメーション本体
+  （プレーンCSSの`@keyframes`のみ、Framer Motion不使用。`LandingPage`の
+  `GraphIllustration.module.css`と同じ構成）。13以上のファイルから
+  読み込まれるため、Framer Motionに依存していないページのバンドルへ
+  影響を与えないための選択。`prefers-reduced-motion: reduce`では
+  ドリップ・液面とも静止表示にフォールバックする
+
+**変更ファイル**（`Loader2`/各種Skeletonを`CoffeeLoader`へ置き換え）:
+①ボタン: `RecordForm.jsx`（`isSubmitting`時。post-saveの`PourIcon`は
+変更なし）、`BrewDetailsCard.jsx`
+②ページ/セクション全体（計12箇所）: `StatsPage.jsx`、`DiagnosisPage.jsx`、
+`WorldMapPage.jsx`、`ProfilePage.jsx`、`RecordDetailPage.jsx`、
+`RecordFormPage.jsx`（編集時のみ）、`HomePage.jsx`（Recent Records）、
+`RecordsPage.jsx`、`features/search/components/SearchResults.jsx`、
+`GraphPage.jsx`（`fillHeight`使用）、`NodeDetailPanel.jsx`、
+`EntityDetailPage.jsx`。`RecordListStates.jsx`・`GraphStates.jsx`は
+該当エクスポート（`RecordListSkeleton`/`GraphLoadingState`）のみ削除し、
+Empty/NoMatch/Error系のstateは変更していない
+
+**削除したファイル**: `StatsSkeleton.jsx`、`DiagnosisSkeleton.jsx`、
+`WorldMapSkeleton.jsx`、`ProfileSkeleton.jsx`、`RecordDetailSkeleton.jsx`、
+`RecordFormSkeleton.jsx`、`HomeRecordCardSkeleton.jsx`、
+`StatCardSkeleton.jsx`、`RankingListSkeleton.jsx`（いずれも参照元が
+無くなったことをgrepで確認済み）。`App.css`の`@keyframes shimmer` /
+`.skeleton-block`（`prefers-reduced-motion`ブロック含む）も削除。ついでに
+無関係だが同じセレクタに依存して残っていた未参照のMLB時代の死んだCSS
+（`.future-star-card--loading .skeleton-block`関連3ルール、
+`future-star-card`というclassNameは現在のJSXに存在しないことを確認済み）
+も同じタイミングで削除した。
+
+**`docs/design.md`の編集**: 「New / Edit Record」節のFramer Motion項目
+から「（他の画面には広げない）」という制限句を削除し、
+「ローディング表示は`CoffeeLoader.jsx`に統一し全画面へ展開した
+（Framer Motionのバネ物理計算自体は引き続きこの画面限定）」という
+日付付き注記を追加した（ユーザーからの直接の指示、「そんなしょうもない
+記述は消して」）。
+
+**データフロー**: 変更なし（表示ロジックのみ。APIレスポンス形状・DBの
+読み書きには影響しない）。
+
+**実行したテストと結果**: `npm run lint`（0エラー）、`npm run test`
+（356件、0エラー）、`npm run build`（0エラー。CSSバンドルが約73.7kB→
+71.1kB、StatsPage/DiagnosisPage/EntityDetailPageの各チャンクも縮小し、
+スケルトン削除が反映されていることを確認）。claude-in-chromeで
+ローカルMongoDBへ一時切り替えのうえ、`/records/new`での保存
+（ボタンスピナー→`PourIcon`遷移に回帰無し）、`BrewDetailsCard`の
+インライン保存、Stats/Diagnosis/Graph（キャンバス全体＋ノード検出パネル）
+の各画面遷移を実機確認した。いずれもコンソールエラー無し。ローカル
+ネットワークでの読み込みが速すぎて、アニメーションの途中フレームを
+スクリーンショットで捉えることはできなかったが、承認済みのArtifactモック
+と全く同じSVGパス・CSS `@keyframes`をそのまま本実装へ移植しているため
+（クリップの不具合修正を含む）、見た目の妥当性はモック側で検証済み。
+
+**未解決事項**: ローカルの高速なネットワーク環境では、実アプリ上で
+アニメーションの動いている様子を目視確認できていない（各画面とも
+一瞬で読み込みが終わるため）。本番相当の速度低下環境（低速回線の
+シミュレーション等）での見え方は未確認。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
 - 2026-08-26、グラフを開いた直後に大きくズームアウトして見づらい問題が発生。当初「`chargeStrength`不足でノードが重なって固定される」と誤診断したが、実際の原因は「産地・精製方法・フレーバー等を何も選択していない記録（エッジ0本の孤立ノード）が反発力だけで際限なく漂流し、それを画面に収めようとカメラが大きくズームアウトする」ことだった。`GraphCanvas.jsx`に中心への引き戻し力（`forceX(0)`/`forceY(0)`、strength 0.05）を追加して解消済み（詳細は2026-08-26の追記エントリ参照）。なお、これとは別に対処を一度ユーザーの確認を取らずに実装してしまい（`warmupTicks`等）、新たな副作用を生んだため取り消した経緯がある（同エントリ参照）。同種の孤立ノードが将来大量に増えた場合の見え方までは検証していない
 - Graph画面で「たまにノードが巨大化して見える」というユーザー報告は、2026-08-26にユーザーへ再ヒアリングした結果、以前の診断（カメラのbounding box計算タイミングが原因）が誤りだったと判明した。正しい原因は「グラフ画面を開いたまま他のタブ・アプリに切り替えて放置すると、`window.devicePixelRatio`のズレによりcanvasの描画倍率が実際の内部解像度とずれる」というもの（詳細は2026-08-26のエントリ参照）。発生条件が特殊でリロードという回避策も既にあるため、ユーザーと相談のうえ修正は見送っている
-- `react-force-graph-2d`の`onEngineTick`/`onEngineStop`が、力学シミュレーション自体は実際に動いている（`getGraphBbox()`で確認済み）にもかかわらず一度も発火しない。`react-kapsule`・`force-graph`本体のソースを読んでも確実な原因は特定できておらず、現状は自前の`requestAnimationFrame`ループで代替している（`GraphCanvas.jsx`冒頭の既知の不具合3参照）。2026-08-26、`react-force-graph-2d`/`force-graph`とも現時点で公開されている最新バージョンで確認したが解消していない（アップグレードでは直らない）。ライブラリの将来のバージョンアップ等で発火するようになった場合は、この代替実装は不要になる可能性がある
+- ~~`react-force-graph-2d`の`onEngineTick`/`onEngineStop`が発火しない問題~~ → 2026-09-18、`react-force-graph-2d`（d3-force）自体を自前の物理演算へ全面置き換えたため解消（該当エントリ参照）。ライブラリの内部実装に依存する不具合ではなくなった
 - FastAPIサービスは現状ヘルスチェックのみで、コーヒードメインの実処理を持たない（`docs/architecture.md`の方針通りの意図的な状態であり、バグではない）
 - 知識グラフの`dateFrom` / `dateTo`フィルターはAPI・純粋関数側には実装済みだが、フロントエンドのフィルターUIには未反映
 - Space Monoは評価・日付・グラフの件数にのみ適用済み。`RecordsPage`の件数表示（`records.countLabel`）など、他の数値表示への適用可否は未判断
@@ -3541,7 +4172,7 @@ lucide-reactのみを使う」ルールも、この9種類に限る例外とし�
 - Insight/Statsへのkeywordノード活用は、今回意図的にスコープ外とした（`docs/features.md`「Graphとの境界」参照）。Graphのみで完結しており、機能としては欠けていない
 - `noteKeywordExtractor.js`の否定ガード（`NEGATION_PARTICLES`）は、マッチした語の直後数文字だけを見る局所的な判定のため、文全体を後から打ち消す言い回し（例:「チョコレートのようなコクのあるコーヒーだと思っていたら、違っていた。」のように、離れた場所の「違っていた」で前半の印象を撤回する文）には対応できず、誤って`チョコレートのような`（flavorAlias経由でChocolateノードへ）・`コク`をキーワードとして検出してしまう。ユーザーと相談のうえ、これは辞書＋部分文字列一致というルールベース方式の設計上の限界として受け入れる方針にした（文構造の解析にはAI/NLPが必要で、`docs/product.md`「MVP Before Intelligence」の精緻化後もAI/NLPは引き続きスコープ外のため）。誤検出の影響は「余分なノードが1つ付く」程度に留まり、記録データ自体は壊れない。将来直すとしても、否定パターンの追加羅列ではなく根本的にNLPへ切り替える判断が必要になる
 - コーヒー診断（`backend/core/diagnosis/diagnosisBuilder.js`）の8種類のARCHETYPESと閾値（`minRoastSample: 3`・`minFlavorSample: 3`）はデモデータでの動作確認のみで、実際のユーザーの記録傾向に基づくチューニングは未実施（`tasteKeywords.json`と同種の課題）
-- 2026-08-27、`--color-accent-*`をCatppuccin Mochaへ刷新した際、一部のトークン名が指すノード種別を変更した（例: `accent-teal`は以前keyword用だったが今回はfarm用）。今後この配色を使う新しいUIを追加する際は、`nodeVisuals.js`で実際の対応を確認してから使うこと
+- ~~2026-08-27、`--color-accent-*`のトークン名が指すノード種別が変わっていた件（`nodeVisuals.js`で要確認）~~ → 2026-09-18、グラフのノード種別色は`--color-accent-*`から独立した専用トークン（`--color-graph-*`）へ分離したため、この注意事項自体が対象外になった（該当エントリ参照）。~~`--color-accent-*`は引き続きDiscover・WorldMapLegend・OverviewStats・Diagnosisのarchetype色として使われている~~ → 2026-09-18（デザイン・テーマの統一）、Discover・WorldMapLegend・Diagnosisを`--color-graph-*`へ移行し、`--color-accent-*`自体を削除した（該当エントリ参照）
 - 2026-08-27に追加したGraph画面のノード検索（`GraphNodeSearch.jsx`）は、マウス/タップ操作のみでキーボードでの候補移動（矢印キー）には対応していない
 - `frontend/src/features/map/utils/countryCodes.js`のISO alpha-2→numeric-3対応表は、現在`backend/seeds/data/origins.js`の20か国のみ検証済み。新しい産地をorigins.jsへ追加する際は、この対応表への追加も忘れないこと（追加し忘れてもエラーにはならず、その産地が地図上でハイライトされないだけ）
 - `backend/repositories/coffeeRecordRepository.js`の`.populate("originId", "name")`が`countryCode`を含んでいなかった不具合（2026-08-28に`"name countryCode"`へ修正）と同様に、他のマスターデータのpopulate選択フィールドも「フロントが実際に必要とする全フィールドを網羅しているか」を機能追加のたびに確認する必要がある（同種の見落としが再発する可能性があるため）
@@ -3569,3 +4200,5 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 9. `OriginQualityScores`・`SimilarRecords`のモバイル幅での表示確認（2026-08-31、iframeを使う代替手法でHome/Records/Graph/World Mapは確認済みだが、この2つはまだ未実施）。同じiframe手法（IMPLEMENTATION.md該当エントリ参照）で確認できる
 10. 2026-08-31（設計レビュー）で明示的にスコープ外とした4項目（JWTリフレッシュ・失効機構の新設、知識グラフのキャッシュ・ページネーション導入、全エンドポイントへのレート制限拡大、GraphCanvasの完全なキーボード操作対応）は、いずれもユーザーとの相談・別途の設計判断が必要な規模のため、着手する場合はまず方針を相談する
 11. 2026-09-17、グラフ画面のラベル密集対応でArtifactにより検討した4案（A: 静かな星図/B: フォーカスモード（採用済み）/C: 諸島マップ/D: 一覧＋ミニグラフ）のうち、B以外は未実装のまま残っている。ノードの物理的な間隔（`chargeStrength`/`linkDistance`）自体の見直しも未着手（記録数がさらに増えた場合の詰まり具合が引き続き未検証のため）。将来さらに手を入れる場合、A（種別ごとの弧状レーン配置）かC（種別ごとの領域分け）を間隔調整とあわせて検討する
+12. 2026-09-18、「デザイン・テーマの統一」で見つかった`originAccent.js`（パステル寄り明度）と`flavorAccent.js`（彩度の高い個別色）のトーンの不一致（同じ画面に並ぶと産地色がフレーバー色より弱く見える）を、着手するか含めてユーザーと相談する
+13. `backend/.env`のAtlas接続情報（`MONGO_URI`）が`bad auth`で使えない状態が2026-08-30から継続している（2026-09-18の視覚確認時もローカルMongoDBへの一時切り替えで代替した）。認証情報のローテーションかIPアクセスリストの確認をユーザー自身に依頼する

@@ -7,7 +7,7 @@ import "../features/coffee-records/coffee-records.css";
 import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecord";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import BackLink from "../components/BackLink";
-import RecordDetailSkeleton from "../features/coffee-records/components/RecordDetailSkeleton";
+import CoffeeLoader from "../components/CoffeeLoader";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { cardClass, primaryButtonClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import {
@@ -21,6 +21,7 @@ import BrewDetailsCard from "../features/coffee-records/components/BrewDetailsCa
 import RecordConnectionsDiagram from "../features/graph/components/RecordConnectionsDiagram";
 import SimilarRecords from "../features/similarRecords/components/SimilarRecords";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
+import { getNodeTintBgClass, getNodeTextColorClass } from "../features/graph/utils/nodeColor";
 import { contentContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
 import { getErrorMessage } from "../utils/errorMessage";
@@ -121,7 +122,7 @@ function RecordDetailPage() {
   if (isLoading) {
     return (
       <div className={contentContainerClass}>
-        <RecordDetailSkeleton />
+        <CoffeeLoader size="lg" />
       </div>
     );
   }
@@ -186,7 +187,7 @@ function RecordDetailPage() {
                 <Link
                   key={item.id}
                   to={`/entities/${encodeURIComponent(`${nodeType}:${item.id}`)}`}
-                  className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary transition-colors duration-150 hover:bg-surface-2 hover:text-text"
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors duration-150 hover:brightness-125 ${getNodeTintBgClass({ type: nodeType, label: item.name })} ${getNodeTextColorClass({ type: nodeType, label: item.name })}`}
                 >
                   {item.name}
                 </Link>

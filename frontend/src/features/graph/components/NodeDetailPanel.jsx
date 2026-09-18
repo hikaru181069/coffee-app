@@ -4,7 +4,8 @@ import { Star, X } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../utils/nodeVisuals";
-import { getOriginTextClass } from "../../coffee-records/utils/originAccent";
+import { getNodeSolidBgClass } from "../utils/nodeColor";
+import CoffeeLoader from "../../../components/CoffeeLoader";
 import { secondaryButtonClass } from "../../coffee-records/components/formStyles";
 import { formatConsumedAtShort } from "../../coffee-records/utils/recordFormat";
 import { getErrorMessage } from "../../../utils/errorMessage";
@@ -36,9 +37,11 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
 
   const visual = getNodeVisual(node.data.type);
   const Icon = visual.icon;
-  // 産地ノードだけは種別共通の色ではなく、産地ごとの個別色
-  // （originAccent.js。GraphCanvas.jsxのnodeColorと同じ考え方）を使う
-  const iconColorClass = node.data.type === "origin" ? getOriginTextClass(node.data.label) : visual.colorClass;
+  // 産地・フレーバーノードだけは種別共通の色ではなく値ごとの個別色を使う
+  // という判定は、他画面とも共有するutils/nodeColor.js（2026-09新設）へ
+  // 集約した。2026-09、見出しをQ構図と揃えた塗りつぶし円バッジへ変更した際、
+  // アイコンの色ではなくバッジ本体の背景色として使うようになった
+  const badgeBgClass = getNodeSolidBgClass({ type: node.data.type, label: node.data.label });
 
   return (
     <aside
@@ -51,11 +54,15 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
       className="fixed inset-x-0 bottom-0 z-[60] max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-surface-2 bg-raised/90 p-4 shadow-panel backdrop-blur-xl sm:absolute sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-80 sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Icon size={18} aria-hidden="true" className={iconColorClass} />
+        <div className="flex items-center gap-3">
+          <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full shadow-elevated ${badgeBgClass}`}>
+            <Icon size={20} aria-hidden="true" className="text-on-inverse" />
+          </div>
           <div>
-            <p className="text-xs text-text-tertiary">{t(visual.labelKey)}</p>
-            <h2 className="text-sm font-semibold text-text">{node.data.label}</h2>
+            <span className="inline-block rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-bold text-text-secondary">
+              {t(visual.labelKey)}
+            </span>
+            <h2 className="mt-1 text-sm font-bold text-text">{node.data.label}</h2>
           </div>
         </div>
         <button
@@ -69,7 +76,7 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
       </div>
 
       <div className="mt-4">
-        {isLoading && <NodeDetailSkeleton isRecord={node.data.type === "record"} t={t} />}
+        {isLoading && <CoffeeLoader size="lg" />}
 
         {error && <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>}
 
@@ -88,37 +95,6 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
         )}
       </div>
     </aside>
-  );
-}
-
-/**
- * 読み込み中のパネル本体。選択したノードの種類（node.data.type）は
- * 選択した時点で既に分かっている（読み込み中なのはdetailだけ）ため、
- * RecordNodeDetail/AttributeNodeDetailの形に合わせて出し分ける。
- */
-function NodeDetailSkeleton({ isRecord, t }) {
-  return (
-    <div aria-busy="true" aria-label={t("common.loading")} className="flex flex-col gap-3">
-      {isRecord ? (
-        <>
-          <div className="skeleton-block h-4 w-24 rounded" />
-          <div className="skeleton-block h-4 w-20 rounded" />
-          <div className="flex flex-col gap-1.5">
-            <div className="skeleton-block h-3.5 w-full rounded" />
-            <div className="skeleton-block h-3.5 w-full rounded" />
-            <div className="skeleton-block h-3.5 w-2/3 rounded" />
-          </div>
-          <div className="skeleton-block mt-1 h-9 w-full rounded-lg" />
-        </>
-      ) : (
-        <>
-          <div className="skeleton-block h-4 w-32 rounded" />
-          <div className="skeleton-block h-9 w-full rounded-lg" />
-          <div className="skeleton-block h-14 w-full rounded-lg" />
-          <div className="skeleton-block h-14 w-full rounded-lg" />
-        </>
-      )}
-    </div>
   );
 }
 

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Loader2, Pencil, Timer } from "lucide-react";
+import { Pencil, Timer } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import CoffeeLoader from "../../../components/CoffeeLoader";
 import EmptyState from "../../../components/EmptyState";
 import FormField from "./FormField";
 import PourScheduleEditor from "./PourScheduleEditor";
@@ -341,7 +342,7 @@ function BrewDetailsCard({ record }) {
               {t("common.cancel")}
             </button>
             <button type="submit" disabled={isSubmitting} className={primaryButtonClass}>
-              {isSubmitting && <Loader2 size={16} aria-hidden="true" className="animate-spin" />}
+              {isSubmitting && <CoffeeLoader size="sm" />}
               {isSubmitting ? t("common.saving") : t("records.brewDetailsSave")}
             </button>
           </div>

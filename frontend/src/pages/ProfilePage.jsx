@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import "../features/coffee-records/coffee-records.css";
 import { logout } from "../utils/authStorage";
 import { useProfile } from "../features/profile/hooks/useProfile";
-import ProfileSkeleton from "../features/profile/components/ProfileSkeleton";
+import CoffeeLoader from "../components/CoffeeLoader";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import FormField from "../features/coffee-records/components/FormField";
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
@@ -27,7 +27,8 @@ import { getErrorMessage } from "../utils/errorMessage";
  * 同じ「header → divide-yで区切ったsection群」の1本の縦の流れへ
  * 再設計した。取得ロジックは features/profile/hooks/useProfile.js へ
  * 切り出し、ローディング/エラー状態も他の詳細系ページと同じ
- * ProfileSkeleton / RecordsErrorState を使う形に揃えた。email欄は
+ * CoffeeLoader（2026-09、ProfileSkeletonから置き換え） / RecordsErrorState
+ * を使う形に揃えた。email欄は
  * 編集不可のため、FormField（必須/任意バッジ付き）ではなく
  * RecordDetailPageのProperty Gridと同じ dt/dd の読み取り専用表示にした。
  *
@@ -77,7 +78,7 @@ function ProfilePage() {
   if (isLoading) {
     return (
       <div className={contentContainerClass}>
-        <ProfileSkeleton />
+        <CoffeeLoader size="lg" />
       </div>
     );
   }

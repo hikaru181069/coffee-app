@@ -1,14 +1,14 @@
 import { useTranslation } from "react-i18next";
 
 import RecordCard from "../../coffee-records/components/RecordCard";
-import { RecordListSkeleton } from "../../coffee-records/components/RecordListStates";
+import CoffeeLoader from "../../../components/CoffeeLoader";
 import { getErrorMessage } from "../../../utils/errorMessage";
 import EntityResultCard from "./EntityResultCard";
 
 /**
  * 横断検索の結果表示。
  *
- * docs/search.md参照。属性ノードの一致（entities）と記録タイトルの一致
+ * docs/features.md「Search」参照。属性ノードの一致（entities）と記録タイトルの一致
  * （records）を別セクションとして表示する。属性は「知識ベース」寄りの
  * 集計情報、記録は個別の記録カード（既存のRecordCard.jsxを再利用）と
  * 見た目の性質が異なるため。
@@ -16,7 +16,7 @@ import EntityResultCard from "./EntityResultCard";
 function SearchResults({ query, entities, entitiesTruncated = false, records, isLoading, error }) {
   const { t } = useTranslation();
 
-  if (isLoading) return <RecordListSkeleton count={3} />;
+  if (isLoading) return <CoffeeLoader size="lg" />;
   if (error) return <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>;
 
   if (entities.length === 0 && records.length === 0) {

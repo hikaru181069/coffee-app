@@ -6,7 +6,7 @@ import "../features/coffee-records/coffee-records.css";
 import { useProfile } from "../features/profile/hooks/useProfile";
 import { useCoffeeRecords } from "../features/coffee-records/hooks/useCoffeeRecords";
 import HomeRecordCard from "../features/coffee-records/components/HomeRecordCard";
-import HomeRecordCardSkeleton from "../features/coffee-records/components/HomeRecordCardSkeleton";
+import CoffeeLoader from "../components/CoffeeLoader";
 import { getErrorMessage } from "../utils/errorMessage";
 // GraphPreviewは以前はreact-force-graph-2dを縮小描画しておりlazy importが
 // 必要だったが、静的なイラスト+件数表示へ変更した際に依存が無くなった
@@ -27,7 +27,7 @@ import { wideContainerClass } from "../styles/pageContainer";
  * 2026-08、Figmaでの再設計に合わせて構成を変更した:
  *   - New Record CTAを、ヘッダー右上の小さいボタンから
  *     「Record Coffee」という独立したセクション（大きな入力エリア）へ格上げした。
- *     Record First（docs/product-principles.md）をより強く表現するため。
+ *     Record First（docs/product.md「Product Principles」）をより強く表現するため。
  *   - Recent Recordsのカードは横並びグリッドにし、表示する情報を
  *     産地・銘柄・精製方法・フレーバーに絞った（HomeRecordCard.jsx）。
  *     日付・記録タイプは一覧画面（RecordCard.jsx）に残っているので
@@ -35,7 +35,7 @@ import { wideContainerClass } from "../styles/pageContainer";
  *     詳しい絞り込みや状態はRecordsPageに譲る。
  *
  * 2026-08、知識グラフを「作る」ものではなく「育つ」ものとして位置づける
- * プロダクト方針（docs/vision.md / docs/product-principles.md）に合わせて
+ * プロダクト方針（docs/product.md「Vision」「Product Principles」）に合わせて
  * さらに調整した:
  *   - New Record CTAは、記録が1件も無い最初の訪問時だけ大きく見せる。
  *     すでに記録があるリピーターには、同じCTAを毎回大きく出す必要は無いため
@@ -46,7 +46,7 @@ import { wideContainerClass } from "../styles/pageContainer";
  *     育っているグラフの縮小プレビュー（GraphPreview）へ差し替えた。
  *     「グラフが育っている」という実感そのものをHomeで見せるため。
  *
- * 2026-08、Insight機能（docs/insights.md）を追加した。グラフは見る側が
+ * 2026-08、Insight機能（docs/features.md「Insights」）を追加した。グラフは見る側が
  * 自分で関係性を読み取る必要があるため、アプリ側から意味のある一文
  * （InsightBanner）をGraphPreviewの上に配置し、発見体験を後押しする。
  *
@@ -156,7 +156,7 @@ function HomePage() {
           </Link>
         </div>
 
-        {isLoading && <HomeRecordCardSkeleton count={3} />}
+        {isLoading && <CoffeeLoader size="lg" />}
         {!isLoading && error && (
           <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>
         )}
