@@ -119,10 +119,16 @@ function RecordDetailPage() {
     }
   };
 
+  // 2026-09、BackLinkをローディング判定より前に出し、読み込み中も
+  // 「一覧へ戻れる」ことがわかるようにした（見出し自体は record.title
+  // に依存するため、記録が読み込まれるまでは出せない）
   if (isLoading) {
     return (
       <div className={contentContainerClass}>
-        <CoffeeLoader size="lg" />
+        <BackLink fallback="/records" />
+        <div className="mt-3">
+          <CoffeeLoader size="lg" />
+        </div>
       </div>
     );
   }
@@ -130,19 +136,22 @@ function RecordDetailPage() {
   if (error) {
     return (
       <div className={contentContainerClass}>
-        {error.isNotFound ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
-            <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
-            <p className="text-sm text-text-tertiary">
-              {t("records.notFoundDesc")}
-            </p>
-            <Link to="/records" className={secondaryButtonClass}>
-              {t("common.backToList")}
-            </Link>
-          </div>
-        ) : (
-          <RecordsErrorState error={error} onRetry={reload} />
-        )}
+        <BackLink fallback="/records" />
+        <div className="mt-3">
+          {error.isNotFound ? (
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+              <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
+              <p className="text-sm text-text-tertiary">
+                {t("records.notFoundDesc")}
+              </p>
+              <Link to="/records" className={secondaryButtonClass}>
+                {t("common.backToList")}
+              </Link>
+            </div>
+          ) : (
+            <RecordsErrorState error={error} onRetry={reload} />
+          )}
+        </div>
       </div>
     );
   }

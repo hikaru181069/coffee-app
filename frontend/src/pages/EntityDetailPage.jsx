@@ -59,10 +59,18 @@ function EntityDetailPage() {
   const trail = location.state?.trail ?? [];
   const { detail, isLoading, error } = useEntityDetail(nodeId);
 
+  // 2026-09、パンくず/BackLink（location.state.trailだけで決まり、
+  // detailのfetchを必要としない）をローディング判定より前に出し、
+  // 読み込み中も「戻る」導線が消えないようにした
+  const backNav = trail.length > 0 ? <EntityTrail trail={trail} current={null} t={t} /> : <BackLink />;
+
   if (isLoading) {
     return (
       <div className={contentContainerClass}>
-        <CoffeeLoader size="lg" />
+        {backNav}
+        <div className="mt-3">
+          <CoffeeLoader size="lg" />
+        </div>
       </div>
     );
   }
@@ -70,7 +78,7 @@ function EntityDetailPage() {
   if (error) {
     return (
       <div className={contentContainerClass}>
-        <BackLink />
+        {backNav}
         <p className="mt-3 text-sm text-danger">{getErrorMessage(error, t)}</p>
       </div>
     );

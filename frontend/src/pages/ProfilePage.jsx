@@ -75,24 +75,6 @@ function ProfilePage() {
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  if (isLoading) {
-    return (
-      <div className={contentContainerClass}>
-        <CoffeeLoader size="lg" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={contentContainerClass}>
-        <RecordsErrorState error={error} onRetry={reload} />
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
   const handleSaveName = async (event) => {
     event.preventDefault();
     const trimmed = name.trim();
@@ -132,11 +114,17 @@ function ProfilePage() {
 
   return (
     <div className={contentContainerClass}>
+      {/* 2026-09、見出しをローディング判定より前に出し、読み込み中も
+          「今どのページにいるか」がわかるようにした */}
       <header className="mb-6">
         <h1 className="text-xl font-bold text-text">{t("profile.heading")}</h1>
         <p className="mt-1 text-sm text-text-tertiary">{t("profile.subtitle")}</p>
       </header>
 
+      {isLoading && <CoffeeLoader size="lg" />}
+      {!isLoading && error && <RecordsErrorState error={error} onRetry={reload} />}
+      {!isLoading && !error && user && (
+        <>
       <div className="flex flex-col divide-y divide-surface-2">
         <section className="pb-6">
           <h2 className="text-sm font-semibold text-text">{t("profile.languageHeading")}</h2>
@@ -238,6 +226,8 @@ function ProfilePage() {
         </div>
         <p className="footer-credit">Built by Hikaru · MERN Portfolio</p>
       </div>
+      </>
+      )}
     </div>
   );
 }

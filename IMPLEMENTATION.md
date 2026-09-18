@@ -4198,6 +4198,56 @@ JSX構造を全ページで揃えるにはより大きな変更が必要なた�
 
 ---
 
+### 2026-09-19: ローディング中も見出し・戻る導線を残すよう5ページを再構成（branch `feat/graph-tactile-interaction`継続）
+
+上記の「min-h-64で最低限揃えた」対応について、ユーザーから「実務の
+アプリでは、ページ本体を丸ごと置き換えるパターンとchromeを残す
+パターンが混在していると一貫性が無いように見える」という指摘を受けた。
+Linear/Notion/Vercelダッシュボードのような実務プロダクトでは、見出し・
+フィルター等のchromeは常に残したまま中身だけローディング表示にする
+パターンが一般的、という考えを共有し、承認を得たうえで実施した。
+
+**対象**: 「ページ本体を丸ごとローディング表示に置き換えていた」5ページ
+（`StatsPage.jsx`・`ProfilePage.jsx`・`RecordDetailPage.jsx`・
+`RecordFormPage.jsx`・`EntityDetailPage.jsx`）を、
+`WorldMapPage.jsx`・`DiagnosisPage.jsx`が既に持っていた「見出し等の
+chromeは先に出し、中身だけをローディング/エラー/本体で出し分ける」
+構造へ揃えた。
+
+**やり方（ページごとにデータに依存しない部分を見極めて先出しした）**:
+- `StatsPage.jsx`: 見出し（固定テキスト＋Diagnosisリンク）は元々
+  データ非依存だったため、単一の`return`＋本体だけを条件分岐する形に
+  リファクタ（`isLoading`/`error`/空/本体の4分岐）
+- `ProfilePage.jsx`: 同様に見出しを先出しし、本体（フォーム群+
+  ConfirmDialog+フッター）をFragmentでまとめて条件分岐
+- `RecordDetailPage.jsx`: 見出し自体は`record.title`に依存するため
+  先出しできないが、`<BackLink fallback="/records" />`はrecordを
+  必要としないため、これだけ先に出す
+- `RecordFormPage.jsx`: `<BackLink>`+`<h1>`は`isEditing`（route
+  paramsだけで決まる）にしか依存しないため、`staticHeader`という
+  ローカル変数に切り出し、ローディング/エラー/本体の3箇所で共有
+- `EntityDetailPage.jsx`: パンくず/BackLink（`location.state.trail`
+  だけで決まる）を`backNav`として先出し。ローディング中は
+  `EntityTrail`の`current`（`detail.label`が必要）を`null`にして
+  暫定表示する
+
+**データフロー**: 変更なし（表示ロジックのみ）。
+
+**実行したテストと結果**: `npm run lint`（0エラー）、`npm run test`
+（356件、0エラー）、`npm run build`（0エラー）。claude-in-chromeで
+ローカルMongoDBへ一時切り替えのうえ、5ページすべての解決後の表示に
+崩れが無いこと（`ProfilePage.jsx`のFragment化を含む）、
+`RecordFormPage.jsx`の編集画面が既存データで正しくプリフィルされる
+ことを確認した。コンソールエラー無し。
+
+**未解決事項**: ローカルネットワークが速すぎて、ローディング中に
+実際に見出し/BackLinkが表示され続けている様子を目視確認できていない
+（前回・前々回のCoffeeLoaderエントリと同じ既知の制約）。コードレベルの
+確認（各分岐でheader/BackLinkが`isLoading`判定より前に置かれている
+こと）に留まる。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証

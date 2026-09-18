@@ -154,9 +154,27 @@ function RecordFormPage() {
   }, [form.isDirty]);
 
   // ── 編集対象の読み込みに関わる状態 ──────────────────
+  // 2026-09、BackLink・見出し（isEditingだけで決まり、recordを必要
+  // としない）をローディング判定より前に出し、読み込み中も「今どの
+  // ページにいるか」がわかるようにした
+  const staticHeader = (
+    <header className="mb-5">
+      <BackLink fallback={isEditing ? `/records/${recordId}` : "/records"} />
+      <h1 className="mt-2 text-xl font-bold text-text">
+        {isEditing ? t("records.editTitle") : t("records.newTitle")}
+      </h1>
+      {!isEditing && (
+        <p className="mt-1 text-sm text-text-tertiary">
+          {t("records.newSubtitle")}
+        </p>
+      )}
+    </header>
+  );
+
   if (isEditing && isRecordLoading) {
     return (
       <div className={wideContainerClass}>
+        {staticHeader}
         <CoffeeLoader size="lg" />
       </div>
     );
@@ -168,6 +186,7 @@ function RecordFormPage() {
 
     return (
       <div className={wideContainerClass}>
+        {staticHeader}
         {isNotFound ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
             <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
@@ -202,23 +221,13 @@ function RecordFormPage() {
 
   return (
     <div className={wideContainerClass}>
-      <header className="mb-5">
-        {/* 2026-08、EntityDetail/Diagnosis/WorldMap/RecordDetailと同じ
-            BackLink（navigate(-1)）へ統一した。編集中に離脱しようとした
-            場合はuseBlockerが引き続きこのクリックも検知して確認する
-            （BackLinkの実体もnavigate()を呼ぶだけなので、Cancelボタンと
-            同じ経路で確認ダイアログが機能する）。fallbackは、URL直接
-            アクセス等で戻れる履歴が無い場合の行き先（編集元の詳細/一覧） */}
-        <BackLink fallback={isEditing ? `/records/${recordId}` : "/records"} />
-        <h1 className="mt-2 text-xl font-bold text-text">
-          {isEditing ? t("records.editTitle") : t("records.newTitle")}
-        </h1>
-        {!isEditing && (
-          <p className="mt-1 text-sm text-text-tertiary">
-            {t("records.newSubtitle")}
-          </p>
-        )}
-      </header>
+      {/* 2026-08、EntityDetail/Diagnosis/WorldMap/RecordDetailと同じ
+          BackLink（navigate(-1)）へ統一した。編集中に離脱しようとした
+          場合はuseBlockerが引き続きこのクリックも検知して確認する
+          （BackLinkの実体もnavigate()を呼ぶだけなので、Cancelボタンと
+          同じ経路で確認ダイアログが機能する）。fallbackは、URL直接
+          アクセス等で戻れる履歴が無い場合の行き先（編集元の詳細/一覧） */}
+      {staticHeader}
 
       <RecordForm
         values={form.values}

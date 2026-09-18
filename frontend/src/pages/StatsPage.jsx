@@ -52,38 +52,13 @@ const daysSince = (isoDate) => {
 function StatsPage() {
   const { t, i18n } = useTranslation();
   const { stats, isLoading, error, reload } = useStats();
-
-  if (isLoading) {
-    return (
-      <div className={wideContainerClass}>
-        <CoffeeLoader size="lg" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={wideContainerClass}>
-        <RecordsErrorState error={error} onRetry={reload} />
-      </div>
-    );
-  }
-
-  if (!stats) return null;
-
-  if (stats.overview.recordCount === 0) {
-    return (
-      <div className={wideContainerClass}>
-        <header className="mb-6">
-          <h1 className="text-xl font-bold text-text">{t("stats.heading")}</h1>
-        </header>
-        <StatsEmptyState />
-      </div>
-    );
-  }
+  const hasRecords = Boolean(stats) && stats.overview.recordCount > 0;
 
   return (
     <div className={wideContainerClass}>
+      {/* 2026-09、見出しをローディング判定より前に出し、読み込み中も
+          「今どのページにいるか」がわかるようにした（statusによって
+          消えるのは中身だけ）。docs/design.md「Motion」参照 */}
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-text">{t("stats.heading")}</h1>
@@ -94,42 +69,50 @@ function StatsPage() {
         </Link>
       </header>
 
-      <div className="flex flex-col gap-6">
-        <section className={cardClass}>
-          <h2 className="text-base font-semibold text-text">{t("stats.paceHeading")}</h2>
-          <div className="mt-5 flex flex-col gap-4">
-            <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} />
-            <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} />
-          </div>
-        </section>
+      {isLoading && <CoffeeLoader size="lg" />}
 
-        <section className={cardClass}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-text">{t("stats.collectionHeading")}</h2>
-            <Link
-              to="/map"
-              className="text-xs text-text-tertiary underline underline-offset-2 hover:text-text"
-            >
-              {t("stats.viewMapLink")}
-            </Link>
-          </div>
-          <div className="mt-5">
-            <CollectionStats collection={stats.collection} />
-          </div>
-        </section>
+      {!isLoading && error && <RecordsErrorState error={error} onRetry={reload} />}
 
-        <section className={cardClass}>
-          <h2 className="text-base font-semibold text-text">{t("stats.tasteHeading")}</h2>
-          <div className="mt-5 flex flex-col gap-6">
-            <RatingDistributionChart distribution={stats.ratingDistribution} />
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {RANKING_TYPES.map((type) => (
-                <TopRankingList key={type} type={type} items={stats[RANKING_KEYS[type]]} />
-              ))}
+      {!isLoading && !error && stats && !hasRecords && <StatsEmptyState />}
+
+      {!isLoading && !error && hasRecords && (
+        <div className="flex flex-col gap-6">
+          <section className={cardClass}>
+            <h2 className="text-base font-semibold text-text">{t("stats.paceHeading")}</h2>
+            <div className="mt-5 flex flex-col gap-4">
+              <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} />
+              <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} />
             </div>
-          </div>
-        </section>
-      </div>
+          </section>
+
+          <section className={cardClass}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-text">{t("stats.collectionHeading")}</h2>
+              <Link
+                to="/map"
+                className="text-xs text-text-tertiary underline underline-offset-2 hover:text-text"
+              >
+                {t("stats.viewMapLink")}
+              </Link>
+            </div>
+            <div className="mt-5">
+              <CollectionStats collection={stats.collection} />
+            </div>
+          </section>
+
+          <section className={cardClass}>
+            <h2 className="text-base font-semibold text-text">{t("stats.tasteHeading")}</h2>
+            <div className="mt-5 flex flex-col gap-6">
+              <RatingDistributionChart distribution={stats.ratingDistribution} />
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {RANKING_TYPES.map((type) => (
+                  <TopRankingList key={type} type={type} items={stats[RANKING_KEYS[type]]} />
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
