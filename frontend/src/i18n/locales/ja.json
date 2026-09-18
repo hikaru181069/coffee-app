@@ -276,7 +276,8 @@
     "viewConnection": "つながりを見る →",
     "continue": "記録を見る",
     "previewFirstAppearance": "{{label}}は初めての記録になります",
-    "previewMilestone": "{{label}}を含む記録が{{count}}件になります"
+    "previewMilestone": "{{label}}を含む記録が{{count}}件になります",
+    "brewingLabel": "発見を淹れています…"
   },
   "similarRecords": {
     "heading": "似た記録"

@@ -254,6 +254,22 @@ Similar Recordsと同じ）を踏襲している（docs/features.md
 RecordDetail/RecordForm/EntityDetail等）・Graphキャンバス・
 DiscoverCardのような「単一のまとまりを待つ」箇所では引き続き使う。
 
+2026-09、CoffeeLoaderのドリップアニメーションを他の場面にも活かしたい
+というユーザーの要望を受け、以下2箇所へ転用した:
+
+- **保存後の「発見」画面**（`SaveDiscoveryReveal.jsx`）: 画面の冒頭に
+  CoffeeLoaderを1サイクル（4.6秒）だけ再生してから、記録・発見一覧を
+  見せるようにした。「コーヒーが淹れ上がって、発見が明らかになる」と
+  いう一連の流れを表現する狙い。発見が無い普通の保存（`RecordForm.jsx`
+  のボタン内`PourIcon`のみ）にまでこの演出を挟むと保存のたびに待たされて
+  煩わしくなるため、発見が1件以上あるこの画面限定にしている。
+  `prefers-reduced-motion`では即座に本体を表示する
+- **記録が1件も無いときの空状態**（`RecordsEmptyState`、Records画面）:
+  固定のCoffeeアイコン（lucide-react）の代わりに、CoffeeLoaderをループ
+  表示するようにした。他の使用箇所が「1サイクルだけ再生する一瞬の演出」
+  なのに対し、ここは「記録するまでずっと続く状態」を表すため、ループの
+  まま止めない
+
 書体は既存方針（Interのみ、画面ごとに増やさない）を維持している
 （装飾的な書体の組み合わせは、作り直しの検討時に一度候補に上がったが、
 実務のプロダクトUI（Linear・Notion・Vercel・Stripe等）は単一の

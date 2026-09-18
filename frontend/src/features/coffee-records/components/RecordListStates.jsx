@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { AlertCircle, Coffee, SearchX } from "lucide-react";
+import { AlertCircle, SearchX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { primaryButtonClass, secondaryButtonClass } from "./formStyles";
+import CoffeeLoader from "../../../components/CoffeeLoader";
 import { getErrorMessage } from "../../../utils/errorMessage";
 import EmptyState from "../../../components/EmptyState";
 
@@ -54,20 +55,29 @@ export function RecordListSkeleton({ count = 4 }) {
 /**
  * 記録が1件も無いとき。
  * 空状態には次の行動を示す（docs/design.md の UI Rules）。
+ *
+ * 2026-09、固定のCoffeeアイコン（lucide-react）の代わりに、CoffeeLoader
+ * （コーヒーのドリップ+液面アニメーション）をループ表示するようにした。
+ * 他の使用箇所（保存後の「発見」画面等）が「1サイクルだけ再生する一瞬の
+ * 演出」なのに対し、ここは「記録するまでずっと続く状態」を表すため、
+ * ループのまま止めない（ユーザーと相談して決定）。共通のEmptyState.jsx
+ * はLucideアイコン（`size`数値+`strokeWidth`）を前提にしており
+ * CoffeeLoaderのAPIとは形が異なるため、この空状態だけ専用のマークアップ
+ * にしている（見た目のクラスはEmptyState.jsxのデフォルトと同じ）。
  */
 export function RecordsEmptyState() {
   const { t } = useTranslation();
   return (
-    <EmptyState
-      icon={Coffee}
-      title={t("records.emptyTitle")}
-      description={t("records.emptyDesc")}
-      action={
-        <Link to="/records/new" className={`${primaryButtonClass} mt-1`}>
-          {t("records.emptyCta")}
-        </Link>
-      }
-    />
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+      <CoffeeLoader size="lg" label={t("records.emptyTitle")} />
+      <div>
+        <p className="text-sm font-medium text-text">{t("records.emptyTitle")}</p>
+        <p className="mt-1 text-sm italic text-text-tertiary">{t("records.emptyDesc")}</p>
+      </div>
+      <Link to="/records/new" className={`${primaryButtonClass} mt-1`}>
+        {t("records.emptyCta")}
+      </Link>
+    </div>
   );
 }
 

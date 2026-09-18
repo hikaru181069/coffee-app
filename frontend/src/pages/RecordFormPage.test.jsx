@@ -133,9 +133,12 @@ describe("RecordFormPage（保存直後の発見）", () => {
 
     await waitFor(() => expect(createCoffeeRecord).toHaveBeenCalledTimes(1));
 
-    // 詳細ページへはまだ遷移せず、発見画面が表示される
+    // 詳細ページへはまだ遷移せず、発見画面が表示される。
+    // SaveDiscoveryReveal.jsxの「淹れている」演出（CoffeeLoaderを1サイクル
+    // =4.6秒再生してから本体を表示する）ぶん、既定のfindByタイムアウト
+    // （1000ms）より長く待つ必要がある
     expect(screen.queryByText("Record Detail Page")).not.toBeInTheDocument();
-    expect(await screen.findByText("Ethiopia Gotiti")).toBeInTheDocument();
+    expect(await screen.findByText("Ethiopia Gotiti", {}, { timeout: 6000 })).toBeInTheDocument();
     expect(screen.getByText("Ethiopiaを初めて記録しました")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "記録を見る" }));

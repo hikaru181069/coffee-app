@@ -1,13 +1,20 @@
+import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { motion as Motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { cardClass, primaryButtonClass } from "./formStyles";
+import CoffeeLoader from "../../../components/CoffeeLoader";
 import { formatConsumedAtShort } from "../utils/recordFormat";
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 import { getNodeSolidBgClass } from "../../graph/utils/nodeColor";
 import { entityDetailPathFromNodeId } from "../../graph/utils/entityLink";
+
+// CoffeeLoaderのドリップ(1.15s)×4=液面サイクル1周ぶん（コンポーネント側の
+// コメント参照）。この画面の冒頭だけ、この1サイクルを「淹れている」演出
+// として再生してから発見一覧を見せる
+const BREW_INTRO_MS = 4600;
 
 /**
  * 発見1件ぶんの行。属性種別のアイコン・色は知識グラフと同じ対応表を使う。
@@ -72,9 +79,41 @@ function DiscoveryRow({ discovery, index }) {
  * discoveries.length === 0 のときはRecordFormPage.jsx側でこの
  * コンポーネント自体を描画しない（従来通り保存演出→即座に詳細ページへ
  * 遷移する）。
+ *
+ * 2026-09、この画面の冒頭にCoffeeLoader（コーヒーのドリップ+液面
+ * アニメーション）を1サイクル（4.6秒）だけ再生してから、記録・発見一覧を
+ * 見せるようにした。「コーヒーが淹れ上がって、発見が明らかになる」という
+ * 一連の流れを表現する狙い（ユーザーと相談して決定）。発見が無い普通の
+ * 保存（RecordForm.jsxのボタン内`PourIcon`のみ）にまでこの演出を挟むと
+ * 保存のたびに待たされて煩わしくなるため、この画面（発見が1件以上ある
+ * ときだけ）に限定している。`prefers-reduced-motion`では即座に本体を表示
+ * する（RecordFormPage.jsxの`isJustSaved`判定と同じ方式）。
  */
 function SaveDiscoveryReveal({ record, discoveries, onContinue }) {
   const { t, i18n } = useTranslation();
+
+  const [isBrewing, setIsBrewing] = useState(
+    () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+
+  useEffect(() => {
+    if (!isBrewing) return undefined;
+    const timer = setTimeout(() => setIsBrewing(false), BREW_INTRO_MS);
+    return () => clearTimeout(timer);
+  }, [isBrewing]);
+
+  if (isBrewing) {
+    return (
+      <Motion.div
+        className={`${cardClass} flex flex-col items-center`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <CoffeeLoader size="lg" label={t("discoveries.brewingLabel")} />
+      </Motion.div>
+    );
+  }
 
   return (
     <Motion.div

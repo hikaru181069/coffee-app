@@ -281,7 +281,8 @@
     "viewConnection": "View connection →",
     "continue": "View record",
     "previewFirstAppearance": "This will be your first record of {{label}}",
-    "previewMilestone": "This will be your {{count}} record with {{label}}"
+    "previewMilestone": "This will be your {{count}} record with {{label}}",
+    "brewingLabel": "Brewing your discoveries…"
   },
   "similarRecords": {
     "heading": "Similar records"

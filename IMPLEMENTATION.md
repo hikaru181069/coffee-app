@@ -4346,6 +4346,67 @@ Diagnosis/Map行を含む最大4行をまとめて表示する形にした（「
 
 ---
 
+### 2026-09-19: CoffeeLoaderドリップアニメーションを「発見」画面・空状態へ転用（branch `feat/graph-tactile-interaction`継続）
+
+前回提案した3つの転用候補（空状態・コーヒー診断結果・Landing）のうち、
+ユーザーから「コーヒーの記録完了の際にアニメを挟むのはどう」という
+別提案があり、相談の結果、以下2箇所で実施することになった:
+
+1. **保存後の「発見」画面**（`SaveDiscoveryReveal.jsx`）の冒頭
+2. **記録が1件も無いときの空状態**（`RecordsEmptyState`、Records画面）
+
+**実装対象・なぜ今実装するのか**: 上記の通り、ユーザーとの相談で決定。
+発見画面は「コーヒーが淹れ上がって、発見が明らかになる」という一連の
+流れを演出する1回きりの体験、空状態は「記録するまでずっと続く状態」を
+表すループ表示という、性質の異なる2つの使い方を使い分けている。
+
+**変更ファイル**:
+- `frontend/src/features/coffee-records/components/SaveDiscoveryReveal.jsx`:
+  `BREW_INTRO_MS`（4600ms、CoffeeLoaderのドリップ×4=液面サイクル1周ぶん）
+  だけ`isBrewing`状態でCoffeeLoaderを表示し、`setTimeout`経過後に本体
+  （記録タイトル・評価・発見一覧・「記録を見る」ボタン）を表示する
+  ように変更。`prefers-reduced-motion`では最初から`isBrewing: false`に
+  して演出をスキップする（`RecordFormPage.jsx`の`isJustSaved`と同じ方式）
+- `frontend/src/features/coffee-records/components/RecordListStates.jsx`:
+  `RecordsEmptyState`の固定Coffeeアイコン（lucide-react）を
+  `CoffeeLoader size="lg"`のループ表示へ変更。共通の`EmptyState.jsx`は
+  Lucideアイコン（`size`数値+`strokeWidth`）を前提にしておりCoffeeLoaderの
+  APIとは形が異なるため、この空状態だけ`EmptyState.jsx`を経由せず専用の
+  マークアップにした（見た目のクラスは`EmptyState.jsx`のデフォルトと
+  同じに揃えている）
+- `frontend/src/i18n/locales/ja.json` / `en.json`: `discoveries.brewingLabel`
+  （CoffeeLoaderの`aria-label`用、視覚的なキャプションは表示しない。他の
+  CoffeeLoader使用箇所と同じくアイコンのみ）を追加
+- `docs/design.md`: 上記2箇所の使い分け（一瞬の演出 vs ループ）を追記
+
+**データフロー**: 変更なし。
+
+**実行したテストと結果**: 既存テストのうち、この変更で実際に壊れたもの:
+- `SaveDiscoveryReveal.test.jsx`（6件中6件が発見演出の追加により失敗）:
+  フェイクタイマー（`vi.useFakeTimers()`）を導入し、`render`直後に
+  `BREW_INTRO_MS`ぶん`vi.advanceTimersByTime`で進めて演出をスキップする
+  ヘルパーへ変更。ボタンクリックを伴うテストだけは、`userEvent.click`が
+  内部で実タイマーのdelayに依存するため、クリック前に`vi.useRealTimers()`
+  へ戻す対応が必要だった（`userEvent.setup({ advanceTimers })`を試したが
+  タイムアウトしたため、実タイマーへ戻す方式に変更）
+- `RecordFormPage.test.jsx`（1件）: 発見画面の内容を待つ`findByText`に
+  `{ timeout: 6000 }`を明示的に指定（既定の1000msでは4.6秒の演出を
+  待ちきれずタイムアウトするため）
+
+`npm run lint`（0エラー）、`npm run test`（356件、0エラー）、
+`npm run build`（0エラー）。claude-in-chromeでローカルMongoDBへ一時
+切り替えのうえ、実際に発見が起こる記録（未使用の産地Burundiを選んで
+保存）を作成し、保存直後にCoffeeLoaderの「淹れている」演出→発見一覧
+（「Burundiを初めて記録しました」）への遷移を実機で確認した。また
+新規テストアカウント（記録0件）で`/records`の空状態にCoffeeLoaderの
+ループ表示が出ることも確認した。いずれもコンソールエラー無し。
+確認後、テストレコード・テストアカウントは削除済み。
+
+**未解決事項**: 本番での「Insight行が以前表示されていたのに今回は
+表示されなかった」という点は、依然として未調査のまま。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
