@@ -20,8 +20,8 @@
   --font-mono: "Space Mono", monospace;
 
   /* 背景・テキストの階調（完全な無彩色。mobbin.comのneutralスケール実測値） */
-  --color-base: #141414;
-  --color-raised: #1f1f1f;
+  --color-base: #000000;
+  --color-raised: #0a0a0a;
   --color-surface-1: #262626;
   --color-surface-2: #333333;
   --color-surface-3: #404040;
