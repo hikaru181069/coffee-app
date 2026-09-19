@@ -73,7 +73,7 @@ export const buildPreviewLayout = (graph) => {
       const source = positionById.get(edge.source);
       const target = positionById.get(edge.target);
       if (!source || !target) return null;
-      return { id: edge.id, x1: source.x, y1: source.y, x2: target.x, y2: target.y };
+      return { id: edge.id, x1: source.x, y1: source.y, x2: target.x, y2: target.y, targetType: target.type };
     })
     .filter(Boolean);
 
