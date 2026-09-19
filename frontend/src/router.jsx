@@ -11,7 +11,6 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import LandingPage from "./pages/LandingPage";
 import RecordsPage from "./pages/RecordsPage";
-import RecordFormPage from "./pages/RecordFormPage";
 import RecordDetailPage from "./pages/RecordDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
@@ -31,10 +30,19 @@ const EntityDetailPage = lazy(() => import("./pages/EntityDetailPage"));
 const DiagnosisPage = lazy(() => import("./pages/DiagnosisPage"));
 // StatsPageは常設ナビの項目だがGraphPageと同じ扱いにした。理由は
 // GraphPage/WorldMapPageと同じ判断基準（重さではなく「初回に必ず開くとは
-// 限らない」）に合わせたもので、record作成・編集（RecordFormPage）や
-// 一覧（RecordsPage）のような中心動線（docs/product.md「Record First」）
-// は対象外にしている
+// 限らない」）に合わせたもので、一覧（RecordsPage）のような中心動線
+// （docs/product.md「Record First」）は対象外にしている
 const StatsPage = lazy(() => import("./pages/StatsPage"));
+// 2026-09、メインバンドルの実測（1.37MB, gzip 231KB）で、RecordFormPage
+// （唯一ここまで遅延読み込みにしていなかった重いページ）がFramer Motion
+// （docs/design.md「Framer Motion」参照。ChipMultiSelect/OriginBadgePicker/
+// PropertyButton/DiscoveryBadge/SaveDiscoveryRevealが依存）をメイン
+// バンドルへ引き込んでいたことが判明した。「record作成・編集は中心動線
+// だから常時読み込んでおく」という以前の判断は、裏を返すとLogin/Home/
+// Recordsのような他の全ページも、一度も/records/newを開かないユーザーの
+// ぶんまでFramer Motionを先払いしている、ということでもあった。他の
+// 遅延読み込みページと同じパターンへ揃える
+const RecordFormPage = lazy(() => import("./pages/RecordFormPage"));
 
 /**
  * 遅延読み込み中（チャンクのダウンロード待ち）のフォールバック。
@@ -83,9 +91,23 @@ export const router = createBrowserRouter(
             /records/new を /records/:recordId より先に置く。
             後ろにすると "new" が recordId として解釈されてしまう */}
         <Route path="/records" element={<RecordsPage />} />
-        <Route path="/records/new" element={<RecordFormPage />} />
+        <Route
+          path="/records/new"
+          element={
+            <Suspense fallback={<LazyPageFallback />}>
+              <RecordFormPage />
+            </Suspense>
+          }
+        />
         <Route path="/records/:recordId" element={<RecordDetailPage />} />
-        <Route path="/records/:recordId/edit" element={<RecordFormPage />} />
+        <Route
+          path="/records/:recordId/edit"
+          element={
+            <Suspense fallback={<LazyPageFallback />}>
+              <RecordFormPage />
+            </Suspense>
+          }
+        />
 
         {/* 知識グラフの属性ノード（産地・農園・品種・精製方法・焙煎度・
             フレーバー・カフェ）1件の詳細ページ。nodeIdは"origin:507f..."
