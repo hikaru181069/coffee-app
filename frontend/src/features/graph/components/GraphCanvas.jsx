@@ -60,9 +60,27 @@ const SPRING_K = 0.02;
 const SPRING_GAP = 220;
 const DAMPING = 0.86;
 const CENTER_K = 0.00015;
-const DRAG_SPRING = 0.32; // ポインタへ追従するバネの強さ（高いほど硬い）
-const DRAG_DAMPING = 0.72; // ドラッグ中の減衰（低いほどよく揺れる）
 const SCALE_LERP = 0.22;
+
+// 2026-09-20、「動きがカクつく／一度ドラッグすると静止しない」という
+// 一連の報告を受けて、d3-force（Obsidianのグラフビューが実際に使用して
+// いるライブラリ、ユーザー指摘により調査）と同じ収束の仕組みへ作り直した。
+// これまでは「速度が閾値未満になったら止める」「一定フレーム後に強制
+// ゼロ」「停止直前だけ追加減衰」という3つの場当たり的な対処を積み重ねて
+// いたが、d3-forceは単一のalpha（温度）値を毎ティック指数関数的に減衰
+// させ、その値を全ての力に掛けるだけで、これらすべてを1つの仕組みで
+// 実現している。alphaが十分小さくなれば力もほぼゼロになり、自然に
+// 静止へ収束することが数学的に保証される。
+// alphaDecay・alphaMinはd3-forceの既定値をそのまま使う
+// （alphaDecay ≈ alphaMin^(1/300)で、既定alphaMin=0.001だと約300
+// ティックで収束する設計）
+const ALPHA_DECAY = 0.0228;
+const ALPHA_MIN = 0.001;
+// ドラッグ中のalphaTarget。d3-forceのドラッグ実装は、掴んだ瞬間にalphaを
+// 1へ跳ね上げるのではなく、alphaTargetをこの値まで緩やかに引き上げる
+// ことで、周囲のノードが急に沸き立つのではなく穏やかに反応するように
+// している
+const ALPHA_TARGET_DRAG = 0.3;
 
 // 初期配置から安定するまでを画面に映さず、裏側で先に計算する。
 // 「読み込むたびにノードが弾け飛んで収まる」という、必然性のない
@@ -264,6 +282,20 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
   const panStateRef = useRef(null);
   const downInfoRef = useRef(null);
   const hoveredIdRef = useRef(null);
+  // 2026-09、実データでは減衰(DAMPING)だけでは速度が正確にゼロへ
+  // 収束せず、毎フレームの積分でグラフ全体がゆっくり回転・ドリフトして
+  // 見える不具合が再確認された（PRE_CONVERGE_STEPS後の一度きりの速度
+  // リセットだけでは、その後も回り続けるstep()ループに対して不十分
+  // だった）。ドラッグ操作が無い間は物理演算そのものを止め、真に静止
+  // させる。ドラッグ開始で再度有効化し、alphaがALPHA_MIN未満になったら
+  // step()内で自動的に再度無効化する
+  const physicsActiveRef = useRef(true);
+  // d3-force（Obsidianのグラフビューが使用）と同じalpha（温度）方式。
+  // 毎ティック alpha += (alphaTarget - alpha) * ALPHA_DECAY で更新し、
+  // 全ての力にこのalphaを掛けることで、力自体が指数関数的に減衰し
+  // 自然に静止へ収束する（ALPHA_DECAY宣言のコメント参照）
+  const alphaRef = useRef(0);
+  const alphaTargetRef = useRef(0);
 
   // selectedNodeId/onSelectNodeはpropなので、rAFループのクロージャから
   // 常に最新値を読めるようrefへ写す
@@ -287,6 +319,11 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
     const list = nodesRef.current;
     const draggingId = draggingIdRef.current;
 
+    // d3-forceと同じ順序: まずalphaを更新し、その値を以降の力すべてに
+    // 掛ける（ALPHA_DECAY宣言のコメント参照）
+    alphaRef.current += (alphaTargetRef.current - alphaRef.current) * ALPHA_DECAY;
+    const alpha = alphaRef.current;
+
     for (let i = 0; i < list.length; i += 1) {
       for (let j = i + 1; j < list.length; j += 1) {
         const a = list[i];
@@ -296,7 +333,7 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
         let d2 = dx * dx + dy * dy;
         if (d2 < 1) d2 = 1;
         const d = Math.sqrt(d2);
-        const f = REPULSION / d2;
+        const f = (REPULSION / d2) * alpha;
         const fx = (dx / d) * f;
         const fy = (dy / d) * f;
         if (a.id !== draggingId) {
@@ -320,7 +357,7 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
       // 次数の高いノード同士が繋がった場合に自然長より実サイズの方が
       // 大きくなり、常に衝突解消と綱引きして詰まって見える不具合になる
       const restLength = nodeRadius(a) + nodeRadius(b) + SPRING_GAP;
-      const f = (d - restLength) * SPRING_K;
+      const f = (d - restLength) * SPRING_K * alpha;
       const fx = (dx / d) * f;
       const fy = (dy / d) * f;
       if (a.id !== draggingId) {
@@ -333,7 +370,15 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
       }
     });
 
+    // 衝突解消は最大10回まで反復するが、多くのフレームでは1〜2回で
+    // 重なりが解消し切る。固定10回だと、重なりが無い（=何も押し戻して
+    // いない）フレームでもO(ノード数^2)の距離計算だけは常に10回分
+    // 走ってしまい、実データ（60ノード超）ではドラッグ中の体感カクつきの
+    // 主要因になっていた（ユーザー報告、2026-09-20）。1回の反復で
+    // 誰も押し戻されなければそれ以上重なりは残っていないので、早期に
+    // 打ち切る
     for (let iter = 0; iter < 10; iter += 1) {
+      let anyPushed = false;
       for (let i = 0; i < list.length; i += 1) {
         for (let j = i + 1; j < list.length; j += 1) {
           const a = list[i];
@@ -343,6 +388,7 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
           const dy = b.y - a.y;
           const d = Math.hypot(dx, dy) || 0.01;
           if (d < minDist) {
+            anyPushed = true;
             const push = (minDist - d) / 2;
             const nx = dx / d;
             const ny = dy / d;
@@ -357,30 +403,46 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
           }
         }
       }
+      if (!anyPushed) break;
     }
 
     const focusId = hoveredIdRef.current ?? selectedNodeIdRef.current;
     list.forEach((n) => {
       if (n.id !== draggingId) {
-        n.vx += (0 - n.x) * CENTER_K;
-        n.vy += (0 - n.y) * CENTER_K;
+        n.vx += (0 - n.x) * CENTER_K * alpha;
+        n.vy += (0 - n.y) * CENTER_K * alpha;
         n.vx *= DAMPING;
         n.vy *= DAMPING;
         n.x += n.vx;
         n.y += n.vy;
       } else {
+        // d3-force（Obsidianのグラフビュー）のfx/fyと同じ「固定座標」
+        // 方式。バネで追従させるのではなく、ドラッグ中のノードは毎ティック
+        // ポインタの位置そのものへ座標を固定し、速度もゼロにする。これに
+        // より、ドラッグしているノード自身の動きにバネの遅れ・揺れが
+        // 一切無くなり、ポインタへ1:1で追従する
         const target = screenToWorld(pointerRef.current.x, pointerRef.current.y);
-        n.vx += (target.x - n.x) * DRAG_SPRING;
-        n.vy += (target.y - n.y) * DRAG_SPRING;
-        n.vx *= DRAG_DAMPING;
-        n.vy *= DRAG_DAMPING;
-        n.x += n.vx;
-        n.y += n.vy;
+        n.x = target.x;
+        n.y = target.y;
+        n.vx = 0;
+        n.vy = 0;
       }
       const isFocus = n.id === hoveredIdRef.current || n.id === draggingId || n.id === focusId;
       n.targetScale = draggingId === n.id ? 1.28 : isFocus ? 1.14 : 1;
       n.scale += (n.targetScale - n.scale) * SCALE_LERP;
     });
+
+    // alphaがALPHA_MIN未満になったら、d3-forceと同じくシミュレーションを
+    // 止める（物理演算そのものを呼ばなくする。フォースはalphaに比例して
+    // 既にほぼゼロになっているはずだが、念のため速度も明示的にゼロへ
+    // リセットしておく）
+    if (draggingId == null && alphaRef.current < ALPHA_MIN) {
+      list.forEach((n) => {
+        n.vx = 0;
+        n.vy = 0;
+      });
+      physicsActiveRef.current = false;
+    }
   };
 
   const screenToWorld = (sx, sy) => {
@@ -557,15 +619,23 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
     linksRef.current = nextLinks;
     adjacencyRef.current = adjacency;
 
+    // alphaを1（全開）から始めることで、事前収束ループの間に通常の
+    // ドラッグ後と同じ減衰カーブで自然に力が弱まっていく
+    // （ALPHA_DECAY≈0.0228なら約300ティックでALPHA_MIN未満になるため、
+    // PRE_CONVERGE_STEPS=1500は十分すぎるほど余裕がある）
+    alphaRef.current = 1;
+    alphaTargetRef.current = 0;
     for (let i = 0; i < PRE_CONVERGE_STEPS; i += 1) step();
-    // 収束後も速度をゼロへ明示的にリセットする（graph-physics-mock.htmlの
-    // 承認済み実装にはこの1行があったが、移植時に見落としていた）。
+    // 収束後も速度・alphaをゼロへ明示的にリセットする（graph-physics-mock.
+    // htmlの承認済み実装にはこの1行があったが、移植時に見落としていた）。
     // これが無いと、収束しきらずわずかに残った速度が毎フレーム積分され
     // 続け、実データではグラフ全体がゆっくり回転して見える不具合になる
     nextNodes.forEach((n) => {
       n.vx = 0;
       n.vy = 0;
     });
+    alphaRef.current = 0;
+    physicsActiveRef.current = false;
 
     fitCamera(FIT_PADDING_FOCUSED, selectedNodeIdRef.current, hasFittedOnceRef.current);
     hasFittedOnceRef.current = true;
@@ -635,6 +705,13 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
       if (hit) {
         draggingIdRef.current = hit.id;
         pointerRef.current = { x: sx, y: sy };
+        // 静止後にドラッグを始めたときは、周囲のノードも押し返せるよう
+        // 物理演算を再度有効化する。alphaTargetを1ではなく0.3にとどめる
+        // ことで、d3-forceのドラッグ実装と同じく、周囲のノードが急に
+        // 沸き立つのではなく穏やかに反応する（ALPHA_TARGET_DRAG宣言の
+        // コメント参照）
+        physicsActiveRef.current = true;
+        alphaTargetRef.current = ALPHA_TARGET_DRAG;
       } else {
         panStateRef.current = { startX: sx, startY: sy, viewX: viewRef.current.x, viewY: viewRef.current.y };
       }
@@ -676,6 +753,13 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
       }
       draggingIdRef.current = null;
       panStateRef.current = null;
+      // d3-forceのドラッグ実装と同じく、ドラッグ終了時はalphaTargetを
+      // 0へ戻すだけでよい。alpha自体はALPHA_DECAYに従って毎ティック
+      // 指数関数的に減衰し続け、ALPHA_MIN未満になった時点でstep()内が
+      // 自動的にphysicsActiveRefをfalseへ戻す（「速度が閾値を自然に
+      // 下回るのを待つ」場当たり的な判定ではなく、alphaという単一の値が
+      // 全ての力を比例して弱めるため、収束が数学的に保証される）
+      alphaTargetRef.current = 0;
       downInfoRef.current = null;
       setCursor();
     };
@@ -711,13 +795,16 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
     };
   }, []);
 
-  // 物理演算+描画のメインループ。マウント中は常時回り続ける
-  // （承認済みのgraph-physics-mock.htmlと同じ、減衰はするが完全停止は
-  // しないバネ物理のため。react-force-graph-2d時代のalpha減衰による
-  // 自動停止とは異なる挙動だが、モック検討時に確認済みの動きそのもの）
+  // 描画（draw）はマウント中常時回り続けるが、物理演算（step）は
+  // physicsActiveRefがtrueの間だけ呼ぶ。2026-09、実データで「グラフ
+  // 全体がゆっくり回転して見える」不具合が再発したため、ドラッグ中で
+  // なく速度が十分小さいときはstep()自体を呼ばず完全に静止させる方式へ
+  // 変更した（physicsActiveRef宣言のコメント参照。以前は「減衰はするが
+  // 完全停止はしないバネ物理」を意図的な仕様としていたが、この方針を
+  // 撤回した）
   useEffect(() => {
     let rafId = requestAnimationFrame(function loop() {
-      step();
+      if (physicsActiveRef.current) step();
       applyCameraAnim();
       draw();
       rafId = requestAnimationFrame(loop);
