@@ -4470,6 +4470,60 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-20: Render方向性の探索とデザインの角丸撤廃、Graph画面の常時ドリフト修正
+
+**実装対象**: (1) Render.comを参考にしたLanding/Homeのビジュアル方向性検討（Artifactモック）。(2) Home画面の知識グラフカード（`GraphPreview.jsx`）を実データのノード・エッジ表示へ作り直し。(3) 背景色・カード背景色をより黒に近い値へ変更。(4) アプリ全体の角丸を撤廃（`rounded-none`へ統一）。(5) Graph画面（`GraphCanvas.jsx`）で、操作していない間もグラフ全体がゆっくり回転して見える不具合を修正。
+
+**なぜ今実装するのか**: ユーザーがRender.comのビジュアル言語（黒基調+単色アクセント、動きのある密度、角ばったUI）を気に入り、coffee-app自身のデザイン方向性として採用したいという要望から。(5)は作業中にユーザーが気づいた既存の不具合報告。
+
+**(1) デザイン探索**: Artifact上でRenderのランディングページの実際のレイアウト・配色を調査した（`document.body.innerText`にモック要素の文字列が一切含まれず、211個のpathからなる1枚の専用SVGイラストだったと判明）。ここから座標を実測して静的にレイアウトを再現し、中身をcoffee-app自身の言葉・データへ差し替えたモックを複数バージョン作成した（Landing/Home）。最終的にはRenderの画面形そのものへの拘りをやめ、coffee-appの中身（見出し・記録トースト・ドリップアニメーション・知識グラフ1枚）に合わせた構成へ着地した。Artifactでの検討に留め、まだ実装には反映していない。
+
+**(2) GraphPreview.jsx**: 見出し行（タイトル+ノード/エッジ件数）／グラフ本体／フッター行（タグライン+導線）の3段構成に作り直した。以前は「読めなくていい、ごく薄い」方針（opacity 40%）だったが、実データのノード・エッジをはっきり表示する方向へ変更。`previewIllustration.js`の`buildPreviewLayout`が返す各edgeに`targetType`を追加し、エッジの色を接続先ノードの種別色で塗るようにした（docs/design.md「Graph」のエッジ配色方針と統一）。
+
+**(3) 配色**: `--color-base`を`#141414`→`#000000`、`--color-raised`（カード背景）を`#1f1f1f`→`#0a0a0a`へ変更。境界線（`border-surface-2`）があるため、純黒背景からも埋もれずに区別できる。
+
+**(4) 角丸の撤廃**: `formStyles.js`の`cardClass`・`primaryButtonClass`等（アプリ全体で共有される中心的なクラス）に加え、個別コンポーネントで直接指定されていた`rounded-xl`/`rounded-2xl`/`rounded-full`/`rounded-md`等を、約25ファイルにわたり`rounded-none`へ統一した。知識グラフのノードバッジ・色ドットなど、docs/design.mdで明示的に円形と定義されている要素（`h-*`/`w-*`の固定サイズに`rounded-full`を組み合わせたもの）は対象から除外し、円のまま維持している。
+
+**(5) Graph画面の常時ドリフト修正**: `GraphCanvas.jsx`の物理演算は「減衰(`DAMPING: 0.86`)はするが完全停止はしないバネ物理」を意図的な仕様としていた（2026-09-18のコメント参照、承認済みのモックの動きを踏襲）が、実データでは減衰だけでは速度が厳密にゼロへ収束せず、毎フレームの積分でグラフ全体がゆっくり回転して見える不具合が再発した（`PRE_CONVERGE_STEPS`後の一度きりの速度リセットだけでは、その後も回り続けるメインループに対して不十分だった）。`physicsActiveRef`を追加し、ドラッグ中でなく全ノードの速度が閾値未満（`SETTLE_VELOCITY_SQ`）になったら`step()`自体の呼び出しを止める方式へ変更した。ドラッグ開始時に再度有効化する。これにより「減衰はするが完全停止はしない」という以前の方針を撤回した。
+
+その後、ユーザーから「一度ドラッグすると、その後動かしていなくても再び回転してしまう」という追加報告を受けた。原因は、ドラッグ終了後に速度が`SETTLE_VELOCITY_SQ`を自然に下回るのを待つだけの実装だと、ノード数の多い実データ（60件超）では収束しきらないケースがあり、`physicsActiveRef`がfalseに戻らず動き続けてしまうこと。ドラッグ終了時刻から`POST_DRAG_SETTLE_FRAMES`（90フレーム、約1.5秒）を`settleDeadlineRef`にセットし、この残りフレームがゼロになったら速度の大小に関わらず強制的にゼロへリセットして停止する、保証付きの上限を追加した。ドラッグ→リリース後、数秒空けたスクリーンショット2枚が完全一致することを実機で確認済み。
+
+さらに、この強制停止が「動きの途中で急に止まる」カクつきを生んでいるという指摘を受けた。`settleDeadlineRef`がゼロになった瞬間に速度をいきなりゼロへ固定していたため、まだ速度が残っている状態から不連続に静止していたことが原因。`COOLDOWN_FRAMES`（30フレーム、停止までの残りフレームがこの値以下になった区間）の間、通常のDAMPINGに加えて1→0への線形イーズアウトをかける`extraDamping`を追加し、停止直前になめらかに減速してから止まるようにした。
+
+続けて「動かしている（ドラッグ中の）動きがカクつく」という報告を受けた。静止時（`step()`を呼ばない）は滑らかで、ドラッグ中（`step()`が毎フレーム走る）だけ重いという条件が一致することから、`step()`内の計算量が原因と特定した。衝突解消ループが固定10回×O(ノード数^2)（実データ60ノード超で約17,700回の距離計算）を毎フレーム走らせており、重なりが既に解消済みで何も押し戻していないフレームでも同じ回数を無条件に繰り返していた。1回の反復で誰も押し戻されなければそれ以上重なりは残っていないため、`anyPushed`フラグで早期に打ち切るよう変更した（`GraphCanvas.jsx`の該当コメント参照）。挙動は変えず（同じ収束結果）、無駄な反復だけを削減する変更。
+
+この対処だけでは「まだ解決していない」という報告が続いた。ユーザーからの「Obsidianを参考にしては」という提案を受けて調査したところ、`drawNode`が**全ノードに毎フレームCanvas 2DのshadowBlurを掛けていた**ことが分かった（`(node.id === selectedNodeId ? 18 : 10) / totalScale`、実データ60ノード超）。選択中・ホバー中・ドラッグ中のノードだけに影を残しそれ以外をフラットにする対処を一度実装したが、「見た目を変えろとは言っていない、動きを再現するだけの話」という指摘を受け、この見た目の変更は完全に取り消した（`drawNode`のshadowBlurを元通り全ノードへ適用する形に戻し、`draw()`の`visualContext`から`draggingId`を削除）。
+
+あらためて「Obsidianの動きを調べて実装する」方針で、WebSearchでObsidianの実際の物理演算を調査した。ObsidianはグラフビューにD3の`d3-force`をそのまま使用していることが判明した。d3-forceの実装で特に重要な2点:
+- **ドラッグは座標の固定（fx/fy）**: バネで追従させるのではなく、ドラッグ中のノードは毎ティック `node.x`/`node.y` をポインタ位置へ直接リセットし、`node.vx`/`node.vy` もゼロにする。遅れ・揺れが一切無い1:1追従になる。
+- **alpha（温度）による減衰**: 毎ティック `alpha += (alphaTarget - alpha) * alphaDecay` で単一のalpha値を更新し、この値を全ての力（反発・バネ・中心引力）に掛ける。alphaが`alphaMin`未満になったらシミュレーションを止める。ドラッグ中は`alphaTarget`を1ではなく0.3程度に留め、周囲のノードが穏やかに反応するようにする。
+
+この2点をこのアプリの物理演算（`GraphCanvas.jsx`のstep()）へそのまま移植した:
+- `DRAG_SPRING`/`DRAG_DAMPING`（バネ追従ドラッグ）を削除し、ドラッグ中のノードは`n.x = target.x; n.y = target.y; n.vx = 0; n.vy = 0;`という直接座標固定に変更
+- `SETTLE_VELOCITY_SQ`/`POST_DRAG_SETTLE_FRAMES`/`COOLDOWN_FRAMES`（速度閾値判定・強制タイムアウト・停止直前のイーズアウトという3つの場当たり的な対処）を全て削除し、`alphaRef`/`alphaTargetRef`によるd3-force方式のalpha減衰へ一本化した。`ALPHA_DECAY`（0.0228）・`ALPHA_MIN`（0.001）はd3-forceの既定値をそのまま使用
+- ドラッグ開始時`alphaTargetRef.current = ALPHA_TARGET_DRAG`（0.3）、終了時`alphaTargetRef.current = 0`。alphaが`ALPHA_MIN`未満になったら`step()`内で`physicsActiveRef.current = false`にして物理演算を止める（この判定自体は前回までの実装から維持）
+- 事前収束（`PRE_CONVERGE_STEPS`）ループの前に`alphaRef.current = 1`をセットし、ループ後に`alphaRef.current = 0`へ明示的にリセット
+
+見た目（shadowBlur等の描画コード）は一切変更していない。反発力・バネ定数・中心引力・DAMPING（速度減衰）・衝突解消ループの前回対処（早期打ち切り）はいずれも変更せず、alphaによる力のスケーリングとドラッグの座標固定方式だけを追加・置き換えた。
+
+ブラウザのFPS計測はCDPのタイムアウト等でこのセッションでは実施できず、定量的な改善幅は未計測。実機で、ドラッグ中のノードがポインタへ1:1で追従すること、重なりが無いこと、リリース後に静止する（数秒空けたスクリーンショット2枚が完全一致）ことを確認済み。
+
+**変更ファイル**:
+- `frontend/src/features/graph/components/GraphPreview.jsx`
+- `frontend/src/features/graph/utils/previewIllustration.js`
+- `frontend/src/index.css`（`--color-base`・`--color-raised`）
+- `frontend/src/features/coffee-records/components/formStyles.js`
+- 上記に加え、`rounded-*`を使用していた約25個のコンポーネントファイル（`RecordCard.jsx`・`HomeRecordCard.jsx`・`GraphFilters.jsx`・`EntityDetailPage.jsx`・`RecordDetailPage.jsx`・`StatCard.jsx`・`ConfirmDialog.jsx`等）
+- `frontend/src/features/graph/components/GraphCanvas.jsx`
+
+**データフロー**: 変更なし（表示・演出・スタイルの変更のみ）。
+
+**実行したテストと結果**: `npm run lint`（0エラー）・`npm run build`（0エラー）・`npm run test`（356件、0エラー）を各変更のたびに実行。claude-in-chromeでローカルMongoDBへ一時切り替えのうえ、Home画面（知識グラフカード・角丸・背景色）、Graph画面（静止の確認、スクリーンショット2枚を数秒空けて比較し位置が完全一致することを確認／ドラッグ操作で物理演算が正しく再有効化されること／リリース後に再収束して静止することを確認）を実機確認した。
+
+**未解決事項**: `docs/design.md`「Radius / Spacing」節はまだ角丸のある旧トークン（`rounded-2xl`等）を前提にした記述のまま。今回の変更（角丸撤廃・黒基調化）を反映した更新が必要。Render方向性の探索（Landing/Homeのモック）を実際のコードへ反映するかどうかも未定。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
