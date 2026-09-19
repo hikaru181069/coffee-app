@@ -131,7 +131,7 @@ function WorldMap({ visitedByNumericId }) {
       {hoveredCountry && tooltipPoint && (
         <div
           role="tooltip"
-          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md border border-surface-2 bg-raised px-2 py-1 text-xs text-text shadow-lg"
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-none border border-surface-2 bg-raised px-2 py-1 text-xs text-text shadow-lg"
           style={{
             left: `${(tooltipPoint[0] / WIDTH) * 100}%`,
             top: `${(tooltipPoint[1] / HEIGHT) * 100 - 2}%`,

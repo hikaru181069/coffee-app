@@ -204,7 +204,7 @@ function RelatedRecordRow({ record, index, language }) {
     <li ref={ref} className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)}`}>
       <Link
         to={`/records/${record.id}`}
-        className="block rounded-lg border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
+        className="block rounded-none border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
       >
         <p className="truncate text-sm font-medium text-text">{record.title}</p>
         <p className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
@@ -266,7 +266,7 @@ function RelatedAttributeGroup({ type, items, t, trail }) {
             to={`/entities/${encodeURIComponent(item.id)}`}
             state={{ trail }}
             replace
-            className={`inline-flex items-center gap-1.5 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium transition-all duration-150 hover:-translate-y-px hover:border-line/60 ${getNodeTintBgClass({ type, label: item.label })} ${getNodeTextColorClass({ type, label: item.label })}`}
+            className={`inline-flex items-center gap-1.5 rounded-none border border-transparent px-3.5 py-1.5 text-sm font-medium transition-all duration-150 hover:-translate-y-px hover:border-line/60 ${getNodeTintBgClass({ type, label: item.label })} ${getNodeTextColorClass({ type, label: item.label })}`}
           >
             {item.label}
             <span className="font-mono text-xs text-text-tertiary">{item.count}</span>
@@ -276,7 +276,7 @@ function RelatedAttributeGroup({ type, items, t, trail }) {
           <button
             type="button"
             onClick={() => setIsExpanded(true)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-line/60 px-3.5 py-1.5 text-sm text-text-tertiary transition-colors duration-150 hover:border-line hover:text-text"
+            className="inline-flex items-center gap-1.5 rounded-none border border-dashed border-line/60 px-3.5 py-1.5 text-sm text-text-tertiary transition-colors duration-150 hover:border-line hover:text-text"
           >
             {t("entityDetail.showMoreRelated", { count: hiddenCount })}
           </button>

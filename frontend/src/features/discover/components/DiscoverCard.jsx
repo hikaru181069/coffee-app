@@ -98,7 +98,7 @@ function DiscoverCard() {
   const hasTeaser = !teaserLoading && !teaserError && Boolean(teaser);
 
   return (
-    <div className="flex h-full flex-col gap-4 rounded-2xl border border-surface-2 bg-raised p-6 shadow-elevated">
+    <div className="flex h-full flex-col gap-4 rounded-none border border-surface-2 bg-raised p-6 shadow-elevated">
       <span className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">Discover</span>
 
       {isLoading ? (
@@ -108,7 +108,7 @@ function DiscoverCard() {
           {insightText && (
             <Link
               to="/graph"
-              className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
+              className="flex items-center gap-3 rounded-none p-2 transition-colors duration-150 hover:bg-surface-1/60"
             >
               <Sparkles size={22} aria-hidden="true" className="flex-shrink-0 text-graph-process" />
               <p className="text-base text-text">{insightText}</p>
@@ -118,7 +118,7 @@ function DiscoverCard() {
           {hasTeaser && (
             <Link
               to={`/entities/${encodeURIComponent(teaser.nodeId)}`}
-              className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
+              className="flex items-center gap-3 rounded-none p-2 transition-colors duration-150 hover:bg-surface-1/60"
             >
               <Compass size={22} aria-hidden="true" className="flex-shrink-0 text-success" />
               <p className="text-base text-text">
@@ -129,7 +129,7 @@ function DiscoverCard() {
 
           <Link
             to="/diagnosis"
-            className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
+            className="flex items-center gap-3 rounded-none p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
             <Coffee size={22} aria-hidden="true" className="flex-shrink-0 text-graph-record" />
             <p className="text-base text-text">{t("discover.diagnosisLink")}</p>
@@ -137,7 +137,7 @@ function DiscoverCard() {
 
           <Link
             to="/map"
-            className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-surface-1/60"
+            className="flex items-center gap-3 rounded-none p-2 transition-colors duration-150 hover:bg-surface-1/60"
           >
             <Globe size={22} aria-hidden="true" className="flex-shrink-0 text-graph-origin" />
             <p className="text-base text-text">{t("discover.mapLink")}</p>

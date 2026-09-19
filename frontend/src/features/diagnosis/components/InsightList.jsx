@@ -34,7 +34,7 @@ function InsightRow({ insight, index, t }) {
   return (
     <li
       ref={ref}
-      className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} flex items-start gap-3 rounded-lg border border-surface-2 bg-raised p-3`}
+      className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} flex items-start gap-3 rounded-none border border-surface-2 bg-raised p-3`}
     >
       <Sparkles size={16} aria-hidden="true" className="mt-0.5 flex-shrink-0 text-text-secondary" />
       <p className="text-sm text-text">{describeInsight(insight, t)}</p>

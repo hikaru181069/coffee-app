@@ -50,7 +50,7 @@ function OriginBadgePicker({ id, options, selectedId, onChange, onCommit, disabl
           return (
             <label
               key={option.id}
-              className={`flex w-16 flex-col items-center gap-1.5 rounded-lg p-1 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/50 ${
+              className={`flex w-16 flex-col items-center gap-1.5 rounded-none p-1 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/50 ${
                 disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
               }`}
             >

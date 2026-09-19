@@ -139,7 +139,7 @@ function RecordDetailPage() {
         <BackLink fallback="/records" />
         <div className="mt-3">
           {error.isNotFound ? (
-            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+            <div className="flex flex-col items-center gap-3 rounded-none border border-dashed border-line/60 px-6 py-12 text-center">
               <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
               <p className="text-sm text-text-tertiary">
                 {t("records.notFoundDesc")}
@@ -196,12 +196,12 @@ function RecordDetailPage() {
                 <Link
                   key={item.id}
                   to={`/entities/${encodeURIComponent(`${nodeType}:${item.id}`)}`}
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors duration-150 hover:brightness-125 ${getNodeTintBgClass({ type: nodeType, label: item.name })} ${getNodeTextColorClass({ type: nodeType, label: item.name })}`}
+                  className={`rounded-none px-2.5 py-1 text-xs font-medium transition-colors duration-150 hover:brightness-125 ${getNodeTintBgClass({ type: nodeType, label: item.name })} ${getNodeTextColorClass({ type: nodeType, label: item.name })}`}
                 >
                   {item.name}
                 </Link>
               ) : (
-                <span key={item.name} className="rounded-full bg-surface-1 px-2.5 py-1 text-xs text-text-secondary">
+                <span key={item.name} className="rounded-none bg-surface-1 px-2.5 py-1 text-xs text-text-secondary">
                   {item.name}
                 </span>
               ),
@@ -248,7 +248,7 @@ function RecordDetailPage() {
         </div>
 
         {record.rating !== null && (
-          <div className="flex items-center gap-1.5 rounded-full bg-surface-1 px-3 py-1.5">
+          <div className="flex items-center gap-1.5 rounded-none bg-surface-1 px-3 py-1.5">
             {[1, 2, 3, 4, 5].map((score) => (
               <Star
                 key={score}
@@ -283,7 +283,7 @@ function RecordDetailPage() {
                 <div
                   key={index}
                   className={
-                    details.components.length > 1 ? "rounded-xl border border-line/60 p-4" : undefined
+                    details.components.length > 1 ? "rounded-none border border-line/60 p-4" : undefined
                   }
                 >
                   {details.components.length > 1 && (
@@ -378,7 +378,7 @@ function RecordDetailPage() {
           // Coffee Information/Notes/味覚グラフ/Connectionsのいずれも無いときは、
           // 次に何ができるかを示す（抽出の詳細は下のBrewDetailsCardが
           // 常に表示するため、ここでは触れない）
-          <p className="rounded-xl border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
+          <p className="rounded-none border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
             {t("records.detailEmptyHint")}
           </p>
         )}
@@ -468,7 +468,7 @@ function MoreMenu({ onDelete }) {
       {isOpen && (
         <div
           role="menu"
-          className="absolute right-0 z-10 mt-2 w-40 rounded-lg border border-surface-2 bg-raised p-1 shadow-xl"
+          className="absolute right-0 z-10 mt-2 w-40 rounded-none border border-surface-2 bg-raised p-1 shadow-xl"
         >
           <button
             type="button"
@@ -477,7 +477,7 @@ function MoreMenu({ onDelete }) {
               setIsOpen(false);
               onDelete();
             }}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-danger transition-colors duration-150 hover:bg-danger/10"
+            className="flex w-full items-center gap-2 rounded-none px-3 py-2 text-left text-sm text-danger transition-colors duration-150 hover:bg-danger/10"
           >
             <Trash2 size={14} aria-hidden="true" />
             {t("common.delete")}

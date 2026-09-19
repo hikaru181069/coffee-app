@@ -42,7 +42,7 @@ class AppErrorBoundary extends Component {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="rounded-lg border border-line/60 px-4 py-2 text-sm text-text transition-colors duration-150 hover:border-line"
+          className="rounded-none border border-line/60 px-4 py-2 text-sm text-text transition-colors duration-150 hover:border-line"
         >
           再読み込み
         </button>

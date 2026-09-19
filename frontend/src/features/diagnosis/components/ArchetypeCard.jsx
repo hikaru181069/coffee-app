@@ -31,7 +31,7 @@ function ArchetypeCard({ archetype, flat = false }) {
   const { t } = useTranslation();
   if (!archetype) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line/60 px-6 py-10 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-none border border-dashed border-line/60 px-6 py-10 text-center">
         <Coffee size={28} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
         <p className="text-sm text-text-tertiary">{t("diagnosis.archetype.empty")}</p>
       </div>
@@ -42,7 +42,7 @@ function ArchetypeCard({ archetype, flat = false }) {
 
   return (
     <div
-      className={`flex flex-col items-center gap-2 rounded-2xl border border-surface-2 bg-raised p-6 text-center ${flat ? "" : "shadow-elevated"}`}
+      className={`flex flex-col items-center gap-2 rounded-none border border-surface-2 bg-raised p-6 text-center ${flat ? "" : "shadow-elevated"}`}
     >
       <Coffee
         size={28}

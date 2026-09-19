@@ -17,7 +17,7 @@ function NotFoundPage() {
   const { t } = useTranslation();
   return (
     <div className={contentContainerClass}>
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-16 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-none border border-dashed border-line/60 px-6 py-16 text-center">
         <Compass size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
         <div>
           <p className="text-sm font-medium text-text">{t("notFound.title")}</p>

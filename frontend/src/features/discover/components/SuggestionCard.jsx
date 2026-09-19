@@ -25,7 +25,7 @@ function SuggestionCard({ suggestion, flat = false }) {
 
   return (
     <li
-      className={`rounded-2xl border border-surface-2 bg-raised p-4 sm:p-5 ${flat ? "" : "shadow-elevated"}`}
+      className={`rounded-none border border-surface-2 bg-raised p-4 sm:p-5 ${flat ? "" : "shadow-elevated"}`}
     >
       <p className="text-sm text-text">
         {t("discover.similarProcessOrigin", {

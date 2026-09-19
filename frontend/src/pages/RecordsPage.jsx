@@ -140,7 +140,7 @@ function RecordsPage() {
           「Recordsをブラウズする道具」に見せる。2026-08、検索ボックスと
           フィルターを併用できるようにしたため、検索中もフィルターUIは
           表示したままにする（アクティブなフィルターの範囲内で検索する）。 */}
-      <div className="mb-6 flex flex-col gap-3 rounded-xl border border-surface-2 bg-raised/60 p-3 sm:p-4">
+      <div className="mb-6 flex flex-col gap-3 rounded-none border border-surface-2 bg-raised/60 p-3 sm:p-4">
         <SearchBox value={searchQuery} onChange={setSearchQuery} />
 
         <RecordFilters

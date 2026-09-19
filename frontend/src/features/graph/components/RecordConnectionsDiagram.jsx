@@ -102,7 +102,7 @@ function ConnectionNode({ node }) {
     >
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-surface-2 bg-raised px-2 py-1 text-[10px] text-text-secondary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-none border border-surface-2 bg-raised px-2 py-1 text-[10px] text-text-secondary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
       >
         <span className="font-medium text-text">{node.label}</span>
         <span className="mx-1 text-text-tertiary" aria-hidden="true">→</span>

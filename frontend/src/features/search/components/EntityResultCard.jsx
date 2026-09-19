@@ -26,7 +26,7 @@ function EntityResultCard({ entity, index = 0 }) {
     <Link
       ref={ref}
       to={`/entities/${encodeURIComponent(entity.id)}`}
-      className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} block rounded-2xl border border-surface-2 bg-raised p-4 shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
+      className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} block rounded-none border border-surface-2 bg-raised p-4 shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
     >
       <div className="flex items-center gap-2">
         <Icon size={16} aria-hidden="true" className={getNodeTextColorClass({ type: entity.type, label: entity.label })} />

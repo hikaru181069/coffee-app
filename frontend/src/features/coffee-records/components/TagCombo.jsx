@@ -55,7 +55,7 @@ function TagCombo({ id, options, selectedIds, onToggle, disabled = false, type =
             return (
               <span
                 key={option.id}
-                className={`inline-flex items-center gap-1.5 rounded-full border border-line-strong py-1 pl-2.5 pr-1 text-xs font-medium ${colorClasses}`}
+                className={`inline-flex items-center gap-1.5 rounded-none border border-line-strong py-1 pl-2.5 pr-1 text-xs font-medium ${colorClasses}`}
               >
                 {type && (
                   <span
@@ -69,7 +69,7 @@ function TagCombo({ id, options, selectedIds, onToggle, disabled = false, type =
                   onClick={() => onToggle(option.id)}
                   disabled={disabled}
                   aria-label={t("common.delete")}
-                  className="rounded-full p-0.5 opacity-70 transition-opacity duration-150 hover:bg-surface-3/60 hover:opacity-100 disabled:cursor-not-allowed"
+                  className="rounded-none p-0.5 opacity-70 transition-opacity duration-150 hover:bg-surface-3/60 hover:opacity-100 disabled:cursor-not-allowed"
                 >
                   <X size={11} aria-hidden="true" />
                 </button>
@@ -85,7 +85,7 @@ function TagCombo({ id, options, selectedIds, onToggle, disabled = false, type =
         onChange={(event) => setQuery(event.target.value)}
         placeholder={t("common.searchPlaceholder")}
         disabled={disabled}
-        className="w-full rounded-lg border border-line bg-surface-1 px-2.5 py-1.5 text-sm text-text outline-none placeholder:text-text-tertiary focus:border-line-strong disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-none border border-line bg-surface-1 px-2.5 py-1.5 text-sm text-text outline-none placeholder:text-text-tertiary focus:border-line-strong disabled:cursor-not-allowed disabled:opacity-60"
       />
 
       <div className="flex flex-col gap-0.5">
@@ -98,7 +98,7 @@ function TagCombo({ id, options, selectedIds, onToggle, disabled = false, type =
               type="button"
               onClick={() => onToggle(option.id)}
               disabled={disabled}
-              className="rounded-lg px-2.5 py-1.5 text-left text-sm text-text-secondary transition-colors duration-150 hover:bg-surface-2 hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-none px-2.5 py-1.5 text-left text-sm text-text-secondary transition-colors duration-150 hover:bg-surface-2 hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
             >
               {option.name}
             </button>

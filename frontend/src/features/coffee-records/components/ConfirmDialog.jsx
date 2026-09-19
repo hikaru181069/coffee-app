@@ -108,7 +108,7 @@ function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby={description ? "confirm-dialog-description" : undefined}
-        className="w-full max-w-sm rounded-2xl border border-surface-2 bg-raised/90 p-5 shadow-panel backdrop-blur-xl"
+        className="w-full max-w-sm rounded-none border border-surface-2 bg-raised/90 p-5 shadow-panel backdrop-blur-xl"
       >
         <h2 id="confirm-dialog-title" className="text-base font-semibold text-text">
           {title}

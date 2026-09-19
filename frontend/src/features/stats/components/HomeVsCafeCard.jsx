@@ -13,7 +13,7 @@ function HomeVsCafeCard({ homeVsCafe, flat = false }) {
   const { t } = useTranslation();
   return (
     <section
-      className={`rounded-2xl border border-surface-2 bg-raised p-4 ${flat ? "" : "shadow-elevated"}`}
+      className={`rounded-none border border-surface-2 bg-raised p-4 ${flat ? "" : "shadow-elevated"}`}
     >
       <h2 className="mb-3 text-sm font-semibold text-text">{t("stats.homeVsCafeHeading")}</h2>
       <div className="grid grid-cols-2 gap-3">
@@ -27,7 +27,7 @@ function HomeVsCafeCard({ homeVsCafe, flat = false }) {
 function RecordTypeStat({ icon, label, stat, t }) {
   const Icon = icon;
   return (
-    <div className="rounded-lg bg-surface-1 p-3">
+    <div className="rounded-none bg-surface-1 p-3">
       <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
         <Icon size={12} aria-hidden="true" />
         {label}

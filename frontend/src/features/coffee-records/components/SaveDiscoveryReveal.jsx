@@ -136,7 +136,7 @@ function SaveDiscoveryReveal({ record, discoveries, onContinue }) {
           </div>
 
           {record.rating !== null && (
-            <div className="flex items-center gap-1.5 rounded-full bg-surface-1 px-3 py-1.5">
+            <div className="flex items-center gap-1.5 rounded-none bg-surface-1 px-3 py-1.5">
               {[1, 2, 3, 4, 5].map((score) => (
                 <Star
                   key={score}

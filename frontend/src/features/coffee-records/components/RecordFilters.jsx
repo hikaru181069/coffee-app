@@ -12,11 +12,11 @@ import ChipMultiSelect from "./ChipMultiSelect";
  * ここに閉じる（RecordForm側の見た目には影響させない）。
  */
 const compactSelectClass =
-  "w-auto rounded-lg border border-line/60 bg-surface-1 py-1.5 pl-2.5 pr-7 text-sm text-text " +
+  "w-auto rounded-none border border-line/60 bg-surface-1 py-1.5 pl-2.5 pr-7 text-sm text-text " +
   "transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
 
 const compactInputClass =
-  "w-auto rounded-lg border border-line/60 bg-surface-1 px-2.5 py-1.5 text-sm text-text " +
+  "w-auto rounded-none border border-line/60 bg-surface-1 px-2.5 py-1.5 text-sm text-text " +
   "transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
 
 /** 産地・品種・精製方法・焙煎度・フレーバーの複数選択フィールド一覧。詳細フィルターのレンダリングとhasActiveFiltersの判定で共有する */
@@ -74,7 +74,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
             type="button"
             onClick={() => update("recordType", "")}
             aria-pressed={filters.recordType === ""}
-            className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
+            className={`rounded-none border px-3 py-1.5 text-sm transition-colors duration-150 ${
               filters.recordType === ""
                 ? "border-line-strong bg-surface-2 font-semibold text-text"
                 : "border-line/60 text-text-secondary hover:border-line"
@@ -88,7 +88,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
               type="button"
               onClick={() => update("recordType", type.value)}
               aria-pressed={filters.recordType === type.value}
-              className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
+              className={`rounded-none border px-3 py-1.5 text-sm transition-colors duration-150 ${
                 filters.recordType === type.value
                   ? "border-line-strong bg-surface-2 font-semibold text-text"
                   : "border-line/60 text-text-secondary hover:border-line"
@@ -126,7 +126,7 @@ function RecordFilters({ filters, onChange, onClear, masterData, hasActiveFilter
           >
             {t("records.advancedFilters")}
             {advancedFilterCount > 0 && (
-              <span className="rounded-full bg-surface-2 px-1.5 font-mono text-xs text-text-secondary">
+              <span className="rounded-none bg-surface-2 px-1.5 font-mono text-xs text-text-secondary">
                 {advancedFilterCount}
               </span>
             )}

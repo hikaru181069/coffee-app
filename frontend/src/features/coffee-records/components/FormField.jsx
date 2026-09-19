@@ -20,7 +20,7 @@ function FormField({ id, label, required = false, hint, error, children }) {
       <label htmlFor={id} className="flex items-center gap-2 text-sm font-medium text-text">
         {label}
         {required ? (
-          <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
+          <span className="rounded-none bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
             {t("common.required")}
           </span>
         ) : (

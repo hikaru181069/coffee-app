@@ -136,7 +136,7 @@ function HomePage() {
         )}
         <Link
           to="/records/new"
-          className={`flex items-center justify-center gap-2 rounded-2xl border border-surface-2 bg-raised text-text shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+          className={`flex items-center justify-center gap-2 rounded-none border border-surface-2 bg-raised text-text shadow-elevated transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
             isRepeatVisitor ? "py-3" : "flex-col py-10"
           }`}
         >
@@ -161,7 +161,7 @@ function HomePage() {
           <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>
         )}
         {!isLoading && !error && records.length === 0 && (
-          <p className="rounded-xl border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
+          <p className="rounded-none border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
             {t("records.emptyDesc")}
           </p>
         )}

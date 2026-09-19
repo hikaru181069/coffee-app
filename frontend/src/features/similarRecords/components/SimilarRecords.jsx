@@ -51,7 +51,7 @@ function SimilarRecordRow({ record, index, language }) {
     <li ref={ref} className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)}`}>
       <Link
         to={`/records/${record.id}`}
-        className="block rounded-lg border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
+        className="block rounded-none border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
       >
         <p className="truncate text-sm font-medium text-text">{record.title}</p>
         <p className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
@@ -67,7 +67,7 @@ function SimilarRecordRow({ record, index, language }) {
           {record.sharedAttributes.map((attribute, attrIndex) => (
             <span
               key={`${attribute.type}-${attribute.label}-${attrIndex}`}
-              className="rounded-full bg-surface-1 px-2 py-0.5 text-[11px] text-text-secondary"
+              className="rounded-none bg-surface-1 px-2 py-0.5 text-[11px] text-text-secondary"
             >
               {attribute.label}
             </span>

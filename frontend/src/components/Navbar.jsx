@@ -46,7 +46,7 @@ const PRIMARY_ITEMS = [
 // 見た目を揃えるために共用する
 const navLinkClass = ({ isActive }) =>
   [
-    "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all duration-150",
+    "flex items-center gap-2 rounded-none px-3 py-1.5 text-sm font-semibold transition-all duration-150",
     isActive
       ? "bg-surface-2 text-text"
       : "text-text-secondary hover:bg-surface-1/60 hover:text-text",
@@ -121,7 +121,7 @@ function Navbar() {
           aria-label={t("nav.toggleMenu")}
           aria-expanded={open}
           aria-controls="mobile-nav-drawer"
-          className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 rounded-md text-text-secondary transition-colors hover:bg-surface-1/60"
+          className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 rounded-none text-text-secondary transition-colors hover:bg-surface-1/60"
         >
           <span
             className={`block h-0.5 w-5 bg-current transition-transform duration-200 ${open ? "translate-y-2 rotate-45" : ""}`}
@@ -186,7 +186,7 @@ function Navbar() {
                 <NavIconButton
                   onClick={logout}
                   Icon={LogOutIcon}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
+                  className="flex items-center gap-3 rounded-none px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
                 >
                   {t("nav.logout")}
                 </NavIconButton>
@@ -196,14 +196,14 @@ function Navbar() {
                 <NavLink
                   to="/login"
                   onClick={close}
-                  className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
+                  className="flex w-full items-center justify-center rounded-none border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
                 >
                   {t("nav.login")}
                 </NavLink>
                 <NavLink
                   to="/register"
                   onClick={close}
-                  className="flex w-full items-center justify-center rounded-lg border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
+                  className="flex w-full items-center justify-center rounded-none border border-surface-3 px-3 py-2 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
                 >
                   {t("nav.register")}
                 </NavLink>
@@ -250,7 +250,7 @@ function Navbar() {
               <NavIconButton
                 onClick={logout}
                 Icon={LogOutIcon}
-                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
+                className="flex items-center gap-2 rounded-none px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:bg-danger/10 hover:text-danger"
               >
                 {t("nav.logout")}
               </NavIconButton>
@@ -259,13 +259,13 @@ function Navbar() {
             <>
               <NavLink
                 to="/login"
-                className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
+                className="flex items-center justify-center rounded-none border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
               >
                 {t("nav.login")}
               </NavLink>
               <NavLink
                 to="/register"
-                className="flex items-center justify-center rounded-lg border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
+                className="flex items-center justify-center rounded-none border border-surface-3 px-3 py-1.5 text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-line-strong hover:text-text"
               >
                 {t("nav.register")}
               </NavLink>

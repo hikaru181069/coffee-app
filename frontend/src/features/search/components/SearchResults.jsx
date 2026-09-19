@@ -21,7 +21,7 @@ function SearchResults({ query, entities, entitiesTruncated = false, records, is
 
   if (entities.length === 0 && records.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
+      <p className="rounded-none border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
         {t("search.noResults", { query })}
       </p>
     );

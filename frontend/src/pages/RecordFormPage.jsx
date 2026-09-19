@@ -188,7 +188,7 @@ function RecordFormPage() {
       <div className={wideContainerClass}>
         {staticHeader}
         {isNotFound ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-none border border-dashed border-line/60 px-6 py-12 text-center">
             <p className="text-sm font-medium text-text">{t("records.notFoundTitle")}</p>
             <p className="text-sm text-text-tertiary">
               {t("records.notFoundDesc")}

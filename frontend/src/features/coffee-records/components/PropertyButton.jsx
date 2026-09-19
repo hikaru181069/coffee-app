@@ -85,7 +85,7 @@ function PropertyButton({ icon: Icon, label, valueLabel, hasValue, disabled = fa
         onClick={() => setIsOpen((open) => !open)}
         disabled={disabled}
         aria-expanded={isOpen}
-        className={`inline-flex items-center gap-1.5 rounded-full border bg-surface-1 px-3 py-1.5 text-sm transition-colors duration-150 hover:border-line-strong disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`inline-flex items-center gap-1.5 rounded-none border bg-surface-1 px-3 py-1.5 text-sm transition-colors duration-150 hover:border-line-strong disabled:cursor-not-allowed disabled:opacity-60 ${
           isOpen ? "border-primary bg-surface-2" : "border-line/60"
         }`}
       >
@@ -111,7 +111,7 @@ function PropertyButton({ icon: Icon, label, valueLabel, hasValue, disabled = fa
             exit={{ opacity: 0, scale: 0.96, y: position.openUpward ? 6 : -6 }}
             transition={{ type: "spring", stiffness: 420, damping: 30 }}
             style={{ position: "fixed", top: position.top, left: position.left, zIndex: 30 }}
-            className="max-h-[min(320px,60vh)] w-max min-w-[220px] max-w-[min(88vw,22rem)] overflow-y-auto rounded-2xl border border-surface-2 bg-raised p-3.5 shadow-panel"
+            className="max-h-[min(320px,60vh)] w-max min-w-[220px] max-w-[min(88vw,22rem)] overflow-y-auto rounded-none border border-surface-2 bg-raised p-3.5 shadow-panel"
           >
             {children}
           </Motion.div>

@@ -51,7 +51,7 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
       // bottom sheetがz-40のままだとDOM順で後に置かれるBottomTabBarに負け、
       // パネル下部の内容がタブバーの裏に隠れてしまう（ConfirmDialog.jsxと同じ
       // 既知の対処。ユーザー報告により発覚）
-      className="fixed inset-x-0 bottom-0 z-[60] max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-surface-2 bg-raised/90 p-4 shadow-panel backdrop-blur-xl sm:absolute sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-80 sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0"
+      className="fixed inset-x-0 bottom-0 z-[60] max-h-[70vh] overflow-y-auto rounded-none-2xl border-t border-surface-2 bg-raised/90 p-4 shadow-panel backdrop-blur-xl sm:absolute sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-80 sm:rounded-none sm:rounded-none-2xl sm:border-l sm:border-t-0"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3">
@@ -59,7 +59,7 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
             <Icon size={20} aria-hidden="true" className="text-on-inverse" />
           </div>
           <div>
-            <span className="inline-block rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-bold text-text-secondary">
+            <span className="inline-block rounded-none bg-surface-2 px-2 py-0.5 text-[10px] font-bold text-text-secondary">
               {t(visual.labelKey)}
             </span>
             <h2 className="mt-1 text-sm font-bold text-text">{node.data.label}</h2>
@@ -69,7 +69,7 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
           type="button"
           onClick={onClose}
           aria-label={t("common.close")}
-          className="rounded p-1 text-text-tertiary hover:bg-surface-2 hover:text-text"
+          className="rounded-none p-1 text-text-tertiary hover:bg-surface-2 hover:text-text"
         >
           <X size={16} aria-hidden="true" />
         </button>
@@ -144,7 +144,7 @@ function AttributeNodeDetail({ nodeId, recordCount, relatedRecords, language, t 
           <li key={record.id}>
             <Link
               to={`/records/${record.id}`}
-              className="block rounded-lg border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
+              className="block rounded-none border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
             >
               <p className="truncate text-sm font-medium text-text">{record.title}</p>
               <p className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">

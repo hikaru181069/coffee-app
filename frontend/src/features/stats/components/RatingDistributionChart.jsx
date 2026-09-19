@@ -9,14 +9,14 @@ function RatingDistributionChart({ distribution }) {
   const maxCount = Math.max(1, ...distribution.map((entry) => entry.count));
 
   return (
-    <section className="rounded-xl border border-surface-2 bg-raised p-4">
+    <section className="rounded-none border border-surface-2 bg-raised p-4">
       <h3 className="mb-3 text-xs font-semibold text-text-tertiary">{t("stats.ratingDistributionHeading")}</h3>
       <div className="flex items-end justify-between gap-2">
         {distribution.map((entry) => (
           <div key={entry.rating} className="flex flex-1 flex-col items-center gap-1.5">
             <span className="font-mono text-xs text-text-secondary">{entry.count}</span>
             <div
-              className="w-full max-w-8 rounded-t bg-warn/70"
+              className="w-full max-w-8 rounded-none bg-warn/70"
               style={{ height: `${Math.max(4, (entry.count / maxCount) * CHART_HEIGHT_PX)}px` }}
             />
             <span className="flex items-center gap-0.5 text-xs text-text-tertiary">

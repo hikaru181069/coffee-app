@@ -16,7 +16,7 @@ function EmptyState({ icon: Icon, title, description, action, variant = "default
   const isError = variant === "error";
 
   const containerClass = [
-    "flex flex-col items-center gap-3 rounded-xl border px-6 py-12 text-center",
+    "flex flex-col items-center gap-3 rounded-none border px-6 py-12 text-center",
     fillHeight ? "h-full min-h-64 justify-center" : "",
     isError ? "border-danger/40 bg-danger/5" : "border-dashed border-line/60",
   ]

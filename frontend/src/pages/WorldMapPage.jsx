@@ -92,7 +92,7 @@ function WorldMapPage() {
 
     if (visitedByNumericId.size === 0) {
       return (
-        <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+        <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-none border border-dashed border-line/60 px-6 py-12 text-center">
           <Globe size={32} aria-hidden="true" className="text-text-tertiary" strokeWidth={1.5} />
           <div>
             <p className="text-sm font-medium text-text">{t("map.emptyTitle")}</p>
@@ -134,7 +134,7 @@ function WorldMapPage() {
               <Link
                 key={item.id}
                 to={`/entities/${encodeURIComponent(item.id)}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-transparent bg-surface-1 px-3.5 py-1.5 text-sm text-text-secondary transition-all duration-150 hover:-translate-y-px hover:border-line/60 hover:bg-surface-2 hover:text-text"
+                className="inline-flex items-center gap-1.5 rounded-none border border-transparent bg-surface-1 px-3.5 py-1.5 text-sm text-text-secondary transition-all duration-150 hover:-translate-y-px hover:border-line/60 hover:bg-surface-2 hover:text-text"
               >
                 <span
                   aria-hidden="true"

@@ -81,12 +81,12 @@ function GraphNodeSearch({ graph, onSelectNode }) {
           }}
           placeholder={t("graph.nodeSearchPlaceholder")}
           aria-label={t("graph.nodeSearchAriaLabel")}
-          className="w-full rounded-lg border border-line/60 bg-surface-1 py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-tertiary/60 transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          className="w-full rounded-none border border-line/60 bg-surface-1 py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-tertiary/60 transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         />
       </div>
 
       {(groupedResults.length > 0 || hasNoResults) && (
-        <div className="absolute inset-x-0 top-full z-10 mt-1.5 max-h-72 overflow-y-auto rounded-lg border border-line/60 bg-raised p-2 shadow-panel">
+        <div className="absolute inset-x-0 top-full z-10 mt-1.5 max-h-72 overflow-y-auto rounded-none border border-line/60 bg-raised p-2 shadow-panel">
           {hasNoResults && (
             <p className="px-2 py-1.5 text-sm text-text-tertiary">
               {t("graph.nodeSearchNoResults", { query })}
@@ -106,7 +106,7 @@ function GraphNodeSearch({ graph, onSelectNode }) {
                       key={node.id}
                       type="button"
                       onClick={() => handleSelect({ id: node.id, data: node })}
-                      className="inline-flex items-center gap-1 rounded-full border border-line/40 px-2.5 py-1 text-xs text-text transition-colors duration-150 hover:border-line hover:bg-surface-2"
+                      className="inline-flex items-center gap-1 rounded-none border border-line/40 px-2.5 py-1 text-xs text-text transition-colors duration-150 hover:border-line hover:bg-surface-2"
                     >
                       <Icon
                         size={12}

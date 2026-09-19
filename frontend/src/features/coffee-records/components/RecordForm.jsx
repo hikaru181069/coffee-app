@@ -254,7 +254,7 @@ function RecordForm({
             {RECORD_TYPES.map((type) => (
               <label
                 key={type.value}
-                className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-colors duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/50 ${
+                className={`flex-1 cursor-pointer rounded-none border px-3 py-2 text-center text-sm transition-colors duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/50 ${
                   values.recordType === type.value
                     ? "border-line-strong bg-surface-2 font-semibold text-text"
                     : "border-line/60 text-text-secondary hover:border-line"
@@ -281,7 +281,7 @@ function RecordForm({
         <span className={zoneHeadingClass}>{t("records.detailsHeading")}</span>
 
         {masterDataError && (
-          <p className="rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
+          <p className="rounded-none border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
             {t("recordForm.masterDataError")}
           </p>
         )}
@@ -487,7 +487,7 @@ function RecordForm({
           type="button"
           onClick={handleAddBlend}
           disabled={isSubmitting}
-          className="inline-flex items-center justify-center gap-1.5 self-start rounded-xl border border-dashed border-line/60 px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors duration-150 hover:border-line hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-1.5 self-start rounded-none border border-dashed border-line/60 px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors duration-150 hover:border-line hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Plus size={16} aria-hidden="true" />
           {t("recordForm.addComponent")}
@@ -529,12 +529,12 @@ function RecordForm({
       </div>
 
       {submitError && !submitError.isValidationError && (
-        <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+        <p role="alert" className="rounded-none border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
           {getErrorMessage(submitError, t)}
         </p>
       )}
       {submitError?.isValidationError && (
-        <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+        <p role="alert" className="rounded-none border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
           {t("recordForm.checkInput")}
         </p>
       )}

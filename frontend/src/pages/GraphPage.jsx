@@ -148,7 +148,7 @@ function GraphPage() {
       <GraphFilters filters={filters} onChange={setFilters} />
       <GraphLegend />
 
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-surface-2">
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-none border border-surface-2">
         {renderBody()}
       </div>
     </div>

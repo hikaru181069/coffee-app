@@ -6,7 +6,7 @@ import { RECORD_TYPES } from "../../coffee-records/utils/recordFormat";
 // RecordFilters.jsxのcompactInputClassと同じ見た目。1箇所でしか使わない
 // 短いスタイル文字列のため、共通コンポーネント化はせずそのまま複製している
 const compactInputClass =
-  "w-auto rounded-lg border border-line/60 bg-surface-1 px-2.5 py-1.5 text-sm text-text " +
+  "w-auto rounded-none border border-line/60 bg-surface-1 px-2.5 py-1.5 text-sm text-text " +
   "transition-colors duration-150 hover:border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
 
 /**
@@ -40,7 +40,7 @@ function GraphFilters({ filters, onChange }) {
           type="button"
           onClick={() => onChange({ ...filters, recordType: "" })}
           aria-pressed={filters.recordType === ""}
-          className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
+          className={`rounded-none border px-3 py-1.5 text-sm transition-colors duration-150 ${
             filters.recordType === ""
               ? "border-line-strong bg-surface-2 font-semibold text-text"
               : "border-line/60 text-text-secondary hover:border-line"
@@ -54,7 +54,7 @@ function GraphFilters({ filters, onChange }) {
             type="button"
             onClick={() => onChange({ ...filters, recordType: type.value })}
             aria-pressed={filters.recordType === type.value}
-            className={`rounded-full border px-3 py-1.5 text-sm transition-colors duration-150 ${
+            className={`rounded-none border px-3 py-1.5 text-sm transition-colors duration-150 ${
               filters.recordType === type.value
                 ? "border-line-strong bg-surface-2 font-semibold text-text"
                 : "border-line/60 text-text-secondary hover:border-line"
@@ -69,7 +69,7 @@ function GraphFilters({ filters, onChange }) {
           <select
             value={filters.ratingMin}
             onChange={(event) => onChange({ ...filters, ratingMin: event.target.value })}
-            className="rounded-lg border border-line/60 bg-surface-1 px-2 py-1 text-xs text-text"
+            className="rounded-none border border-line/60 bg-surface-1 px-2 py-1 text-xs text-text"
           >
             <option value="">{t("graph.ratingUnfiltered")}</option>
             {[5, 4, 3, 2].map((score) => (
@@ -128,7 +128,7 @@ function GraphFilters({ filters, onChange }) {
                 type="button"
                 onClick={() => toggleNodeType(type)}
                 aria-pressed={active}
-                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors duration-150 ${
+                className={`inline-flex items-center gap-1 rounded-none border px-2.5 py-1 text-xs transition-colors duration-150 ${
                   active
                     ? "border-line bg-surface-2 text-text"
                     : "border-line/40 text-text-tertiary hover:border-line/60"

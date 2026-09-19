@@ -327,7 +327,7 @@ function BrewDetailsCard({ record }) {
           </FormField>
 
           {submitError && (
-            <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+            <p role="alert" className="rounded-none border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
               {getErrorMessage(submitError, t)}
             </p>
           )}

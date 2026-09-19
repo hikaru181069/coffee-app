@@ -29,7 +29,7 @@
  */
 function StatCard({ label, value, icon: Icon, iconColorClass, iconBgClass, flat = false }) {
   return (
-    <div className={`min-w-44 rounded-2xl border border-surface-2 bg-raised p-4 ${flat ? "" : "shadow-elevated"}`}>
+    <div className={`min-w-44 rounded-none border border-surface-2 bg-raised p-4 ${flat ? "" : "shadow-elevated"}`}>
       <div className="flex items-center gap-3">
         {Icon && (
           <span

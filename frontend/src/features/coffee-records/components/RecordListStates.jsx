@@ -34,17 +34,17 @@ export function RecordListSkeleton({ count = 4 }) {
       {Array.from({ length: count }, (_, index) => (
         <li
           key={index}
-          className="rounded-2xl border border-surface-2 bg-raised p-5 sm:p-6"
+          className="rounded-none border border-surface-2 bg-raised p-5 sm:p-6"
         >
           <div className="flex items-center gap-2">
             <div className="skeleton-block h-3 w-0.5 rounded-full" />
-            <div className="skeleton-block h-3 w-16 rounded" />
+            <div className="skeleton-block h-3 w-16 rounded-none" />
           </div>
-          <div className="skeleton-block mt-2 h-4 w-1/2 rounded" />
-          <div className="skeleton-block mt-2 h-3 w-1/3 rounded" />
+          <div className="skeleton-block mt-2 h-4 w-1/2 rounded-none" />
+          <div className="skeleton-block mt-2 h-3 w-1/3 rounded-none" />
           <div className="mt-4 flex gap-1.5">
-            <div className="skeleton-block h-5 w-1/5 rounded-full" />
-            <div className="skeleton-block h-5 w-1/4 rounded-full" />
+            <div className="skeleton-block h-5 w-1/5 rounded-none" />
+            <div className="skeleton-block h-5 w-1/4 rounded-none" />
           </div>
         </li>
       ))}
@@ -68,7 +68,7 @@ export function RecordListSkeleton({ count = 4 }) {
 export function RecordsEmptyState() {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line/60 px-6 py-12 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-none border border-dashed border-line/60 px-6 py-12 text-center">
       <CoffeeLoader size="lg" label={t("records.emptyTitle")} />
       <div>
         <p className="text-sm font-medium text-text">{t("records.emptyTitle")}</p>

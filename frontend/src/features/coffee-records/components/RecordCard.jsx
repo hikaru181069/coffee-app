@@ -21,7 +21,7 @@ import { revealDelayClass } from "../../../utils/revealDelay";
  * `flavorAccent.js`のコメント参照。
  */
 const tagBaseClass =
-  "inline-flex items-center gap-1.5 rounded-full border border-transparent px-2 py-0.5 text-[11px] font-medium transition-all duration-150 hover:-translate-y-px hover:border-line/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
+  "inline-flex items-center gap-1.5 rounded-none border border-transparent px-2 py-0.5 text-[11px] font-medium transition-all duration-150 hover:-translate-y-px hover:border-line/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
 const tagDotClass = "h-1.5 w-1.5 flex-shrink-0 rounded-full";
 const processVisual = getNodeVisual("process");
 
@@ -67,18 +67,18 @@ function RecordCard({ record, index = 0 }) {
   return (
     <li
       ref={ref}
-      className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} relative rounded-2xl border border-surface-2 bg-raised p-5 shadow-elevated transition-all duration-200 hover:-translate-y-px hover:border-line hover:bg-surface-1/40 sm:p-6`}
+      className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)} relative rounded-none border border-surface-2 bg-raised p-5 shadow-elevated transition-all duration-200 hover:-translate-y-px hover:border-line hover:bg-surface-1/40 sm:p-6`}
     >
       <Link
         to={`/records/${record.id}`}
         aria-label={record.title}
-        className="absolute inset-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        className="absolute inset-0 rounded-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       />
 
       {origins.length > 0 && (
         <Link
           to={entityDetailPath("origin", origins[0].id)}
-          className="relative mb-2 inline-flex items-center gap-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          className="relative mb-2 inline-flex items-center gap-2 rounded-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         >
           {/* ブレンド（産地が複数）は産地の数だけ細いバーを並べる
               （2026-09、ブレンドコーヒー対応。docs/design.md参照） */}
@@ -118,7 +118,7 @@ function RecordCard({ record, index = 0 }) {
         </div>
 
         {record.rating !== null && (
-          <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-surface-1 px-2 py-1 text-xs font-semibold text-warn">
+          <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-none bg-surface-1 px-2 py-1 text-xs font-semibold text-warn">
             <Star size={12} aria-hidden="true" fill="currentColor" strokeWidth={0} />
             <span className="font-mono">{record.rating}</span>
             <span className="sr-only">{t("records.outOf5Sr")}</span>

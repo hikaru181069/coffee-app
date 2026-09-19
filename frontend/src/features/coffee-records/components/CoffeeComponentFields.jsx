@@ -45,7 +45,7 @@ function CoffeeComponentFields({
   const idPrefix = `component-${headingIndex}`;
 
   return (
-    <div className="rounded-xl border border-line/60 bg-surface-1 p-4">
+    <div className="rounded-none border border-line/60 bg-surface-1 p-4">
       <div className="mb-4 flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
           {t("recordForm.componentHeading", { index: headingIndex + 1 })}
@@ -55,7 +55,7 @@ function CoffeeComponentFields({
           onClick={onRemove}
           disabled={isSubmitting}
           aria-label={t("common.delete")}
-          className="rounded-full p-1 text-text-tertiary transition-colors duration-150 hover:bg-surface-2 hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-none p-1 text-text-tertiary transition-colors duration-150 hover:bg-surface-2 hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <X size={16} aria-hidden="true" />
         </button>
