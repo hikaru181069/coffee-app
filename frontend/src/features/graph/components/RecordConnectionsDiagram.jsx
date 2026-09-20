@@ -67,7 +67,7 @@ function RecordConnectionsDiagram({ record }) {
               y2={edge.y2}
               stroke={edgeColorHex(edge)}
               strokeOpacity="0.55"
-              strokeWidth="1.1"
+              strokeWidth="0.5"
             />
           ))}
         </svg>
