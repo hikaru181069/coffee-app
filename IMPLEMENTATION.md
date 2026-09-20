@@ -4524,6 +4524,42 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-20: 記録詳細・エンティティ詳細ページのダッシュボード化
+
+**実装対象**: `RecordDetailPage.jsx`・`EntityDetailPage.jsx`を、KPIタイル行+2カラムグリッドの「ダッシュボード風」レイアウトへ作り直した。デスクトップ（`lg`以上）では画面の高さに収まり、ページ自体はスクロールしない。
+
+**なぜ今実装するのか**: ユーザーから「records詳細ページとentitiesページをダッシュボード風にします」という明示的な依頼。Artifactでモック（タブ切り替えで両ページ分）を作成し、承認を得たうえで実装した。モック提示後、「Homeと同じ画面いっぱいに」「デスクトップではスクロールする必要がない方が良い」という追加要望を受け、モックをビューポート内固定（各カードが自分の中身だけ内部スクロールする構成）へ改修してから実装に進んだ。「それぞれのアクセントカラーは既存コードに則って」という指示も受け、モックで使っていたハードコードのhexは使わず、実装では`getNodeVisual`/`nodeColor.js`（知識グラフのノード種別色）をそのまま再利用した。
+
+**レイアウトの実装方針**: `docs/design.md`「Record Detail」に追記済み（詳細はそちら参照）。要点:
+- コンテナ幅を`contentContainerClass`（1200px）から`wideContainerClass`（1600px、Home画面と同じ）へ変更
+- KPIタイル行を追加（既存の`StatCard`を再利用。新しい集計値は作らず、既に計算済みの値を先出しするだけ）
+- `lg:h-[calc(100vh-3.5rem)]`でページ自体をナビバー分を引いた画面高さに固定し、2カラムグリッド（`lg:grid-cols-[1.6fr_1fr]`）にする
+- 各カードは`lg:min-h-0`+`lg:overflow-y-auto`で見出しを固定したまま本文だけ内部スクロールする
+- lg未満（モバイル）ではこれらの制約をすべて外し、従来通り1カラムで縦にスクロールする（`lg:`プレフィックス無しのクラスは一切変更していないため、CSSのカスケードにより自動的に元の見た目へ戻る）
+
+**実データで踏んだ不具合と修正**: 実装直後、claude-in-chrome+ローカルMongoDBで実データを確認したところ、「コーヒーの詳細」カードの中身がほぼ空（罫線だけ）に潰れる不具合が発生した。原因はCSS flexboxの仕様: `flex-basis: 0%`の兄弟（Coffee Information、`flex-[3_1_0%]`）と`flex-basis: auto`の兄弟（`BrewDetailsCard`、当時は無指定で自然な高さ）を同じ列に混在させると、コンテナの合計高さが不足したとき（deficit）、`flex-basis: 0%`側の縮小スケール係数が常に0になるため、そちら側が数学的に0へ潰れ、`flex-basis: auto`側（自然な高さのまま縮まない）がすべての空間を奪ってしまう。`BrewDetailsCard.jsx`にも`lg:flex lg:min-h-0 lg:flex-1`+内部スクロールを追加し、メイン列の全カードを同じ`flex-basis: 0%`方式へ揃えて解消した。
+
+サイドバー列（味覚グラフ/つながり図/似た記録）でも同種の問題が発生した。「つながり」図（`RecordConnectionsDiagram`、aspect-square）は自然な高さがサイドバー列の持ち分（実データで530px）を超えることがあり、当初`SimilarRecords`に付けていた`flex-1`（0%-basis）がまたゼロへ潰れ、5件あるはずの類似記録が完全に不可視になっていた（`ul`の高さ0で確認）。今回は逆方向の修正にした: `SimilarRecords`を`flex-1`から外し、味覚グラフ・つながり図と同じ「自然な高さのまま置く」方式に統一（正方形の図解・最大5件という上限があり内容量が予測できるため、flex-1で無理に埋めようとしない）。あわせて、両カラムの列（stack）自体にも保険として`lg:overflow-y-auto`を追加し、自然な高さの合計が列の持ち分を超えた場合でも、列全体をスクロールしてすべての内容に到達できるようにした（個々のカードを潰すのではなく、列がスクロールすることで解決する設計に変更）。
+
+**EntityDetailPage.jsx**: 同じ方針で作り直した。既存のKPI行（記録数・平均評価・最後に飲んだ日）に「関連する種別」（`relatedTypes.length`）のタイルを追加した（新規i18nキー`entityDetail.relatedTypesCount`）。「関連する属性」セクションは、種別ブロックを縦積みから`lg:grid-cols-2`の2列へ変更（広がった横幅を使い切るため）。こちらは「関連する属性」「関連する記録」の2つとも`flex-1`（0%-basis）で統一しており、上記のような混在は無いため、同種の不具合は発生しなかった。
+
+**変更ファイル**:
+- `frontend/src/pages/RecordDetailPage.jsx`
+- `frontend/src/pages/EntityDetailPage.jsx`
+- `frontend/src/features/coffee-records/components/BrewDetailsCard.jsx`
+- `frontend/src/features/similarRecords/components/SimilarRecords.jsx`
+- `frontend/src/features/discover/components/DiscoverSuggestions.jsx`（`mb-6`の削除、親のgapに委ねる形へ）
+- `frontend/src/i18n/locales/ja.json`・`en.json`（`entityDetail.relatedTypesCount`追加）
+- `docs/design.md`（「Record Detail」節に追記）・`docs/features.md`（「Entity Detail」の「表示」節に追記）
+
+**データフロー**: 変更なし（表示・レイアウトの変更のみ。KPIタイルも既存の計算結果を再利用するだけで、新しいAPI呼び出し・集計ロジックは追加していない）。
+
+**実行したテストと結果**: `npm run lint`（0エラー）・`npm run build`（0エラー）・`npm run test`（356件、0エラー）。claude-in-chromeでローカルMongoDBへ一時切り替えのうえ、ブレンド記録（2コンポーネント・産地/品種/精製方法あり）とEntity Detail（Ethiopia、関連記録6件）を実機確認。デスクトップ幅（1680px）でページ自体がスクロールしないこと（`document.documentElement.scrollHeight === clientHeight`をJS側でも確認）、各カードの内部スクロール・列レベルのフォールバックスクロールが実際に機能すること（「コーヒーの詳細」「似た記録」「関連する記録」のいずれも、圧縮されず全件に到達できることを確認）を検証した。モバイル幅は、このセッションのブラウザ自動化ツールでウィンドウを直接縮小しても`window.innerWidth`が反映されなかったため（複数タブが同一ウィンドウを共有している影響と推測）、2026-08-31に確立済みのiframe代替手法（`width:390px`のiframeを注入し`contentWindow`側を検証する。IMPLEMENTATION.md該当エントリ参照）で両ページを確認した。KPIタイルが1列に積み上がること、`window.innerWidth`が386px、`pageScrollable`（`scrollHeight > clientHeight`）が`true`（通常のページスクロールに戻っている）ことを確認し、デスクトップ用の`lg:`制約が漏れていないことを実証した。
+
+**未解決事項**: 今回の「コンテナ内で自然な高さの兄弟同士がflexboxの空間を奪い合う」不具合は、今後同種のダッシュボード風レイアウトを他画面に広げる際にも再発しうる一般的な罠のため、同じ列内のカードは可能な限り同じflex方式（全部flex-1か、全部自然な高さのどちらか）に揃える、という判断基準を今回の実装で得た。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -4562,6 +4598,7 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 - 2026-08-30、ローディングスケルトンのレビュー（同日）で「`StatsSkeleton.jsx`は現状と一致している」と判断したのは誤りだった（`cardClass`化への追随だけを見ており、内部の`StatCard`/`TopRankingList`構造までは突き合わせていなかった）。同日中にユーザー指摘で修正済みだが、今後同種のレビューでは子コンポーネントの内部構造まで一段深く確認する
 - 2026-08-30、コーヒー診断の強化で新規追加した13タイプ分の日本語・英語コピー（タイトル・説明文）は、既存5タイプと同じトーンで新規に書き下ろしたものであり、実データでの見え方の検証は行っていない
 - 2026-08-30、診断の判定軸（焙煎度×フレーバーcategory）には`rating`（総合評価）を使っていない。ユーザーへの確認では選択肢に含めたが選ばれなかった（将来「高評価のタイプ」等のバッジを追加する場合の候補として残る）
+- 2026-09-20、RecordDetail/EntityDetailのダッシュボード化（該当エントリ参照）で踏んだ「同じ列内でflex-basis:0%の兄弟とauto（自然な高さ）の兄弟を混在させると、コンテナが不足したときauto側が空間を奪い0%側が潰れる」というflexboxの罠は、今後同種のレイアウトを他画面に広げる際に再発しうる一般的な注意点として残る
 
 ## 次に実装すべき最小単位
 

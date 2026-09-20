@@ -31,6 +31,10 @@ import { cardClass } from "../../coffee-records/components/formStyles";
  * 「UI Rules」のカード化ルール参照）。レポート系ページの他セクションと
  * 同じ`cardClass`で統一し、中の`SuggestionCard`は`flat`にして
  * 二重の影にしないようにした。
+ *
+ * 2026-09、EntityDetailPage.jsxのダッシュボード風レイアウト（サイドバー列に
+ * 縦積みのカード）に合わせ、余白は自分でmb-6を持たず親のgapに委ねる形へ
+ * 変更した（呼び出し側が1箇所のみのため、この変更で他画面への影響は無い）。
  */
 function DiscoverSuggestions({ nodeId }) {
   const { t } = useTranslation();
@@ -39,7 +43,7 @@ function DiscoverSuggestions({ nodeId }) {
   if (isLoading || error || suggestions.length === 0) return null;
 
   return (
-    <section className={`${cardClass} mb-6`}>
+    <section className={cardClass}>
       <div className="mb-3 flex items-center gap-2">
         <Compass size={16} aria-hidden="true" className="text-success" />
         <h2 className="text-sm font-semibold text-text">{t("discover.heading")}</h2>

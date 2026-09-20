@@ -69,6 +69,14 @@ const BREW_TIME_ERROR_KEY_MAP = { brewTimeMinutes: "brewTimeSeconds", brewTimeSe
  * APIエンドポイントは作らない。ページ全体のreload()は呼ばず、
  * このカード自身の表示状態だけを更新する（他のセクションはこの
  * フィールドを参照しないため）。
+ *
+ * 2026-09、RecordDetailPage.jsxのダッシュボード風レイアウト（メイン列に
+ * 縦積みのカード。コーヒーの詳細・メモと高さを分け合う）に合わせ、
+ * 見出しを固定したまま本文だけを内部スクロールできるようにした。
+ * 空状態（EmptyState）は他の2カードより内容の背が高くなりがちで、
+ * 固定の自然高さのままだと兄弟カードの取り分を圧迫してしまう
+ * （実データで発覚: flex-basis:0%の兄弟が高さ0近くまで潰れた）ため、
+ * このカードも同じflex-1+min-h-0で「奪い合わない」設計に揃えた。
  */
 function BrewDetailsCard({ record }) {
   const { t } = useTranslation();
@@ -179,7 +187,7 @@ function BrewDetailsCard({ record }) {
   };
 
   return (
-    <section className={cardClass}>
+    <section className={`${cardClass} lg:flex lg:min-h-0 lg:flex-1 lg:flex-col`}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-text">{t("records.brewDetailsHeading")}</h2>
         {!isEditing && hasBrewData && (
@@ -195,7 +203,7 @@ function BrewDetailsCard({ record }) {
       </div>
 
       {!isEditing && !hasBrewData && (
-        <div className="mt-4">
+        <div className="mt-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
           <EmptyState
             icon={Timer}
             title={t("records.brewDetailsEmptyTitle")}
@@ -209,7 +217,7 @@ function BrewDetailsCard({ record }) {
       )}
 
       {!isEditing && hasBrewData && (
-        <div className="mt-4 flex flex-col gap-4">
+        <div className="mt-4 flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
           <dl className="flex flex-wrap gap-x-8 gap-y-3">
             {brewData.doseWeight !== null && (
               <div>
@@ -255,7 +263,11 @@ function BrewDetailsCard({ record }) {
       )}
 
       {isEditing && (
-        <form onSubmit={handleSubmit} noValidate className="mt-4 flex flex-col gap-4">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="mt-4 flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1"
+        >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <FormField id="doseWeight" label={t("records.brewDetailsDoseLabel")} error={errors.doseWeight}>
               <input

@@ -24,6 +24,15 @@ import { revealDelayClass } from "../../../utils/revealDelay";
  * 「Discovery Must Be Actionable」（docs/product.md）に従い、共有数の
  * 数字だけでなく実際に共有している属性（例:「Ethiopia」「Washed」）を
  * チップで示し、「なぜ似ているか」が一目で分かるようにしている。
+ *
+ * 2026-09、RecordDetailPage.jsxのダッシュボード風レイアウト（サイドバー列に
+ * 縦積みのカード）に合わせ、余白は自分でmt-6を持たず親のgapに委ねる形へ
+ * 変更した（呼び出し側が1箇所のみのため、この変更で他画面への影響は無い）。
+ * TasteRadarChart/RecordConnectionsDiagramと同じく自然な高さのまま置く
+ * （候補は最大5件までのため（THRESHOLDS参照）内容量の上限が決まっており、
+ * flex-1で残り空間を埋めようとすると、逆に「つながり」図のような背の
+ * 高い兄弟カードに空間を奪われて潰れてしまうことが実データで判明した
+ * ため、この形に落ち着いた）。
  */
 function SimilarRecords({ recordId }) {
   const { t, i18n } = useTranslation();
@@ -32,7 +41,7 @@ function SimilarRecords({ recordId }) {
   if (isLoading || error || similarRecords.length === 0) return null;
 
   return (
-    <section className={`${cardClass} mt-6`}>
+    <section className={cardClass}>
       <h2 className="text-base font-semibold text-text">{t("similarRecords.heading")}</h2>
       <ul className="mt-4 flex flex-col gap-2">
         {similarRecords.map((record, index) => (

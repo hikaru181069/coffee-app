@@ -257,6 +257,11 @@ GET /api/graph/nodes/origin%3A507f...
 Statsのランキングから遷移できる。「グラフで見る」ボタンで
 `/graph?focus=<nodeId>`に戻れる。
 
+2026-09、RecordDetailPageと同じ「ダッシュボード風」の作り直しを行った
+（レイアウトの詳細はdocs/design.md「Record Detail」参照）。記録数・
+平均評価・最後に飲んだ日に加え、関連する種別数（`relatedTypes.length`）
+のKPIタイルを追加した。
+
 ---
 
 ## Stats

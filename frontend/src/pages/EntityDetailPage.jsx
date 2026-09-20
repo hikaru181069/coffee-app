@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Calendar, ChevronRight, Star } from "lucide-react";
+import { Calendar, ChevronRight, Share2, Star } from "lucide-react";
 
 import { useEntityDetail } from "../features/graph/hooks/useEntityDetail";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
@@ -13,7 +13,7 @@ import DiscoverSuggestions from "../features/discover/components/DiscoverSuggest
 import BackLink from "../components/BackLink";
 import CoffeeLoader from "../components/CoffeeLoader";
 import StatCard from "../components/StatCard";
-import { contentContainerClass } from "../styles/pageContainer";
+import { wideContainerClass } from "../styles/pageContainer";
 import { useReveal } from "../hooks/useReveal";
 import { revealDelayClass } from "../utils/revealDelay";
 
@@ -66,7 +66,7 @@ function EntityDetailPage() {
 
   if (isLoading) {
     return (
-      <div className={contentContainerClass}>
+      <div className={wideContainerClass}>
         {backNav}
         <div className="mt-3">
           <CoffeeLoader size="lg" />
@@ -77,7 +77,7 @@ function EntityDetailPage() {
 
   if (error) {
     return (
-      <div className={contentContainerClass}>
+      <div className={wideContainerClass}>
         {backNav}
         <p className="mt-3 text-sm text-danger">{getErrorMessage(error, t)}</p>
       </div>
@@ -98,7 +98,7 @@ function EntityDetailPage() {
   const nextTrail = [...trail, { id: detail.id, label: detail.label }];
 
   return (
-    <div className={contentContainerClass}>
+    <div className={`${wideContainerClass} lg:flex lg:h-[calc(100vh-3.5rem)] lg:flex-col`}>
       {trail.length > 0 ? <EntityTrail trail={trail} current={detail.label} t={t} /> : <BackLink />}
       <header className="mt-3 mb-6">
         <div className="flex items-center gap-2">
@@ -121,7 +121,11 @@ function EntityDetailPage() {
           という単純なルールへ統一した（docs/design.md「UI Rules」
           「カード化の使い分け」参照）。StatCardは他cardClassにネストされる
           ため`flat`にする */}
-      <section className={`${cardClass} mb-6`}>
+      {/* 2026-09、ダッシュボード風の作り直しで、関連する種別数（何種類の
+          属性とつながっているか）のタイルを追加した。単一のノード種別に
+          対応しないため、lastConsumedと同じ中立色（text-tertiary/
+          surface-2）にしている */}
+      <section className={cardClass}>
         <div className="flex flex-wrap gap-3">
           <StatCard
             label={t("entityDetail.recordCount")}
@@ -147,51 +151,76 @@ function EntityDetailPage() {
             iconBgClass="bg-surface-2"
             flat
           />
+          <StatCard
+            label={t("entityDetail.relatedTypesCount")}
+            value={relatedTypes.length}
+            icon={Share2}
+            iconColorClass="text-text-tertiary"
+            iconBgClass="bg-surface-2"
+            flat
+          />
         </div>
       </section>
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        <Link to={`/graph?focus=${encodeURIComponent(detail.id)}`} className={secondaryButtonClass}>
-          {t("entityDetail.viewInGraph")}
-        </Link>
-        {/* 世界地図は産地専用の機能（docs/features.md「World Map」）のため、
-            産地ノードを見ているときだけ導線を出す。地図側にその国だけへ
-            フォーカスする仕組みは無く、地図全体を開くだけ（Graphの
-            ?focus=のような絞り込みは今回のスコープ外） */}
-        {detail.type === "origin" && (
-          <Link to="/map" className={secondaryButtonClass}>
-            {t("entityDetail.viewOnMap")}
-          </Link>
-        )}
-      </div>
+      {/* ── ダッシュボード本体 ───────────────────────
+          2026-09、「entitiesページをダッシュボード風にする」再設計
+          （RecordDetailPage.jsxと同じ方針）。lg以上では2カラム（関連する
+          属性・記録を扱う列/操作・提案を扱う列）のグリッドにし、ページ
+          自体の高さをビューポートに収める。関連する属性・関連する記録は
+          件数が伸びやすいため内部スクロールにし、操作リンク・Discover
+          提案は内容量が決まっているため自然な高さのまま置く。lg未満
+          （モバイル）ではこの制約を外し、従来通り1カラムで縦にスクロール
+          する。 */}
+      <div className="mt-6 flex flex-col gap-6 lg:flex-1 lg:min-h-0 lg:grid lg:grid-cols-[1.6fr_1fr] lg:gap-5">
+        {/* ── メイン列: 関連する属性・記録 ─────────────── */}
+        <div className="flex flex-col gap-6 lg:min-h-0 lg:gap-4 lg:overflow-y-auto lg:pr-1">
+          {relatedTypes.length > 0 && (
+            <section className={`${cardClass} lg:flex lg:min-h-0 lg:flex-1 lg:flex-col`}>
+              <h2 className="text-base font-semibold text-text">{t("entityDetail.relatedHeading")}</h2>
+              <div className="mt-5 flex flex-col gap-5 lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:gap-x-6 lg:gap-y-5 lg:overflow-y-auto lg:pr-1">
+                {relatedTypes.map((type) => (
+                  <RelatedAttributeGroup
+                    key={type}
+                    type={type}
+                    items={detail.relatedAttributes[type]}
+                    t={t}
+                    trail={nextTrail}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
-      {detail.type === "origin" && <DiscoverSuggestions nodeId={detail.id} />}
+          <section className={`${cardClass} lg:flex lg:min-h-0 lg:flex-1 lg:flex-col`}>
+            <h2 className="text-base font-semibold text-text">{t("entityDetail.recordsHeading")}</h2>
+            <ul className="mt-4 flex flex-col gap-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+              {detail.records.map((record, index) => (
+                <RelatedRecordRow key={record.id} record={record} index={index} language={i18n.language} />
+              ))}
+            </ul>
+          </section>
+        </div>
 
-      {relatedTypes.length > 0 && (
-        <section className={`${cardClass} mb-6`}>
-          <h2 className="text-base font-semibold text-text">{t("entityDetail.relatedHeading")}</h2>
-          <div className="mt-5 flex flex-col gap-5">
-            {relatedTypes.map((type) => (
-              <RelatedAttributeGroup
-                key={type}
-                type={type}
-                items={detail.relatedAttributes[type]}
-                t={t}
-                trail={nextTrail}
-              />
-            ))}
+        {/* ── サイドバー列: 操作・Discover提案 ─────────── */}
+        <div className="flex flex-col gap-6 lg:min-h-0 lg:gap-4 lg:overflow-y-auto lg:pr-1">
+          <div className="flex flex-wrap gap-2">
+            <Link to={`/graph?focus=${encodeURIComponent(detail.id)}`} className={secondaryButtonClass}>
+              {t("entityDetail.viewInGraph")}
+            </Link>
+            {/* 世界地図は産地専用の機能（docs/features.md「World Map」）のため、
+                産地ノードを見ているときだけ導線を出す。地図側にその国だけへ
+                フォーカスする仕組みは無く、地図全体を開くだけ（Graphの
+                ?focus=のような絞り込みは今回のスコープ外） */}
+            {detail.type === "origin" && (
+              <Link to="/map" className={secondaryButtonClass}>
+                {t("entityDetail.viewOnMap")}
+              </Link>
+            )}
           </div>
-        </section>
-      )}
 
-      <section className={cardClass}>
-        <h2 className="text-base font-semibold text-text">{t("entityDetail.recordsHeading")}</h2>
-        <ul className="mt-4 flex flex-col gap-2">
-          {detail.records.map((record, index) => (
-            <RelatedRecordRow key={record.id} record={record} index={index} language={i18n.language} />
-          ))}
-        </ul>
-      </section>
+          {detail.type === "origin" && <DiscoverSuggestions nodeId={detail.id} />}
+        </div>
+      </div>
     </div>
   );
 }

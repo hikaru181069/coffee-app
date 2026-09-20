@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Coffee, Globe, MoreHorizontal, Pencil, Share2, Star, Store, Trash2 } from "lucide-react";
+import { Coffee, Globe, MoreHorizontal, Pencil, Share2, Star, Store, Timer, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import "../features/coffee-records/coffee-records.css";
@@ -8,6 +8,7 @@ import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecor
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import BackLink from "../components/BackLink";
 import CoffeeLoader from "../components/CoffeeLoader";
+import StatCard from "../components/StatCard";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { cardClass, primaryButtonClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import {
@@ -22,7 +23,7 @@ import RecordConnectionsDiagram from "../features/graph/components/RecordConnect
 import SimilarRecords from "../features/similarRecords/components/SimilarRecords";
 import { getNodeVisual } from "../features/graph/utils/nodeVisuals";
 import { getNodeTintBgClass, getNodeTextColorClass } from "../features/graph/utils/nodeColor";
-import { contentContainerClass } from "../styles/pageContainer";
+import { wideContainerClass } from "../styles/pageContainer";
 import { useToast } from "../contexts/ToastContext";
 import { getErrorMessage } from "../utils/errorMessage";
 
@@ -124,7 +125,7 @@ function RecordDetailPage() {
   // に依存するため、記録が読み込まれるまでは出せない）
   if (isLoading) {
     return (
-      <div className={contentContainerClass}>
+      <div className={wideContainerClass}>
         <BackLink fallback="/records" />
         <div className="mt-3">
           <CoffeeLoader size="lg" />
@@ -135,7 +136,7 @@ function RecordDetailPage() {
 
   if (error) {
     return (
-      <div className={contentContainerClass}>
+      <div className={wideContainerClass}>
         <BackLink fallback="/records" />
         <div className="mt-3">
           {error.isNotFound ? (
@@ -171,6 +172,21 @@ function RecordDetailPage() {
   const hasTasteRatings = TASTE_AXES.some(
     (axis) => record[axis.field] !== null && record[axis.field] !== undefined,
   );
+
+  // ── ダッシュボード風レイアウトのKPIタイル ──────────────
+  // 2026-09、記録詳細ページを「ダッシュボード風」に作り直した際に追加。
+  // 新しい集計は行わず、既に計算済みのdetails（collectCoffeeDetails）と
+  // 抽出の詳細（BrewDetailsCard.jsxと同じ式）から件数だけを取り出す。
+  // レシオ以外はすべて知識グラフのノード種別に対応するため、アイコン・
+  // 色はgetNodeVisualをそのまま使い、このページ専用の色は増やさない。
+  const originCount = details.components.filter((rows) => rows.some((row) => row.key === "origin")).length;
+  const varietyCount = details.components.reduce(
+    (sum, rows) => sum + (rows.find((row) => row.key === "varieties")?.items.length ?? 0),
+    0,
+  );
+  const flavorCount = details.shared.find((row) => row.key === "flavors")?.items.length ?? 0;
+  const brewRatio =
+    record.doseWeight && record.waterWeight ? (record.waterWeight / record.doseWeight).toFixed(1) : null;
 
   /** collectCoffeeDetails()が返す1行分（アイコン+ラベル+pill一覧）を描画する */
   const renderDetailRow = (detail) => {
@@ -213,7 +229,7 @@ function RecordDetailPage() {
   };
 
   return (
-    <div className={contentContainerClass}>
+    <div className={`${wideContainerClass} lg:flex lg:h-[calc(100vh-3.5rem)] lg:flex-col`}>
       {/* ── Back ─────────────────────────────────── */}
       {/* 2026-08、記録一覧・Home・検索結果・関連記録など複数の場所から
           遷移してくるため、`/records`固定のパンくずでは実際の遷移元と
@@ -267,139 +283,206 @@ function RecordDetailPage() {
         )}
       </header>
 
-      <div className="mt-6 flex flex-col gap-6">
-        {/* ── Coffee Information（Property Grid） ─── */}
-        {hasCoffeeInfo && (
-          <section className={cardClass}>
-            <h2 className="text-base font-semibold text-text">{t("records.detailsHeading")}</h2>
-            <div className="mt-5 flex flex-col gap-5">
-              {/* 2026-09、ブレンドコーヒー対応で「コーヒーの詳細」
-                  （産地・農園・品種・精製方法）はcomponentごとにグループ化
-                  して表示する。産地と精製方法の対応関係を保つのが目的なので、
-                  単一グループ（シングルオリジン）のときは以前と同じ見た目
-                  （枠なし）にし、複数グループのときだけ「コーヒーN」の
-                  見出しと枠で区切る */}
-              {details.components.map((rows, index) => (
+      {/* ── KPIタイル ─────────────────────────────
+          2026-09、ダッシュボード風の作り直しで追加。新しい集計値では
+          なく、下のCoffee Information/BrewDetailsCardが既に持っている
+          値を要約として先出しするだけ（Source of Truthは変えない） */}
+      <section className={`${cardClass} mt-6`}>
+        <div className="flex flex-wrap gap-3">
+          <StatCard
+            label={t("graph.nodeTypes.origin")}
+            value={originCount}
+            icon={getNodeVisual("origin").icon}
+            iconColorClass={getNodeVisual("origin").colorClass}
+            iconBgClass={getNodeVisual("origin").bgTintClass}
+            flat
+          />
+          <StatCard
+            label={t("graph.nodeTypes.variety")}
+            value={varietyCount}
+            icon={getNodeVisual("variety").icon}
+            iconColorClass={getNodeVisual("variety").colorClass}
+            iconBgClass={getNodeVisual("variety").bgTintClass}
+            flat
+          />
+          <StatCard
+            label={t("graph.nodeTypes.flavor")}
+            value={flavorCount}
+            icon={getNodeVisual("flavor").icon}
+            iconColorClass={getNodeVisual("flavor").colorClass}
+            iconBgClass={getNodeVisual("flavor").bgTintClass}
+            flat
+          />
+          <StatCard
+            label={t("records.brewDetailsRatioLabel")}
+            value={brewRatio ? `1 : ${brewRatio}` : "—"}
+            icon={Timer}
+            iconColorClass="text-text-tertiary"
+            iconBgClass="bg-surface-2"
+            flat
+          />
+        </div>
+      </section>
+
+      {/* ── ダッシュボード本体 ───────────────────────
+          2026-09、「records詳細ページをダッシュボード風にする」再設計。
+          lg以上では2カラム（コーヒーの情報を主に扱う列/図解を扱う列）の
+          グリッドにし、ページ自体の高さをビューポートに収める
+          （lg:flex-1 lg:min-h-0）。各カードはそれぞれ`lg:min-h-0`+
+          内部スクロール領域を持ち、ブレンドのコーヒー詳細やメモが
+          長くなってもページ全体はスクロールせず、そのカードの中だけが
+          スクロールする。lg未満（モバイル）ではこの制約を外し、従来通り
+          1カラムで縦にスクロールする。
+
+          各列（stack）自体にも`lg:overflow-y-auto`を保険として付けている。
+          味覚グラフ・つながり図は内容が図解（aspect-square）のため、
+          カードごとの内部スクロールに乗せず自然な高さのままにしている
+          （中途半端に圧縮すると図が歪むため）。実データで検証したところ、
+          ブレンド記録のつながり図はノード数が多いと自然な高さだけで
+          サイドバー列の持ち分を超えることがあり、その場合は列全体が
+          スクロールしてすべて見られるようにする（個々のカードだけを
+          潰さない、という判断）。 */}
+      <div className="mt-6 flex flex-col gap-6 lg:flex-1 lg:min-h-0 lg:grid lg:grid-cols-[1.6fr_1fr] lg:gap-5">
+        {/* ── メイン列: コーヒーの情報 ─────────────── */}
+        <div className="flex flex-col gap-6 lg:min-h-0 lg:gap-4 lg:overflow-y-auto lg:pr-1">
+          {/* ── Coffee Information（Property Grid） ─── */}
+          {hasCoffeeInfo && (
+            <section className={`${cardClass} lg:flex lg:min-h-0 lg:flex-[3_1_0%] lg:flex-col`}>
+              <h2 className="text-base font-semibold text-text">{t("records.detailsHeading")}</h2>
+              <div className="mt-5 flex flex-col gap-5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+                {/* 2026-09、ブレンドコーヒー対応で「コーヒーの詳細」
+                    （産地・農園・品種・精製方法）はcomponentごとにグループ化
+                    して表示する。産地と精製方法の対応関係を保つのが目的なので、
+                    単一グループ（シングルオリジン）のときは以前と同じ見た目
+                    （枠なし）にし、複数グループのときだけ「コーヒーN」の
+                    見出しと枠で区切る。ダッシュボード化にあわせ、広い画面では
+                    グループを縦積みではなく横に並べて余白を使い切る */}
                 <div
-                  key={index}
                   className={
-                    details.components.length > 1 ? "rounded-none border border-line/60 p-4" : undefined
+                    details.components.length > 1
+                      ? "grid gap-4 lg:grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]"
+                      : "flex flex-col gap-4"
                   }
                 >
-                  {details.components.length > 1 && (
-                    <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-text-tertiary">
-                      {t("recordForm.componentHeading", { index: index + 1 })}
-                    </span>
-                  )}
-                  <dl className="flex flex-wrap gap-x-8 gap-y-6">{rows.map(renderDetailRow)}</dl>
-                </div>
-              ))}
-
-              {details.shared.length > 0 && (
-                <dl
-                  className={`flex flex-wrap gap-x-8 gap-y-6 ${
-                    details.components.length > 0 ? "border-t border-line/60 pt-5" : ""
-                  }`}
-                >
-                  {details.shared.map(renderDetailRow)}
-                </dl>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* ── Tasting Note ─────────────────────────── */}
-        {record.notes && (
-          <section className={cardClass}>
-            <h2 className="text-base font-semibold text-text">{t("records.notesHeading")}</h2>
-            {/* whitespace-pre-wrap: 入力時の改行を表示にも反映する */}
-            <p className="mt-3 whitespace-pre-wrap text-base italic leading-relaxed text-text-secondary">
-              {record.notes}
-            </p>
-          </section>
-        )}
-
-        {/* ── 味覚グラフ / Connections ─────────────────
-            どちらも記録本体に対する補助的な図解で、形も近い正方形の
-            ため、両方あるときはlg以上で横並びにして縦の高さを圧縮する
-            （docsとの相談: 詳細画面は記録1件分の量が決まっているため、
-            Recordsの一覧と違い「スクロール無しで収まる」ことを狙える）。
-            片方しか無いときはgridを掛けず単一カラムのまま伸ばす */}
-        {(hasTasteRatings || hasConnections) && (
-          <section className={cardClass}>
-            <div className={hasTasteRatings && hasConnections ? "grid gap-8 lg:grid-cols-2" : ""}>
-              {hasTasteRatings && (
-                <div>
-                  <h2 className="text-base font-semibold text-text">{t("records.tasteHeading")}</h2>
-                  <div className="mt-4">
-                    <TasteRadarChart record={record} />
-                  </div>
-                </div>
-              )}
-
-              {hasConnections && (
-                <div>
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-base font-semibold text-text">{t("records.connectionsHeading")}</h2>
-                    <div className="flex items-center gap-3">
-                      <Link
-                        to={`/graph?focus=record:${record.id}`}
-                        className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
-                      >
-                        <Share2 size={12} aria-hidden="true" />
-                        <span className="underline underline-offset-2">{t("common.viewOnGraph")}</span>
-                      </Link>
-                      {/* 世界地図は産地専用の機能（docs/features.md「World Map」）
-                          のため、産地がある記録のときだけ導線を出す。EntityDetailPage.jsx
-                          の産地ページと同じ理由で、地図側にこの記録の産地だけへ
-                          フォーカスする仕組みは無く、地図全体を開くだけ */}
-                      {(record.components ?? []).some((component) => component.origin) && (
-                        <Link
-                          to="/map"
-                          className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
-                        >
-                          <Globe size={12} aria-hidden="true" />
-                          <span className="underline underline-offset-2">{t("common.viewOnMap")}</span>
-                        </Link>
+                  {details.components.map((rows, index) => (
+                    <div
+                      key={index}
+                      className={
+                        details.components.length > 1 ? "rounded-none border border-line/60 p-4" : undefined
+                      }
+                    >
+                      {details.components.length > 1 && (
+                        <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+                          {t("recordForm.componentHeading", { index: index + 1 })}
+                        </span>
                       )}
+                      <dl className="flex flex-wrap gap-x-8 gap-y-6">{rows.map(renderDetailRow)}</dl>
                     </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <RecordConnectionsDiagram record={record} />
-                  </div>
+                  ))}
                 </div>
-              )}
-            </div>
-          </section>
-        )}
 
-        {!hasCoffeeInfo && !hasTasteRatings && !record.notes && !hasConnections && (
-          // Coffee Information/Notes/味覚グラフ/Connectionsのいずれも無いときは、
-          // 次に何ができるかを示す（抽出の詳細は下のBrewDetailsCardが
-          // 常に表示するため、ここでは触れない）
-          <p className="rounded-none border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
-            {t("records.detailEmptyHint")}
-          </p>
-        )}
+                {details.shared.length > 0 && (
+                  <dl
+                    className={`flex flex-wrap gap-x-8 gap-y-6 ${
+                      details.components.length > 0 ? "border-t border-line/60 pt-5" : ""
+                    }`}
+                  >
+                    {details.shared.map(renderDetailRow)}
+                  </dl>
+                )}
+              </div>
+            </section>
+          )}
 
-        {/* ── 抽出の詳細（独立カード）───────────────────
-            記録編集フォームには含めない（レシオ関連の情報は豆そのものの
-            情報と性質が異なるという判断、docs/domain-model.md参照）。
-            味覚グラフの下に配置する（ユーザー指摘）。このカードが抽出
-            データを追加する唯一の入り口のため、他のセクションと違い
-            常に表示する */}
-        <BrewDetailsCard record={record} />
+          {/* ── Tasting Note ─────────────────────────── */}
+          {record.notes && (
+            <section className={`${cardClass} lg:flex lg:min-h-0 lg:flex-1 lg:flex-col`}>
+              <h2 className="text-base font-semibold text-text">{t("records.notesHeading")}</h2>
+              {/* whitespace-pre-wrap: 入力時の改行を表示にも反映する */}
+              <div className="mt-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+                <p className="whitespace-pre-wrap text-base italic leading-relaxed text-text-secondary">
+                  {record.notes}
+                </p>
+              </div>
+            </section>
+          )}
+
+          {!hasCoffeeInfo && !record.notes && (
+            // Coffee Information/Notesのいずれも無いときは、次に何ができるかを示す
+            // （抽出の詳細は下のBrewDetailsCardが常に表示するため、ここでは触れない）
+            <p className="rounded-none border border-dashed border-line/60 px-4 py-6 text-center text-sm text-text-tertiary">
+              {t("records.detailEmptyHint")}
+            </p>
+          )}
+
+          {/* ── 抽出の詳細（独立カード）───────────────────
+              記録編集フォームには含めない（レシオ関連の情報は豆そのものの
+              情報と性質が異なるという判断、docs/domain-model.md参照）。
+              このカードが抽出データを追加する唯一の入り口のため、他の
+              セクションと違い常に表示する */}
+          <BrewDetailsCard record={record} />
+        </div>
+
+        {/* ── サイドバー列: 図解・つながり ─────────────── */}
+        <div className="flex flex-col gap-6 lg:min-h-0 lg:gap-4 lg:overflow-y-auto lg:pr-1">
+          {/* ── 味覚グラフ ───────────────────────────
+              2026-09、ダッシュボード化にあわせ、以前は「つながり」と
+              1枚のカードに横並びで収めていた図を、サイドバー列の別カードへ
+              分割した（サイドバー自体が1列のため、横並びにする意味が
+              無くなったため） */}
+          {hasTasteRatings && (
+            <section className={cardClass}>
+              <h2 className="text-base font-semibold text-text">{t("records.tasteHeading")}</h2>
+              <div className="mt-4">
+                <TasteRadarChart record={record} />
+              </div>
+            </section>
+          )}
+
+          {/* ── Connections ──────────────────────────── */}
+          {hasConnections && (
+            <section className={cardClass}>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold text-text">{t("records.connectionsHeading")}</h2>
+                <div className="flex items-center gap-3">
+                  <Link
+                    to={`/graph?focus=record:${record.id}`}
+                    className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
+                  >
+                    <Share2 size={12} aria-hidden="true" />
+                    <span className="underline underline-offset-2">{t("common.viewOnGraph")}</span>
+                  </Link>
+                  {/* 世界地図は産地専用の機能（docs/features.md「World Map」）
+                      のため、産地がある記録のときだけ導線を出す。EntityDetailPage.jsx
+                      の産地ページと同じ理由で、地図側にこの記録の産地だけへ
+                      フォーカスする仕組みは無く、地図全体を開くだけ */}
+                  {(record.components ?? []).some((component) => component.origin) && (
+                    <Link
+                      to="/map"
+                      className="inline-flex items-center gap-1 text-xs text-text-tertiary transition-colors duration-150 hover:text-text"
+                    >
+                      <Globe size={12} aria-hidden="true" />
+                      <span className="underline underline-offset-2">{t("common.viewOnMap")}</span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <RecordConnectionsDiagram record={record} />
+              </div>
+            </section>
+          )}
+
+          {/* ── Similar Records ──────────────────────────
+              DiscoverSuggestions.jsxと同じく、候補が無ければ何も描画しない
+              自己判定コンポーネントのため、hasCoffeeInfo等のゲートの外に置く
+              （それらがすべてfalseの記録でも、共有するキーワード等があれば
+              表示されうる）。味覚グラフ・つながり図と同じ自然な高さのまま
+              置く（SimilarRecords.jsx参照） */}
+          <SimilarRecords recordId={record.id} />
+        </div>
       </div>
-
-      {/* ── Similar Records ──────────────────────────
-          DiscoverSuggestions.jsxと同じく、候補が無ければ何も描画しない
-          自己判定コンポーネントのため、hasCoffeeInfo等のゲートの外に置く
-          （それらがすべてfalseの記録でも、共有するキーワード等があれば
-          表示されうる）。余白はコンポーネント自身が実際に描画するときだけ
-          持つ（親側でmt-6を付けると、何も表示されない場合も空の余白だけが
-          残ってしまうため） */}
-      <SimilarRecords recordId={record.id} />
 
       {/* ── Actions ──────────────────────────────── */}
       <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-surface-2 pt-6">
