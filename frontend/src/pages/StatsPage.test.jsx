@@ -4,6 +4,9 @@
  * 読み込み中・エラー・記録0件（空状態）・正常系（3セクション構成）の
  * 出し分けを確認する。各サブコンポーネント（OverviewStats等）自体の
  * 内部表示ロジックはこのテストの対象外。
+ *
+ * 2026-09、ダッシュボード風の作り直しで「記録のペース」「Collection」の
+ * 2見出しを「記録の概要」1つへ統合したため、見出しの検証もそれに合わせた。
  */
 import { describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -57,15 +60,14 @@ describe("StatsPage", () => {
     renderStatsPage();
 
     expect(await screen.findByText("統計")).toBeInTheDocument();
-    expect(screen.queryByText("記録のペース")).not.toBeInTheDocument();
+    expect(screen.queryByText("記録の概要")).not.toBeInTheDocument();
   });
 
-  test("記録があれば3セクション（ペース・Collection・味の傾向）を表示する", async () => {
+  test("記録があれば3セクション（記録の概要・味の傾向）を表示する", async () => {
     fetchStats.mockResolvedValue(FULL_STATS);
     renderStatsPage();
 
-    expect(await screen.findByText("記録のペース")).toBeInTheDocument();
-    expect(screen.getByText("Collection")).toBeInTheDocument();
+    expect(await screen.findByText("記録の概要")).toBeInTheDocument();
     expect(screen.getByText("味の傾向")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "詳しい診断を見る" })).toHaveAttribute("href", "/diagnosis");
   });

@@ -1,6 +1,7 @@
 import { Calendar, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import StatCard from "../../../components/StatCard";
+import { KpiTile } from "../../../components/KpiStrip";
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 
 /**
@@ -20,37 +21,54 @@ import { getNodeVisual } from "../../graph/utils/nodeVisuals";
  * StatCard側の`min-w`だけで幅の下限を決める（中身に応じた幅になり、
  * 均等grid特有の「短い内容でも幅いっぱいに引き伸ばされる」余白が
  * 生まれない）。RecordDetailPage.jsxのCoffee Detailsタイルと同じ考え方。
+ *
+ * 2026-09、StatsPage.jsxのダッシュボード風の作り直しで、`variant="strip"`
+ * を追加した。StatsPageではCollectionStats.jsxと1本のKPIストリップ
+ * （`KpiStrip`/`KpiTile`、RecordDetail/EntityDetailと同じ意匠）へ統合
+ * するため、区切り線を持たない`StatCard`ではなく`KpiTile`を裸のまま
+ * （フラグメントとして）返す。DiagnosisPage.jsxは引き続き単独の
+ * `cardClass`セクション内に置くため、既定値`"cards"`（従来通りの
+ * `StatCard`）のまま変更していない。
  */
-function OverviewStats({ overview, daysSinceStart }) {
+function OverviewStats({ overview, daysSinceStart, variant = "cards" }) {
   const { t } = useTranslation();
   const record = getNodeVisual("record");
 
+  const tiles = [
+    {
+      label: t("stats.overview.recordCount"),
+      value: overview.recordCount,
+      icon: record.icon,
+      iconColorClass: record.colorClass,
+      iconBgClass: record.bgTintClass,
+    },
+    {
+      label: t("stats.overview.avgRating"),
+      value: overview.avgRating ?? "—",
+      icon: Star,
+      iconColorClass: "text-warn",
+      iconBgClass: "bg-warn/15",
+    },
+    {
+      label: t("stats.overview.daysSinceStart"),
+      value: daysSinceStart != null ? t("stats.overview.daysCount", { count: daysSinceStart }) : "—",
+      icon: Calendar,
+      iconColorClass: "text-text-tertiary",
+      iconBgClass: "bg-surface-2",
+    },
+  ];
+
+  if (variant === "strip") {
+    return tiles.map((tile) => (
+      <KpiTile key={tile.label} label={tile.label} value={tile.value} icon={tile.icon} iconColorClass={tile.iconColorClass} />
+    ));
+  }
+
   return (
     <div className="flex flex-wrap gap-3">
-      <StatCard
-        label={t("stats.overview.recordCount")}
-        value={overview.recordCount}
-        icon={record.icon}
-        iconColorClass={record.colorClass}
-        iconBgClass={record.bgTintClass}
-        flat
-      />
-      <StatCard
-        label={t("stats.overview.avgRating")}
-        value={overview.avgRating ?? "—"}
-        icon={Star}
-        iconColorClass="text-warn"
-        iconBgClass="bg-warn/15"
-        flat
-      />
-      <StatCard
-        label={t("stats.overview.daysSinceStart")}
-        value={daysSinceStart != null ? t("stats.overview.daysCount", { count: daysSinceStart }) : "—"}
-        icon={Calendar}
-        iconColorClass="text-text-tertiary"
-        iconBgClass="bg-surface-2"
-        flat
-      />
+      {tiles.map((tile) => (
+        <StatCard key={tile.label} {...tile} flat />
+      ))}
     </div>
   );
 }

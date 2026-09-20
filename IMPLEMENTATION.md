@@ -4588,6 +4588,35 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-21: Statsページのダッシュボード化
+
+**実装対象**: `StatsPage.jsx`を、RecordDetail/EntityDetailと同じダッシュボード方針（KPIストリップ+lg以上でビューポートに収める構成）へ作り直した。
+
+**なぜ今実装するのか**: ユーザーから「statsページです。まずはモックを作成してください」という依頼。Artifactでモックを提示したところ「スクロール不要にしたい」という追加要望を受け、「記録のペース」（3項目）と「Collection」（6項目）のKPI行を1本へ統合し、唯一内容量が伸びうる「味の傾向」のランキングだけを可変領域にする案へモックを修正し、承認を得てから実装した。
+
+**実装内容**:
+- **KPIストリップの統合**: `OverviewStats.jsx`に`variant`prop（既定`"cards"`、新規`"strip"`）を追加した。`"strip"`のときは個別に枠+影が付く`StatCard`ではなく、`KpiStrip`の中で使う裸の`KpiTile`（components/KpiStrip.jsx）のフラグメントを返す。`DiagnosisPage.jsx`は`variant`を指定していないため既定の`"cards"`のまま、見た目に変化は無い（実機で確認済み）。`CollectionStats.jsx`は呼び出し元がStatsPage.jsxの1箇所のみだったため、`variant`分岐を作らず`KpiTile`のフラグメントを返す形へ直接変更した
+- **KpiStrip.jsxの列数を修正**: 固定`grid-cols-4`のままだと9タイル（3+6）が4/4/1に折り返され、最終行に大きな空白セルができてしまった。`grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr))`へ変更し、タイル数に応じて自動的に列を埋めるようにした（RecordDetail/EntityDetailの4タイルでも見た目は変わらないことを確認済み）
+- **見出しの統合**: 「記録のペース」「Collection」の2見出しを「記録の概要」（新規i18nキー`stats.summaryHeading`）1つへ統合し、「世界地図で見る」リンクをそこへ付け替えた。不要になった`stats.paceHeading`/`stats.collectionHeading`キーは削除した
+- **グラフのカード化**: `MonthlyTrendChart.jsx`・`RatingDistributionChart.jsx`の独自の枠線スタイル（影なし）を、他のダッシュボードカードと同じ`cardClass`（影付き）へ揃え、グラフの高さも詰めた（コンパクトな2カラム常時表示のため）。両者ともStatsPage.jsxの1箇所でしか使われていないため安全に変更できた
+- **ランキングの個別カード化**: 以前は1つの大きい`cardClass`セクション内に5つの`TopRankingList`を並べていたが、種別ごとに個別の`cardClass`カードへ分割し、`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`のグリッドに並べた（`TopRankingList.jsx`自体は変更していない。DiagnosisPage.jsxでの素の使用にも影響なし）
+- **ビューポートフィット**: ページ全体を`lg:h-[calc(100vh-3.5rem)] lg:flex lg:flex-col`にし、KPIストリップ・グラフ2カラムは自然な高さのまま、ランキンググリッドだけ`lg:flex-1 lg:min-h-0 lg:overflow-y-auto`にして残りの高さを埋める。ランキングは各種別最大5件までという上限（`docs/features.md`）があり内容量が予測できるため、RecordDetail/EntityDetailで踏んだ「flex-basis:0%と自然な高さの兄弟が混在して潰れる」不具合の対象にはならなかった（唯一の可変領域のため競合する兄弟が無い）
+
+**変更ファイル**:
+- `frontend/src/pages/StatsPage.jsx`・`StatsPage.test.jsx`
+- `frontend/src/features/stats/components/OverviewStats.jsx`・`CollectionStats.jsx`・`MonthlyTrendChart.jsx`・`RatingDistributionChart.jsx`
+- `frontend/src/components/KpiStrip.jsx`
+- `frontend/src/i18n/locales/ja.json`・`en.json`（`stats.summaryHeading`追加、`stats.paceHeading`/`stats.collectionHeading`削除）
+- `docs/design.md`（「Stats」節に追記）・`docs/features.md`（Stats節・World Map節の「Collection」表記を更新）
+
+**データフロー**: 変更なし。表示の再構成のみで、`GET /api/stats`のレスポンス形（`overview`/`collection`フィールド名含む）は変更していない。
+
+**実行したテストと結果**: `npm run lint`（0エラー）・`npm run build`（0エラー）・`npm run test`（356件、うち`StatsPage.test.jsx`の見出しアサーションを新しい見出しに合わせて更新）。claude-in-chromeでローカルMongoDBへ一時切り替えのうえ実機確認: KPIストリップが9タイルを1行で均等に表示すること、グラフ2カラム、ランキングの個別カード化、デスクトップ（1680px）でページ自体がスクロールしないこと（`document.documentElement.scrollHeight === clientHeight`）、DiagnosisPage.jsxのOverviewStats表示に変化が無いことをいずれも確認した。
+
+**未解決事項**: 特になし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証

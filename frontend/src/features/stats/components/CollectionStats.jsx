@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import StatCard from "../../../components/StatCard";
+import { KpiTile } from "../../../components/KpiStrip";
 import { getNodeVisual } from "../../graph/utils/nodeVisuals";
 
 /**
@@ -16,6 +16,12 @@ import { getNodeVisual } from "../../graph/utils/nodeVisuals";
  * 2026-08、それでも広い画面では余白が目立つという指摘を受け、`grid`の
  * 均等割りから`flex flex-wrap`（中身に応じた幅、StatCard側のmin-wが
  * 下限）へ変更した。OverviewStats.jsxと同じ理由。
+ *
+ * 2026-09、StatsPage.jsxのダッシュボード風の作り直しで、OverviewStats.jsx
+ * と1本のKPIストリップ（`KpiStrip`/`KpiTile`）へ統合するため、個別に
+ * 枠+影の付く`StatCard`から、区切り線で分割される`KpiTile`（裸の
+ * フラグメント）へ変更した。呼び出し側がStatsPage.jsxの1箇所のみのため、
+ * `OverviewStats.jsx`のような`variant`分岐は不要と判断した。
  */
 function CollectionStats({ collection }) {
   const { t } = useTranslation();
@@ -26,58 +32,46 @@ function CollectionStats({ collection }) {
   const cafe = getNodeVisual("cafe");
   const flavor = getNodeVisual("flavor");
 
-  return (
-    <div className="flex flex-wrap gap-3">
-      <StatCard
-        label={t("stats.collection.originCount")}
-        value={collection.originCount}
-        icon={origin.icon}
-        iconColorClass={origin.colorClass}
-        iconBgClass={origin.bgTintClass}
-        flat
-      />
-      <StatCard
-        label={t("stats.collection.varietyCount")}
-        value={collection.varietyCount}
-        icon={variety.icon}
-        iconColorClass={variety.colorClass}
-        iconBgClass={variety.bgTintClass}
-        flat
-      />
-      <StatCard
-        label={t("stats.collection.processCount")}
-        value={collection.processCount}
-        icon={process.icon}
-        iconColorClass={process.colorClass}
-        iconBgClass={process.bgTintClass}
-        flat
-      />
-      <StatCard
-        label={t("stats.collection.farmCount")}
-        value={collection.farmCount}
-        icon={farm.icon}
-        iconColorClass={farm.colorClass}
-        iconBgClass={farm.bgTintClass}
-        flat
-      />
-      <StatCard
-        label={t("stats.collection.cafeCount")}
-        value={collection.cafeCount}
-        icon={cafe.icon}
-        iconColorClass={cafe.colorClass}
-        iconBgClass={cafe.bgTintClass}
-        flat
-      />
-      <StatCard
-        label={t("stats.collection.flavorCount")}
-        value={collection.flavorCount}
-        icon={flavor.icon}
-        iconColorClass={flavor.colorClass}
-        iconBgClass={flavor.bgTintClass}
-        flat
-      />
-    </div>
-  );
+  return [
+    {
+      label: t("stats.collection.originCount"),
+      value: collection.originCount,
+      icon: origin.icon,
+      iconColorClass: origin.colorClass,
+    },
+    {
+      label: t("stats.collection.varietyCount"),
+      value: collection.varietyCount,
+      icon: variety.icon,
+      iconColorClass: variety.colorClass,
+    },
+    {
+      label: t("stats.collection.processCount"),
+      value: collection.processCount,
+      icon: process.icon,
+      iconColorClass: process.colorClass,
+    },
+    {
+      label: t("stats.collection.farmCount"),
+      value: collection.farmCount,
+      icon: farm.icon,
+      iconColorClass: farm.colorClass,
+    },
+    {
+      label: t("stats.collection.cafeCount"),
+      value: collection.cafeCount,
+      icon: cafe.icon,
+      iconColorClass: cafe.colorClass,
+    },
+    {
+      label: t("stats.collection.flavorCount"),
+      value: collection.flavorCount,
+      icon: flavor.icon,
+      iconColorClass: flavor.colorClass,
+    },
+  ].map((tile) => (
+    <KpiTile key={tile.label} label={tile.label} value={tile.value} icon={tile.icon} iconColorClass={tile.iconColorClass} />
+  ));
 }
 
 export default CollectionStats;

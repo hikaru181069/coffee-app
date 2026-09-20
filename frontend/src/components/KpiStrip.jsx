@@ -9,10 +9,17 @@
  * 区切り線は各セルの背景色（bg-raised）とストリップ自体の背景色
  * （bg-surface-2、境界線と同じ色）の1px gapで表現する（セルごとに
  * border-rightを引くより、端のセルだけ扱いを変えずに済む）。
+ *
+ * 2026-09、StatsPage.jsxで9タイル（記録のペース3+Collection6の統合）を
+ * 表示する際、固定`grid-cols-4`だと最終行に1タイルだけ残り、右側が
+ * 大きな空白セルになってしまった。列数を内容に応じて自動で決める
+ * `repeat(auto-fit, minmax(...))`へ変更し、タイル数に関わらず各行が
+ * 均等に埋まるようにした（RecordDetail/EntityDetailの4タイルでも
+ * 見た目は変わらない）。
  */
 export function KpiStrip({ children }) {
   return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-none border border-surface-2 bg-surface-2 shadow-elevated sm:grid-cols-4">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-px overflow-hidden rounded-none border border-surface-2 bg-surface-2 shadow-elevated">
       {children}
     </div>
   );

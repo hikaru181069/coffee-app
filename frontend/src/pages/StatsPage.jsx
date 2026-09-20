@@ -8,6 +8,7 @@ import MonthlyTrendChart from "../features/stats/components/MonthlyTrendChart";
 import RatingDistributionChart from "../features/stats/components/RatingDistributionChart";
 import TopRankingList from "../features/stats/components/TopRankingList";
 import CoffeeLoader from "../components/CoffeeLoader";
+import { KpiStrip } from "../components/KpiStrip";
 import StatsEmptyState from "../features/stats/components/StatsEmptyState";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { cardClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
@@ -48,6 +49,16 @@ const daysSince = (isoDate) => {
  * RecordDetailPage.jsx・EntityDetailPage.jsxが`cardClass`へ移行する前の
  * 古いパターンが残っていただけの移行漏れだった。両ページと同じ`cardClass`
  * （枠線+背景+影のカード、`formStyles.js`）で3セクションを統一した。
+ *
+ * 2026-09、「ダッシュボード風にしたい・スクロール不要にしたい」という
+ * 要望を受け、Artifactモックの承認を経て作り直した
+ * （レイアウトの詳細はdocs/design.md「Stats」参照）。3つの縦積み
+ * `cardClass`セクションから、KPIストリップ＋グラフ2カラム＋ランキング
+ * グリッドへ再構成した。「記録のペース」（3項目）と「Collection」
+ * （6項目）は見出し・余白の重複を削るため1本のKPIストリップへ統合し、
+ * 唯一内容量が伸びうる「味の傾向」のランキングだけを可変領域
+ * （`lg:flex-1 lg:min-h-0`+内部スクロール）にした
+ * （RecordDetailPage.jsx・EntityDetailPage.jsxと同じ考え方）。
  */
 function StatsPage() {
   const { t, i18n } = useTranslation();
@@ -55,7 +66,7 @@ function StatsPage() {
   const hasRecords = Boolean(stats) && stats.overview.recordCount > 0;
 
   return (
-    <div className={wideContainerClass}>
+    <div className={`${wideContainerClass} lg:flex lg:h-[calc(100vh-3.5rem)] lg:flex-col`}>
       {/* 2026-09、見出しをローディング判定より前に出し、読み込み中も
           「今どのページにいるか」がわかるようにした（statusによって
           消えるのは中身だけ）。docs/design.md「Motion」参照 */}
@@ -76,18 +87,11 @@ function StatsPage() {
       {!isLoading && !error && stats && !hasRecords && <StatsEmptyState />}
 
       {!isLoading && !error && hasRecords && (
-        <div className="flex flex-col gap-6">
-          <section className={cardClass}>
-            <h2 className="text-base font-semibold text-text">{t("stats.paceHeading")}</h2>
-            <div className="mt-5 flex flex-col gap-4">
-              <OverviewStats overview={stats.overview} daysSinceStart={daysSince(stats.overview.firstRecordedAt)} />
-              <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} />
-            </div>
-          </section>
-
-          <section className={cardClass}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-base font-semibold text-text">{t("stats.collectionHeading")}</h2>
+        <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1">
+          {/* ── 記録の概要（記録のペース + Collection の統合） ── */}
+          <div>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-text">{t("stats.summaryHeading")}</h2>
               <Link
                 to="/map"
                 className="text-xs text-text-tertiary underline underline-offset-2 hover:text-text"
@@ -95,22 +99,39 @@ function StatsPage() {
                 {t("stats.viewMapLink")}
               </Link>
             </div>
-            <div className="mt-5">
+            <KpiStrip>
+              <OverviewStats
+                overview={stats.overview}
+                daysSinceStart={daysSince(stats.overview.firstRecordedAt)}
+                variant="strip"
+              />
               <CollectionStats collection={stats.collection} />
-            </div>
-          </section>
+            </KpiStrip>
+          </div>
 
-          <section className={cardClass}>
+          {/* ── グラフ2カラム（コンパクトな高さで常時表示） ── */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
+            <MonthlyTrendChart monthlyTrend={stats.monthlyTrend} language={i18n.language} />
+            <RatingDistributionChart distribution={stats.ratingDistribution} />
+          </div>
+
+          {/* ── 味の傾向: 唯一の可変領域。収まらない場合だけこのグリッド
+              自体がスクロールする（RecordDetailPage.jsx・
+              EntityDetailPage.jsxのサイドバー列と同じ保険） ── */}
+          <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
             <h2 className="text-base font-semibold text-text">{t("stats.tasteHeading")}</h2>
-            <div className="mt-5 flex flex-col gap-6">
-              <RatingDistributionChart distribution={stats.ratingDistribution} />
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {RANKING_TYPES.map((type) => (
-                  <TopRankingList key={type} type={type} items={stats[RANKING_KEYS[type]]} />
-                ))}
-              </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:overflow-y-auto lg:pr-1">
+              {RANKING_TYPES.map((type) => {
+                const items = stats[RANKING_KEYS[type]];
+                if (items.length === 0) return null;
+                return (
+                  <div key={type} className={cardClass}>
+                    <TopRankingList type={type} items={items} />
+                  </div>
+                );
+              })}
             </div>
-          </section>
+          </div>
         </div>
       )}
     </div>
