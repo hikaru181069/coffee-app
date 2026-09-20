@@ -303,7 +303,12 @@
     "viewInGraph": "グラフで見る",
     "viewOnMap": "地図で見る",
     "relatedHeading": "グラフ上の関連",
+    "breakdownHeading": "種別ごとの内訳",
     "recordsHeading": "関連する記録",
+    "recordsTableTitle": "タイトル",
+    "recordsTableDate": "日付",
+    "recordsTableRating": "評価",
+    "recordsTableNotes": "メモ",
     "trailAriaLabel": "パンくずリスト",
     "showMoreRelated": "他{{count}}件を見る"
   },

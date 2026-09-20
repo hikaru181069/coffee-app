@@ -12,10 +12,8 @@ import { cardClass, secondaryButtonClass } from "../features/coffee-records/comp
 import DiscoverSuggestions from "../features/discover/components/DiscoverSuggestions";
 import BackLink from "../components/BackLink";
 import CoffeeLoader from "../components/CoffeeLoader";
-import StatCard from "../components/StatCard";
+import { KpiStrip, KpiTile } from "../components/KpiStrip";
 import { wideContainerClass } from "../styles/pageContainer";
-import { useReveal } from "../hooks/useReveal";
-import { revealDelayClass } from "../utils/revealDelay";
 
 /**
  * エンティティ詳細ページ。
@@ -93,9 +91,21 @@ function EntityDetailPage() {
   // 見るこのノードと同じ色にするため、種別共通のvisual.colorClassでは
   // なくこちらを使う）
   const entityColorClass = getNodeTextColorClass({ type: detail.type, label: detail.label });
-  const entityTintBgClass = getNodeTintBgClass({ type: detail.type, label: detail.label });
   const relatedTypes = Object.keys(detail.relatedAttributes);
   const nextTrail = [...trail, { id: detail.id, label: detail.label }];
+
+  // 2026-09、「種別ごとの内訳」カード用の集計。個々の値（例: Berry/Floral）
+  // ではなく種別（例: flavor）単位の合計のため、値ごとの個別色ではなく
+  // 型共通色（getNodeVisual）を使う（docs/design.md「値ごとの個別色と
+  // 型共通色の一貫性」の、集計値・複数値の集合は型共通色のままという
+  // 方針に沿う）
+  const relatedTypeBreakdown = relatedTypes
+    .map((type) => ({
+      type,
+      total: detail.relatedAttributes[type].reduce((sum, item) => sum + item.count, 0),
+    }))
+    .sort((a, b) => b.total - a.total);
+  const maxRelatedTotal = Math.max(...relatedTypeBreakdown.map((entry) => entry.total), 1);
 
   return (
     <div className={`${wideContainerClass} lg:flex lg:h-[calc(100vh-3.5rem)] lg:flex-col`}>
@@ -108,59 +118,41 @@ function EntityDetailPage() {
         <h1 className="mt-1 text-xl font-bold text-text">{detail.label}</h1>
       </header>
 
-      {/* 2026-08、「ページが少し寂しい」という指摘を受け、Statsページの
-          StatCard.jsxと同じアイコンバッジ+flex-wrapのカードにした
-          （components/StatCard.jsxとして共有化。以前はこのページ専用の
-          ローカルなStatCardを持っていた）。記録数はこのエンティティ自身の
+      {/* 2026-08、「ページが少し寂しい」という指摘を受け、アイコンバッジ
+          付きのKPI表示を追加した。記録数はこのエンティティ自身の
           ノード種別アイコン・色（visual）を再利用し、平均評価・最後に
-          飲んだ日はStatsページのOverviewStats.jsxと同じ配色にした */}
-      {/* 2026-08、見出しの無いこの統計カード行だけ外枠が無く、他セクション
-          （関連する属性・関連する記録・Discover提案）とカード化の扱いが
-          揃っていないという指摘を受けた。「見出しの有無」で例外を作らず、
-          レポート系ページのコンテンツブロックは一律cardClassで囲む、
-          という単純なルールへ統一した（docs/design.md「UI Rules」
-          「カード化の使い分け」参照）。StatCardは他cardClassにネストされる
-          ため`flat`にする */}
-      {/* 2026-09、ダッシュボード風の作り直しで、関連する種別数（何種類の
-          属性とつながっているか）のタイルを追加した。単一のノード種別に
-          対応しないため、lastConsumedと同じ中立色（text-tertiary/
-          surface-2）にしている */}
-      <section className={cardClass}>
-        <div className="flex flex-wrap gap-3">
-          <StatCard
-            label={t("entityDetail.recordCount")}
-            value={t("search.recordCount", { count: detail.recordCount })}
-            icon={Icon}
-            iconColorClass={entityColorClass}
-            iconBgClass={entityTintBgClass}
-            flat
-          />
-          <StatCard
-            label={t("entityDetail.avgRating")}
-            value={detail.avgRating ?? "—"}
-            icon={Star}
-            iconColorClass="text-warn"
-            iconBgClass="bg-warn/15"
-            flat
-          />
-          <StatCard
-            label={t("entityDetail.lastConsumed")}
-            value={detail.lastConsumedAt ? formatConsumedAtShort(detail.lastConsumedAt, i18n.language) : "—"}
-            icon={Calendar}
-            iconColorClass="text-text-tertiary"
-            iconBgClass="bg-surface-2"
-            flat
-          />
-          <StatCard
-            label={t("entityDetail.relatedTypesCount")}
-            value={relatedTypes.length}
-            icon={Share2}
-            iconColorClass="text-text-tertiary"
-            iconBgClass="bg-surface-2"
-            flat
-          />
-        </div>
-      </section>
+          飲んだ日はStatsページのOverviewStats.jsxと同じ配色にした。
+          2026-09、ダッシュボード風の作り直しで、Artifactモックの区切り線
+          付き統計ストリップ（`KpiStrip`/`KpiTile`、components/KpiStrip.jsx）
+          へ差し替えた。あわせて関連する種別数（何種類の属性とつながって
+          いるか）のタイルを追加した。単一のノード種別に対応しないため、
+          lastConsumedと同じ中立色（text-tertiary）にしている */}
+      <KpiStrip>
+        <KpiTile
+          label={t("entityDetail.recordCount")}
+          value={t("search.recordCount", { count: detail.recordCount })}
+          icon={Icon}
+          iconColorClass={entityColorClass}
+        />
+        <KpiTile
+          label={t("entityDetail.avgRating")}
+          value={detail.avgRating ?? "—"}
+          icon={Star}
+          iconColorClass="text-warn"
+        />
+        <KpiTile
+          label={t("entityDetail.lastConsumed")}
+          value={detail.lastConsumedAt ? formatConsumedAtShort(detail.lastConsumedAt, i18n.language) : "—"}
+          icon={Calendar}
+          iconColorClass="text-text-tertiary"
+        />
+        <KpiTile
+          label={t("entityDetail.relatedTypesCount")}
+          value={relatedTypes.length}
+          icon={Share2}
+          iconColorClass="text-text-tertiary"
+        />
+      </KpiStrip>
 
       {/* ── ダッシュボード本体 ───────────────────────
           2026-09、「entitiesページをダッシュボード風にする」再設計
@@ -193,16 +185,56 @@ function EntityDetailPage() {
 
           <section className={`${cardClass} lg:flex lg:min-h-0 lg:flex-1 lg:flex-col`}>
             <h2 className="text-base font-semibold text-text">{t("entityDetail.recordsHeading")}</h2>
-            <ul className="mt-4 flex flex-col gap-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
-              {detail.records.map((record, index) => (
-                <RelatedRecordRow key={record.id} record={record} index={index} language={i18n.language} />
-              ))}
-            </ul>
+            <div className="mt-4 overflow-x-auto lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+              <table className="w-full min-w-[28rem] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-surface-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+                    <th className="pb-2 pr-4 font-semibold">{t("entityDetail.recordsTableTitle")}</th>
+                    <th className="pb-2 pr-4 font-semibold">{t("entityDetail.recordsTableDate")}</th>
+                    <th className="pb-2 pr-4 font-semibold">{t("entityDetail.recordsTableRating")}</th>
+                    <th className="pb-2 font-semibold">{t("entityDetail.recordsTableNotes")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detail.records.map((record) => (
+                    <RelatedRecordRow key={record.id} record={record} language={i18n.language} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         </div>
 
-        {/* ── サイドバー列: 操作・Discover提案 ─────────── */}
+        {/* ── サイドバー列: 内訳・操作・Discover提案 ─────────── */}
         <div className="flex flex-col gap-6 lg:min-h-0 lg:gap-4 lg:overflow-y-auto lg:pr-1">
+          {relatedTypeBreakdown.length > 0 && (
+            <section className={cardClass}>
+              <h2 className="text-base font-semibold text-text">{t("entityDetail.breakdownHeading")}</h2>
+              <div className="mt-4 flex flex-col gap-3">
+                {relatedTypeBreakdown.map(({ type, total }) => {
+                  const typeVisual = getNodeVisual(type);
+                  return (
+                    <div key={type} className="flex items-center gap-3">
+                      <span className="flex w-20 flex-shrink-0 items-center gap-1.5 truncate text-xs text-text-secondary">
+                        <span className={`h-2 w-2 flex-shrink-0 rounded-full ${typeVisual.solidBgClass}`} />
+                        {t(typeVisual.labelKey)}
+                      </span>
+                      <div className="h-1.5 flex-1 bg-surface-1">
+                        <div
+                          className={`h-full ${typeVisual.solidBgClass}`}
+                          style={{ width: `${(total / maxRelatedTotal) * 100}%` }}
+                        />
+                      </div>
+                      <span className="w-6 flex-shrink-0 text-right font-mono text-xs text-text-tertiary">
+                        {total}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           <div className="flex flex-wrap gap-2">
             <Link to={`/graph?focus=${encodeURIComponent(detail.id)}`} className={secondaryButtonClass}>
               {t("entityDetail.viewInGraph")}
@@ -225,31 +257,40 @@ function EntityDetailPage() {
   );
 }
 
-/** 関連記録一覧の1行。スクロールインで段階的にカスケード表示する */
-function RelatedRecordRow({ record, index, language }) {
-  const [ref, isVisible] = useReveal();
-
+/**
+ * 関連記録一覧の1行。
+ *
+ * 2026-09、Artifactモックに合わせてカード形式（`<li>`+`<Link>`）から
+ * 表形式（`<tr>`+`<td>`）へ変更した。行のスクロールイン演出（reveal）は
+ * `transform`が`<tr>`で仕様上不安定なため今回は付けていない
+ * （個々のカードだった頃だけの演出だったので、機能的な後退ではない）。
+ */
+function RelatedRecordRow({ record, language }) {
   return (
-    <li ref={ref} className={`reveal ${isVisible ? "visible" : ""} ${revealDelayClass(index)}`}>
-      <Link
-        to={`/records/${record.id}`}
-        className="block rounded-none border border-surface-2 px-3 py-2 transition-colors duration-150 hover:border-line"
-      >
-        <p className="truncate text-sm font-medium text-text">{record.title}</p>
-        <p className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
-          <span className="font-mono">{formatConsumedAtShort(record.consumedAt, language)}</span>
-          {record.rating !== null && (
-            <span className="flex items-center gap-0.5 text-warn">
-              <Star size={10} aria-hidden="true" fill="currentColor" strokeWidth={0} />
-              <span className="font-mono">{record.rating}</span>
-            </span>
-          )}
-        </p>
-        {record.notesExcerpt && (
-          <p className="mt-1 truncate text-xs italic text-text-secondary">{record.notesExcerpt}</p>
+    <tr className="border-b border-surface-1 last:border-none">
+      <td className="max-w-0 py-2.5 pr-4">
+        <Link
+          to={`/records/${record.id}`}
+          className="block truncate text-sm font-medium text-text transition-colors duration-150 hover:text-text-secondary hover:underline"
+        >
+          {record.title}
+        </Link>
+      </td>
+      <td className="whitespace-nowrap py-2.5 pr-4 font-mono text-xs text-text-tertiary">
+        {formatConsumedAtShort(record.consumedAt, language)}
+      </td>
+      <td className="whitespace-nowrap py-2.5 pr-4">
+        {record.rating !== null && (
+          <span className="inline-flex items-center gap-0.5 font-mono text-xs text-warn">
+            <Star size={10} aria-hidden="true" fill="currentColor" strokeWidth={0} />
+            {record.rating}
+          </span>
         )}
-      </Link>
-    </li>
+      </td>
+      <td className="max-w-0 py-2.5 text-xs italic text-text-tertiary">
+        {record.notesExcerpt && <span className="block truncate">{record.notesExcerpt}</span>}
+      </td>
+    </tr>
   );
 }
 

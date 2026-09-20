@@ -8,7 +8,7 @@ import { useCoffeeRecord } from "../features/coffee-records/hooks/useCoffeeRecor
 import ConfirmDialog from "../features/coffee-records/components/ConfirmDialog";
 import BackLink from "../components/BackLink";
 import CoffeeLoader from "../components/CoffeeLoader";
-import StatCard from "../components/StatCard";
+import { KpiStrip, KpiTile } from "../components/KpiStrip";
 import { RecordsErrorState } from "../features/coffee-records/components/RecordListStates";
 import { cardClass, primaryButtonClass, secondaryButtonClass } from "../features/coffee-records/components/formStyles";
 import {
@@ -287,42 +287,34 @@ function RecordDetailPage() {
           2026-09、ダッシュボード風の作り直しで追加。新しい集計値では
           なく、下のCoffee Information/BrewDetailsCardが既に持っている
           値を要約として先出しするだけ（Source of Truthは変えない） */}
-      <section className={`${cardClass} mt-6`}>
-        <div className="flex flex-wrap gap-3">
-          <StatCard
+      <div className="mt-6">
+        <KpiStrip>
+          <KpiTile
             label={t("graph.nodeTypes.origin")}
             value={originCount}
             icon={getNodeVisual("origin").icon}
             iconColorClass={getNodeVisual("origin").colorClass}
-            iconBgClass={getNodeVisual("origin").bgTintClass}
-            flat
           />
-          <StatCard
+          <KpiTile
             label={t("graph.nodeTypes.variety")}
             value={varietyCount}
             icon={getNodeVisual("variety").icon}
             iconColorClass={getNodeVisual("variety").colorClass}
-            iconBgClass={getNodeVisual("variety").bgTintClass}
-            flat
           />
-          <StatCard
+          <KpiTile
             label={t("graph.nodeTypes.flavor")}
             value={flavorCount}
             icon={getNodeVisual("flavor").icon}
             iconColorClass={getNodeVisual("flavor").colorClass}
-            iconBgClass={getNodeVisual("flavor").bgTintClass}
-            flat
           />
-          <StatCard
+          <KpiTile
             label={t("records.brewDetailsRatioLabel")}
             value={brewRatio ? `1 : ${brewRatio}` : "—"}
             icon={Timer}
             iconColorClass="text-text-tertiary"
-            iconBgClass="bg-surface-2"
-            flat
           />
-        </div>
-      </section>
+        </KpiStrip>
+      </div>
 
       {/* ── ダッシュボード本体 ───────────────────────
           2026-09、「records詳細ページをダッシュボード風にする」再設計。
@@ -434,7 +426,7 @@ function RecordDetailPage() {
             <section className={cardClass}>
               <h2 className="text-base font-semibold text-text">{t("records.tasteHeading")}</h2>
               <div className="mt-4">
-                <TasteRadarChart record={record} />
+                <TasteRadarChart record={record} layout="row" />
               </div>
             </section>
           )}

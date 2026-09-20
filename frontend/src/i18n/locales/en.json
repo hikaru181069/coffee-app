@@ -309,7 +309,12 @@
     "viewInGraph": "View in Graph",
     "viewOnMap": "View on Map",
     "relatedHeading": "Related in the graph",
+    "breakdownHeading": "Breakdown by type",
     "recordsHeading": "Related records",
+    "recordsTableTitle": "Title",
+    "recordsTableDate": "Date",
+    "recordsTableRating": "Rating",
+    "recordsTableNotes": "Notes",
     "trailAriaLabel": "Breadcrumb",
     "showMoreRelated_one": "Show {{count}} more",
     "showMoreRelated_other": "Show {{count}} more"

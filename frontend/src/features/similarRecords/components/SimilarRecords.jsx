@@ -33,6 +33,9 @@ import { revealDelayClass } from "../../../utils/revealDelay";
  * flex-1で残り空間を埋めようとすると、逆に「つながり」図のような背の
  * 高い兄弟カードに空間を奪われて潰れてしまうことが実データで判明した
  * ため、この形に落ち着いた）。
+ *
+ * 2026-09、Artifactモックに合わせ、1列の縦並びから2列グリッドへ変更した
+ * （サイドバー列の横幅が広く、1列だと右側が空いて見えたため）。
  */
 function SimilarRecords({ recordId }) {
   const { t, i18n } = useTranslation();
@@ -43,7 +46,7 @@ function SimilarRecords({ recordId }) {
   return (
     <section className={cardClass}>
       <h2 className="text-base font-semibold text-text">{t("similarRecords.heading")}</h2>
-      <ul className="mt-4 flex flex-col gap-2">
+      <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {similarRecords.map((record, index) => (
           <SimilarRecordRow key={record.id} record={record} index={index} language={i18n.language} />
         ))}

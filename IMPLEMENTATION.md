@@ -4560,6 +4560,34 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-20: ダッシュボード化のモック再現度を修正
+
+**実装対象**: 直前のRecordDetail/EntityDetailダッシュボード化で、Artifactモックと実装の見た目が大きく異なっていた5箇所を、モック通りへ作り直した。
+
+**なぜ今実装するのか**: ユーザーから「モックと大幅にデザインが違いますが、なぜ？」という指摘。確認したところ、KPI行を（モックの区切り線付き統計ストリップではなく）既存の`StatCard`をただ並べただけにしていた、似た記録を1列のまま2列化していなかった、味覚グラフを横並びにしていなかった、EntityDetailの関連する記録を表形式にしていなかった、「種別ごとの内訳」カードを丸ごと実装し忘れていた、という5点の乖離があった。既存コンポーネントの再利用を優先しモックの細部を簡略化してしまったのが原因で、これはユーザーへ確認せず自分の判断で進めてしまった落ち度だった。
+
+**実装内容**:
+1. **KPIタイル**: 新規`components/KpiStrip.jsx`（`KpiStrip`/`KpiTile`）を追加。1px gapの背景色（`bg-surface-2`）で各セル（`bg-raised`）を区切ることで、モックの「1枚の枠を細い線で分割した統計ストリップ」を再現した。`StatCard`（個別に枠+影が付き隙間が空く見た目）とは別物として使い分ける。RecordDetailPage.jsx・EntityDetailPage.jsxの両方で`StatCard`から差し替えた
+2. **似た記録**: `SimilarRecords.jsx`の`<ul>`を`flex flex-col`から`grid grid-cols-1 sm:grid-cols-2`へ変更。各アイテムは元々ボーダー付きの個別ボックスだったため、グリッド化だけで対応できた
+3. **味覚グラフ**: `TasteRadarChart.jsx`に`layout="row"`propを追加（既定は従来通り`"stacked"`）。`row`のときは図と数値一覧（縦積みの罫線区切りリストへ変更）を横並びにする。ArchetypeCard.jsx（Diagnosisページ）は`layout`を指定していないため見た目に影響なし。RecordDetailPage.jsxだけ`layout="row"`を渡す
+4. **関連する記録（EntityDetail）**: `<ul>`+`<li>`+`<Link>`のカード形式から`<table>`（タイトル/日付/評価/メモの4列）へ変更。行のスクロールイン演出（`useReveal`）は`transform`が`<tr>`で仕様上不安定なため削除した（見た目だけの演出で機能的な後退ではない）。新規i18nキー4件（`entityDetail.recordsTableTitle`等）
+5. **種別ごとの内訳（EntityDetail）**: 完全に実装し忘れていたセクションを追加。`relatedTypes`ごとに`item.count`の合計を集計し、最大値に対する比率で横棒グラフを描く。値ごとの個別色ではなく型共通色（`getNodeVisual`）を使う（docs/design.md「値ごとの個別色と型共通色の一貫性」の、集計値は型共通色のままという既存ルールに従う）。サイドバー列の先頭（操作ボタン・Discover提案より前）に配置。新規i18nキー`entityDetail.breakdownHeading`
+
+**変更ファイル**:
+- 新規: `frontend/src/components/KpiStrip.jsx`
+- `frontend/src/pages/RecordDetailPage.jsx`・`EntityDetailPage.jsx`
+- `frontend/src/features/coffee-records/components/TasteRadarChart.jsx`
+- `frontend/src/features/similarRecords/components/SimilarRecords.jsx`
+- `frontend/src/i18n/locales/ja.json`・`en.json`（`entityDetail.recordsTable*`4件・`entityDetail.breakdownHeading`追加）
+
+**データフロー**: 変更なし。「種別ごとの内訳」もAPIが既に返している`detail.relatedAttributes`の`count`を集計しているだけで、新しいAPI呼び出しは追加していない。
+
+**実行したテストと結果**: `npm run lint`（0エラー）・`npm run build`（0エラー）・`npm run test`（356件、0エラー。既存テストの修正は不要だった）。claude-in-chromeでローカルMongoDBへ一時切り替えのうえ実機確認: KPIストリップの区切り線、似た記録の2列グリッド、関連する記録の表形式、種別ごとの内訳の横棒グラフ（フレーバー13件を最大値として他種別が比例縮小）をいずれもモック通りに確認。デスクトップでページ自体がスクロールしないことも再確認済み。
+
+**未解決事項**: 特になし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
