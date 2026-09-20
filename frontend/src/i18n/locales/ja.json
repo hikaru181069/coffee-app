@@ -204,6 +204,7 @@
     "heading": "プロフィール",
     "subtitle": "表示言語や名前・パスワードを変更したり、アカウントを削除したりできます。",
     "languageHeading": "表示言語",
+    "accountHeading": "アカウント情報",
     "name": "名前",
     "email": "メールアドレス",
     "saveName": "名前を保存",

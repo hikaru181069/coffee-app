@@ -4640,6 +4640,30 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-21: 記録詳細つながり図の線幅調整、Profileページの余白・タイポ統一
+
+**実装対象**: (1) `RecordConnectionsDiagram.jsx`のエッジのstrokeWidthを1.1→0.5へ細くした。(2) `ProfilePage.jsx`のsection見出し・余白を他の詳細系ページ（RecordDetail/EntityDetail/Stats）と揃えた。
+
+**なぜ今実装するのか**: (1)はユーザーから「繋がりの線を細くして」という指摘。(2)は「Profileページもダッシュボード化すべきでは」という相談に対し、一本道の設定フォーム（並べて見せる数値・ランキングが無い）という性質上ダッシュボード化は不要と回答したうえで、「余白・タイポを揃えて」という指示を受けて対応した。
+
+**実装内容**:
+- (1) 前回のGraph画面デザイン統一の直後の微調整のみ
+- (2) `ProfilePage.jsx`の4つのsection見出し（表示言語・アカウント情報・パスワードを変更・アカウントを削除）を`text-sm`→`text-base`（RecordDetailPage等と同じ5段階タイプスケールの「カード内タイトル」相当）へ統一。見出し→本文の余白を`mt-4`→`mt-5`（他ページと同じ）へ統一。名前変更のsectionだけ他の3sectionと違い見出しが無かったため、新規i18nキー`profile.accountHeading`（「アカウント情報」。メールアドレスの読み取り専用表示もこのsection内にあるため）を追加して揃えた。あわせて、`{!isLoading && !error && user && (<>...`のJSXインデントが崩れていた（フラグメント内の要素が親と同じ深さのまま平坦になっていた）のを整形した
+
+**変更ファイル**:
+- `frontend/src/features/graph/components/RecordConnectionsDiagram.jsx`
+- `frontend/src/pages/ProfilePage.jsx`
+- `frontend/src/i18n/locales/ja.json`・`en.json`（`profile.accountHeading`追加）
+- `docs/design.md`（「Profile / Settings」節に追記）
+
+**データフロー**: 変更なし（表示・スタイルの変更のみ）。
+
+**実行したテストと結果**: `npm run lint`（0エラー）・`npm run build`（0エラー）・`npm run test`（356件、0エラー。`ProfilePage.test.jsx`含め既存テストの修正は不要だった）。claude-in-chromeでローカルMongoDBへ一時切り替えのうえ、Profileページの4見出しがすべて同じサイズで揃っていること、アカウント情報sectionに見出しが表示されることを実機確認した。
+
+**未解決事項**: 特になし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証

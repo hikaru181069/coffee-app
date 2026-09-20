@@ -32,6 +32,16 @@ import { getErrorMessage } from "../utils/errorMessage";
  * 編集不可のため、FormField（必須/任意バッジ付き）ではなく
  * RecordDetailPageのProperty Gridと同じ dt/dd の読み取り専用表示にした。
  *
+ * 2026-09、「余白・タイポを他の詳細系ページと揃えて」という指摘を受けた。
+ * 各section見出し（h2）が`text-sm`のままで、RecordDetailPage/
+ * EntityDetailPage/StatsPageの`text-base`（docs/design.mdの5段階タイプ
+ * スケール参照）と揃っていなかった。見出し→本文の余白も`mt-4`のままで、
+ * 他ページの`mt-5`と揃っていなかった。あわせて、名前変更のsectionだけ
+ * 他の3section（表示言語・パスワード変更・アカウント削除）と違い見出しが
+ * 無かったため、`profile.accountHeading`を新設して揃えた（メールアドレス
+ * の読み取り専用表示もこのsection内にあり、「名前」より「アカウント情報」
+ * の方が内容に合うため、既存の`profile.name`とは別キーにした）。
+ *
  * 技術スタックの表示とクレジット表記は、以前はログイン後の全ページ下部に
  * 常時出るフッターだった。docs/design.mdの「派手な実績表示で惹きつけない、
  * 道具としての静けさ」という方針と噛み合わないという指摘を受け、
@@ -125,108 +135,114 @@ function ProfilePage() {
       {!isLoading && error && <RecordsErrorState error={error} onRetry={reload} />}
       {!isLoading && !error && user && (
         <>
-      <div className="flex flex-col divide-y divide-surface-2">
-        <section className="pb-6">
-          <h2 className="text-sm font-semibold text-text">{t("profile.languageHeading")}</h2>
-          <div className="mt-4">
-            <LanguageSwitcher />
+          <div className="flex flex-col divide-y divide-surface-2">
+            <section className="pb-6">
+              <h2 className="text-base font-semibold text-text">{t("profile.languageHeading")}</h2>
+              <div className="mt-5">
+                <LanguageSwitcher />
+              </div>
+            </section>
+
+            <section className="py-6">
+              <h2 className="text-base font-semibold text-text">{t("profile.accountHeading")}</h2>
+              <form onSubmit={handleSaveName} className="mt-5 flex flex-col gap-4">
+                <FormField id="profile-name" label={t("profile.name")} required>
+                  <input
+                    id="profile-name"
+                    type="text"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    disabled={isSavingName}
+                    className={controlClass(false)}
+                  />
+                </FormField>
+
+                <dl>
+                  <dt className="text-xs text-text-tertiary">{t("profile.email")}</dt>
+                  <dd className="mt-0.5 text-sm text-text">{user.email}</dd>
+                </dl>
+
+                <div>
+                  <button type="submit" disabled={isSavingName} className={primaryButtonClass}>
+                    {isSavingName ? t("common.saving") : t("profile.saveName")}
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section className="py-6">
+              <h2 className="text-base font-semibold text-text">{t("profile.changePasswordHeading")}</h2>
+              <form onSubmit={handleChangePassword} className="mt-5 flex flex-col gap-4">
+                <FormField id="current-password" label={t("profile.currentPassword")} required>
+                  <input
+                    id="current-password"
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(event) =>
+                      setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))
+                    }
+                    disabled={isChangingPassword}
+                    className={controlClass(false)}
+                  />
+                </FormField>
+
+                <FormField
+                  id="new-password"
+                  label={t("profile.newPassword")}
+                  required
+                  hint={t("profile.newPasswordHint")}
+                >
+                  <input
+                    id="new-password"
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(event) =>
+                      setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))
+                    }
+                    disabled={isChangingPassword}
+                    className={controlClass(false)}
+                  />
+                </FormField>
+
+                <div>
+                  <button type="submit" disabled={isChangingPassword} className={primaryButtonClass}>
+                    {isChangingPassword ? t("profile.changingPassword") : t("profile.changePasswordButton")}
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section className="pt-6">
+              <h2 className="text-base font-semibold text-danger">{t("profile.deleteAccountHeading")}</h2>
+              <p className="mt-1 text-xs text-text-tertiary">{t("profile.deleteAccountWarning")}</p>
+              <button
+                type="button"
+                onClick={() => setIsConfirmOpen(true)}
+                className={`${dangerButtonClass} mt-3`}
+              >
+                {t("profile.deleteAccountButton")}
+              </button>
+            </section>
           </div>
-        </section>
 
-        <section className="py-6">
-          <form onSubmit={handleSaveName} className="flex flex-col gap-4">
-            <FormField id="profile-name" label={t("profile.name")} required>
-              <input
-                id="profile-name"
-                type="text"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                disabled={isSavingName}
-                className={controlClass(false)}
-              />
-            </FormField>
+          <ConfirmDialog
+            isOpen={isConfirmOpen}
+            title={t("profile.confirmDeleteTitle")}
+            description={t("profile.confirmDeleteDescription")}
+            isProcessing={isDeletingAccount}
+            onConfirm={handleDeleteAccount}
+            onCancel={() => setIsConfirmOpen(false)}
+          />
 
-            <dl>
-              <dt className="text-xs text-text-tertiary">{t("profile.email")}</dt>
-              <dd className="mt-0.5 text-sm text-text">{user.email}</dd>
-            </dl>
-
-            <div>
-              <button type="submit" disabled={isSavingName} className={primaryButtonClass}>
-                {isSavingName ? t("common.saving") : t("profile.saveName")}
-              </button>
+          <div className="mt-6 flex flex-col items-center gap-3 border-t border-surface-2 pt-6">
+            <div className="footer-stack">
+              {TECH_STACK.map((tech) => (
+                <span key={tech} className="footer-badge">{tech}</span>
+              ))}
             </div>
-          </form>
-        </section>
-
-        <section className="py-6">
-          <h2 className="text-sm font-semibold text-text">{t("profile.changePasswordHeading")}</h2>
-          <form onSubmit={handleChangePassword} className="mt-4 flex flex-col gap-4">
-            <FormField id="current-password" label={t("profile.currentPassword")} required>
-              <input
-                id="current-password"
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(event) =>
-                  setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))
-                }
-                disabled={isChangingPassword}
-                className={controlClass(false)}
-              />
-            </FormField>
-
-            <FormField id="new-password" label={t("profile.newPassword")} required hint={t("profile.newPasswordHint")}>
-              <input
-                id="new-password"
-                type="password"
-                value={passwordForm.newPassword}
-                onChange={(event) =>
-                  setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))
-                }
-                disabled={isChangingPassword}
-                className={controlClass(false)}
-              />
-            </FormField>
-
-            <div>
-              <button type="submit" disabled={isChangingPassword} className={primaryButtonClass}>
-                {isChangingPassword ? t("profile.changingPassword") : t("profile.changePasswordButton")}
-              </button>
-            </div>
-          </form>
-        </section>
-
-        <section className="pt-6">
-          <h2 className="text-sm font-semibold text-danger">{t("profile.deleteAccountHeading")}</h2>
-          <p className="mt-1 text-xs text-text-tertiary">{t("profile.deleteAccountWarning")}</p>
-          <button
-            type="button"
-            onClick={() => setIsConfirmOpen(true)}
-            className={`${dangerButtonClass} mt-3`}
-          >
-            {t("profile.deleteAccountButton")}
-          </button>
-        </section>
-      </div>
-
-      <ConfirmDialog
-        isOpen={isConfirmOpen}
-        title={t("profile.confirmDeleteTitle")}
-        description={t("profile.confirmDeleteDescription")}
-        isProcessing={isDeletingAccount}
-        onConfirm={handleDeleteAccount}
-        onCancel={() => setIsConfirmOpen(false)}
-      />
-
-      <div className="mt-8 flex flex-col items-center gap-3 border-t border-surface-2 pt-6 pb-2">
-        <div className="footer-stack">
-          {TECH_STACK.map((tech) => (
-            <span key={tech} className="footer-badge">{tech}</span>
-          ))}
-        </div>
-        <p className="footer-credit">Built by Hikaru · MERN Portfolio</p>
-      </div>
-      </>
+            <p className="footer-credit">Built by Hikaru · MERN Portfolio</p>
+          </div>
+        </>
       )}
     </div>
   );

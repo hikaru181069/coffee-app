@@ -208,6 +208,7 @@
     "heading": "Profile",
     "subtitle": "Change your display language, update your name and password, or delete your account.",
     "languageHeading": "Display Language",
+    "accountHeading": "Account Information",
     "name": "Name",
     "email": "Email",
     "saveName": "Save Name",
