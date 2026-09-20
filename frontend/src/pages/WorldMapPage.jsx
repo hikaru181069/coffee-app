@@ -15,7 +15,7 @@ import BackLink from "../components/BackLink";
 import StatCard from "../components/StatCard";
 import { useMasterData } from "../features/coffee-records/hooks/useMasterData";
 import { cardClass, primaryButtonClass } from "../features/coffee-records/components/formStyles";
-import { contentContainerClass } from "../styles/pageContainer";
+import { wideContainerClass } from "../styles/pageContainer";
 
 const MAP_FILTERS = { nodeTypes: ["origin"], recordType: "", ratingMin: "" };
 
@@ -63,6 +63,12 @@ const MAP_FILTERS = { nodeTypes: ["origin"], recordType: "", ratingMin: "" };
  * 概算スコアが「その国のコーヒーは常にこの点数」という誤解を招く懸念が
  * あるとの判断で、Origin Quality機能自体とあわせて削除した。地図は
  * 「訪問状況」の1モードのみに戻している。
+ *
+ * 2026-09、「ページごとにmax-widthが異なる」という指摘を受けて確認した
+ * ところ、地図+統計サマリー+産地一覧という構成にもかかわらず、
+ * `contentContainerClass`（1200px、読み物・フォーム系向け）のまま
+ * 取り残されていたことが分かった。Home/Records/Stats/RecordDetail/
+ * EntityDetail等と同じ`wideContainerClass`（1600px）へ揃えた。
  */
 function WorldMapPage() {
   const { t } = useTranslation();
@@ -151,7 +157,7 @@ function WorldMapPage() {
   };
 
   return (
-    <div className={contentContainerClass}>
+    <div className={wideContainerClass}>
       {/* fallbackは、URL直接アクセス等で戻れる履歴が無い場合の行き先。
           Statsページの「Collection」セクションからのリンクでのみ到達する
           ため、Statsを自然な既定値にする */}

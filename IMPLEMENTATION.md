@@ -4664,6 +4664,26 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-21: WorldMapPageのmax-widthを他ページと統一
+
+**実装対象**: `WorldMapPage.jsx`のコンテナ幅を`contentContainerClass`（1200px）から`wideContainerClass`（1600px）へ変更した。
+
+**なぜ今実装するのか**: ユーザーから「ページごとにmax-widthが異なるのですが、統一させた方が良いのでは？」という相談。全ページを監査したところ、Home/Records/Stats/RecordDetail/EntityDetail/RecordForm/Diagnosisは既に1600pxに揃っており、狭い1200pxのままなのはProfile・404・WorldMapの3ページだけだった。Profile・404は「読み物・フォーム系」として意図的に狭くしている（1行50〜75文字程度が読みやすいというタイポグラフィの目安。実務でも設定画面を狭く保つのは一般的、という説明にユーザーから同意を得た）が、WorldMapは地図+統計サマリー+産地一覧という「一覧・ダッシュボード系」の内容にもかかわらず1200pxのまま取り残されている移行漏れだったため、ユーザーの指示でこちらだけ1600pxへ揃えた。Graphページ（max-width自体を持たず常に全幅）はキャンバスとして意図的な例外のため対象外。
+
+**実装内容**: `WorldMapPage.jsx`のimport・JSXを`contentContainerClass`→`wideContainerClass`へ変更。あわせて`styles/pageContainer.js`のコード先頭コメント（各クラスの使い分けを説明する箇所）が、RecordDetail/EntityDetailを`contentContainerClass`の例として挙げたまま（今回のダッシュボード化より前の記述）だったのを、現状（`contentContainerClass`を使うのはProfile・404のみ）に合わせて更新した。
+
+**変更ファイル**:
+- `frontend/src/pages/WorldMapPage.jsx`
+- `frontend/src/styles/pageContainer.js`（コメントのみ）
+
+**データフロー**: 変更なし（コンテナ幅のみ）。
+
+**実行したテストと結果**: `npm run lint`（0エラー）・`npm run build`（0エラー）・`npm run test`（356件、0エラー）。claude-in-chromeでローカルMongoDBへ一時切り替えのうえ、`/map`が他のダッシュボード系ページと同じ幅（1600px）で表示され、地図・統計サマリー・産地一覧のレイアウトが崩れていないことを実機確認した。
+
+**未解決事項**: 特になし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
