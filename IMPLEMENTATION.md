@@ -4617,6 +4617,29 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-21: 記録詳細「つながり」図をGraph画面のデザインへ統一
+
+**実装対象**: `RecordConnectionsDiagram.jsx`（記録詳細ページの「つながり」セクション）のノード・エッジの見た目を、GraphCanvas.jsx・NodeDetailPanel.jsxの2026-09の作り直しに揃えた。
+
+**なぜ今実装するのか**: ユーザーから「records詳細ページのグラフプレビューが実際のグラフのデザインと異なります。統一させて。」という指摘。確認したところ、`nodeColor.js`（ノードの色を1箇所で決める共有ヘルパー）経由でアイコンの色自体は既に統一済みだったが、ノードの見た目（輪郭線+`bg-surface-1`の中立背景 vs 実際のGraphの塗りつぶし円）とエッジの色（一律`stroke-surface-2`グレー vs 実際のGraphの属性ノード色）が、2026-09のGraph画面の作り直し（「輪郭線+小さいアイコン」→「種別色で塗りつぶした円+暗色アイコン」、エッジも属性ノードの色を帯びる）に追随できておらず、移行漏れだったことが分かった。
+
+**実装内容**:
+- **ノード**: 中心の記録ノード・各属性ノード（`ConnectionNode`）を、NodeDetailPanel.jsxと同じ「塗りつぶし円（`getNodeSolidBgClass`）+暗色アイコン（`text-on-inverse`）+`shadow-elevated`」へ変更した。中心ノードは`getNodeVisual("record").solidBgClass`をそのまま使用
+- **エッジ**: `recordConnectionsLayout.js`（DOM非依存の純粋関数）の各edgeオブジェクトに`type`/`label`を追加した。フレーバーの幹（中心→trunk）は複数のフレーバーで共有する線のため特定の値を持たず、`label: null`にした。`RecordConnectionsDiagram.jsx`側で`edgeColorHex()`ヘルパーを新設し、GraphCanvas.jsxの`edgeColor()`（属性ノード側の色を使う）と同じロジックでSVGの`stroke`に生のhex値を渡す（`label`があれば`getNodeColorHex`で個別色/型共通色を自動判定、`label`が無い幹だけは`getNodeVisual(type).canvasColor`で型共通色に固定。`getNodeColorHex`へlabel:nullを渡すとflavorAccent.jsの汎用フォールバック色（中立グレー）になってしまい、フレーバーらしい色にならないため使わなかった）
+
+**変更ファイル**:
+- `frontend/src/features/graph/components/RecordConnectionsDiagram.jsx`
+- `frontend/src/features/graph/utils/recordConnectionsLayout.js`
+- `docs/design.md`（「値ごとの個別色と型共通色の一貫性」節に追記）
+
+**データフロー**: 変更なし。表示の見た目のみで、`buildRecordConnectionsLayout`が受け取る入力（record.components等）・返す座標は変えていない（各edgeに`type`/`label`フィールドを追加しただけ）。
+
+**実行したテストと結果**: `npm run lint`（0エラー）・`npm run build`（0エラー）・`npm run test`（356件、0エラー。既存の`recordConnectionsLayout.test.js`・`RecordConnectionsDiagram.test.jsx`は座標・リンク・件数のみを検証しており色を見ていないため、修正不要だった）。claude-in-chromeでローカルMongoDBへ一時切り替えのうえ実機確認: ブレンド記録の「つながり」図（Ethiopia/Guatemala/Natural/Washed/Medium/Floral/Chocolate）を`/graph?focus=record:<id>`で同じ記録を開いた実際のGraph画面と並べて比較し、ノードの色（Ethiopiaの個別色、Natural/Washedの精製方法共通色等）・塗りつぶしの見た目が一致することを確認した。
+
+**未解決事項**: 特になし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証

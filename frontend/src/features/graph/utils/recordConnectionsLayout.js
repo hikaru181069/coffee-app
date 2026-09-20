@@ -64,7 +64,7 @@ export function buildRecordConnectionsLayout({ origins = [], processes = [], roa
     origins.forEach((origin, index) => {
       const x = origins.length === 1 ? 50 : startX + step * index;
       nodes.push({ type: "origin", id: origin.id, label: origin.name, x, y: ORIGIN_Y });
-      edges.push({ x1: CENTER.x, y1: CENTER.y, x2: x, y2: ORIGIN_Y });
+      edges.push({ x1: CENTER.x, y1: CENTER.y, x2: x, y2: ORIGIN_Y, type: "origin", label: origin.name });
     });
   }
   if (processes.length > 0) {
@@ -75,13 +75,13 @@ export function buildRecordConnectionsLayout({ origins = [], processes = [], roa
     processes.forEach((process, index) => {
       const y = processes.length === 1 ? 50 : startY + step * index;
       nodes.push({ type: "process", id: process.id, label: process.name, x: PROCESS_X, y });
-      edges.push({ x1: CENTER.x, y1: CENTER.y, x2: PROCESS_X, y2: y });
+      edges.push({ x1: CENTER.x, y1: CENTER.y, x2: PROCESS_X, y2: y, type: "process", label: process.name });
     });
   }
   if (roastLevel) {
     const pos = SINGLE_SLOTS.roastLevel;
     nodes.push({ type: "roastLevel", id: roastLevel.id, label: roastLevel.name, x: pos.x, y: pos.y });
-    edges.push({ x1: CENTER.x, y1: CENTER.y, x2: pos.x, y2: pos.y });
+    edges.push({ x1: CENTER.x, y1: CENTER.y, x2: pos.x, y2: pos.y, type: "roastLevel", label: roastLevel.name });
   }
 
   const shownFlavors = flavors.slice(0, MAX_FLAVOR_NODES);
@@ -89,7 +89,10 @@ export function buildRecordConnectionsLayout({ origins = [], processes = [], roa
 
   if (shownFlavors.length > 0) {
     const trunk = { x: 50, y: FLAVOR_TRUNK_Y };
-    edges.push({ x1: CENTER.x, y1: CENTER.y, x2: trunk.x, y2: trunk.y });
+    // 幹（中心→trunk）は複数のフレーバーで共有するため、特定の1件の個別色
+    // ではなく種別共通色にする（labelを渡さない。getNodeColorHex等は
+    // 未知のlabelに対して中立なフォールバック色を返すため落ちない）
+    edges.push({ x1: CENTER.x, y1: CENTER.y, x2: trunk.x, y2: trunk.y, type: "flavor", label: null });
 
     const spread = Math.min(MAX_FLAVOR_SPREAD, shownFlavors.length * FLAVOR_SPREAD_PER_NODE);
     const startX = 50 - spread / 2;
@@ -98,7 +101,7 @@ export function buildRecordConnectionsLayout({ origins = [], processes = [], roa
     shownFlavors.forEach((flavor, index) => {
       const x = shownFlavors.length === 1 ? 50 : startX + step * index;
       nodes.push({ type: "flavor", id: flavor.id, label: flavor.name, x, y: FLAVOR_LEAF_Y });
-      edges.push({ x1: trunk.x, y1: trunk.y, x2: x, y2: FLAVOR_LEAF_Y });
+      edges.push({ x1: trunk.x, y1: trunk.y, x2: x, y2: FLAVOR_LEAF_Y, type: "flavor", label: flavor.name });
     });
   }
 

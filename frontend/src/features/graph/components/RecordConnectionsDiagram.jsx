@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../utils/nodeVisuals";
-import { getNodeTextColorClass } from "../utils/nodeColor";
+import { getNodeColorHex, getNodeSolidBgClass } from "../utils/nodeColor";
 import { entityDetailPath } from "../utils/entityLink";
 import { buildRecordConnectionsLayout } from "../utils/recordConnectionsLayout";
 
@@ -13,6 +13,16 @@ import { buildRecordConnectionsLayout } from "../utils/recordConnectionsLayout";
  * 同じアイコン・配色（getNodeVisual）で、クリックするとそのエンティティ
  * 詳細ページへ遷移する（以前のチップ一覧と同じ遷移先）。
  *
+ * 2026-09、「records詳細ページのグラフプレビューが実際のグラフの
+ * デザインと異なる」という指摘を受けた。GraphCanvas.jsx・
+ * NodeDetailPanel.jsxは2026-09の作り直しで「種別色の塗りつぶし円+
+ * 暗色（text-on-inverse）アイコン」「つながる属性ノードの色を帯びた
+ * 太めの線」という見た目へ揃っていたが、このコンポーネントだけ旧来の
+ * 「輪郭線+小さい色付きアイコン」「グレーの細線」のまま移行漏れに
+ * なっていた（docs/design.md「Graph」参照）。ノードはNodeDetailPanel.jsx
+ * と同じ塗りつぶし円バッジへ、エッジはGraphCanvas.jsxのedgeColor()と
+ * 同じ「属性ノード側の色」へ揃えた。
+ *
  * 接続線はレイアウト計算（recordConnectionsLayout.js）に従って敷いた
  * 装飾用のSVG（aria-hidden）。実際にフォーカス・クリックできるのは
  * 記録タイトル以外の各ノード（通常のLink要素）のみで、上に
@@ -20,6 +30,19 @@ import { buildRecordConnectionsLayout } from "../utils/recordConnectionsLayout";
  * 追加のaria-labelは付けていない（role="img"にすると子のLinkが
  * スクリーンリーダーから見えなくなってしまうため）。
  */
+
+/**
+ * エッジの色。GraphCanvas.jsxのedgeColor()と同じ「属性ノード側の色」を
+ * 使う。フレーバーの幹（中心→trunk）だけは複数のフレーバーで共有する
+ * ため特定の値を持たず（label: null）、値ごとの個別色ではなく種別共通色
+ * （getNodeVisual）にフォールバックする（docs/design.md「値ごとの
+ * 個別色と型共通色の一貫性」の、集合・非実データは型共通色のままという
+ * 方針に沿う。getNodeColorHexへlabel: nullを渡すとflavorAccent.jsの
+ * 汎用フォールバック色になってしまい、ここでは意図と異なるため使わない）。
+ */
+const edgeColorHex = (edge) =>
+  edge.label ? getNodeColorHex({ type: edge.type, label: edge.label }) : getNodeVisual(edge.type).canvasColor;
+
 function RecordConnectionsDiagram({ record }) {
   const { t } = useTranslation();
   const layout = buildRecordConnectionsLayout({
@@ -42,8 +65,9 @@ function RecordConnectionsDiagram({ record }) {
               y1={edge.y1}
               x2={edge.x2}
               y2={edge.y2}
-              className="stroke-surface-2"
-              strokeWidth="0.6"
+              stroke={edgeColorHex(edge)}
+              strokeOpacity="0.55"
+              strokeWidth="1.1"
             />
           ))}
         </svg>
@@ -53,8 +77,10 @@ function RecordConnectionsDiagram({ record }) {
           className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1"
           style={{ left: `${layout.center.x}%`, top: `${layout.center.y}%` }}
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-1 ring-2 ring-surface-2">
-            <RecordIcon size={18} aria-hidden="true" className={recordVisual.colorClass} strokeWidth={1.75} />
+          <span
+            className={`flex h-11 w-11 items-center justify-center rounded-full shadow-elevated ${recordVisual.solidBgClass}`}
+          >
+            <RecordIcon size={18} aria-hidden="true" className="text-on-inverse" strokeWidth={1.75} />
           </span>
           {/* 中心ノードだけは省略されすぎないよう、他ノードより広い幅で2行まで許容する */}
           <span
@@ -93,6 +119,7 @@ function ConnectionNode({ node }) {
   const { t } = useTranslation();
   const visual = getNodeVisual(node.type);
   const Icon = visual.icon;
+  const solidBgClass = getNodeSolidBgClass({ type: node.type, label: node.label });
 
   return (
     <Link
@@ -109,13 +136,10 @@ function ConnectionNode({ node }) {
         {t(visual.labelKey)}
       </span>
 
-      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-surface-1 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:border-line/60 group-hover:bg-surface-2 group-focus-visible:ring-2 group-focus-visible:ring-primary/50">
-        <Icon
-          size={14}
-          aria-hidden="true"
-          className={getNodeTextColorClass({ type: node.type, label: node.label })}
-          strokeWidth={1.75}
-        />
+      <span
+        className={`flex h-8 w-8 items-center justify-center rounded-full shadow-elevated transition-transform duration-150 group-hover:-translate-y-0.5 group-focus-visible:ring-2 group-focus-visible:ring-primary/50 ${solidBgClass}`}
+      >
+        <Icon size={14} aria-hidden="true" className="text-on-inverse" strokeWidth={1.75} />
       </span>
       <span className="max-w-[4.5rem] truncate text-[10px] text-text-secondary transition-colors duration-150 group-hover:text-text">
         {node.label}

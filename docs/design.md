@@ -602,6 +602,22 @@ flavorなら個別色、それ以外は`nodeVisuals.js`の型共通色を自動�
 円+暗色（`text-on-inverse`）アイコン」という新スタイルへ揃えた
 （`getNodeSolidBgClass`を使用）。
 
+2026-09、「records詳細ページのグラフプレビューが実際のグラフのデザインと
+異なる」という指摘を受けて確認したところ、`RecordConnectionsDiagram.jsx`
+（記録詳細の「つながり」図）は上記の色ヘルパー移行（アイコン色のみ）は
+済んでいたが、ノードの見た目自体（輪郭線+小さい色付きアイコン、
+`bg-surface-1`の中立背景）とエッジの色（`stroke-surface-2`の一律グレー）
+は、GraphCanvas.jsx・NodeDetailPanel.jsxの2026-09の作り直し（「Graph」
+節参照。塗りつぶし円+暗色アイコン、つながる属性ノードの色を帯びた
+エッジ）に追随できていなかったことが分かった。ノードは
+NodeDetailPanel.jsxと同じ塗りつぶし円バッジ（`getNodeSolidBgClass`+
+`text-on-inverse`）へ、エッジはGraphCanvas.jsxの`edgeColor()`
+（record⇔属性の2端点のうち属性側ノードの色を使う）と同じロジックへ
+揃えた。フレーバーの幹（中心→trunk）だけは複数のフレーバーで共有する
+特定の値を持たない線のため、値ごとの個別色ではなく型共通色にフォール
+バックする（`recordConnectionsLayout.js`の各edgeに`type`/`label`を
+追加し、`RecordConnectionsDiagram.jsx`側で色を解決する形にした）。
+
 ## Design Tokens
 
 2026-08、参照先をLinear（linear.app）からmobbin.com（UIデザイン
