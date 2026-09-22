@@ -4,6 +4,16 @@ coffee-appを本番環境（MongoDB Atlas + Render + Vercel）へデプロイす
 ローカル作業用のメモであり、`docs/`配下の仕様ドキュメントとは別に、実際にデプロイした
 ときの構成・設定値・手順を記録する。
 
+> **2026-09、AWSへのリリースフェーズ開始**: 本番運用は現時点でも下記の
+> Vercel + Render + MongoDB Atlas 構成のまま。AWSへの移行に向けた
+> 第一段階として、Docker（`backend`・`frontend`・`fastapi-service`の
+> 各`Dockerfile`・新規`docker-compose.prod.yml`）を本番相当で動く形へ
+> 仕上げたが、**これはまだ「ローカルでの本番再現」止まりで、AWSへの
+> 実デプロイ（ECS/ECR/Secrets Manager等のセットアップ、AWSアカウント
+> 作成含む）はまだ着手していない**。手順は[`README.md`](README.md)
+> 「本番相当の動きをローカルで再現する」参照。このドキュメント自体は、
+> AWS移行が完了するまでは現行構成の記録として引き続き有効。
+
 ## 全体構成
 
 ```text

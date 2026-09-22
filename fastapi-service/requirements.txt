@@ -1,4 +1,7 @@
-fastapi
-uvicorn[standard]
-pytest
-httpx
+# 本番実行に必要な依存だけを持つ（テスト専用ツールはrequirements-dev.txt）。
+# 2026-09、AWS本番リリースに向けたDocker仕上げで、バージョン未固定のまま
+# だったのを実際にインストールされているバージョンへ固定した
+# （固定しないと、知らないうちに中身が変わって本番だけ動かなくなる
+# リスクがあるため）。
+fastapi==0.136.3
+uvicorn[standard]==0.48.0

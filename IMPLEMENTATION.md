@@ -4684,6 +4684,47 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-23: Docker本番化（AWSリリースの第一段階）
+
+**実装対象**: `backend`・`frontend`・`fastapi-service`の3つの`Dockerfile`をmulti-stage化し、「開発用」（既存の挙動をそのまま維持）と「本番用」（新規）の2パターンを1ファイルに同居させた。新規`docker-compose.prod.yml`で、本番相当の動きをAWSアカウント無しでローカル再現できるようにした。
+
+**なぜ今実装するのか**: ユーザーから「AWS本番環境へのリリースフェーズへ移る、まずDockerを仕上げたい」という依頼。調査の結果、既存の`docker-compose.yml`・各`Dockerfile`は完全にローカル開発専用（ホットリロード目的のbind mount、devサーバーをCMDにしている）で、本番想定の構成が一切存在しないことが分かった。現在の本番運用はVercel + Render + MongoDB Atlasで、Docker/AWSとは無関係（`DEPLOYMENT.md`参照）。ユーザーはまだAWSアカウントを作成しておらず、「ローカルで本番環境を再現する」ことを今回のゴールとしたため、frontendも含めた3サービスすべてをDocker化する方針にした（AWSのIaC・アカウント作成・実デプロイは次フェーズ）。
+
+なお、計画段階でユーザーから「Dockerをあまり理解していない」というフィードバックを受け、通常より丁寧に（料理のレシピの例え等を使って）Docker自体の基礎から説明したうえでプランの承認を得た。
+
+**調査で見つかった問題点**:
+- 3つの`Dockerfile`はいずれも単一ステージで、devサーバー（`nodemon`/`vite`/`uvicorn --reload`）をそのままCMDにしていた
+- `frontend`にビルド成果物（`dist/`）を配信する仕組みが一切無かった（唯一の静的配信ルールはVercel専用の`vercel.json`で、Dockerでは使えない）
+- `backend`の`npm start`（`tsx server.js`）が使う`tsx`が`devDependencies`にあり、本番向けの`npm ci --omit=dev`をすると起動できなくなる実質的なバグだった
+- `backend`にヘルスチェック用のエンドポイントが無かった（`fastapi-service`には`GET /`があった）
+- `fastapi-service/requirements.txt`はバージョン未固定で、テスト専用の`pytest`/`httpx`が本番用要件と同居していた
+
+**実装内容**:
+- **backend**: `Dockerfile`を`base`→`dev`/`prod-deps`→`prod`のmulti-stage化。`tsx`を`devDependencies`→`dependencies`へ移動（Docker外でも効く本質的なバグ修正）。`app.js`の既存`GET /`ルート（従来プレーンテキストを返すだけだった）を、`fastapi-service`の`GET /`と同じJSON形（`{status, service}`）のヘルスチェックへ変更（新規に`/health`を作るより、既存の同じ役割のルートを揃える方が重複が無いと判断）。`USER node`で非root起動、`HEALTHCHECK`を追加
+- **frontend**: `Dockerfile`を`base`→`dev`/`build`→`prod`（`nginx:alpine`）のmulti-stage化。新規`nginx.conf`でSPAのフォールバック（`try_files`、既存`vercel.json`のrewriteと同じ意図）・静的アセットのキャッシュヘッダー・`/health`を設定
+- **fastapi-service**: `requirements.txt`を本番用（`fastapi`・`uvicorn[standard]`、実際にインストールされていたバージョンへ固定）に絞り、新規`requirements-dev.txt`（`-r requirements.txt` + `pytest`・`httpx`）へテスト専用依存を分離。`Dockerfile`をmulti-stage化し、本番用は非root（`appuser`）起動・`--reload`無し。CI（`.github/workflows/test.yml`）のfastapi-testsジョブも`requirements-dev.txt`を使うよう追随
+- **docker-compose.yml**（開発用）: 各サービスの`build`に`target: dev`を明示するだけの最小差分（挙動・ポート・volumeは無変更）
+- **docker-compose.prod.yml**（新規）: backend・frontend・fastapi・MongoDBを`target: prod`で同時に立ち上げる。`JWT_SECRET`はファイルに直書きせず`${JWT_SECRET:?...}`で必須化し、新規`.env.prod.example`（実値なし）を用意。mongodb・fastapiはホストへポートを公開しない（本番でDBを外部公開しないのと同じ考え方）。dev/prodのイメージが同じタグを取り合わないよう、prod側は`image: coffee-app-*:prod`を明示
+
+**実機検証で見つけて直したバグ**: 実際にビルド・起動して確認したところ、`frontend`のHEALTHCHECK（`wget http://localhost/health`）が`Connection refused`で失敗し続けた。原因はAlpineの`wget`が`localhost`をまずIPv6（`::1`）で引こうとするが、nginxはIPv4（`0.0.0.0`）にしか`listen`していなかったこと。`docker exec`でコンテナに入り`wget http://127.0.0.1/health`が成功することを確認して特定した。3サービスすべてのHEALTHCHECKで`localhost`を`127.0.0.1`へ明示するよう修正した（backend・fastapiは症状が出ていなかったが、同じ環境依存の再発リスクがあるため揃えて直した）。
+
+**変更ファイル**:
+- `backend/Dockerfile`・`backend/package.json`（tsx移動）・`backend/package-lock.json`・`backend/app.js`（ヘルスチェック）
+- `frontend/Dockerfile`、新規`frontend/nginx.conf`
+- `fastapi-service/Dockerfile`・`fastapi-service/requirements.txt`、新規`fastapi-service/requirements-dev.txt`
+- `docker-compose.yml`（`target: dev`追加）、新規`docker-compose.prod.yml`、新規`.env.prod.example`
+- `.github/workflows/test.yml`（fastapi-testsジョブ）
+- `.gitignore`（`.env.prod.example`を追跡対象に追加）
+- `README.md`（本番相当のローカル再現手順を追記、requirements-dev.txtへの参照修正）・`DEPLOYMENT.md`（AWS移行フェーズ開始・現状はローカル再現止まりである旨を明記）
+
+**データフロー**: 変更なし（Docker・依存関係・設定ファイルのみの変更で、アプリのロジック・API・DBスキーマには一切手を入れていない）。
+
+**実行したテストと結果**: `cd backend && npm run typecheck && npm test`（573件、0エラー）・`cd frontend && npm run lint && npm run build && npm test`（356件、0エラー）。加えて実際にDockerを使った検証: (1) `docker compose -f docker-compose.prod.yml --env-file .env.prod build` で3イメージともエラー無くビルド、(2) `up -d`後、`docker compose ... ps`で全コンテナ（mongodb含む）が起動し、backend/fastapi/frontendの3つが`healthy`になることを確認（上記のIPv6/IPv4バグ修正後）、(3) `npm run seed`・`npm run seed:demo`でデモデータ投入、(4) claude-in-chromeで`http://localhost:8080`を開きログイン→Home（実データの記録一覧・知識グラフプレビュー表示）→`/stats`への直接URLアクセス（nginxのSPAフォールバックが正しく効くこと）を確認、(5) `curl`で`backend`の`GET /`・`fastapi`の`GET /`（backend経由の内部ネットワーク越し）がそれぞれ200のJSONを返すことを確認、(6) 既存の`docker compose build`（devファイル）が引き続きエラー無くビルドできることを確認（回帰確認）。検証後、テスト用に作った`.env.prod`・prod用コンテナ/ボリュームは削除済み。
+
+**未解決事項**: AWSアカウントの作成・実際のデプロイ（ECS/ECR/Secrets Manager等のIaC）は次フェーズとして未着手。`docker-compose.prod.yml`のMongoDBは本番でもAWS上でセルフホストするか、MongoDB Atlasを使い続けるか（現行の非Docker本番運用と同じ）は未検討。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -4723,6 +4764,7 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 - 2026-08-30、コーヒー診断の強化で新規追加した13タイプ分の日本語・英語コピー（タイトル・説明文）は、既存5タイプと同じトーンで新規に書き下ろしたものであり、実データでの見え方の検証は行っていない
 - 2026-08-30、診断の判定軸（焙煎度×フレーバーcategory）には`rating`（総合評価）を使っていない。ユーザーへの確認では選択肢に含めたが選ばれなかった（将来「高評価のタイプ」等のバッジを追加する場合の候補として残る）
 - 2026-09-20、RecordDetail/EntityDetailのダッシュボード化（該当エントリ参照）で踏んだ「同じ列内でflex-basis:0%の兄弟とauto（自然な高さ）の兄弟を混在させると、コンテナが不足したときauto側が空間を奪い0%側が潰れる」というflexboxの罠は、今後同種のレイアウトを他画面に広げる際に再発しうる一般的な注意点として残る
+- 2026-09-23、Docker本番化（該当エントリ参照）はAWSリリースの第一段階のみで、AWSアカウント作成・実デプロイ（ECS/ECR/Secrets Manager等）はまだ着手していない。`docker-compose.prod.yml`のMongoDBを本番でもセルフホストするかAtlasを使い続けるかも未検討
 
 ## 次に実装すべき最小単位
 
@@ -4742,3 +4784,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 12. 2026-09-18、「デザイン・テーマの統一」で見つかった`originAccent.js`（パステル寄り明度）と`flavorAccent.js`（彩度の高い個別色）のトーンの不一致（同じ画面に並ぶと産地色がフレーバー色より弱く見える）を、着手するか含めてユーザーと相談する
 13. ~~`backend/.env`のAtlas接続情報（`MONGO_URI`）が`bad auth`で使えない状態が2026-08-30から継続~~ → 2026-09-19に解消（上記「未解決事項」参照）
 14. 2026-09-19のバックフィル（同エントリ参照）で発覚した「スキーマ変更時のバックフィル忘れ」を防ぐ一般的な運用（マイグレーション手順のチェックリスト化等）は未検討
+15. 2026-09-23、Docker本番化（該当エントリ参照）の次フェーズ: AWSアカウントの作成、ECS/ECR等へのIaC整備、Secrets Managerでの秘密情報管理、実際のAWSへのデプロイ

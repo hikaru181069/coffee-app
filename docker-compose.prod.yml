@@ -1,0 +1,75 @@
+# 本番相当の動き方をローカルで再現するための司令書。
+#
+# 2026-09、AWS本番リリースに向けたDocker仕上げの一環で新設した。
+# 既存のdocker-compose.yml（開発用、ホットリロード・bind mount）は
+# 一切変更せず、こちらは別ファイルとして完全に独立している。
+#
+# 使い方:
+#   1. リポジトリ直下に .env.prod を作る（.env.prod.exampleをコピーして
+#      JWT_SECRETを自分の値に書き換える）
+#   2. docker compose -f docker-compose.prod.yml --env-file .env.prod up --build
+#
+# 各サービスのDockerfileの `target: prod` ステージ（本番用の作り方）を使う。
+# mongodb・fastapiはコンテナ同士の通信だけで使うため、ホストPCへポートを
+# 公開しない（本番でDBを外部公開しないのと同じ考え方をローカル再現でも
+# 踏襲する）。
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: coffee-app-mongodb-prod
+    volumes:
+      - mongodb_prod_data:/data/db
+    restart: unless-stopped
+
+  fastapi:
+    build:
+      context: ./fastapi-service
+      target: prod
+    # dev用のdocker-compose.ymlも同じサービス名（fastapi/backend/frontend）
+    # を使っているため、image名を明示しないとdevとprodのビルドが同じタグを
+    # 取り合ってしまう（後からビルドした方が上書きする）。:prodサフィックス
+    # で明確に分ける。
+    image: coffee-app-fastapi:prod
+    container_name: coffee-app-fastapi-prod
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      target: prod
+    image: coffee-app-backend:prod
+    container_name: coffee-app-backend-prod
+    ports:
+      - "5001:5001"
+    environment:
+      PORT: 5001
+      MONGO_URI: mongodb://mongodb:27017/coffeeApp
+      FASTAPI_URL: http://fastapi:8000
+      FRONTEND_URL: http://localhost:8080
+      # ${JWT_SECRET:?...} は「JWT_SECRETが渡されていなければ即エラーで
+      # 止める」という書き方。開発用のようにファイルへ値を直書きしない。
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required. Copy .env.prod.example to .env.prod and set it.}
+    depends_on:
+      - mongodb
+      - fastapi
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      target: prod
+      args:
+        # ブラウザ（ホストPC側）から見えるURL。上のbackendがホストの
+        # 5001番へ公開されているため、コンテナ内部名(backend)ではなく
+        # localhostを指定する（frontend/Dockerfileのbuildステージのコメント参照）。
+        VITE_API_URL: http://localhost:5001
+    image: coffee-app-frontend:prod
+    container_name: coffee-app-frontend-prod
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongodb_prod_data:

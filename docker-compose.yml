@@ -10,7 +10,11 @@ services:
       - mongodb_data:/data/db
 
   fastapi:
-    build: ./fastapi-service
+    # 2026-09、Dockerfileをmulti-stage化（開発用/本番用の2ステージ）した
+    # ため、開発用のtargetを明示する（docker-compose.prod.ymlはtarget: prod）。
+    build:
+      context: ./fastapi-service
+      target: dev
     container_name: coffee-app-fastapi
     ports:
       # mlb-appのfastapiコンテナがホスト側8000を使用中のため、別番号を割り当てる
@@ -19,7 +23,9 @@ services:
       - ./fastapi-service:/app
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      target: dev
     container_name: coffee-app-backend
     ports:
       # mlb-appのbackendコンテナがホスト側5001を使用中のため、別番号を割り当てる
@@ -46,7 +52,9 @@ services:
       - fastapi
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      target: dev
     container_name: coffee-app-frontend
     ports:
       # mlb-appのfrontendコンテナがホスト側5173を使用中のため、別番号を割り当てる

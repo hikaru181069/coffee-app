@@ -60,8 +60,11 @@ app.use("/api/discoveries", discoveryPreviewRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 
+// ヘルスチェック用（Dockerのコンテナ生存確認・将来のALB/ECS等からの疎通確認を想定）。
+// DBに依存せず即座に200を返すだけにする。fastapi-service/main.jsのGET /と
+// 同じ「DBに依存しない生存確認」という設計・レスポンス形に揃えている。
 app.get("/", (req, res) => {
-  res.send("Backend server is running");
+  res.json({ status: "ok", service: "Coffee App Backend" });
 });
 
 app.use(notFoundHandler);

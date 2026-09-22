@@ -1,0 +1,5 @@
+# 開発・テスト時だけ必要な依存。本番用のrequirements.txtを土台にして、
+# テストツールだけ追加する（2026-09、Docker仕上げで分離した）。
+-r requirements.txt
+pytest==9.1.1
+httpx==0.28.1

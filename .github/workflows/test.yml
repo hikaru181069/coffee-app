@@ -22,9 +22,12 @@ jobs:
         with:
           python-version: "3.13"
 
-      # 3. 依存ライブラリをインストールする（pytestもrequirements.txtに含めている）
+      # 3. 依存ライブラリをインストールする。
+      # 2026-09、Docker本番化に伴いrequirements.txtを本番用のみへ絞ったため、
+      # pytest等のテスト専用ツールを含むrequirements-dev.txt（requirements.txt
+      # を土台にする）を使う。
       - name: Install dependencies
-        run: pip install -r fastapi-service/requirements.txt
+        run: pip install -r fastapi-service/requirements-dev.txt
 
       # 4. テストを実行する
       - name: Run pytest

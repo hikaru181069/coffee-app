@@ -234,6 +234,27 @@ MongoDB / FastAPI / Backend / Frontend の4サービスが起動します。環�
 
 ソースコードを編集するとホットリロード（nodemon / Vite / uvicorn --reload）で反映されます。停止は `docker compose down`（`-v` を付けるとDBのデータも削除）。
 
+### 本番相当の動きをローカルで再現する
+
+AWSへのリリース準備の一環で、`docker-compose.yml`（開発用）とは別に `docker-compose.prod.yml` を用意しています。frontendはVite開発サーバーではなくビルド済みファイルをnginxで配信し、backend/fastapiもホットリロード無しの本番相当の起動方法（`npm ci --omit=dev` / `--reload`無し）になります。**AWSアカウントは不要**で、手元のPCだけで完結します。
+
+```bash
+cp .env.prod.example .env.prod   # JWT_SECRETを自分の値に書き換える
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+
+# 初回だけ、マスターデータ・デモデータを投入
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend npm run seed
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend npm run seed:demo
+```
+
+- Frontend: http://localhost:8080
+- Backend: http://localhost:5001（`GET /` がヘルスチェック用）
+- MongoDB / FastAPIはコンテナ間通信のみで、ホストへは公開しません
+
+停止は `docker compose -f docker-compose.prod.yml --env-file .env.prod down`（`-v` を付けるとDBのデータも削除）。
+
+> **注意**: これはあくまで「ローカルでの本番再現」です。AWS（ECS/ECR/Secrets Manager等）への実際のデプロイはまだ行っていません（詳細は [`DEPLOYMENT.md`](DEPLOYMENT.md) 参照）。
+
 ### Docker を使わない場合
 
 **必要なもの:** Node.js 20.11+ / Python 3.13+ / Docker（MongoDB用）
@@ -243,9 +264,9 @@ MongoDB / FastAPI / Backend / Frontend の4サービスが起動します。環�
 cd backend && npm install
 cd ../frontend && npm install
 
-# Python 仮想環境
+# Python 仮想環境（テスト用ツール込み。requirements-dev.txtがrequirements.txtを内包する）
 python3 -m venv .venv
-.venv/bin/pip install -r fastapi-service/requirements.txt
+.venv/bin/pip install -r fastapi-service/requirements-dev.txt
 
 # 環境変数
 cp backend/.env.example backend/.env   # 値を埋める
