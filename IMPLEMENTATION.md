@@ -4725,6 +4725,28 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-24: docker-compose.prod.ymlが開発用コンテナを巻き込んで削除する不具合を修正
+
+**実装対象**: `docker-compose.prod.yml`に明示的な`name:`（Composeのプロジェクト名）を追加した。
+
+**なぜ今実装するのか**: ユーザーから「開発用と本番用のDocker環境が完全に独立しているか確認して」という依頼。実際に開発用（`docker compose up`）を起動した状態で本番用（`docker compose -f docker-compose.prod.yml ... up`）を起動して確認したところ、**本番用を起動した瞬間に、動いていた開発用のコンテナ（`coffee-app-backend`等）が削除され、作り直されるログ（`Recreate`）を実機で確認した**。
+
+**原因**: 両方のcomposeファイルが、明示的な`name:`を持たず、既定値（ディレクトリ名`coffee-app`）を「プロジェクト名」として使っていた。さらに両ファイルとも同じサービス名（`backend`・`frontend`・`fastapi`・`mongodb`）を使っている。Composeは各コンテナを`container_name`ではなく「プロジェクト名+サービス名」の組み合わせで管理しているため、本番用の`up`は「`coffee-app`プロジェクトの`backend`サービスを、新しい設定（本番用のDockerfile・ポート等）で再デプロイする」と解釈し、そこに元々あった開発用のコンテナ（同じプロジェクト+サービス名の組み合わせを占有していた）を問答無用で削除してから、本番用のコンテナ（`container_name: coffee-app-backend-prod`）を新規作成していた。`container_name`を分けているだけでは、この「プロジェクト+サービス名」レベルの衝突は防げていなかった。
+
+**修正**: `docker-compose.prod.yml`の先頭に`name: coffee-app-prod`を追加し、Compose上のプロジェクト自体を開発用（`coffee-app`）とは別物にした。これにより、コンテナ管理だけでなく、Dockerネットワーク（`coffee-app_default` / `coffee-app-prod_default`）・ボリューム名も完全に別の名前空間になる。
+
+**修正後の検証**: 開発用を起動 → 本番用を起動 → 両方とも一切干渉せず8コンテナ（4+4）が同時に動き続けることを確認。`docker network ls`で2つの別ネットワークができていることを確認。開発用のコンテナから本番用のコンテナ名（`mongodb-prod`）が名前解決できないこと、本番用の`mongodb`という名前が（開発用のではなく）本番用自身のMongoDBを正しく指すことを、それぞれのコンテナ内から`getent hosts`で確認した。作業中に生まれた、修正前の古いボリューム（`coffee-app_mongodb_prod_data`、新しい命名規則とは別の取り残し）も削除した。
+
+**変更ファイル**: `docker-compose.prod.yml`（`name:`追加のみ）
+
+**データフロー**: 変更なし。
+
+**実行したテストと結果**: 上記「修正後の検証」の通り、実際に両スタックを同時起動しての実機確認のみ（コード変更を伴わないためlint/build/testの再実行は不要と判断）。
+
+**未解決事項**: 特になし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
