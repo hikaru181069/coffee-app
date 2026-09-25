@@ -64,3 +64,16 @@ def test_dominant_attributes_never_include_record_type():
 
     assert len(communities) == 1
     assert "record" not in communities[0]["dominantAttributes"]
+
+
+def test_node_ids_include_both_records_and_attributes():
+    nodes = [
+        *[_record(f"r{i}") for i in range(3)],
+        _attribute("origin:eth", "origin", "Ethiopia"),
+    ]
+    edges = [{"source": f"record:r{i}", "target": "origin:eth"} for i in range(3)]
+
+    communities = detect_communities(nodes, edges)
+
+    assert len(communities) == 1
+    assert set(communities[0]["nodeIds"]) == {"record:r0", "record:r1", "record:r2", "origin:eth"}

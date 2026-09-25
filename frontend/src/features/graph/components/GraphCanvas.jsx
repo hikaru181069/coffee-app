@@ -262,7 +262,7 @@ function drawNode(ctx, node, viewScale, { selectedNodeId, focusId, adjacency, in
   ctx.restore();
 }
 
-function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, interactive = true }) {
+function GraphCanvas({ graph, selectedNodeId, onSelectNode, onHoverNode, focusRequest, interactive = true }) {
   const { t } = useTranslation();
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
@@ -307,6 +307,14 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
   useEffect(() => {
     onSelectNodeRef.current = onSelectNode;
   }, [onSelectNode]);
+  // 2026-09、Graph Communities（ホバー中のノードが属するグループを
+  // GraphCommunities.jsxへプレビュー表示する機能）のために追加。
+  // hoveredIdRefと同様、呼び出しはpointermoveハンドラの中で行うため
+  // refで最新値を持つ。
+  const onHoverNodeRef = useRef(onHoverNode);
+  useEffect(() => {
+    onHoverNodeRef.current = onHoverNode;
+  }, [onHoverNode]);
   const interactiveRef = useRef(interactive);
   useEffect(() => {
     interactiveRef.current = interactive;
@@ -733,8 +741,22 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
       } else {
         const world = screenToWorld(sx, sy);
         const hit = findNodeAtGraphPoint(nodesRef.current, world.x, world.y, selectedNodeIdRef.current);
-        hoveredIdRef.current = hit?.id ?? null;
+        const nextHoveredId = hit?.id ?? null;
+        // pointermoveは同じノード上でも高頻度に発火するため、値が実際に
+        // 変わったときだけ呼び出し元（GraphPage）へ通知する
+        // （毎フレームの再レンダーを避けるため）。
+        if (nextHoveredId !== hoveredIdRef.current) {
+          hoveredIdRef.current = nextHoveredId;
+          onHoverNodeRef.current?.(nextHoveredId);
+        }
         setCursor();
+      }
+    };
+
+    const handlePointerLeave = () => {
+      if (hoveredIdRef.current !== null) {
+        hoveredIdRef.current = null;
+        onHoverNodeRef.current?.(null);
       }
     };
 
@@ -785,12 +807,14 @@ function GraphCanvas({ graph, selectedNodeId, onSelectNode, focusRequest, intera
     canvas.addEventListener("pointermove", handlePointerMove);
     canvas.addEventListener("pointerup", endInteraction);
     canvas.addEventListener("pointercancel", endInteraction);
+    canvas.addEventListener("pointerleave", handlePointerLeave);
     canvas.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
       canvas.removeEventListener("pointerdown", handlePointerDown);
       canvas.removeEventListener("pointermove", handlePointerMove);
       canvas.removeEventListener("pointerup", endInteraction);
       canvas.removeEventListener("pointercancel", endInteraction);
+      canvas.removeEventListener("pointerleave", handlePointerLeave);
       canvas.removeEventListener("wheel", handleWheel);
     };
   }, []);

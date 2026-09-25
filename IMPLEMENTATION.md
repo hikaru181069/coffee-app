@@ -4820,6 +4820,36 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-25（追記）: Graph Communitiesの表示をノード単位のインタラクションへ作り直し
+
+**実装対象**: 上記のGraph Communities機能について、「Detected groups」欄が検出された全グループを常時一覧表示していたUXを、「ノード単位でホバー/クリックしたときにそのノードが属するグループを表示する」形へ作り直した。
+
+**なぜ今実装するのか**: ユーザーから実装確認後「Detected groupsの表示基準が曖昧、ノードごとに関連するものを表示するのが良い」という指摘。相談の結果、(1)クリック時にNodeDetailPanelへ「属するグループ」欄を追加、(2)キャンバス上でホバー中のノードが属するグループをDetected groups欄にプレビュー表示、の2案を組み合わせる方針で合意した。クリックはモバイルのbottom sheetでも機能するため主経路、ホバーはPCでの補助的なプレビューという役割分担にした（docs/design.md「モバイルではグラフ詳細をbottom sheetにする」というルールに、ホバーだけの実装だと反してしまうため）。
+
+**変更内容**:
+
+- **fastAPI**: `Community`スキーマに`nodeIds`（このグループに属する全ノードID）を追加。フロントエンドが「あるノードがどのグループに属するか」を引くための情報（`schemas/graph.py`・`core/communityDetection.py`・`routers/graph.py`）
+- **フロントエンド新規**: `utils/communityLookup.js`（`findCommunityForNode`、GraphCommunities.jsxとNodeDetailPanel.jsxの両方から使う共通の探索ロジック）
+- **`GraphCanvas.jsx`**: `onHoverNode`propを追加。既存の`hoveredIdRef`（描画用、隣接ノードのラベル表示に使用済み）と同じ値を、変化したときだけ親へ通知する（`pointermove`が高頻度に発火するため、値が変わったときだけ呼ぶことで無駄な再レンダリングを避けた）。`pointerleave`ハンドラも新設し、キャンバスからカーソルが外れたら通知をクリアする（これまでhoveredIdRefはキャンバスを離れても最後の値のまま残る挙動だったため、ホバー駆動の新UIのために対応した）
+- **`GraphPage.jsx`**: `useGraphCommunities`をここへ引き上げ（NodeDetailPanel・GraphCommunitiesの両方が同じデータを参照するため、二重取得を避けた）。ホバー中のノードIDを`hoveredNodeId`stateとして保持
+- **`GraphCommunities.jsx`**: 自前でデータ取得していたのをやめ、`communities`・`hoveredNodeId`を受け取るだけの表示専用コンポーネントへ変更。ホバー中のノードが属するグループが無ければ何も表示しない
+- **`NodeDetailPanel.jsx`**: `communities`propを追加。選択中ノードが属するグループがあれば「属するグループ」欄（`NodeGroupMembership`）を表示する。選択中ノード自身のラベルはチップとして重複表示しない
+
+**データの流れ**: FastAPIのレスポンスにノードIDの集合が加わっただけで、Express側の計算・グレースフルデグレードの設計は変更していない。フロントエンドは1回取得した`communities`を、ホバー（GraphCommunities）とクリック（NodeDetailPanel）の両方でクライアント側の配列探索（`findCommunityForNode`）だけで使い回す（追加のAPI呼び出しは発生しない）。
+
+**変更ファイル**: `fastapi-service/schemas/graph.py`・`fastapi-service/core/communityDetection.py`・`fastapi-service/routers/graph.py`・`fastapi-service/tests/test_community_detection.py`・`fastapi-service/tests/test_graph_router.py`・`backend/tests/graphCommunities.test.js`（モックの実データ整合性のみ、Express側のロジック自体は無変更）・`frontend/src/features/graph/components/GraphCanvas.jsx`・`frontend/src/features/graph/components/GraphCommunities.jsx`（全面書き換え）・`frontend/src/features/graph/components/GraphCommunities.test.jsx`（全面書き換え）・`frontend/src/features/graph/components/NodeDetailPanel.jsx`・`frontend/src/features/graph/components/NodeDetailPanel.test.jsx`・`frontend/src/pages/GraphPage.jsx`・`frontend/src/i18n/locales/{ja,en}.json`（`nodeGroupHeading`追加）・新規`frontend/src/features/graph/utils/communityLookup.js`・`communityLookup.test.js`・`docs/features.md`「Graph Communities」の「表示」節を書き直し
+
+**実行したテストと結果**:
+- `fastapi-service`: `pytest` 8件全て成功（`nodeIds`の新規テスト1件追加）
+- `frontend`: `npm run lint`・`npm run test`（365件全て成功）・`npm run build` いずれも成功
+- `backend`: `npm run test` 578件全て成功（この変更ではExpress側のロジックは変えていないため無変化）
+- Docker（開発用スタック、fastapiを`nodeIds`追加込みで再ビルド）で`POST http://localhost:8001/graph/communities`のレスポンスに`nodeIds`が含まれることを確認
+- claude-in-chromeで実際にGraph画面を操作: 「Brazil」ノードにホバー → Detected groups欄に「6 records ● Colombia ● Guatemala ...」が表示されることを確認。同じノードをクリック → NodeDetailPanelに「Part of group」欄が表示され、選択中の「Brazil」自身はチップに重複しないことを確認。ホバーを外す・パネルを閉じるとどちらも何も表示されない（静かな道具の方針通り）ことを確認
+
+**未解決事項**: なし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証

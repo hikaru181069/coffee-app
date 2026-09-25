@@ -20,7 +20,12 @@ def detect_graph_communities(request: CommunityDetectionRequest) -> CommunityDet
     raw_communities = detect_communities(nodes, edges)
 
     communities = [
-        Community(id=index, recordCount=community["recordCount"], dominantAttributes=community["dominantAttributes"])
+        Community(
+            id=index,
+            recordCount=community["recordCount"],
+            dominantAttributes=community["dominantAttributes"],
+            nodeIds=community["nodeIds"],
+        )
         for index, community in enumerate(raw_communities)
     ]
 

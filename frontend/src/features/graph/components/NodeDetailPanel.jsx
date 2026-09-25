@@ -5,6 +5,7 @@ import { Trans, useTranslation } from "react-i18next";
 
 import { getNodeVisual } from "../utils/nodeVisuals";
 import { getNodeSolidBgClass } from "../utils/nodeColor";
+import { findCommunityForNode } from "../utils/communityLookup";
 import CoffeeLoader from "../../../components/CoffeeLoader";
 import { secondaryButtonClass } from "../../coffee-records/components/formStyles";
 import { formatConsumedAtShort } from "../../coffee-records/utils/recordFormat";
@@ -23,8 +24,14 @@ import { useFocusTrap } from "../../../hooks/useFocusTrap";
  * ノードの種類で表示内容を分ける（docs/knowledge-graph.md の Interaction）:
  *   record ノード … 記録日・rating・notesの短い抜粋・詳細画面へのリンク
  *   属性ノード     … type・label・recordCount・関連記録一覧
+ *
+ * 2026-09、選んだノードが属するコミュニティ（Graph Communities、
+ * docs/features.md参照）があれば、種類を問わず共通で「属するグループ」
+ * 欄を追加で出す。ホバー時のGraphCommunities.jsxと同じ情報だが、
+ * クリックは（bottom sheetとして）モバイルでも使えるため、こちらが
+ * この機能の主経路になる。
  */
-function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
+function NodeDetailPanel({ node, detail, isLoading, error, communities, onClose }) {
   const { t, i18n } = useTranslation();
   const panelRef = useRef(null);
 
@@ -34,6 +41,8 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
   useFocusTrap(panelRef, Boolean(node), onClose);
 
   if (!node) return null;
+
+  const community = findCommunityForNode(communities ?? [], node.id);
 
   const visual = getNodeVisual(node.data.type);
   const Icon = visual.icon;
@@ -76,6 +85,8 @@ function NodeDetailPanel({ node, detail, isLoading, error, onClose }) {
       </div>
 
       <div className="mt-4">
+        {community && <NodeGroupMembership community={community} currentNode={node.data} t={t} />}
+
         {isLoading && <CoffeeLoader size="lg" />}
 
         {error && <p className="text-sm text-danger">{getErrorMessage(error, t)}</p>}
@@ -163,6 +174,41 @@ function AttributeNodeDetail({ nodeId, recordCount, relatedRecords, language, t 
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/**
+ * 選択中ノードが属するコミュニティ（Graph Communities）の要約。
+ * GraphCommunities.jsxと同じ見た目・情報だが、今見ているノード自身の
+ * ラベルは重複表示しない（「Ethiopiaを選んだらEthiopiaと出る」を避ける）。
+ */
+function NodeGroupMembership({ community, currentNode, t }) {
+  const chips = Object.entries(community.dominantAttributes).flatMap(([type, labels]) =>
+    labels
+      .filter((label) => !(type === currentNode.type && label === currentNode.label))
+      .map((label) => ({ type, label })),
+  );
+
+  return (
+    <div className="mb-3 rounded-none border border-line bg-surface-1 px-3 py-2">
+      <p className="text-xs font-medium text-text-tertiary">{t("graph.nodeGroupHeading")}</p>
+      <p className="mt-1 font-mono text-xs text-text-tertiary">
+        {t("graph.communitiesRecordCount", { count: community.recordCount })}
+      </p>
+      {chips.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {chips.map(({ type, label }) => (
+            <span key={`${type}:${label}`} className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
+              <span
+                className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${getNodeSolidBgClass({ type, label })}`}
+                aria-hidden="true"
+              />
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

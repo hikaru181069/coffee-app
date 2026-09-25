@@ -106,4 +106,35 @@ describe("NodeDetailPanel", () => {
 
     expect(onClose).toHaveBeenCalled();
   });
+
+  test("選択中のノードが属するグループがあれば「属するグループ」欄を表示する", () => {
+    renderPanel({
+      node: ATTRIBUTE_NODE,
+      detail: { kind: "attribute", relatedRecords: [] },
+      communities: [
+        {
+          id: 0,
+          recordCount: 6,
+          dominantAttributes: { origin: ["Ethiopia"], process: ["Washed"] },
+          nodeIds: ["origin:1", "process:washed"],
+        },
+      ],
+    });
+
+    expect(screen.getByText("属するグループ")).toBeInTheDocument();
+    expect(screen.getByText("6件")).toBeInTheDocument();
+    // 選択中のノード自身（Ethiopia）はチップとして重複表示しない
+    expect(screen.getAllByText("Ethiopia")).toHaveLength(1);
+    expect(screen.getByText("Washed")).toBeInTheDocument();
+  });
+
+  test("どのグループにも属さなければ「属するグループ」欄を表示しない", () => {
+    renderPanel({
+      node: ATTRIBUTE_NODE,
+      detail: { kind: "attribute", relatedRecords: [] },
+      communities: [{ id: 0, recordCount: 6, dominantAttributes: {}, nodeIds: ["origin:999"] }],
+    });
+
+    expect(screen.queryByText("属するグループ")).not.toBeInTheDocument();
+  });
 });

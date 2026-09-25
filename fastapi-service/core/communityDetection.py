@@ -36,7 +36,7 @@ def detect_communities(nodes: list[dict], edges: list[dict]) -> list[dict]:
     nodes: [{"id": str, "type": str, "label": str}, ...]
     edges: [{"source": str, "target": str}, ...]
 
-    戻り値: [{"recordCount": int, "dominantAttributes": {type: [label, ...]}}, ...]
+    戻り値: [{"recordCount": int, "dominantAttributes": {type: [label, ...]}, "nodeIds": [str, ...]}, ...]
     （record数が多い順。idは呼び出し側で付与する）
     """
     graph = nx.Graph()
@@ -72,7 +72,15 @@ def detect_communities(nodes: list[dict], edges: list[dict]) -> list[dict]:
             for node_type, labels in labels_by_type.items()
         }
 
-        results.append({"recordCount": record_count, "dominantAttributes": dominant_attributes})
+        results.append(
+            {
+                "recordCount": record_count,
+                "dominantAttributes": dominant_attributes,
+                # フロントエンドがノード単位の所属判定に使う（ソートは
+                # 出力の安定性のためだけで、意味は持たない）。
+                "nodeIds": sorted(member_ids),
+            }
+        )
 
     results.sort(key=lambda community: community["recordCount"], reverse=True)
     return results[:MAX_COMMUNITIES]

@@ -1,51 +1,51 @@
 /**
  * GraphCommunities.jsxのテスト。
  *
- * SimilarRecords.test.jsxと同じ方針: 「読み込み中・0件のときは何も
- * 表示しない」という“静かな道具”の方針を中心に見る。データ取得自体は
- * useGraphCommunitiesの責務のためモックする。
+ * 2026-09、「ホバー中のノードが属するグループだけを表示する」設計に
+ * 作り直した（該当エントリ参照）。純粋にprops（communities/hoveredNodeId）
+ * だけで決まる表示のため、hookのモックは不要。
  */
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-vi.mock("../hooks/useGraphCommunities", () => ({
-  useGraphCommunities: vi.fn(),
-}));
-
-import { useGraphCommunities } from "../hooks/useGraphCommunities";
 import GraphCommunities from "./GraphCommunities";
 
+const communities = [
+  {
+    id: 0,
+    recordCount: 6,
+    dominantAttributes: { origin: ["Ethiopia"], process: ["Washed"] },
+    nodeIds: ["record:1", "origin:eth", "process:washed"],
+  },
+];
+
 describe("GraphCommunities", () => {
-  test("読み込み中は何も表示しない", () => {
-    useGraphCommunities.mockReturnValue({ communities: [], isLoading: true });
-    const { container } = render(<GraphCommunities />);
+  test("何もホバーしていなければ何も表示しない", () => {
+    const { container } = render(<GraphCommunities communities={communities} hoveredNodeId={null} />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
-  test("グループが0件なら何も表示しない", () => {
-    useGraphCommunities.mockReturnValue({ communities: [], isLoading: false });
-    const { container } = render(<GraphCommunities />);
+  test("ホバー中のノードがどのグループにも属さなければ何も表示しない", () => {
+    const { container } = render(
+      <GraphCommunities communities={communities} hoveredNodeId="origin:unrelated" />,
+    );
 
     expect(container).toBeEmptyDOMElement();
   });
 
-  test("グループがあれば見出し・記録件数・代表属性を表示する", () => {
-    useGraphCommunities.mockReturnValue({
-      communities: [
-        {
-          id: 0,
-          recordCount: 6,
-          dominantAttributes: { origin: ["Ethiopia"], process: ["Washed"] },
-        },
-      ],
-      isLoading: false,
-    });
-    render(<GraphCommunities />);
+  test("ホバー中のノードが属するグループの記録件数・代表属性を表示する", () => {
+    render(<GraphCommunities communities={communities} hoveredNodeId="origin:eth" />);
 
     expect(screen.getByText("検出されたグループ")).toBeInTheDocument();
     expect(screen.getByText("6件")).toBeInTheDocument();
     expect(screen.getByText("Ethiopia")).toBeInTheDocument();
     expect(screen.getByText("Washed")).toBeInTheDocument();
+  });
+
+  test("グループ内の別のノードをホバーしても同じグループが表示される", () => {
+    render(<GraphCommunities communities={communities} hoveredNodeId="process:washed" />);
+
+    expect(screen.getByText("6件")).toBeInTheDocument();
   });
 });

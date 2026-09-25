@@ -246,6 +246,7 @@
     "communitiesHeading": "Detected groups",
     "communitiesRecordCount_one": "{{count}} record",
     "communitiesRecordCount_other": "{{count}} records",
+    "nodeGroupHeading": "Part of group",
     "nodeTypes": {
       "record": "Record",
       "origin": "Origin",

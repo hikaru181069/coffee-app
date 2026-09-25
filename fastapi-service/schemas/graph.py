@@ -33,6 +33,11 @@ class Community(BaseModel):
     # 種別ごとの代表ラベル（record型は含めない）。
     # 例: { "origin": ["Ethiopia"], "process": ["Washed"] }
     dominantAttributes: dict[str, list[str]]
+    # 2026-09、グラフ画面でのノード単位のホバー/クリック表示のために追加。
+    # このグループに属する全ノードのID（record・属性のどちらも含む）。
+    # フロントエンドは「ホバー/選択中のノードIDがここに含まれるか」で
+    # 所属グループを引く（docs/features.md「Graph Communities」参照）。
+    nodeIds: list[str]
 
 
 class CommunityDetectionResponse(BaseModel):

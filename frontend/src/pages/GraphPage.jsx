@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import "../features/coffee-records/coffee-records.css";
 import { useGraph } from "../features/graph/hooks/useGraph";
 import { useNodeDetail } from "../features/graph/hooks/useNodeDetail";
+import { useGraphCommunities } from "../features/graph/hooks/useGraphCommunities";
 import GraphCanvas from "../features/graph/components/GraphCanvas";
 import GraphFilters from "../features/graph/components/GraphFilters";
 import GraphLegend from "../features/graph/components/GraphLegend";
@@ -41,6 +42,10 @@ function GraphPage() {
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [selectedNode, setSelectedNode] = useState(null);
+  // ホバー中のノードID。GraphCanvasのpointermoveから伝わる
+  // （GraphCommunities.jsxのプレビュー表示に使う。docs/features.md
+  // 「Graph Communities」参照）。
+  const [hoveredNodeId, setHoveredNodeId] = useState(null);
   // GraphNodeSearchで選んだ時だけカメラを明示的に動かすための合図。
   // 新しいオブジェクト参照を渡すたびGraphCanvas側のuseEffectが発火する
   // （同じノードを続けて選んでも毎回反応させたいため、nodeIdの値ではなく
@@ -52,6 +57,11 @@ function GraphPage() {
     selectedNode,
     filters,
   );
+  // NodeDetailPanel（クリック）とGraphCommunities（ホバー）の両方が
+  // 同じ「自分の記録全体についてのグループ」を参照するため、ここで1回
+  // だけ取得して両方へpropsで渡す（フィルター状態には依存しない、
+  // useGraphCommunities.js参照）。
+  const { communities } = useGraphCommunities();
 
   const hasActiveFilters = useMemo(
     () =>
@@ -120,6 +130,7 @@ function GraphPage() {
           graph={graph}
           selectedNodeId={selectedNode?.id}
           onSelectNode={setSelectedNode}
+          onHoverNode={setHoveredNodeId}
           focusRequest={focusRequest}
         />
         <NodeDetailPanel
@@ -127,6 +138,7 @@ function GraphPage() {
           detail={detail}
           isLoading={isDetailLoading}
           error={detailError}
+          communities={communities}
           onClose={() => setSelectedNode(null)}
         />
       </div>
@@ -148,7 +160,7 @@ function GraphPage() {
 
       <GraphFilters filters={filters} onChange={setFilters} />
       <GraphLegend />
-      <GraphCommunities />
+      <GraphCommunities communities={communities} hoveredNodeId={hoveredNodeId} />
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-none border border-surface-2">
         {renderBody()}

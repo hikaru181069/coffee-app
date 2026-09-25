@@ -68,7 +68,14 @@ describe("GET /api/graph/communities", () => {
     await createRecordFor(alice.user._id, { components: [{ originId: origin._id }] });
 
     const fakeResult = {
-      communities: [{ id: 0, recordCount: 3, dominantAttributes: { origin: ["Ethiopia"] } }],
+      communities: [
+        {
+          id: 0,
+          recordCount: 3,
+          dominantAttributes: { origin: ["Ethiopia"] },
+          nodeIds: ["record:1", "record:2", "record:3", "origin:507f"],
+        },
+      ],
     };
     detectGraphCommunities.mockResolvedValue(fakeResult);
 

@@ -240,6 +240,7 @@
     "appearsInCount": "<mono>{{count}}</mono> 件の記録で登場",
     "communitiesHeading": "検出されたグループ",
     "communitiesRecordCount": "{{count}}件",
+    "nodeGroupHeading": "属するグループ",
     "nodeTypes": {
       "record": "記録",
       "origin": "産地",
