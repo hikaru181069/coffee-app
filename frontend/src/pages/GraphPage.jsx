@@ -133,6 +133,20 @@ function GraphPage() {
           onHoverNode={setHoveredNodeId}
           focusRequest={focusRequest}
         />
+        {/*
+          2026-09、GraphLegendの下に並べる形（通常のドキュメントフロー）
+          で実装していたが、出現・消失のたびにその高さぶんキャンバスが
+          上下に押しやられ、ホバー中のノードがカーソルの真下からずれて
+          「ホバーが外れる→非表示→キャンバスが元の位置に戻る→カーソルが
+          再びノード上に→再表示→…」という無限の点滅ループを引き起こして
+          いた（ユーザー報告により発覚）。NodeDetailPanelと同じく、
+          キャンバスの上に絶対配置のオーバーレイにすることで、
+          表示/非表示がキャンバス自体のレイアウトに一切影響しないように
+          修正した。
+        */}
+        <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-[calc(100%-1.5rem)]">
+          <GraphCommunities communities={communities} hoveredNodeId={hoveredNodeId} />
+        </div>
         <NodeDetailPanel
           node={selectedNode}
           detail={detail}
@@ -160,7 +174,6 @@ function GraphPage() {
 
       <GraphFilters filters={filters} onChange={setFilters} />
       <GraphLegend />
-      <GraphCommunities communities={communities} hoveredNodeId={hoveredNodeId} />
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-none border border-surface-2">
         {renderBody()}
