@@ -4747,6 +4747,40 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-25: nginxをリバースプロキシへ格上げ（backendのポート非公開化）
+
+**実装対象**: `frontend/nginx.conf`に`/api/`をbackendコンテナへ転送するリバースプロキシ設定を追加し、`docker-compose.prod.yml`のbackendからホストポート公開（`5001:5001`）を外した。ブラウザから見るとfrontend・backendが同じオリジン（`http://localhost:8080`）に見えるようになった。
+
+**なぜ今実装するのか**: ユーザーから「nginxを本格的にこのアプリのwebサーバーとして使いたい。何をすれば良い？」という相談。「静的配信のまま堅牢化する」か「リバースプロキシへ格上げする」の2択を提示し、後者を選択（AWS移行後、ALB/ECSでも同じ構成をそのまま踏襲できるため）。
+
+**変更内容**:
+
+- `frontend/nginx.conf`: `upstream backend { server backend:5001; }`と`location /api/ { proxy_pass http://backend; ... }`を追加。フロントのJS（`services/api/httpClient.js`）は元々`${API_URL}${path}`（`path`は常に`/api/...`）という形でURLを組み立てていたため、`VITE_API_URL`をビルド時に空文字にするだけでJS側の相対パス化が完結し、コード変更は不要だった
+- `docker-compose.prod.yml`: backendの`ports: - "5001:5001"`を削除（コンテナ間通信のみで足りるため）。frontendのbuild argを`VITE_API_URL: http://localhost:5001` → `VITE_API_URL: ""`へ変更
+
+**見つけた不具合1: `apiConfig.js`の`||`が空文字を「未設定」として扱っていた**
+
+`frontend/src/utils/apiConfig.js`は`import.meta.env.VITE_API_URL || "http://localhost:5001"`という書き方だった。JavaScriptでは空文字`""`は偽値のため、意図的に空文字を渡しても`||`の右側（ハードコードされた`http://localhost:5001`という既定値）にフォールバックしてしまい、リバースプロキシ化の意味が失われていた（実機で`docker exec`してビルド済みJSを`grep`し、`localhost:5001`という文字列が焼き込まれたままなことで発覚）。「未設定（`undefined`）のときだけ既定値を使う」`??`（Nullish coalescing）へ修正した。
+
+**見つけた不具合2: `nginx.conf`が`index.html`にCache-Controlを指定していなかった**
+
+不具合1を修正してビルドし直した後も、**ブラウザで実際に動作確認すると**Statsページなど一部の画面だけが「サーバーに接続できません」というエラーのまま直らなかった。`window.fetch`を一時的にラップしてスタックトレースを取ったところ、ブラウザが実際に実行していたのは**もう存在しないはずの古いビルドのJS**（ハッシュ付きファイル名が、直前に削除された古いビルドのものと一致）だった。原因は、`nginx.conf`が`index.html`（SPAのフォールバック先）に対して`Cache-Control`を何も指定していなかったこと。ブラウザがこれをヒューリスティックにキャッシュし、新しいビルド（＝新しいハッシュ名のJS/CSSを参照する新しい`index.html`）をデプロイしても、古い`index.html`（＝古いハッシュ名を参照）を使い続けてしまっていた。`location /`ブロックに`add_header Cache-Control "no-cache";`を追加し、`index.html`は常にサーバーへ再検証させるよう修正した（ハッシュ付きファイル名を持つ`/assets/`配下は、既存の7日間キャッシュのままでよい）。この不具合は今回のリバースプロキシ化そのものとは無関係で、**最初のDocker本番化（2026-09-23）の時点から潜在していた**（そちらは`docker exec`でのファイル確認止まりで、ブラウザでの実機確認をしていなかったため見逃していた）。今後デプロイのたびに同じ問題が再発しうる箇所だったため、見つけ次第すぐに直した。
+
+**変更ファイル**: `frontend/nginx.conf`、`frontend/src/utils/apiConfig.js`、`docker-compose.prod.yml`、`README.md`
+
+**データフロー**: ブラウザ → `http://localhost:8080/api/...`（nginx） → `proxy_pass`で`http://backend:5001/api/...`（コンテナ間通信） → Express。以前はブラウザから`http://localhost:5001`へ直接（CORSあり）だったが、ブラウザからは常にnginx経由（同一オリジン、CORS不要）になった。
+
+**実行したテストと結果**:
+
+- `curl -X POST http://localhost:8080/api/auth/login ...` でトークン取得成功、`curl http://localhost:5001/` が接続拒否になること（backendがホストへ非公開になったことの確認）を確認
+- claude-in-chromeで実際にブラウザ操作: ログイン → Home（記録一覧・知識グラフプレビュー・Discoverカードが実データで表示） → Statsページ（初回は上記の不具合2により失敗、修正後は正常に表示）を確認。`window.fetch`のラップと`document.querySelectorAll('script[src]')`で、実際に読み込まれているJSのハッシュが最新ビルドと一致することを確認
+- `docker exec`でコンテナ内の全JSファイルを`grep`し、`localhost:5001`という文字列が1つも残っていないことを確認
+- 開発用（`docker-compose.yml`）を巻き込まないことは、2026-09-24の修正（`name: coffee-app-prod`）が引き続き効いていることをコンテナ一覧で確認
+
+**未解決事項**: なし（このリバースプロキシ化自体は完了）。AWSアカウント作成・実デプロイは引き続き未着手（2026-09-23のエントリと同じ）。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -4786,7 +4820,7 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 - 2026-08-30、コーヒー診断の強化で新規追加した13タイプ分の日本語・英語コピー（タイトル・説明文）は、既存5タイプと同じトーンで新規に書き下ろしたものであり、実データでの見え方の検証は行っていない
 - 2026-08-30、診断の判定軸（焙煎度×フレーバーcategory）には`rating`（総合評価）を使っていない。ユーザーへの確認では選択肢に含めたが選ばれなかった（将来「高評価のタイプ」等のバッジを追加する場合の候補として残る）
 - 2026-09-20、RecordDetail/EntityDetailのダッシュボード化（該当エントリ参照）で踏んだ「同じ列内でflex-basis:0%の兄弟とauto（自然な高さ）の兄弟を混在させると、コンテナが不足したときauto側が空間を奪い0%側が潰れる」というflexboxの罠は、今後同種のレイアウトを他画面に広げる際に再発しうる一般的な注意点として残る
-- 2026-09-23、Docker本番化（該当エントリ参照）はAWSリリースの第一段階のみで、AWSアカウント作成・実デプロイ（ECS/ECR/Secrets Manager等）はまだ着手していない。`docker-compose.prod.yml`のMongoDBを本番でもセルフホストするかAtlasを使い続けるかも未検討
+- 2026-09-23〜25、Docker本番化・nginxのリバースプロキシ化（該当エントリ参照）はAWSリリースの第一段階のみで、AWSアカウント作成・実デプロイ（ECS/ECR/Secrets Manager等）はまだ着手していない。`docker-compose.prod.yml`のMongoDBを本番でもセルフホストするかAtlasを使い続けるかも未検討
 
 ## 次に実装すべき最小単位
 

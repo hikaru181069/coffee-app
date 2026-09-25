@@ -247,9 +247,8 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend npm 
 docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend npm run seed:demo
 ```
 
-- Frontend: http://localhost:8080
-- Backend: http://localhost:5001（`GET /` がヘルスチェック用）
-- MongoDB / FastAPIはコンテナ間通信のみで、ホストへは公開しません
+- Frontend: http://localhost:8080（ブラウザから見えるのはこの1つだけ）
+- backend・fastapi・MongoDBはコンテナ間通信のみで、ホストへは公開しません。nginx（frontend）が`/api/`宛のリクエストをbackendへリバースプロキシするため、ブラウザからbackendへ直接アクセスする必要が無くなりました
 
 停止は `docker compose -f docker-compose.prod.yml --env-file .env.prod down`（`-v` を付けるとDBのデータも削除）。
 

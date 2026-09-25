@@ -14,6 +14,11 @@
 # 公開しない（本番でDBを外部公開しないのと同じ考え方をローカル再現でも
 # 踏襲する）。
 #
+# 2026-09、frontend（nginx）を「静的ファイル配信専用」から「/api/を
+# backendへ転送するリバースプロキシ」へ格上げした（frontend/nginx.confの
+# コメント参照）。ブラウザはfrontendの1箇所だけを見ればよくなったため、
+# backendのポートもmongodb・fastapiと同じくホストへ公開しない。
+#
 # `name:` でCompose上のプロジェクト名を明示的に分けている。これを省略すると
 # 両ファイルとも「ディレクトリ名(coffee-app)」を既定のプロジェクト名として
 # 使ってしまい、開発用（docker-compose.yml）と同じプロジェクト扱いになる。
@@ -51,8 +56,8 @@ services:
       target: prod
     image: coffee-app-backend:prod
     container_name: coffee-app-backend-prod
-    ports:
-      - "5001:5001"
+    # ブラウザはfrontend（nginx）経由でしかbackendを呼ばなくなったため、
+    # ホストへポートを公開しない（コンテナ間通信のみ。上のコメント参照）。
     environment:
       PORT: 5001
       MONGO_URI: mongodb://mongodb:27017/coffeeApp
@@ -71,10 +76,13 @@ services:
       context: ./frontend
       target: prod
       args:
-        # ブラウザ（ホストPC側）から見えるURL。上のbackendがホストの
-        # 5001番へ公開されているため、コンテナ内部名(backend)ではなく
-        # localhostを指定する（frontend/Dockerfileのbuildステージのコメント参照）。
-        VITE_API_URL: http://localhost:5001
+        # 2026-09、nginxがリバースプロキシとして/api/をbackendへ転送する
+        # ようになったため、空文字にする。frontend/utils/apiConfig.jsの
+        # API_URLが空になり、fetchのURLが「今開いているページと同じ場所」
+        # 宛の相対パス（/api/...）になる。以前はbackendの公開ポートを
+        # 直接指定していたが、そのポート自体を公開しなくなったため不要に
+        # なった（frontend/nginx.confのコメント参照）。
+        VITE_API_URL: ""
     image: coffee-app-frontend:prod
     container_name: coffee-app-frontend-prod
     ports:
