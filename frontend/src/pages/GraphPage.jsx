@@ -62,6 +62,12 @@ function GraphPage() {
   // だけ取得して両方へpropsで渡す（フィルター状態には依存しない、
   // useGraphCommunities.js参照）。
   const { communities } = useGraphCommunities();
+  // ホバー中のノードの種別。record型ノードは「属するグループが無ければ
+  // 何も表示しない」ではなく「まだ大きなグループの一部になっていない」と
+  // 明示する（コーヒーの記録には必ずつながりを見せたい、という方針。
+  // docs/features.md「Graph Communities」参照）ため、GraphCommunities.jsx
+  // 側でこの判定に使う。
+  const hoveredNodeType = graph?.nodes.find((node) => node.id === hoveredNodeId)?.type ?? null;
 
   const hasActiveFilters = useMemo(
     () =>
@@ -145,7 +151,11 @@ function GraphPage() {
           修正した。
         */}
         <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-[calc(100%-1.5rem)]">
-          <GraphCommunities communities={communities} hoveredNodeId={hoveredNodeId} />
+          <GraphCommunities
+            communities={communities}
+            hoveredNodeId={hoveredNodeId}
+            hoveredNodeType={hoveredNodeType}
+          />
         </div>
         <NodeDetailPanel
           node={selectedNode}

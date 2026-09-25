@@ -241,6 +241,7 @@
     "communitiesHeading": "検出されたグループ",
     "communitiesRecordCount": "{{count}}件",
     "nodeGroupHeading": "属するグループ",
+    "notYetGroupedMessage": "まだ大きなグループの一部になっていません",
     "nodeTypes": {
       "record": "記録",
       "origin": "産地",

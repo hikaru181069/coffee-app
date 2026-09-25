@@ -4868,6 +4868,34 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-25（追記3）: コーヒーの記録には必ずつながりを見せる方針へ変更（上位5件キャップ撤廃・record型の「まだグループの一部になっていません」表示）
+
+**実装対象**: Graph Communities機能について、(1)fastAPI側の「上位5グループまで」という打ち切り（`MAX_COMMUNITIES`）を撤廃し、(2)record型ノード（コーヒーの記録そのもの）はホバー/クリックしたとき、属するグループが無くても「まだ大きなグループの一部になっていません」と明示するようにした。
+
+**なぜ今実装するのか**: ユーザーから「コーヒーの記録には必ずつながりを見せたいです。なぜならこのアプリのテーマだから」という提案。Record→Connect→Discoverが`docs/product.md`のVisionそのものであるという指摘は妥当だが、一方で「実際には属さないグループを見せる」ことは`docs/product.md`「Discovery Must Be Actionable」（根拠の無い気づきを出さない）と衝突する。相談の結果、次の折衷案で合意した: 3件以上という意味のある閾値はそのまま残しつつ、(1)恣意的な上位5件キャップは撤廃する、(2)record型ノードは属するグループが無くても「まだ大きなグループの一部になっていません」と正直に明示する（属さないことを隠さない・捏造しない）。
+
+**なぜrecord型限定か**: 属性ノード（産地・フレーバー等）まで対象を広げると、単に登場回数が少ないだけの属性すべてにこの表示が付いてノイズになる。また「つながり」自体（グラフのエッジ・記録詳細ページの「つながり」図・Similar Records）は、Graph Communitiesを使わずとも既にどの記録にも無条件で表示されている。Graph Communitiesが担うのは「自分の記録全体の中の、より大きな系統・パターン」という統計的なクラスタ検出であり、ここでの「必ず見せる」はrecord型ノード（＝コーヒーの記録そのもの）に絞ることで、テーマ性と統計的な誠実さを両立させた。
+
+**変更内容**:
+
+- **fastAPI**: `core/communityDetection.py`の`MAX_COMMUNITIES`定数と、それによる結果の打ち切り（`results[:MAX_COMMUNITIES]`）を削除。`MIN_RECORD_COUNT`（3件）による閾値判定はそのまま維持
+- **`GraphPage.jsx`**: ホバー中のノードの種別（`hoveredNodeType`）を`graph.nodes`から引いて`GraphCommunities`へ渡すよう追加
+- **`GraphCommunities.jsx`**: 該当グループが無い場合、`hoveredNodeType === "record"`なら「まだ大きなグループの一部になっていません」を表示。それ以外（属性ノード）の場合は従来通り何も表示しない
+- **`NodeDetailPanel.jsx`**: 同様に、選択中ノードが`record`型で属するグループが無い場合に同じメッセージを表示
+
+**変更ファイル**: `fastapi-service/core/communityDetection.py`・`fastapi-service/tests/test_community_detection.py`（6クラスタ全てが返ることを確認するテストを追加）・`frontend/src/pages/GraphPage.jsx`・`frontend/src/features/graph/components/GraphCommunities.jsx`・`frontend/src/features/graph/components/GraphCommunities.test.jsx`・`frontend/src/features/graph/components/NodeDetailPanel.jsx`・`frontend/src/features/graph/components/NodeDetailPanel.test.jsx`・`frontend/src/i18n/locales/{ja,en}.json`（`notYetGroupedMessage`追加）・`docs/features.md`
+
+**データフロー**: 変更なし（Expressの計算・グレースフルデグレード設計はそのまま）。fastAPIが返すグループの件数が増えうる（上限撤廃）点のみが変わる。
+
+**実行したテストと結果**:
+- `fastapi-service`: `pytest` 9件全て成功（6クラスタが全て返ることを確認する新規テスト1件を含む）
+- `frontend`: `npm run lint`・`npm run test`（368件全て成功）・`npm run build` いずれも成功
+- Docker（開発用スタック、fastapiを`MAX_COMMUNITIES`撤廃込みで再ビルド）で実データを使い、実際にどのグループにも属さない記録（例:「% Arabica - Panama Geisha」、産地・精製方法・フレーバーの組み合わせが他の記録と重ならない）を特定し、claude-in-chromeでその記録をホバー・クリックして「Not yet part of a larger group」（英語UI）が両方の経路で正しく表示されることを確認
+
+**未解決事項**: なし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証

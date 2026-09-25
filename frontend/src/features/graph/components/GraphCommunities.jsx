@@ -11,18 +11,39 @@ import { getNodeSolidBgClass } from "../utils/nodeColor";
  * 「表示する基準が曖昧」というユーザーからの指摘を受けて作り直した。
  * 「グラフ全体」という漠然とした単位ではなく「今ホバーしているノードに
  * 対して」という明確な基準にし、既存の「ホバーで隣接ノードのラベルを
- * 出す」挙動（GraphCanvas.jsx）と同じ操作感に揃えた。何もホバーして
- * いない・該当グループが無いときは何も表示しない（静かな道具の方針）。
+ * 出す」挙動（GraphCanvas.jsx）と同じ操作感に揃えた。属性ノードは、
+ * 該当グループが無ければ何も表示しない（静かな道具の方針）。
  *
- * クリックしたノードの詳細（NodeDetailPanel.jsx）には別途同じグループ
- * 情報を表示しており、そちらはモバイル（ホバー操作が無い環境）でも
- * 使える主経路になっている。ここはPCでの補助的なプレビュー。
+ * 2026-09（追記）: record型ノード（コーヒーの記録そのもの）だけは例外で、
+ * 属するグループが無くても「まだ大きなグループの一部になっていません」
+ * と明示する。「コーヒーの記録には必ずつながりを見せたい
+ * （Record→Connect→Discoverがこのアプリのテーマのため）」という方針
+ * だが、実際に属さないグループを捏造すると`docs/product.md`の
+ * 「Discovery Must Be Actionable」（根拠の無い気づきを出さない）と
+ * 矛盾するため、正直に「無い」ことを伝える形にした。属性ノード
+ * （産地・フレーバー等）まで対象を広げると、単に登場回数が少ないだけの
+ * 属性すべてにこの表示が付いてノイズになるため、record型限定にしている。
+ *
+ * クリックしたノードの詳細（NodeDetailPanel.jsx）には別途同じ情報を
+ * 表示しており、そちらはモバイル（ホバー操作が無い環境）でも使える
+ * 主経路になっている。ここはPCでの補助的なプレビュー。
  */
-function GraphCommunities({ communities, hoveredNodeId }) {
+function GraphCommunities({ communities, hoveredNodeId, hoveredNodeType }) {
   const { t } = useTranslation();
+
+  if (!hoveredNodeId) return null;
+
   const community = findCommunityForNode(communities, hoveredNodeId);
 
-  if (!community) return null;
+  if (!community) {
+    if (hoveredNodeType !== "record") return null;
+
+    return (
+      <div className="rounded-full border border-line bg-surface-1 px-2.5 py-1 text-[11px] text-text-tertiary">
+        {t("graph.notYetGroupedMessage")}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 rounded-full border border-line bg-surface-1 px-2.5 py-1 text-[11px] text-text-secondary">

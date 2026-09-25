@@ -26,12 +26,20 @@ describe("GraphCommunities", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  test("ホバー中のノードがどのグループにも属さなければ何も表示しない", () => {
+  test("属性ノードがどのグループにも属さなければ何も表示しない", () => {
     const { container } = render(
-      <GraphCommunities communities={communities} hoveredNodeId="origin:unrelated" />,
+      <GraphCommunities communities={communities} hoveredNodeId="origin:unrelated" hoveredNodeType="origin" />,
     );
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  test("record型ノードがどのグループにも属さなければ「まだ大きなグループの一部になっていません」と表示する", () => {
+    render(
+      <GraphCommunities communities={communities} hoveredNodeId="record:unrelated" hoveredNodeType="record" />,
+    );
+
+    expect(screen.getByText("まだ大きなグループの一部になっていません")).toBeInTheDocument();
   });
 
   test("ホバー中のノードが属するグループの記録件数・代表属性を表示する", () => {

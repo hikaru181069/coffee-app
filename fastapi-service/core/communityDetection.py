@@ -26,9 +26,11 @@ MIN_RECORD_COUNT = 3
 # 表示が煩雑にならないよう代表ラベルはこの件数までに絞る。
 MAX_LABELS_PER_TYPE = 3
 
-# 結果として返すグループ数の上限（記録数が多いユーザーほどグループ数が
-# 増えうるため、画面に出す分だけに絞る）。
-MAX_COMMUNITIES = 5
+# 2026-09、当初はグループ数の上限（MAX_COMMUNITIES=5）を設けていたが、
+# 「コーヒーの記録には必ずつながりを見せたい（Record→Connect→Discoverが
+# このアプリのテーマのため）」という方針のもと撤廃した。MIN_RECORD_COUNT
+# を満たす（＝偶然の一致ではないと言える）グループは、6番目以降でも
+# 恣意的に隠さず全て返す。
 
 
 def detect_communities(nodes: list[dict], edges: list[dict]) -> list[dict]:
@@ -83,4 +85,4 @@ def detect_communities(nodes: list[dict], edges: list[dict]) -> list[dict]:
         )
 
     results.sort(key=lambda community: community["recordCount"], reverse=True)
-    return results[:MAX_COMMUNITIES]
+    return results

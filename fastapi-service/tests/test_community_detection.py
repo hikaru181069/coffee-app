@@ -77,3 +77,23 @@ def test_node_ids_include_both_records_and_attributes():
 
     assert len(communities) == 1
     assert set(communities[0]["nodeIds"]) == {"record:r0", "record:r1", "record:r2", "origin:eth"}
+
+
+def test_more_than_five_communities_are_all_returned():
+    # 2026-09、「コーヒーの記録には必ずつながりを見せたい」という方針で
+    # 上位5件への打ち切り（MAX_COMMUNITIES）を撤廃した。6個以上の独立した
+    # クラスタがあっても、閾値（3件）を満たす限り全て返ることを確認する。
+    nodes = []
+    edges = []
+    for cluster in range(6):
+        origin_id = f"origin:c{cluster}"
+        nodes.append(_attribute(origin_id, "origin", f"Origin{cluster}"))
+        for i in range(3):
+            record_id = f"c{cluster}r{i}"
+            nodes.append(_record(record_id))
+            edges.append({"source": f"record:{record_id}", "target": origin_id})
+
+    communities = detect_communities(nodes, edges)
+
+    assert len(communities) == 6
+    assert all(c["recordCount"] == 3 for c in communities)

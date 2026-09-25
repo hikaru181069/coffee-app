@@ -247,6 +247,7 @@
     "communitiesRecordCount_one": "{{count}} record",
     "communitiesRecordCount_other": "{{count}} records",
     "nodeGroupHeading": "Part of group",
+    "notYetGroupedMessage": "Not yet part of a larger group",
     "nodeTypes": {
       "record": "Record",
       "origin": "Origin",

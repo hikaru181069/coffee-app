@@ -29,7 +29,9 @@ import { useFocusTrap } from "../../../hooks/useFocusTrap";
  * docs/features.md参照）があれば、種類を問わず共通で「属するグループ」
  * 欄を追加で出す。ホバー時のGraphCommunities.jsxと同じ情報だが、
  * クリックは（bottom sheetとして）モバイルでも使えるため、こちらが
- * この機能の主経路になる。
+ * この機能の主経路になる。record型ノードだけは、属するグループが無くても
+ * 「まだ大きなグループの一部になっていません」と明示する（GraphCommunities.jsx
+ * のコメント参照。コーヒーの記録には必ずつながりの有無を見せる方針）。
  */
 function NodeDetailPanel({ node, detail, isLoading, error, communities, onClose }) {
   const { t, i18n } = useTranslation();
@@ -86,6 +88,20 @@ function NodeDetailPanel({ node, detail, isLoading, error, communities, onClose 
 
       <div className="mt-4">
         {community && <NodeGroupMembership community={community} currentNode={node.data} t={t} />}
+        {/*
+          record型ノード（コーヒーの記録そのもの）だけは、属するグループが
+          無くても「まだ大きなグループの一部になっていません」と明示する
+          （GraphCommunities.jsxのコメント参照。Record→Connect→Discoverが
+          このアプリのテーマのため、コーヒーの記録には必ずつながりの有無を
+          見せる）。属性ノードは引き続き、該当グループが無ければ何も
+          出さない（登場回数が少ないだけの属性すべてに付くとノイズに
+          なるため）。
+        */}
+        {!community && node.data.type === "record" && (
+          <p className="mb-3 rounded-none border border-line bg-surface-1 px-3 py-2 text-xs text-text-tertiary">
+            {t("graph.notYetGroupedMessage")}
+          </p>
+        )}
 
         {isLoading && <CoffeeLoader size="lg" />}
 
