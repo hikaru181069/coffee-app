@@ -45,3 +45,16 @@ export const getNodeDetail = async (req, res) => {
 
   res.status(200).json({ data: detail });
 };
+
+/**
+ * GET /api/graph/communities
+ *
+ * FastAPI（NetworkX）に計算させた「記録のグループ分け」を返す
+ * （docs/features.md「Graph Communities」）。フィルターは持たない
+ * （getNodeDetailと同じく、自分の記録全体についての結果を返す機能のため）。
+ */
+export const getGraphCommunities = async (req, res) => {
+  const communities = await graphService.getGraphCommunities(req.user._id);
+
+  res.status(200).json({ data: communities });
+};

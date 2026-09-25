@@ -3,6 +3,7 @@ import * as masterDataRepository from "../../repositories/masterDataRepository.j
 import { serializeCoffeeRecords } from "./coffeeRecordSerializer.js";
 import { buildGraph, findRecordIdsConnectedToNode } from "../../core/graph/graphBuilder.js";
 import { buildEntityDetail } from "../../core/graph/entityDetailBuilder.js";
+import { detectGraphCommunities } from "../fastApiService.js";
 import { notFoundError } from "../../utils/AppError.js";
 import { excerptNotes } from "../../utils/textExcerpt.js";
 
@@ -127,4 +128,33 @@ export const getNodeDetail = async (userId, nodeId) => {
         notesExcerpt: excerptNotes(record.notes),
       })),
   };
+};
+
+/**
+ * 知識グラフのコミュニティ検出（NetworkXでのグループ分け、docs/features.md
+ * 「Graph Communities」参照）。
+ *
+ * FastAPIは「あれば嬉しい」補助計算のため、呼び出しに失敗しても例外を
+ * 投げず空配列を返す（Similar Records/Discover等と同じ「候補が無ければ
+ * 何も表示しない」という静かな道具の方針。グラフ本体の表示を道連れに
+ * しない）。ただし握りつぶさず、原因はログへ残す。
+ */
+export const getGraphCommunities = async (userId) => {
+  const [records, flavorsByNormalizedName] = await Promise.all([
+    coffeeRecordRepository.findAllForUser(userId),
+    loadFlavorsByNormalizedName(),
+  ]);
+  const serialized = serializeCoffeeRecords(records);
+  const graph = buildGraph(serialized, { flavorsByNormalizedName });
+
+  if (graph.summary.edgeCount === 0) return { communities: [] };
+
+  try {
+    const nodes = graph.nodes.map(({ id, type, label }) => ({ id, type, label }));
+    const edges = graph.edges.map(({ source, target }) => ({ source, target }));
+    return await detectGraphCommunities(nodes, edges);
+  } catch (error) {
+    console.error("Failed to fetch graph communities from FastAPI:", error.message);
+    return { communities: [] };
+  }
 };

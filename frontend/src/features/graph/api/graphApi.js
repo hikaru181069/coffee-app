@@ -57,3 +57,13 @@ export const fetchNodeDetail = async (nodeId, { signal } = {}) => {
   const payload = await apiRequest(`${GRAPH_PATH}/nodes/${encodeURIComponent(nodeId)}`, { signal });
   return payload.data;
 };
+
+/**
+ * 知識グラフのコミュニティ検出（記録のグループ分け）を取得する。
+ * フィルターは持たない（自分の記録全体についての結果のため、
+ * backend/services/coffee/graphService.jsのgetGraphCommunities参照）。
+ */
+export const fetchGraphCommunities = async ({ signal } = {}) => {
+  const payload = await apiRequest(`${GRAPH_PATH}/communities`, { signal });
+  return payload.data;
+};

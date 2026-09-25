@@ -8,6 +8,7 @@ import { useNodeDetail } from "../features/graph/hooks/useNodeDetail";
 import GraphCanvas from "../features/graph/components/GraphCanvas";
 import GraphFilters from "../features/graph/components/GraphFilters";
 import GraphLegend from "../features/graph/components/GraphLegend";
+import GraphCommunities from "../features/graph/components/GraphCommunities";
 import GraphNodeSearch from "../features/graph/components/GraphNodeSearch";
 import NodeDetailPanel from "../features/graph/components/NodeDetailPanel";
 import CoffeeLoader from "../components/CoffeeLoader";
@@ -147,6 +148,7 @@ function GraphPage() {
 
       <GraphFilters filters={filters} onChange={setFilters} />
       <GraphLegend />
+      <GraphCommunities />
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-none border border-surface-2">
         {renderBody()}

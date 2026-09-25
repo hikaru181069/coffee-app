@@ -22,7 +22,13 @@ react -> express -> MongoDB
 
 ### fastAPI
 
-今はヘルスチェックのみ。将来はDBに依存しない計算を担当する想定。
+DBに依存しない計算を担当する。MongoDBへの直接アクセスと認証は行わない
+（ブラウザから直接叩かれることも無い。常にExpressが呼び出す）。
+
+2026-09、知識グラフのコミュニティ検出（NetworkX、docs/features.md
+「Graph Communities」参照）が最初の実装として入った。それまではヘルス
+チェックのみで実装済みの機能が無い状態が続いていた
+（`docs/mlb-legacy-inventory.md`参照）。
 
 ### MongoDB
 
@@ -40,3 +46,27 @@ RecordForm（画面）
   → MongoDB（保存）
   → フロントエンドへ結果を返す
 ```
+
+## Request Flow: Graph Communities（fastAPIを経由する例）
+
+fastAPIを実際に呼び出す唯一の機能（2026-09時点）。fastAPIはDBに触れず、
+Expressが渡した計算済みのグラフ（nodes/edges）に対してNetworkXで
+コミュニティ検出をするだけ。フロントエンドはfastAPIの存在を意識しない
+（Expressの1つのエンドポイントを叩くだけ）。
+
+```text
+GraphPage（画面）
+  → GET /api/graph/communities（APIを呼ぶ）
+  → authenticate（ログイン確認）
+  → controller
+  → service（graphService.js: MongoDBからグラフを組み立てる。
+             docs/knowledge-graph.mdと同じ手順）
+  → POST http://fastapi:8000/graph/communities（services/fastApiService.js）
+  → fastAPI（NetworkXでコミュニティ検出、DBには触れない）
+  → Express（結果をそのまま集約）
+  → フロントエンドへ結果を返す
+```
+
+fastAPIが応答しない・タイムアウトした場合でも、Expressは例外を投げず
+空配列を返す（`graph本体`の表示は道連れにしない、docs/features.md
+「Graph Communities」参照）。

@@ -4781,6 +4781,45 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-25: Graph Communities機能を追加（fastAPIの最初の実装、NetworkXでのコミュニティ検出）
+
+**実装対象**: 知識グラフをNetworkXでグループ分けする「Graph Communities」機能（docs/features.md参照）。fastAPI（`docs/architecture.md`で「DBに依存しない計算」を担当する設計だったが、これまでヘルスチェックのみで実装済み機能が無かった）の最初の実装。
+
+**なぜ今実装するのか**: ユーザーから「知識グラフの処理をfastAPIへ移行する価値はあるか」という相談。既存の`graphBuilder.js`（DBに依存する処理で、search/entity-detail/similar-records等から共通関数として多用されている）自体の移行はコストに見合わないと回答した上で、「fastAPIを使いこなすにはどんな処理が良いか」を相談され、(1)NetworkXでのグラフ理論分析、(2)味覚ベクトルの類似度計算の2案を提示。ユーザーが(1)を選択し、その中でもコミュニティ検出（グラフを自動的にいくつかのグループへ分割する）を選んで実装した。
+
+**再利用したmlb-appのコード**: 無し（fastapi-serviceはMVP当初からヘルスチェックのみで、この機能が最初の実装）。
+
+**新規作成ファイル**:
+- `fastapi-service/schemas/graph.py`（Pydanticスキーマ）
+- `fastapi-service/core/communityDetection.py`（NetworkXの`greedy_modularity_communities`を使う純粋関数。記録数3件未満のグループは除外、代表属性は種別ごと最大3件・アルファベット順、結果は記録数の多い順に最大5件）
+- `fastapi-service/routers/graph.py`（`POST /graph/communities`）
+- `fastapi-service/tests/test_community_detection.py`（4テスト: エッジ無しで空、2クラスタの分離、閾値未満の除外、record型がdominantAttributesに含まれないこと）
+- `fastapi-service/tests/test_graph_router.py`（HTTPレベル2テスト）
+- `backend/services/fastApiService.js`（FastAPI呼び出しの薄いクライアント。5秒タイムアウト、失敗時は例外を投げるだけで握りつぶさない）
+- `backend/tests/graphCommunities.test.js`（HTTPレベル5テスト。fastApiServiceをvi.mockし、Express側の振る舞い＝「記録が無ければFastAPIを呼ばない」「FastAPIが失敗しても500にならず空配列を返す」「他ユーザーの記録を含めない」を確認）
+- `frontend/src/features/graph/hooks/useGraphCommunities.js`
+- `frontend/src/features/graph/components/GraphCommunities.jsx`（GraphLegendの直下に配置。候補が無ければ何も表示しない「静かな道具」方針）
+- `frontend/src/features/graph/components/GraphCommunities.test.jsx`（3テスト）
+
+**変更ファイル**: `fastapi-service/requirements.txt`（`networkx==3.7`追加）・`fastapi-service/main.py`（router登録）・`backend/services/coffee/graphService.js`（`getGraphCommunities`追加）・`backend/controllers/graphController.js`・`backend/routes/graphRoutes.js`（`GET /api/graph/communities`追加）・`frontend/src/features/graph/api/graphApi.js`・`frontend/src/pages/GraphPage.jsx`・`frontend/src/i18n/locales/{ja,en}.json`・`docs/features.md`（新規「Graph Communities」節）・`docs/architecture.md`（fastAPIの節を更新、Request Flowの例を追加）・`docs/mlb-legacy-inventory.md`（FastAPI未使用という記述が古くなったため注記を追加）
+
+**データフロー**: `docs/architecture.md`「Request Flow: Graph Communities」に詳細図を追加した。要約すると、GraphPage → `GET /api/graph/communities` → Express（`graphService.js`が`graphBuilder.js`でMongoDBからグラフを組み立てる、他機能と同じ）→ `POST http://fastapi:8000/graph/communities`（計算済みのnodes/edgesのみを渡す、生のMongoDBデータは渡さない）→ fastAPI（NetworkX、DBに一切触れない）→ Expressが結果をそのまま集約 → フロントエンド。
+
+**グレースフルデグレードの設計**: fastAPIは「あれば嬉しい」補助機能と位置付け、記録のCRUD・Graph画面本体には一切依存させていない。`graphService.js`の`getGraphCommunities`はfastAPI呼び出しを`try/catch`し、失敗時は`console.error`でログに残しつつ`{ communities: [] }`を返す（「エラーを握りつぶさない」というCLAUDE.mdの方針と、「あれば嬉しい機能の失敗でコア機能を壊さない」という要件を両立させるため、ログには残すがHTTPエラーにはしないという設計にした）。
+
+**開発環境の副次的な修正**: `fastapi-service/.venv`が、このリポジトリがmlb-appから複製される前の絶対パス（`/Users/hikarusato/mlb-app/fastapi-service/.venv`）を指したまま残っており、`pip install`が別プロジェクトのPython環境に対して実行されてしまう不具合を発見した（`.venv/bin/pip`のshebangが古いパスを指していた）。ローカルでのテスト実行に必要なため、venvを削除して`coffee-app`配下に作り直した。
+
+**実行したテストと結果**:
+- `fastapi-service`: `pytest` 7件全て成功
+- `backend`: `npm run test` 578件全て成功
+- `frontend`: `npm run lint`・`npm run test`（359件全て成功）・`npm run build` いずれも成功
+- Docker（開発用スタック）で`fastapi`・`backend`を`networkx`込みで再ビルドし、`POST http://localhost:8001/graph/communities`への直接呼び出し、`GET http://localhost:5002/api/graph/communities`（認証込み）への呼び出しの両方で実際に動作することを確認
+- claude-in-chromeで実際にGraph画面（`http://localhost:5174/graph`）を開き、「Detected groups」欄に実データ（Brazil/Colombia/Guatemala系統6件、Ethiopia/Kenya系統4件の2グループ）が表示されることを確認
+
+**未解決事項**: なし（この機能自体は完了）。fastAPIをさらに活用する案（味覚ベクトルの類似度計算）は今回見送った選択肢として残っている。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -4841,3 +4880,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 13. ~~`backend/.env`のAtlas接続情報（`MONGO_URI`）が`bad auth`で使えない状態が2026-08-30から継続~~ → 2026-09-19に解消（上記「未解決事項」参照）
 14. 2026-09-19のバックフィル（同エントリ参照）で発覚した「スキーマ変更時のバックフィル忘れ」を防ぐ一般的な運用（マイグレーション手順のチェックリスト化等）は未検討
 15. 2026-09-23、Docker本番化（該当エントリ参照）の次フェーズ: AWSアカウントの作成、ECS/ECR等へのIaC整備、Secrets Managerでの秘密情報管理、実際のAWSへのデプロイ
+16. 2026-09-25、Graph Communities機能（該当エントリ参照）の検討時に候補として挙がった「味覚ベクトル（6軸）の類似度計算」は今回見送った。fastAPIをさらに活用する2つ目の案として残っている
