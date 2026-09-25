@@ -106,4 +106,59 @@ describe("NodeDetailPanel", () => {
 
     expect(onClose).toHaveBeenCalled();
   });
+
+  test("選択中のノードが属するグループがあれば「属するグループ」欄を表示する", () => {
+    renderPanel({
+      node: ATTRIBUTE_NODE,
+      detail: { kind: "attribute", relatedRecords: [] },
+      communities: [
+        {
+          id: 0,
+          recordCount: 6,
+          dominantAttributes: { origin: ["Ethiopia"], process: ["Washed"] },
+          nodeIds: ["origin:1", "process:washed"],
+        },
+      ],
+    });
+
+    expect(screen.getByText("属するグループ")).toBeInTheDocument();
+    expect(screen.getByText("6件")).toBeInTheDocument();
+    // 選択中のノード自身（Ethiopia）はチップとして重複表示しない
+    expect(screen.getAllByText("Ethiopia")).toHaveLength(1);
+    expect(screen.getByText("Washed")).toBeInTheDocument();
+  });
+
+  test("属性ノードはどのグループにも属さなければ何も表示しない", () => {
+    renderPanel({
+      node: ATTRIBUTE_NODE,
+      detail: { kind: "attribute", relatedRecords: [] },
+      communities: [{ id: 0, recordCount: 6, dominantAttributes: {}, nodeIds: ["origin:999"] }],
+    });
+
+    expect(screen.queryByText("属するグループ")).not.toBeInTheDocument();
+    expect(screen.queryByText("まだ大きなグループの一部になっていません")).not.toBeInTheDocument();
+  });
+
+  test("record型ノードはどのグループにも属さなくても「まだ大きなグループの一部になっていません」と表示する", () => {
+    renderPanel({
+      node: RECORD_NODE,
+      detail: { kind: "record", record: { id: "1", consumedAt: "2026-07-15T09:00:00.000Z", rating: null, notes: "" } },
+      communities: [{ id: 0, recordCount: 6, dominantAttributes: {}, nodeIds: ["record:999"] }],
+    });
+
+    expect(screen.getByText("まだ大きなグループの一部になっていません")).toBeInTheDocument();
+  });
+
+  test("record型ノードがグループに属していれば「まだ...」は表示しない", () => {
+    renderPanel({
+      node: RECORD_NODE,
+      detail: { kind: "record", record: { id: "1", consumedAt: "2026-07-15T09:00:00.000Z", rating: null, notes: "" } },
+      communities: [
+        { id: 0, recordCount: 6, dominantAttributes: { origin: ["Ethiopia"] }, nodeIds: ["record:1"] },
+      ],
+    });
+
+    expect(screen.getByText("属するグループ")).toBeInTheDocument();
+    expect(screen.queryByText("まだ大きなグループの一部になっていません")).not.toBeInTheDocument();
+  });
 });

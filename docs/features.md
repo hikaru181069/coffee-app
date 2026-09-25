@@ -16,6 +16,7 @@ MVP完成後に追加した個別機能の仕様。もともとは機能ごと�
 - **World Map**: 自分が記録した産地を世界地図上でハイライトする
 - **Similar Records**: 知識グラフの共起関係を使い、ある記録と属性を共有する他の記録を提示する
 - **Save Discoveries**: 記録を保存した直後、その記録によって新しく生まれたつながり・達成したマイルストーンを見せる
+- **Graph Communities**: 知識グラフをNetworkX（fastAPI）でグループ分けし、自分の記録がどんな系統に分かれているかを見せる
 
 ---
 
@@ -881,3 +882,144 @@ POST /api/discoveries/preview
 では呼ばない）にこのAPIを呼び、結果があれば新しいUIコンポーネントを
 増やさず既存のトースト（`useToast`）で1件だけ知らせる。数秒で自動的に
 消える（他のトーストと同じ挙動）。
+
+---
+
+## Graph Communities
+
+### Purpose
+
+これまでのGraph画面は、記録・属性の1つ1つのつながりを見て探索する
+機能だった（Knowledge Graph参照）。Graph Communitiesは、知識グラフ
+全体を俯瞰し、「自分の記録は大きくどんな系統に分かれているか」を
+見せる機能。例えば「Ethiopia・Kenya・Light Roast・Citrus系統」と
+「Brazil・Colombia・Medium Roast・Chocolate系統」のように、自分でも
+言語化していなかった好みの分かれ方を提示する。
+
+### なぜfastAPIで実装したか
+
+docs/architecture.mdの通り、fastAPIは「DBに依存しない計算」を担当する
+設計だったが、2026-09時点まで実装済みの機能が無かった
+（`docs/mlb-legacy-inventory.md`参照）。コミュニティ検出（グラフの
+密なつながりを見てグループへ自動分割するアルゴリズム）はNode.js側に
+同等のライブラリが無く、Python の NetworkX を使う必然性が説明しやすい
+題材のため、fastAPIの最初の実装として選んだ。
+
+### なぜAI推薦ではないか
+
+NetworkXの`greedy_modularity_communities`（モジュラリティ最大化に
+基づく決定的なグラフアルゴリズム）を使う。機械学習モデルの学習・推論は
+行わない、入力（nodes/edges）に対して毎回同じ結果を返す計算処理であり、
+docs/product.md「MVP Before Intelligence」のAI/NLPには当たらない
+（Insight/Discover/Similar Records等と同じ、ルールベース・決定的な
+アルゴリズムの延長）。
+
+### 計算の流れ
+
+1. Express（`graphService.js`）が、他の機能と同じく
+   `backend/core/graph/graphBuilder.js`でMongoDBの記録・マスターデータ
+   からグラフ（nodes/edges）を組み立てる（グラフ用の専用コレクションは
+   持たない、docs/knowledge-graph.mdの方針をそのまま踏襲）
+2. 組み立て済みのnodes/edges（MongoDBの生データではない、軽量なJSON）を
+   `services/fastApiService.js`経由でfastAPIへPOSTする
+3. fastAPI（`core/communityDetection.py`）がNetworkXでグラフを構築し、
+   `greedy_modularity_communities`でグループ分けする
+4. 記録数が少ないグループ（3件未満、他の発見系機能と同じ「偶然の一致を
+   断定しない」閾値）は結果から除外する
+5. 各グループについて、含まれる属性ノードを種別ごとに集計し、代表
+   ラベル（種別ごと最大3件、アルファベット順）を添えて返す
+6. 記録数が多い順に並べてExpressへ返す。2026-09、当初はグループ数の
+   上限（上位5件）を設けていたが、「コーヒーの記録には必ずつながりを
+   見せたい（Record→Connect→Discoverがこのアプリのテーマのため）」
+   という方針を受けて撤廃した。閾値（3件以上）を満たすグループは、
+   6番目以降でも恣意的に隠さず全て返す
+
+具体的な計算は`fastapi-service/core/communityDetection.py`を参照。
+
+### グレースフルデグレード
+
+fastAPIは「あれば嬉しい」補助計算であり、他の全機能（記録のCRUD・
+Graph画面本体等）はfastAPIに一切依存しない。fastAPIが応答しない・
+タイムアウトした場合、Express（`graphService.js`）は例外を投げず
+`{ communities: [] }`を返す（原因はログに残すが、リクエスト自体は
+失敗させない）。フロントエンドも「候補が無い」のと同じ扱いで何も
+表示しない（Similar Records/Discoverと同じ「静かな道具」の方針）。
+
+### Source of Truth
+
+MongoDBのCoffeeRecordとマスターデータを正とする。fastAPI側はDBに
+一切アクセスせず、Expressから渡されたグラフの計算だけを行う。
+
+### Response Shape
+
+```json
+GET /api/graph/communities
+
+{
+  "data": {
+    "communities": [
+      {
+        "id": 0,
+        "recordCount": 6,
+        "dominantAttributes": {
+          "origin": ["Brazil", "Colombia", "Guatemala"],
+          "roastLevel": ["Medium", "Medium Dark"],
+          "flavor": ["Caramel", "Chocolate", "Nutty"]
+        },
+        "nodeIds": ["record:...", "origin:...", "..."]
+      }
+    ]
+  }
+}
+```
+
+`nodeIds`はこのグループに属する全ノードのID（record・属性のどちらも
+含む）。フロントエンドが「今見ているノードがどのグループに属するか」を
+引くための、フロントエンドだけが使う内部的なフィールド（フィルターは
+持たない。`getNodeDetail`と同じく自分の記録全体についての結果を返す
+機能のため）。
+
+### 表示
+
+2026-09、当初は`/graph`のGraphLegendの直下に検出された全グループを
+常時一覧表示していたが、「表示する基準が曖昧」というユーザーからの
+指摘を受けて作り直した。「グラフ全体」という漠然とした単位ではなく、
+「今操作しているノードに対して」という明確な基準にしている。
+
+- **ホバー時のプレビュー（`GraphCommunities.jsx`、キャンバス左上への
+  絶対配置オーバーレイ）**: キャンバス上でノードにカーソルを重ねている
+  間だけ、そのノードが属するグループ（記録件数・代表属性のチップ）を
+  表示する。既存の「ホバーで隣接ノードのラベルを出す」挙動
+  （`GraphCanvas.jsx`）と同じ操作感に揃えた。何もホバーしていない・
+  該当グループが無いときは何も表示しない（静かな道具の方針）。PCでの
+  補助的な導線のため、モバイル（ホバー操作が無い環境）では機能しない。
+  2026-09、当初はGraphLegendの下に通常のドキュメントフローで配置して
+  いたが、出現・消失のたびにその高さぶんキャンバス自体が上下に押し
+  やられ、ホバー中のノードがカーソルの真下からずれてしまい
+  「非表示→キャンバスが元の位置に戻る→カーソルが再びノード上に→
+  再表示→…」という無限の点滅ループを起こす不具合が実機で見つかった
+  （ユーザー報告により発覚）。NodeDetailPanelと同じ絶対配置の
+  オーバーレイに変更し、表示/非表示がキャンバスのレイアウトに一切
+  影響しないようにして解消した
+- **クリック時の詳細（`NodeDetailPanel.jsx`の「属するグループ」欄）**:
+  ノードをクリックして開く詳細パネルに、同じグループ情報を恒常的に表示
+  する。クリックはモバイルでもbottom sheetとして機能するため、こちらが
+  この機能の主経路。選択中のノード自身のラベルは重複表示しない
+  （「Ethiopiaを選んだらEthiopiaと出る」を避けるため、
+  `dominantAttributes`から選択中ノードと同じtype/labelの組み合わせを除く）
+
+2026-09（追記）: record型ノード（コーヒーの記録そのもの）だけは、
+属するグループが無くても「まだ大きなグループの一部になっていません」
+と明示する（ホバー・クリックどちらも）。「コーヒーの記録には必ず
+つながりを見せたい」という方針だが、実際には属さないグループを
+捏造すると`docs/product.md`「Discovery Must Be Actionable」（根拠の無い
+気づきを出さない）と矛盾するため、正直に「無い」ことを伝える形にした。
+属性ノード（産地・フレーバー等）まで対象を広げると、単に登場回数が
+少ないだけの属性すべてにこの表示が付いてノイズになるため、record型
+限定にしている。
+
+どちらも属性の色は記録カード・エンティティ詳細等と同じ
+`getNodeSolidBgClass`（origin・flavorは値ごとの個別色、他は種別共通色）
+で揃える。グラフキャンバス上のノード自体の色分け（種別色）とは別の
+情報のため、キャンバスへ重ねて表示することはしない（docs/design.md
+「Graph」のノード配色を上書きしないため）。

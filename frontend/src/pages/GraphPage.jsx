@@ -5,9 +5,11 @@ import { useTranslation } from "react-i18next";
 import "../features/coffee-records/coffee-records.css";
 import { useGraph } from "../features/graph/hooks/useGraph";
 import { useNodeDetail } from "../features/graph/hooks/useNodeDetail";
+import { useGraphCommunities } from "../features/graph/hooks/useGraphCommunities";
 import GraphCanvas from "../features/graph/components/GraphCanvas";
 import GraphFilters from "../features/graph/components/GraphFilters";
 import GraphLegend from "../features/graph/components/GraphLegend";
+import GraphCommunities from "../features/graph/components/GraphCommunities";
 import GraphNodeSearch from "../features/graph/components/GraphNodeSearch";
 import NodeDetailPanel from "../features/graph/components/NodeDetailPanel";
 import CoffeeLoader from "../components/CoffeeLoader";
@@ -40,6 +42,10 @@ function GraphPage() {
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [selectedNode, setSelectedNode] = useState(null);
+  // ホバー中のノードID。GraphCanvasのpointermoveから伝わる
+  // （GraphCommunities.jsxのプレビュー表示に使う。docs/features.md
+  // 「Graph Communities」参照）。
+  const [hoveredNodeId, setHoveredNodeId] = useState(null);
   // GraphNodeSearchで選んだ時だけカメラを明示的に動かすための合図。
   // 新しいオブジェクト参照を渡すたびGraphCanvas側のuseEffectが発火する
   // （同じノードを続けて選んでも毎回反応させたいため、nodeIdの値ではなく
@@ -51,6 +57,17 @@ function GraphPage() {
     selectedNode,
     filters,
   );
+  // NodeDetailPanel（クリック）とGraphCommunities（ホバー）の両方が
+  // 同じ「自分の記録全体についてのグループ」を参照するため、ここで1回
+  // だけ取得して両方へpropsで渡す（フィルター状態には依存しない、
+  // useGraphCommunities.js参照）。
+  const { communities } = useGraphCommunities();
+  // ホバー中のノードの種別。record型ノードは「属するグループが無ければ
+  // 何も表示しない」ではなく「まだ大きなグループの一部になっていない」と
+  // 明示する（コーヒーの記録には必ずつながりを見せたい、という方針。
+  // docs/features.md「Graph Communities」参照）ため、GraphCommunities.jsx
+  // 側でこの判定に使う。
+  const hoveredNodeType = graph?.nodes.find((node) => node.id === hoveredNodeId)?.type ?? null;
 
   const hasActiveFilters = useMemo(
     () =>
@@ -119,13 +136,33 @@ function GraphPage() {
           graph={graph}
           selectedNodeId={selectedNode?.id}
           onSelectNode={setSelectedNode}
+          onHoverNode={setHoveredNodeId}
           focusRequest={focusRequest}
         />
+        {/*
+          2026-09、GraphLegendの下に並べる形（通常のドキュメントフロー）
+          で実装していたが、出現・消失のたびにその高さぶんキャンバスが
+          上下に押しやられ、ホバー中のノードがカーソルの真下からずれて
+          「ホバーが外れる→非表示→キャンバスが元の位置に戻る→カーソルが
+          再びノード上に→再表示→…」という無限の点滅ループを引き起こして
+          いた（ユーザー報告により発覚）。NodeDetailPanelと同じく、
+          キャンバスの上に絶対配置のオーバーレイにすることで、
+          表示/非表示がキャンバス自体のレイアウトに一切影響しないように
+          修正した。
+        */}
+        <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-[calc(100%-1.5rem)]">
+          <GraphCommunities
+            communities={communities}
+            hoveredNodeId={hoveredNodeId}
+            hoveredNodeType={hoveredNodeType}
+          />
+        </div>
         <NodeDetailPanel
           node={selectedNode}
           detail={detail}
           isLoading={isDetailLoading}
           error={detailError}
+          communities={communities}
           onClose={() => setSelectedNode(null)}
         />
       </div>

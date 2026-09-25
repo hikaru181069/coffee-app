@@ -9,18 +9,24 @@ FastAPI サービス — DBに依存しない計算処理だけを担当する
   DB非依存の計算・将来の味覚分析・類似度計算。
   MongoDBへの直接アクセスと認証は行わない。
 
-MVPでは知識グラフの変換をExpress内の純粋関数（backend/core/graph）で
-行っており（docs/architecture.md の Architecture Decision）、
-このサービスに実装済みの機能は無い。将来、味覚の類似度計算など
-DB非依存の重い計算処理が必要になった時点でルーターを追加する。
+2026-09、知識グラフのコミュニティ検出（NetworkX）を追加した。これが
+このサービスの最初の実装（それまではヘルスチェックのみ）。Expressが
+backend/core/graph/graphBuilder.js で組み立て済みのnodes/edgesを渡し、
+このサービスはDBに触れず計算だけを行う（docs/features.md
+「Graph Communities」参照）。
 
 エンドポイント一覧:
-  GET / ヘルスチェック
+  GET  /               ヘルスチェック
+  POST /graph/communities  知識グラフのコミュニティ検出
 """
 
 from fastapi import FastAPI
 
+from routers import graph
+
 app = FastAPI(title="Coffee App Analysis Service", version="0.1.0")
+
+app.include_router(graph.router, prefix="/graph", tags=["graph"])
 
 # CORSミドルウェアは付けていない。docs/architecture.mdの通り、このサービスは
 # ブラウザから直接叩かれる想定が無く（React → Express → FastAPI → Express →

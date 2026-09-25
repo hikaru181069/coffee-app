@@ -38,6 +38,12 @@ frontend・backendのどちらからも呼び出されておらず、ヘルス�
 みが動いている状態（`docs/architecture.md`の方針通りの意図的な状態で
 あり、バグではない）。
 
+2026-09、Graph Communities機能（docs/features.md参照）の追加で
+`backend/services/fastApiService.js`を新設し、`FASTAPI_URL`も実際に
+読むようになった。上記の「未使用」という記述はこの時点で解消済み
+（このファイルはbootstrap時点の棚卸しの歴史的記録として、当時の状態を
+そのまま残す）。
+
 ### 削除済み（2026-08確認）
 
 以下はすべて実在しないことを確認済み: `controllers/`配下のMLB系16種

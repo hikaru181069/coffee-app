@@ -238,6 +238,10 @@
     "viewRecordDetail": "記録の詳細を見る",
     "viewEntityDetail": "詳細を見る",
     "appearsInCount": "<mono>{{count}}</mono> 件の記録で登場",
+    "communitiesHeading": "検出されたグループ",
+    "communitiesRecordCount": "{{count}}件",
+    "nodeGroupHeading": "属するグループ",
+    "notYetGroupedMessage": "まだ大きなグループの一部になっていません",
     "nodeTypes": {
       "record": "記録",
       "origin": "産地",

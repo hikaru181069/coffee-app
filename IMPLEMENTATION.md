@@ -4781,6 +4781,121 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-25: Graph Communities機能を追加（fastAPIの最初の実装、NetworkXでのコミュニティ検出）
+
+**実装対象**: 知識グラフをNetworkXでグループ分けする「Graph Communities」機能（docs/features.md参照）。fastAPI（`docs/architecture.md`で「DBに依存しない計算」を担当する設計だったが、これまでヘルスチェックのみで実装済み機能が無かった）の最初の実装。
+
+**なぜ今実装するのか**: ユーザーから「知識グラフの処理をfastAPIへ移行する価値はあるか」という相談。既存の`graphBuilder.js`（DBに依存する処理で、search/entity-detail/similar-records等から共通関数として多用されている）自体の移行はコストに見合わないと回答した上で、「fastAPIを使いこなすにはどんな処理が良いか」を相談され、(1)NetworkXでのグラフ理論分析、(2)味覚ベクトルの類似度計算の2案を提示。ユーザーが(1)を選択し、その中でもコミュニティ検出（グラフを自動的にいくつかのグループへ分割する）を選んで実装した。
+
+**再利用したmlb-appのコード**: 無し（fastapi-serviceはMVP当初からヘルスチェックのみで、この機能が最初の実装）。
+
+**新規作成ファイル**:
+- `fastapi-service/schemas/graph.py`（Pydanticスキーマ）
+- `fastapi-service/core/communityDetection.py`（NetworkXの`greedy_modularity_communities`を使う純粋関数。記録数3件未満のグループは除外、代表属性は種別ごと最大3件・アルファベット順、結果は記録数の多い順に最大5件）
+- `fastapi-service/routers/graph.py`（`POST /graph/communities`）
+- `fastapi-service/tests/test_community_detection.py`（4テスト: エッジ無しで空、2クラスタの分離、閾値未満の除外、record型がdominantAttributesに含まれないこと）
+- `fastapi-service/tests/test_graph_router.py`（HTTPレベル2テスト）
+- `backend/services/fastApiService.js`（FastAPI呼び出しの薄いクライアント。5秒タイムアウト、失敗時は例外を投げるだけで握りつぶさない）
+- `backend/tests/graphCommunities.test.js`（HTTPレベル5テスト。fastApiServiceをvi.mockし、Express側の振る舞い＝「記録が無ければFastAPIを呼ばない」「FastAPIが失敗しても500にならず空配列を返す」「他ユーザーの記録を含めない」を確認）
+- `frontend/src/features/graph/hooks/useGraphCommunities.js`
+- `frontend/src/features/graph/components/GraphCommunities.jsx`（GraphLegendの直下に配置。候補が無ければ何も表示しない「静かな道具」方針）
+- `frontend/src/features/graph/components/GraphCommunities.test.jsx`（3テスト）
+
+**変更ファイル**: `fastapi-service/requirements.txt`（`networkx==3.7`追加）・`fastapi-service/main.py`（router登録）・`backend/services/coffee/graphService.js`（`getGraphCommunities`追加）・`backend/controllers/graphController.js`・`backend/routes/graphRoutes.js`（`GET /api/graph/communities`追加）・`frontend/src/features/graph/api/graphApi.js`・`frontend/src/pages/GraphPage.jsx`・`frontend/src/i18n/locales/{ja,en}.json`・`docs/features.md`（新規「Graph Communities」節）・`docs/architecture.md`（fastAPIの節を更新、Request Flowの例を追加）・`docs/mlb-legacy-inventory.md`（FastAPI未使用という記述が古くなったため注記を追加）
+
+**データフロー**: `docs/architecture.md`「Request Flow: Graph Communities」に詳細図を追加した。要約すると、GraphPage → `GET /api/graph/communities` → Express（`graphService.js`が`graphBuilder.js`でMongoDBからグラフを組み立てる、他機能と同じ）→ `POST http://fastapi:8000/graph/communities`（計算済みのnodes/edgesのみを渡す、生のMongoDBデータは渡さない）→ fastAPI（NetworkX、DBに一切触れない）→ Expressが結果をそのまま集約 → フロントエンド。
+
+**グレースフルデグレードの設計**: fastAPIは「あれば嬉しい」補助機能と位置付け、記録のCRUD・Graph画面本体には一切依存させていない。`graphService.js`の`getGraphCommunities`はfastAPI呼び出しを`try/catch`し、失敗時は`console.error`でログに残しつつ`{ communities: [] }`を返す（「エラーを握りつぶさない」というCLAUDE.mdの方針と、「あれば嬉しい機能の失敗でコア機能を壊さない」という要件を両立させるため、ログには残すがHTTPエラーにはしないという設計にした）。
+
+**開発環境の副次的な修正**: `fastapi-service/.venv`が、このリポジトリがmlb-appから複製される前の絶対パス（`/Users/hikarusato/mlb-app/fastapi-service/.venv`）を指したまま残っており、`pip install`が別プロジェクトのPython環境に対して実行されてしまう不具合を発見した（`.venv/bin/pip`のshebangが古いパスを指していた）。ローカルでのテスト実行に必要なため、venvを削除して`coffee-app`配下に作り直した。
+
+**実行したテストと結果**:
+- `fastapi-service`: `pytest` 7件全て成功
+- `backend`: `npm run test` 578件全て成功
+- `frontend`: `npm run lint`・`npm run test`（359件全て成功）・`npm run build` いずれも成功
+- Docker（開発用スタック）で`fastapi`・`backend`を`networkx`込みで再ビルドし、`POST http://localhost:8001/graph/communities`への直接呼び出し、`GET http://localhost:5002/api/graph/communities`（認証込み）への呼び出しの両方で実際に動作することを確認
+- claude-in-chromeで実際にGraph画面（`http://localhost:5174/graph`）を開き、「Detected groups」欄に実データ（Brazil/Colombia/Guatemala系統6件、Ethiopia/Kenya系統4件の2グループ）が表示されることを確認
+
+**未解決事項**: なし（この機能自体は完了）。fastAPIをさらに活用する案（味覚ベクトルの類似度計算）は今回見送った選択肢として残っている。
+
+---
+
+### 2026-09-25（追記）: Graph Communitiesの表示をノード単位のインタラクションへ作り直し
+
+**実装対象**: 上記のGraph Communities機能について、「Detected groups」欄が検出された全グループを常時一覧表示していたUXを、「ノード単位でホバー/クリックしたときにそのノードが属するグループを表示する」形へ作り直した。
+
+**なぜ今実装するのか**: ユーザーから実装確認後「Detected groupsの表示基準が曖昧、ノードごとに関連するものを表示するのが良い」という指摘。相談の結果、(1)クリック時にNodeDetailPanelへ「属するグループ」欄を追加、(2)キャンバス上でホバー中のノードが属するグループをDetected groups欄にプレビュー表示、の2案を組み合わせる方針で合意した。クリックはモバイルのbottom sheetでも機能するため主経路、ホバーはPCでの補助的なプレビューという役割分担にした（docs/design.md「モバイルではグラフ詳細をbottom sheetにする」というルールに、ホバーだけの実装だと反してしまうため）。
+
+**変更内容**:
+
+- **fastAPI**: `Community`スキーマに`nodeIds`（このグループに属する全ノードID）を追加。フロントエンドが「あるノードがどのグループに属するか」を引くための情報（`schemas/graph.py`・`core/communityDetection.py`・`routers/graph.py`）
+- **フロントエンド新規**: `utils/communityLookup.js`（`findCommunityForNode`、GraphCommunities.jsxとNodeDetailPanel.jsxの両方から使う共通の探索ロジック）
+- **`GraphCanvas.jsx`**: `onHoverNode`propを追加。既存の`hoveredIdRef`（描画用、隣接ノードのラベル表示に使用済み）と同じ値を、変化したときだけ親へ通知する（`pointermove`が高頻度に発火するため、値が変わったときだけ呼ぶことで無駄な再レンダリングを避けた）。`pointerleave`ハンドラも新設し、キャンバスからカーソルが外れたら通知をクリアする（これまでhoveredIdRefはキャンバスを離れても最後の値のまま残る挙動だったため、ホバー駆動の新UIのために対応した）
+- **`GraphPage.jsx`**: `useGraphCommunities`をここへ引き上げ（NodeDetailPanel・GraphCommunitiesの両方が同じデータを参照するため、二重取得を避けた）。ホバー中のノードIDを`hoveredNodeId`stateとして保持
+- **`GraphCommunities.jsx`**: 自前でデータ取得していたのをやめ、`communities`・`hoveredNodeId`を受け取るだけの表示専用コンポーネントへ変更。ホバー中のノードが属するグループが無ければ何も表示しない
+- **`NodeDetailPanel.jsx`**: `communities`propを追加。選択中ノードが属するグループがあれば「属するグループ」欄（`NodeGroupMembership`）を表示する。選択中ノード自身のラベルはチップとして重複表示しない
+
+**データの流れ**: FastAPIのレスポンスにノードIDの集合が加わっただけで、Express側の計算・グレースフルデグレードの設計は変更していない。フロントエンドは1回取得した`communities`を、ホバー（GraphCommunities）とクリック（NodeDetailPanel）の両方でクライアント側の配列探索（`findCommunityForNode`）だけで使い回す（追加のAPI呼び出しは発生しない）。
+
+**変更ファイル**: `fastapi-service/schemas/graph.py`・`fastapi-service/core/communityDetection.py`・`fastapi-service/routers/graph.py`・`fastapi-service/tests/test_community_detection.py`・`fastapi-service/tests/test_graph_router.py`・`backend/tests/graphCommunities.test.js`（モックの実データ整合性のみ、Express側のロジック自体は無変更）・`frontend/src/features/graph/components/GraphCanvas.jsx`・`frontend/src/features/graph/components/GraphCommunities.jsx`（全面書き換え）・`frontend/src/features/graph/components/GraphCommunities.test.jsx`（全面書き換え）・`frontend/src/features/graph/components/NodeDetailPanel.jsx`・`frontend/src/features/graph/components/NodeDetailPanel.test.jsx`・`frontend/src/pages/GraphPage.jsx`・`frontend/src/i18n/locales/{ja,en}.json`（`nodeGroupHeading`追加）・新規`frontend/src/features/graph/utils/communityLookup.js`・`communityLookup.test.js`・`docs/features.md`「Graph Communities」の「表示」節を書き直し
+
+**実行したテストと結果**:
+- `fastapi-service`: `pytest` 8件全て成功（`nodeIds`の新規テスト1件追加）
+- `frontend`: `npm run lint`・`npm run test`（365件全て成功）・`npm run build` いずれも成功
+- `backend`: `npm run test` 578件全て成功（この変更ではExpress側のロジックは変えていないため無変化）
+- Docker（開発用スタック、fastapiを`nodeIds`追加込みで再ビルド）で`POST http://localhost:8001/graph/communities`のレスポンスに`nodeIds`が含まれることを確認
+- claude-in-chromeで実際にGraph画面を操作: 「Brazil」ノードにホバー → Detected groups欄に「6 records ● Colombia ● Guatemala ...」が表示されることを確認。同じノードをクリック → NodeDetailPanelに「Part of group」欄が表示され、選択中の「Brazil」自身はチップに重複しないことを確認。ホバーを外す・パネルを閉じるとどちらも何も表示されない（静かな道具の方針通り）ことを確認
+
+**未解決事項**: なし。
+
+---
+
+### 2026-09-25（追記2）: Detected groupsの点滅バグを修正（レイアウトシフトによる無限ループ）
+
+**実装対象**: 上記のGraph Communitiesのホバー機能で、「Detected groupsの表示がチラチラする」というユーザー報告を受けた不具合修正。
+
+**原因**: `GraphCommunities`をGraphLegendの下（通常のドキュメントフロー）に配置していたため、ホバーで表示/非表示が切り替わるたびに、その要素の高さぶん下のキャンバスが上下に押しやられていた。キャンバスが動くと、その中で描画されているノードも画面上の位置がずれる。ノードがずれた結果、ホバー中だったカーソル位置の真下からノードが外れてしまい、「ホバーが外れたと判定→Detected groups非表示→キャンバスが元の位置に戻る→ノードが再びカーソルの真下に→ホバー再検出→再表示→キャンバスがまた押しやられる→…」という自己駆動の無限ループが発生していた。ホバー時にだけ・ノードの近くで発生するという条件と完全に一致する。
+
+**修正**: `GraphCommunities`を、`NodeDetailPanel`と同じ「キャンバスの上に絶対配置するオーバーレイ」（キャンバス左上、`pointer-events-none`でキャンバスへのポインター操作を妨げないようにした）へ変更した。これにより表示/非表示がキャンバス自体のレイアウトに一切影響しなくなり、ループの発生源を断った。
+
+**再発防止の観点**: 「ホバーで表示が変わるUI要素」を「ホバーの対象そのものの画面位置に影響する場所」（ドキュメントフロー上でホバー対象より上・同じ列）に置くと、原理的にこの種のフィードバックループが起こりうる。今後、キャンバスやリスト等「ホバー判定を続ける対象」の近くに条件付き表示のUIを足す場合は、対象のレイアウトに影響しない絶対配置（オーバーレイ）にすることを基本にする。
+
+**変更ファイル**: `frontend/src/pages/GraphPage.jsx`（`GraphCommunities`の配置のみ変更、propsは変えていない）・`docs/features.md`（「表示」節の説明を修正）
+
+**実行したテストと結果**: `npm run lint`・`npx vitest run GraphCommunities NodeDetailPanel`（13件成功）・`npm run test`（365件全て成功）・`npm run build`いずれも成功。claude-in-chromeで実際にノードへホバーし、同じスクリーンショットを複数回連続撮影して表示が安定したまま変化しないことを確認（修正前に再現できていたわけではないが、レイアウトシフトの発生源自体が無くなったことをコードとキャンバス位置の両面から確認した）。
+
+**未解決事項**: なし。
+
+---
+
+### 2026-09-25（追記3）: コーヒーの記録には必ずつながりを見せる方針へ変更（上位5件キャップ撤廃・record型の「まだグループの一部になっていません」表示）
+
+**実装対象**: Graph Communities機能について、(1)fastAPI側の「上位5グループまで」という打ち切り（`MAX_COMMUNITIES`）を撤廃し、(2)record型ノード（コーヒーの記録そのもの）はホバー/クリックしたとき、属するグループが無くても「まだ大きなグループの一部になっていません」と明示するようにした。
+
+**なぜ今実装するのか**: ユーザーから「コーヒーの記録には必ずつながりを見せたいです。なぜならこのアプリのテーマだから」という提案。Record→Connect→Discoverが`docs/product.md`のVisionそのものであるという指摘は妥当だが、一方で「実際には属さないグループを見せる」ことは`docs/product.md`「Discovery Must Be Actionable」（根拠の無い気づきを出さない）と衝突する。相談の結果、次の折衷案で合意した: 3件以上という意味のある閾値はそのまま残しつつ、(1)恣意的な上位5件キャップは撤廃する、(2)record型ノードは属するグループが無くても「まだ大きなグループの一部になっていません」と正直に明示する（属さないことを隠さない・捏造しない）。
+
+**なぜrecord型限定か**: 属性ノード（産地・フレーバー等）まで対象を広げると、単に登場回数が少ないだけの属性すべてにこの表示が付いてノイズになる。また「つながり」自体（グラフのエッジ・記録詳細ページの「つながり」図・Similar Records）は、Graph Communitiesを使わずとも既にどの記録にも無条件で表示されている。Graph Communitiesが担うのは「自分の記録全体の中の、より大きな系統・パターン」という統計的なクラスタ検出であり、ここでの「必ず見せる」はrecord型ノード（＝コーヒーの記録そのもの）に絞ることで、テーマ性と統計的な誠実さを両立させた。
+
+**変更内容**:
+
+- **fastAPI**: `core/communityDetection.py`の`MAX_COMMUNITIES`定数と、それによる結果の打ち切り（`results[:MAX_COMMUNITIES]`）を削除。`MIN_RECORD_COUNT`（3件）による閾値判定はそのまま維持
+- **`GraphPage.jsx`**: ホバー中のノードの種別（`hoveredNodeType`）を`graph.nodes`から引いて`GraphCommunities`へ渡すよう追加
+- **`GraphCommunities.jsx`**: 該当グループが無い場合、`hoveredNodeType === "record"`なら「まだ大きなグループの一部になっていません」を表示。それ以外（属性ノード）の場合は従来通り何も表示しない
+- **`NodeDetailPanel.jsx`**: 同様に、選択中ノードが`record`型で属するグループが無い場合に同じメッセージを表示
+
+**変更ファイル**: `fastapi-service/core/communityDetection.py`・`fastapi-service/tests/test_community_detection.py`（6クラスタ全てが返ることを確認するテストを追加）・`frontend/src/pages/GraphPage.jsx`・`frontend/src/features/graph/components/GraphCommunities.jsx`・`frontend/src/features/graph/components/GraphCommunities.test.jsx`・`frontend/src/features/graph/components/NodeDetailPanel.jsx`・`frontend/src/features/graph/components/NodeDetailPanel.test.jsx`・`frontend/src/i18n/locales/{ja,en}.json`（`notYetGroupedMessage`追加）・`docs/features.md`
+
+**データフロー**: 変更なし（Expressの計算・グレースフルデグレード設計はそのまま）。fastAPIが返すグループの件数が増えうる（上限撤廃）点のみが変わる。
+
+**実行したテストと結果**:
+- `fastapi-service`: `pytest` 9件全て成功（6クラスタが全て返ることを確認する新規テスト1件を含む）
+- `frontend`: `npm run lint`・`npm run test`（368件全て成功）・`npm run build` いずれも成功
+- Docker（開発用スタック、fastapiを`MAX_COMMUNITIES`撤廃込みで再ビルド）で実データを使い、実際にどのグループにも属さない記録（例:「% Arabica - Panama Geisha」、産地・精製方法・フレーバーの組み合わせが他の記録と重ならない）を特定し、claude-in-chromeでその記録をホバー・クリックして「Not yet part of a larger group」（英語UI）が両方の経路で正しく表示されることを確認
+
+**未解決事項**: なし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -4841,3 +4956,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 13. ~~`backend/.env`のAtlas接続情報（`MONGO_URI`）が`bad auth`で使えない状態が2026-08-30から継続~~ → 2026-09-19に解消（上記「未解決事項」参照）
 14. 2026-09-19のバックフィル（同エントリ参照）で発覚した「スキーマ変更時のバックフィル忘れ」を防ぐ一般的な運用（マイグレーション手順のチェックリスト化等）は未検討
 15. 2026-09-23、Docker本番化（該当エントリ参照）の次フェーズ: AWSアカウントの作成、ECS/ECR等へのIaC整備、Secrets Managerでの秘密情報管理、実際のAWSへのデプロイ
+16. 2026-09-25、Graph Communities機能（該当エントリ参照）の検討時に候補として挙がった「味覚ベクトル（6軸）の類似度計算」は今回見送った。fastAPIをさらに活用する2つ目の案として残っている
