@@ -6,6 +6,8 @@
 react -> express -> MongoDB
               |
            (fastAPI)
+
+prometheus --(scrape /metrics)--> express, fastAPI
 ```
 
 ## Responsibility
@@ -33,6 +35,30 @@ DBに依存しない計算を担当する。MongoDBへの直接アクセスと�
 ### MongoDB
 
 データ保存のみ。
+
+### Prometheus（監視）
+
+2026-09、AWS本番リリースに向けたDocker仕上げの一環で導入した。
+Express・fastAPIそれぞれが公開する`GET /metrics`（`backend/middleware/
+metrics.js`・`fastapi-service/main.py`のInstrumentator）を15秒間隔で
+スクレイピングする（`monitoring/prometheus/prometheus.yml`）。
+
+- Express: `@prometheus-io/client`（`prom-client`のnpm非推奨化に伴う
+  公式後継パッケージ。APIは同一）でNode.jsランタイムの標準メトリクス
+  （イベントループ遅延・メモリ・GC等）とHTTPリクエストのレイテンシ
+  （`http_request_duration_seconds`）を収集する
+- fastAPI: `prometheus-fastapi-instrumentator`（FastAPI公式ドキュメントが
+  紹介する定番ライブラリ）が同様の内容を自動収集する
+
+`/metrics`はどちらも`/api/`配下に置かず、認証も付けない。本番でも
+backend・fastapiのポートはホストへ非公開（コンテナ間通信のみ、
+docker-compose.prod.ymlのbackendサービスのコメント参照）で、frontendの
+nginxも`/metrics`を`/api/`同様にはプロキシしないため、外部から直接
+到達することは無い。Prometheus自体は`docker-compose.yml`（開発用、
+ホスト9090番）・`docker-compose.prod.yml`（本番相当のローカル再現、
+ホスト9091番）の両方に追加している。実際のAWS本番でどう構成するか
+（Amazon Managed Service for Prometheus等）は未着手（IMPLEMENTATION.md
+参照）。
 
 ## Request Flow: Create Record
 

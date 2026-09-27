@@ -91,5 +91,27 @@ services:
       - backend
     restart: unless-stopped
 
+  # 2026-09、backend・fastapiの/metricsをスクレイピングするために追加
+  # （monitoring/prometheus/prometheus.yml参照。開発用docker-compose.yml
+  # と設定ファイルを共用している）。実際のAWS本番では、9090番を
+  # そのままインターネットへ公開することはせず、VPN経由・内部限定の
+  # ALB・Amazon Managed Service for Prometheus等を使う想定（現時点では
+  # 未着手、IMPLEMENTATION.md参照）。ここではローカルで本番相当の動きを
+  # 再現し、実際に自分のブラウザから確認できるようにするため公開する。
+  prometheus:
+    image: prom/prometheus:v3.9.1
+    container_name: coffee-app-prometheus-prod
+    ports:
+      # 開発用（docker-compose.yml）のPrometheusが既にホスト側9090番を
+      # 使っているため、他のサービス（backend/frontend等）と同じ理由で
+      # 別番号を割り当てる（コンテナ内部は9090のまま）。
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - backend
+      - fastapi
+    restart: unless-stopped
+
 volumes:
   mongodb_prod_data:

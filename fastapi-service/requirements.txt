@@ -7,3 +7,5 @@ fastapi==0.136.3
 uvicorn[standard]==0.48.0
 # 2026-09、知識グラフのコミュニティ検出（グループ分け）用に追加
 networkx==3.7
+# 2026-09、Prometheus向けのGET /metrics公開用に追加
+prometheus-fastapi-instrumentator==8.1.0

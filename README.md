@@ -224,11 +224,12 @@ cd coffee-app
 docker compose up -d --build
 ```
 
-MongoDB / FastAPI / Backend / Frontend の4サービスが起動します。環境変数は `docker-compose.yml` にローカル開発専用の値が定義済みなので、`.env` の用意は不要です。
+MongoDB / FastAPI / Backend / Frontend / Prometheus の5サービスが起動します。環境変数は `docker-compose.yml` にローカル開発専用の値が定義済みなので、`.env` の用意は不要です。
 
 - Frontend: http://localhost:5174
 - Backend: http://localhost:5002
 - FastAPI: http://localhost:8001
+- Prometheus: http://localhost:9090（backend・fastapiの`/metrics`を収集。`monitoring/prometheus/prometheus.yml`参照）
 
 > ポート番号は `docker-compose.yml` のホスト側ポートに合わせています。他のプロジェクトと被らなければ、5173/5001/8000のような一般的な番号に変更しても構いません。
 
@@ -249,6 +250,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend npm 
 
 - Frontend: http://localhost:8080（ブラウザから見えるのはこの1つだけ）
 - backend・fastapi・MongoDBはコンテナ間通信のみで、ホストへは公開しません。nginx（frontend）が`/api/`宛のリクエストをbackendへリバースプロキシするため、ブラウザからbackendへ直接アクセスする必要が無くなりました
+- Prometheus: http://localhost:9091（backend・fastapiの`/metrics`を収集。開発用`docker-compose.yml`のPrometheus（9090番）と同時に動かせるよう、本番相当の方はポートをずらしています）
 
 停止は `docker compose -f docker-compose.prod.yml --env-file .env.prod down`（`-v` を付けるとDBのデータも削除）。
 

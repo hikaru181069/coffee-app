@@ -25,6 +25,7 @@ import discoveryPreviewRoutes from "./routes/discoveryPreviewRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import { register, metricsMiddleware } from "./middleware/metrics.js";
 
 const app = express();
 
@@ -47,6 +48,10 @@ app.use(
 
 app.use(express.json());
 
+// 404・エラーレスポンスも含めて全リクエストを計測するため、
+// ルート登録より前に置く。
+app.use(metricsMiddleware);
+
 app.use("/api/coffee-records", coffeeRecordRoutes);
 app.use("/api/master-data", masterDataRoutes);
 app.use("/api/graph", graphRoutes);
@@ -65,6 +70,16 @@ app.use("/api/users", userRoutes);
 // 同じ「DBに依存しない生存確認」という設計・レスポンス形に揃えている。
 app.get("/", (req, res) => {
   res.json({ status: "ok", service: "Coffee App Backend" });
+});
+
+// Prometheusのスクレイピング用（monitoring/prometheus/prometheus.yml参照）。
+// `/`のヘルスチェックと同じく`/api/`配下には置かず、認証も付けない。
+// 本番でもbackendのポートはホストへ非公開（frontendのnginx経由でしか
+// 到達できない）ため、外部から直接叩かれることはない
+// （docker-compose.prod.ymlのbackendサービスのコメント参照）。
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
 });
 
 app.use(notFoundHandler);

@@ -13,6 +13,11 @@ coffee-appを本番環境（MongoDB Atlas + Render + Vercel）へデプロイす
 > 作成含む）はまだ着手していない**。手順は[`README.md`](README.md)
 > 「本番相当の動きをローカルで再現する」参照。このドキュメント自体は、
 > AWS移行が完了するまでは現行構成の記録として引き続き有効。
+>
+> 2026-09、監視（Prometheus）もローカルのDocker構成へ追加した
+> （`docs/architecture.md`「Prometheus（監視）」参照）。現行の
+> Vercel + Render + MongoDB Atlas構成には組み込んでおらず、AWS移行後の
+> 監視構成（Amazon Managed Service for Prometheus等）も未検討。
 
 ## 全体構成
 

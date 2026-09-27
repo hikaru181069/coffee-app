@@ -27,3 +27,21 @@ describe("未定義のルート", () => {
     });
   });
 });
+
+describe("GET /metrics", () => {
+  test("Prometheus形式のテキストを返す", async () => {
+    const res = await request(app).get("/metrics");
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toContain("text/plain");
+    expect(res.text).toContain("http_request_duration_seconds");
+  });
+
+  test("404になったリクエストもrouteラベルをunmatchedとして計測する", async () => {
+    await request(app).get("/api/this-route-does-not-exist-for-metrics-test");
+
+    const res = await request(app).get("/metrics");
+
+    expect(res.text).toContain('route="unmatched"');
+  });
+});

@@ -15,18 +15,30 @@ backend/core/graph/graphBuilder.js で組み立て済みのnodes/edgesを渡し�
 このサービスはDBに触れず計算だけを行う（docs/features.md
 「Graph Communities」参照）。
 
+2026-09、Prometheus向けの GET /metrics を追加した
+（monitoring/prometheus/prometheus.yml参照）。backend側の実装
+（backend/middleware/metrics.js）と同じ「リクエスト件数・レイテンシ・
+ランタイムの標準メトリクス」という内容を、prometheus-fastapi-instrumentator
+（FastAPI公式ドキュメントが推奨する定番ライブラリ）が自動で計測・公開する。
+
 エンドポイント一覧:
-  GET  /               ヘルスチェック
-  POST /graph/communities  知識グラフのコミュニティ検出
+  GET  /                    ヘルスチェック
+  GET  /metrics             Prometheus用メトリクス
+  POST /graph/communities   知識グラフのコミュニティ検出
 """
 
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from routers import graph
 
 app = FastAPI(title="Coffee App Analysis Service", version="0.1.0")
 
 app.include_router(graph.router, prefix="/graph", tags=["graph"])
+
+# instrument()がHTTPリクエストの件数・レイテンシ等を計測するミドルウェアを
+# 登録し、expose()が計測結果を返す GET /metrics を追加する。
+Instrumentator().instrument(app).expose(app)
 
 # CORSミドルウェアは付けていない。docs/architecture.mdの通り、このサービスは
 # ブラウザから直接叩かれる想定が無く（React → Express → FastAPI → Express →

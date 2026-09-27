@@ -1,0 +1,28 @@
+# Prometheusの設定ファイル。docker-compose.yml（開発用）・
+# docker-compose.prod.yml（本番相当のローカル再現）の両方から、
+# このファイルをそのままマウントして使う（環境ごとに内容を変える
+# 必要が無いため、1ファイルで共用している）。
+#
+# スクレイピング対象のホスト名（backend, fastapi）はDocker Composeの
+# サービス名。Prometheus自身も同じdocker composeネットワークの中で
+# 動くため、コンテナ名で他のコンテナへ到達できる
+# （docker-compose.yml内のbackendサービスのコメントと同じ理由）。
+
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  # Prometheus自身の状態（スクレイピングの成功・失敗等）も見えるようにする
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "backend"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["backend:5001"]
+
+  - job_name: "fastapi"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["fastapi:8000"]

@@ -72,5 +72,19 @@ services:
     depends_on:
       - backend
 
+  # 2026-09、backend・fastapiの/metricsをスクレイピングするために追加
+  # （monitoring/prometheus/prometheus.yml参照）。設定ファイルは本番相当
+  # （docker-compose.prod.yml）と共用している。
+  prometheus:
+    image: prom/prometheus:v3.9.1
+    container_name: coffee-app-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - backend
+      - fastapi
+
 volumes:
   mongodb_data:

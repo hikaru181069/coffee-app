@@ -4896,6 +4896,40 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-27: Prometheusを導入（backend・fastapiの`/metrics`をスクレイピング）
+
+**実装対象**: backend（Express）・fastapi-serviceそれぞれに`GET /metrics`を追加し、Prometheusコンテナが両方をスクレイピングする構成を、開発用・本番相当（ローカル再現）の両方のdocker-composeへ追加した。
+
+**なぜ今実装するのか**: ユーザーから「prometheusを導入してください。ディレクトリは作成済みです（`monitoring/prometheus`）」という明示的な依頼。AWS本番リリースに向けたDocker仕上げ（2026-09-23〜25の一連のエントリ）の延長として、監視の土台を整える位置付け。
+
+**新規作成ファイル**:
+- `monitoring/prometheus/prometheus.yml`（スクレイピング設定。開発用・本番相当の両docker-composeで共用）
+- `backend/middleware/metrics.js`（Node.jsランタイムの標準メトリクス＋HTTPリクエストのレイテンシを収集）
+- `fastapi-service/tests/test_metrics.py`
+
+**変更ファイル**: `backend/app.js`（`GET /metrics`追加、`metricsMiddleware`をルート登録より前に配置）・`backend/package.json`（`@prometheus-io/client`追加）・`backend/tests/app.test.js`（`/metrics`の2テスト追加）・`fastapi-service/main.py`（`Instrumentator`で`GET /metrics`を追加）・`fastapi-service/requirements.txt`（`prometheus-fastapi-instrumentator`追加）・`docker-compose.yml`・`docker-compose.prod.yml`（`prometheus`サービス追加）・`docs/architecture.md`（「Prometheus（監視）」節を新設）・`README.md`・`DEPLOYMENT.md`
+
+**`prom-client`ではなく`@prometheus-io/client`を使った理由**: `npm install prom-client`時に「`prom-client`は`@prometheus-io/client`に置き換えられた」という非推奨メッセージが出た。実際に調べたところ、Prometheus公式（`prombot`・`julius.volz@promlabs.com`等のメンテナ）がAPIを完全互換のまま引き継いだ後継パッケージだった（READMEに「This package was previously published as `prom-client`」と明記、`Registry`/`Histogram`/`collectDefaultMetrics`等のAPIが同一であることを実機で確認済み）。新規実装のため、非推奨のまま使い始めるのではなく後継の方を採用した。
+
+**カーディナリティへの配慮**: HTTPリクエストのレイテンシを計測するヒストグラムのラベル（`route`）は、`req.route.path`（例: `/api/coffee-records/:recordId`）が無いリクエスト（＝マッチするルートが無かった404）では、生の`req.path`ではなく固定文字列`"unmatched"`にフォールバックする。存在しないURLを次々叩かれた場合に、ラベルの組み合わせが際限なく増えてしまう（カーディナリティ爆発）ことを避けるため。
+
+**`/metrics`に認証を付けない理由**: 本番でもbackend・fastapiのポートはホストへ非公開（コンテナ間通信のみ）で、frontendのnginxも`/metrics`を`/api/`同様にはプロキシしないため、外部から直接到達することが無い。Prometheus自体も同じdocker composeネットワーク内から到達する前提のため、追加の認証は現時点では設けていない。
+
+**開発中に見つかった不具合（Dockerの既知の挙動）**: `docker compose build backend` → `docker compose up -d`という手順で依存関係（`@prometheus-io/client`）を追加したはずのbackendコンテナが起動時に`ERR_MODULE_NOT_FOUND`でクラッシュした。原因は、`docker-compose.yml`のbackendサービスが持つ匿名volume（`/app/node_modules`、ホストのソースコードでnode_modulesが上書きされないための保護）が、コンテナ再作成をまたいで古い内容のまま残っていたこと（イメージ自体は新しい依存関係を含めて正しくビルドされていたが、起動時にこの古いvolumeで上書きされていた）。`docker compose up -d --force-recreate --renew-anon-volumes backend`で新しい匿名volumeを強制的に作り直すことで解消した。**今後、backend/frontendのnpm依存関係を追加・変更した際は、通常の`docker compose build && up -d`だけでは反映されない場合があることに注意**（`--renew-anon-volumes`が必要になる、この開発環境固有の既知の挙動として記録しておく）。
+
+**ポート競合**: 当初、本番相当（`docker-compose.prod.yml`）のPrometheusも開発用と同じホスト9090番を使う設定にしたところ、開発用スタックを起動したまま本番相当スタックを起動する実機検証で「port is already allocated」エラーが発生した。他のサービス（backend/frontend等）と同じ理由（他プロジェクトとの重複回避）で、本番相当側は9091番へ変更して解消した。
+
+**データフロー**: `docs/architecture.md`「Prometheus（監視）」節に図を追加した。Prometheusが15秒間隔で`backend:5001/metrics`・`fastapi:8000/metrics`をスクレイピングするだけで、既存のリクエストフロー（React→Express→MongoDB、Express→FastAPI）には一切影響しない。
+
+**実行したテストと結果**:
+- `backend`: `npm run test` 580件全て成功（`/metrics`の新規テスト2件を含む）
+- `fastapi-service`: `pytest` 10件全て成功（`/metrics`の新規テスト1件を含む）
+- Docker: 開発用・本番相当（ローカル再現）の両方のスタックを実際に同時起動し、Prometheusの管理画面（`http://localhost:9090`・`http://localhost:9091`）でbackend・fastapi・Prometheus自身の3ターゲットが全てUPになることをそれぞれ確認した（claude-in-chromeで開発用の管理画面を実際に開いて目視確認済み）
+
+**未解決事項**: 実際のAWS本番でPrometheusをどう構成するか（Amazon Managed Service for Prometheus、VPN経由のアクセス制限等）は未検討。Grafana等の可視化ダッシュボードも未導入（Prometheus自体の簡易グラフ機能のみ）。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -4957,3 +4991,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 14. 2026-09-19のバックフィル（同エントリ参照）で発覚した「スキーマ変更時のバックフィル忘れ」を防ぐ一般的な運用（マイグレーション手順のチェックリスト化等）は未検討
 15. 2026-09-23、Docker本番化（該当エントリ参照）の次フェーズ: AWSアカウントの作成、ECS/ECR等へのIaC整備、Secrets Managerでの秘密情報管理、実際のAWSへのデプロイ
 16. 2026-09-25、Graph Communities機能（該当エントリ参照）の検討時に候補として挙がった「味覚ベクトル（6軸）の類似度計算」は今回見送った。fastAPIをさらに活用する2つ目の案として残っている
+17. 2026-09-27、Prometheus導入（該当エントリ参照）はローカルのDocker構成のみで、実際のAWS本番でどう監視を構成するか（Amazon Managed Service for Prometheus、VPN経由のアクセス制限等）・Grafana等の可視化ダッシュボード導入は未着手
