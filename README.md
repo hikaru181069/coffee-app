@@ -236,6 +236,14 @@ MongoDB / FastAPI / Backend / Frontend / Prometheus / Grafana の6サービス�
 
 ソースコードを編集するとホットリロード（nodemon / Vite / uvicorn --reload）で反映されます。停止は `docker compose down`（`-v` を付けるとDBのデータも削除）。
 
+負荷テスト（k6）は上記5サービスと違い常駐させず、必要な時だけ実行します。
+
+```bash
+docker compose run --rm k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+```
+
+結果はGrafanaの「k6 Load Test」ダッシュボード（`monitoring/grafana/provisioning/dashboards/k6-load-test.json`）でリアルタイムに見られます。「Coffee App Overview」のBackend Memory・Request Rateと同時に見ると、負荷がbackend側にどう跳ね返るかも確認できます。
+
 ### 本番相当の動きをローカルで再現する
 
 AWSへのリリース準備の一環で、`docker-compose.yml`（開発用）とは別に `docker-compose.prod.yml` を用意しています。frontendはVite開発サーバーではなくビルド済みファイルをnginxで配信し、backend/fastapiもホットリロード無しの本番相当の起動方法（`npm ci --omit=dev` / `--reload`無し）になります。**AWSアカウントは不要**で、手元のPCだけで完結します。
@@ -253,6 +261,12 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend npm 
 - backend・fastapi・MongoDBはコンテナ間通信のみで、ホストへは公開しません。nginx（frontend）が`/api/`宛のリクエストをbackendへリバースプロキシするため、ブラウザからbackendへ直接アクセスする必要が無くなりました
 - Prometheus: http://localhost:9091（backend・fastapiの`/metrics`を収集。開発用`docker-compose.yml`のPrometheus（9090番）と同時に動かせるよう、本番相当の方はポートをずらしています）
 - Grafana: http://localhost:3001（ログイン: `admin` / `.env.prod`の`GRAFANA_ADMIN_PASSWORD`。開発用（3000番）と同時に動かせるようポートをずらしています）
+
+負荷テスト（k6）はnginxのリバースプロキシ経由（実際のブラウザと同じ経路）で実行されます。
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+```
 
 停止は `docker compose -f docker-compose.prod.yml --env-file .env.prod down`（`-v` を付けるとDBのデータも削除）。
 

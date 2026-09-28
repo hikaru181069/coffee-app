@@ -9,6 +9,8 @@ react -> express -> MongoDB
 
 prometheus --(scrape /metrics)--> express, fastAPI
 grafana --(query)--> prometheus
+k6 --(load test)--> express (dev) / nginx (prod)
+k6 --(remote_write)--> prometheus
 ```
 
 ## Responsibility
@@ -78,6 +80,37 @@ Grafana自体は`grafana-oss`イメージ（エンタープライズ機能を含
 本番相当は`.env.prod`の`GRAFANA_ADMIN_PASSWORD`で必須指定する
 （`${VAR:?...}`の書き方もJWT_SECRETと同じ）。開発用・本番相当は
 ホスト側ポート（3000番・3001番）を分けて両立できる。
+
+### k6（負荷テスト）
+
+2026-09、実際にアプリへ負荷をかけて動作・性能を確認するために導入した。
+Prometheus・Grafanaと違い常駐させる意味が無いサービスのため、
+`docker-compose.yml`・`docker-compose.prod.yml`どちらでも
+`profiles: ["load-test"]`を付け、`docker compose up`では起動せず、
+明示的に呼び出したときだけ動くようにしている。
+
+```bash
+# 開発用
+docker compose run --rm k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+
+# 本番相当（ローカル再現）
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+```
+
+`monitoring/k6/scripts/smoke-test.js`は、ログイン→記録一覧・知識グラフ・
+統計・マスターデータの閲覧という主要な閲覧フローを5仮想ユーザーで
+30秒間繰り返す。`-o experimental-prometheus-rw`で、結果をリアルタイムに
+Prometheusへ送る（`K6_PROMETHEUS_RW_SERVER_URL`）。これを受け取るため、
+Prometheus自体にも`--web.enable-remote-write-receiver`フラグを追加した
+（既定では無効）。結果はGrafanaの「k6 Load Test」ダッシュボード
+（`monitoring/grafana/provisioning/dashboards/k6-load-test.json`）で見られ、
+「coffee-app-overview」ダッシュボードのBackend Memory・Request Rateと
+同時に見ることで、負荷がbackend側にどう跳ね返るかも確認できる。
+
+dev/prodでAPIの入口が異なる（dev: backendコンテナへ直接、prod: frontend
+のnginx経由）ため、`BASE_URL`環境変数で切り替えている。prod側をnginx
+経由にしているのは、実際にブラウザが叩く経路と同じにすることで、
+リバースプロキシを挟んだ分のオーバーヘッドも含めて計測するため。
 
 ## Request Flow: Create Record
 

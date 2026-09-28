@@ -101,6 +101,12 @@ services:
   prometheus:
     image: prom/prometheus:v3.9.1
     container_name: coffee-app-prometheus-prod
+    # 開発用docker-compose.ymlのprometheusサービスのコメント参照
+    # （k6の負荷テスト結果をリアルタイムに受け取るためのフラグ）。
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-remote-write-receiver"
     ports:
       # 開発用（docker-compose.yml）のPrometheusが既にホスト側9090番を
       # 使っているため、他のサービス（backend/frontend等）と同じ理由で
@@ -132,6 +138,28 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
+
+  # 開発用docker-compose.ymlのk6サービスのコメント参照（常駐しない、
+  # profilesで`up`の対象から外している）。
+  #
+  # 実行方法:
+  #   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+  #
+  # BASE_URLは開発用と違い、backendへ直接ではなくfrontend（nginxの
+  # リバースプロキシ）経由にしている。実際のブラウザが叩く経路と同じに
+  # することで、nginxを挟んだ分のオーバーヘッドも含めて計測するため。
+  k6:
+    image: grafana/k6:2.3.0
+    container_name: coffee-app-k6-prod
+    profiles: ["load-test"]
+    volumes:
+      - ./monitoring/k6/scripts:/scripts:ro
+    environment:
+      BASE_URL: http://frontend/api
+      K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
+    depends_on:
+      - frontend
+      - prometheus
 
 volumes:
   mongodb_prod_data:

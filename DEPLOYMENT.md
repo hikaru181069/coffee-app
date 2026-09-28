@@ -14,11 +14,11 @@ coffee-appを本番環境（MongoDB Atlas + Render + Vercel）へデプロイす
 > 「本番相当の動きをローカルで再現する」参照。このドキュメント自体は、
 > AWS移行が完了するまでは現行構成の記録として引き続き有効。
 >
-> 2026-09、監視（Prometheus・可視化のGrafana）もローカルのDocker構成へ
-> 追加した（`docs/architecture.md`「Prometheus（監視）」「Grafana（可視化）」
-> 参照）。現行のVercel + Render + MongoDB Atlas構成には組み込んでおらず、
-> AWS移行後の監視構成（Amazon Managed Service for Prometheus/Grafana等）
-> も未検討。
+> 2026-09、監視（Prometheus・可視化のGrafana・負荷テストのk6）もローカルの
+> Docker構成へ追加した（`docs/architecture.md`「Prometheus（監視）」
+> 「Grafana（可視化）」「k6（負荷テスト）」参照）。現行のVercel + Render +
+> MongoDB Atlas構成には組み込んでおらず、AWS移行後の監視構成（Amazon
+> Managed Service for Prometheus/Grafana等）も未検討。
 
 ## 全体構成
 

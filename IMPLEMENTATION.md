@@ -4977,6 +4977,36 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-28（追記2）: k6を導入（負荷テスト結果をPrometheus/Grafanaへリアルタイム連携）
+
+**実装対象**: k6（負荷テストツール）を開発用・本番相当（ローカル再現）の両方のdocker-composeへ追加した。実際のAPIを叩くテストスクリプト（`monitoring/k6/scripts/smoke-test.js`）と、結果を見るGrafanaダッシュボード（`k6-load-test.json`）もあわせて用意した。
+
+**なぜ今実装するのか**: ユーザーから「k6を導入します」という明示的な依頼。Prometheus・Grafanaに続く監視まわりの整備の一環。
+
+**設計判断: k6の結果をPrometheusへリアルタイム送信する**: k6はデフォルトで実行後にサマリーをターミナルへ出すだけだが、`-o experimental-prometheus-rw`（Prometheusのremote-write）を使うことで、負荷をかけている最中の様子をリアルタイムにGrafanaで見られるようにした。これを受け取るため、Prometheus自体にも`--web.enable-remote-write-receiver`フラグを追加した（デフォルト無効）。この構成により、k6の「Requests per second」「Error Rate」と、backend自身の「coffee-app-overview」ダッシュボード（Request Rate・Backend Memory）を同時に見比べられる＝負荷が実際にbackend側にどう跳ね返るかを確認できる、という一貫したストーリーになっている。
+
+**k6は常駐サービスではない**: Prometheus/Grafanaと違い「ずっと動いている」意味が無いため、`profiles: ["load-test"]`を付けて`docker compose up`の対象から外した（呼び出す側が`docker compose run --rm k6 run ...`のように明示的に指定したときだけ動く）。
+
+**dev/prodでBASE_URLを分けた理由**: devはbackendコンテナへ直接（`http://backend:5001/api`）、本番相当は`frontend`（nginxのリバースプロキシ）経由（`http://frontend/api`）にした。実際のブラウザが叩く経路と揃えることで、nginxを挟んだ分のオーバーヘッドも含めて計測するため（2026-09-25のリバースプロキシ格上げの延長線上にある判断）。
+
+**実機検証で見つけた不具合（k6スクリプト自身のバグ）**: 最初の実装では、`default`関数（各VU・各イテレーションで毎回呼ばれる）の中で毎回ログインし、ログイン失敗時は`sleep()`を通らず即座に次のイテレーションへ入るようになっていた。実際に5 VU・30秒で実行したところ、`checks_succeeded`が0.01%（31万件中50件）という壊滅的な結果になった。原因を調べたところ、この「失敗時にsleepしない」バグにより1秒未満でログインの再試行が殺到し、backendのブルートフォース対策レート制限（`backend/middleware/rateLimiter.js`、**15分あたり10回まで**）を数百ミリ秒で使い切ってしまい、以降ほぼ全リクエストが429（Too Many Requests）になっていた。ログインをイテレーションごとではなくk6の`setup()`（テスト開始時に1回だけ実行される）へ移し、実際のユーザーが一度ログインしたらセッションを使い続ける挙動に合わせて修正した。修正後は`checks_succeeded`100%・`http_req_failed`0%・p95=81.52msで、thresholds（`http_req_failed rate<0.01`・`http_req_duration p(95)<800ms`）も両方合格した。バグが原因で発動したレート制限は15分間解除されないため、`docker compose restart backend`でExpressの（メモリ内に保持される）レート制限状態をリセットして再検証した。
+
+**新規作成ファイル**:
+- `monitoring/k6/scripts/smoke-test.js`（ログイン→記録一覧・知識グラフ・統計・マスターデータの閲覧を5 VU・30秒で繰り返すシナリオ）
+- `monitoring/grafana/provisioning/dashboards/k6-load-test.json`（Active VUs・Error Rate・p99 Latency・Requests per secondの4パネル）
+
+**変更ファイル**: `docker-compose.yml`・`docker-compose.prod.yml`（`k6`サービス追加、`prometheus`サービスに`--web.enable-remote-write-receiver`フラグ追加）・`docs/architecture.md`（「k6（負荷テスト）」節を新設、System Overview図も更新）・`README.md`・`DEPLOYMENT.md`
+
+**実行したテストと結果**:
+- 開発用スタックで実際に`docker compose run --rm k6 run -o experimental-prometheus-rw /scripts/smoke-test.js`を実行し、上記の不具合発見→修正→再検証（100%成功・thresholds合格）まで一通り確認した
+- 本番相当（ローカル再現、nginx経由）でも同じスクリプトを実行し、同様に100%成功（p95=73.53ms）することを確認した
+- Prometheusに`k6_`プレフィックスの16種類のメトリクス（`k6_http_reqs_total`・`k6_vus`等）が実際に書き込まれていることをPrometheus API（`/api/v1/label/__name__/values`）で確認した
+- Grafanaの「k6 Load Test」ダッシュボードが自動プロビジョニングされることをAPIで確認した上で、k6を実行しながらclaude-in-chromeで実際にダッシュボードを開き、Active VUs・Requests per second等が実データで描画されることをブラウザで目視確認した
+
+**未解決事項**: より重い負荷（stress test相当）のシナリオは未作成（現状は「実際の使われ方を再現し続ける」程度のsmoke/load testのみ）。k6のGrafanaダッシュボードは、同じテストを複数回実行すると過去の実行分のスカラー値が同じ時間範囲内に混在して見える（k6が実行ごとに異なる内部ラベルを付けるため）。実運用上は「直近の実行結果を見る」用途では支障が無いため対応は見送ったが、testid等でのフィルタリングは今後の改善候補として残る。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -5038,4 +5068,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 14. 2026-09-19のバックフィル（同エントリ参照）で発覚した「スキーマ変更時のバックフィル忘れ」を防ぐ一般的な運用（マイグレーション手順のチェックリスト化等）は未検討
 15. 2026-09-23、Docker本番化（該当エントリ参照）の次フェーズ: AWSアカウントの作成、ECS/ECR等へのIaC整備、Secrets Managerでの秘密情報管理、実際のAWSへのデプロイ
 16. 2026-09-25、Graph Communities機能（該当エントリ参照）の検討時に候補として挙がった「味覚ベクトル（6軸）の類似度計算」は今回見送った。fastAPIをさらに活用する2つ目の案として残っている
-17. 2026-09-27〜28、Prometheus・Grafana導入（該当エントリ参照）はローカルのDocker構成のみで、実際のAWS本番でどう監視を構成するか（Amazon Managed Service for Prometheus/Grafana、VPN経由のアクセス制限等）は未着手。MongoDB自体のメトリクス（mongodb_exporter等）・アラート設定も未着手
+17. 2026-09-27〜28、Prometheus・Grafana・k6導入（該当エントリ参照）はローカルのDocker構成のみで、実際のAWS本番でどう監視・負荷テストを構成するか（Amazon Managed Service for Prometheus/Grafana、VPN経由のアクセス制限等）は未着手。MongoDB自体のメトリクス（mongodb_exporter等）・アラート設定も未着手。k6はsmoke/load test程度の軽い負荷のみで、stress testシナリオは未作成

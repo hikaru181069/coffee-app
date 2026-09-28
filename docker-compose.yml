@@ -78,6 +78,13 @@ services:
   prometheus:
     image: prom/prometheus:v3.9.1
     container_name: coffee-app-prometheus
+    # 既定のCMD（--config.file・--storage.tsdb.path）はcommand:で上書きすると
+    # 消えるため明示的に引き継いだ上で、k6の結果をリアルタイムに送り込める
+    # よう--web.enable-remote-write-receiverを追加する（既定では無効）。
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-remote-write-receiver"
     ports:
       - "9090:9090"
     volumes:
@@ -106,6 +113,30 @@ services:
       # 個別に設定させる。
       GF_SECURITY_ADMIN_PASSWORD: admin
     depends_on:
+      - prometheus
+
+  # 2026-09、負荷テスト用に追加。Prometheus/Grafanaと違い常駐させる
+  # 意味が無いサービスのため、profilesで`docker compose up`の対象から
+  # 外している（呼び出す側が明示的に指定したときだけ動く）。
+  #
+  # 実行方法:
+  #   docker compose run --rm k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+  #
+  # -o experimental-prometheus-rwで、結果をリアルタイムにPrometheusへ
+  # 送る（K6_PROMETHEUS_RW_SERVER_URL）。Grafanaの「k6 Load Test」
+  # ダッシュボードで見られる（monitoring/grafana/provisioning/dashboards/
+  # k6-load-test.json）。
+  k6:
+    image: grafana/k6:2.3.0
+    container_name: coffee-app-k6
+    profiles: ["load-test"]
+    volumes:
+      - ./monitoring/k6/scripts:/scripts:ro
+    environment:
+      BASE_URL: http://backend:5001/api
+      K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
+    depends_on:
+      - backend
       - prometheus
 
 volumes:
