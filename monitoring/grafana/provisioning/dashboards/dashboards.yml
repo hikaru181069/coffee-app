@@ -1,0 +1,14 @@
+# このディレクトリに置いたダッシュボードJSONを、Grafana起動時に
+# 自動で読み込ませるための設定（データソースのprovisioningと同じ考え方）。
+
+apiVersion: 1
+
+providers:
+  - name: "Coffee App"
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards

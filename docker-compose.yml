@@ -86,5 +86,28 @@ services:
       - backend
       - fastapi
 
+  # 2026-09、Prometheusが集めたメトリクスを見るためのダッシュボード。
+  # データソース・ダッシュボード（monitoring/grafana/provisioning/）を
+  # 起動時に自動で読み込むため、手動でのGUI設定は不要
+  # （http://localhost:3000 を開いてログインするだけでよい）。
+  grafana:
+    image: grafana/grafana-oss:13.0.2
+    container_name: coffee-app-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      # ダッシュボードの手動編集・ユーザー設定等、Grafana自身が持つ状態
+      # （SQLite）を永続化する（mongodb_dataと同じ考え方）。
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      # ローカル開発専用の値（JWT_SECRETの開発用値と同じ扱い）。
+      # 本番相当（docker-compose.prod.yml）では必須の環境変数として
+      # 個別に設定させる。
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    depends_on:
+      - prometheus
+
 volumes:
   mongodb_data:
+  grafana_data:

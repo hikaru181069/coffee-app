@@ -1,0 +1,20 @@
+# Grafana起動時に、手動でデータソースを追加しなくても済むよう
+# 自動設定する（Grafana用語で「プロビジョニング」）。
+#
+# uidを固定値("prometheus")にしているのは、
+# monitoring/grafana/provisioning/dashboards/coffee-app-overview.json の
+# 各パネルがこのuidを直接参照しているため。UIから手動で追加した場合は
+# ランダムなuidが割り振られ、ダッシュボード側と一致しなくなる。
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    # "prometheus"はdocker composeのサービス名。Grafanaも同じネットワーク
+    # 内で動くため、コンテナ名で到達できる（他のサービス間通信と同じ）。
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false

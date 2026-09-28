@@ -4930,6 +4930,37 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-28: Grafanaを導入（Prometheusのデータソース・ダッシュボードを自動プロビジョニング）
+
+**実装対象**: Prometheusが集めたメトリクスを見るためのGrafanaコンテナを、開発用・本番相当（ローカル再現）の両方のdocker-composeへ追加した。データソース（Prometheus）とダッシュボード（backend・fastapiのTargets Up / Request Rate / p95 Latencyの3パネル）はどちらも起動時に自動読み込みされる「プロビジョニング」で設定し、GUIでの手動セットアップを不要にした。
+
+**なぜ今実装するのか**: ユーザーから「次はGrafanaを導入します」という明示的な依頼。前日のPrometheus導入（該当エントリ参照）の自然な続き。
+
+**新規作成ファイル**:
+- `monitoring/grafana/provisioning/datasources/prometheus.yml`（Prometheusデータソースの自動設定。`uid: prometheus`を固定値にし、ダッシュボードJSON側から参照できるようにした）
+- `monitoring/grafana/provisioning/dashboards/dashboards.yml`（ダッシュボードプロバイダ設定）
+- `monitoring/grafana/provisioning/dashboards/coffee-app-overview.json`（ダッシュボード本体、3パネル）
+
+**変更ファイル**: `docker-compose.yml`・`docker-compose.prod.yml`（`grafana`サービス・ボリューム追加）・`.env.prod.example`（`GRAFANA_ADMIN_PASSWORD`追加）・`docs/architecture.md`（「Grafana（可視化）」節を新設、System Overview図も更新）・`README.md`・`DEPLOYMENT.md`
+
+**ダッシュボードの設計**: backend（`@prometheus-io/client`）・fastapi（`prometheus-fastapi-instrumentator`）のどちらも、HTTPリクエストのヒストグラムを同じメトリクス名`http_request_duration_seconds`で公開している（2026-09-27のPrometheus導入時に偶然ではなく意図して揃えた）。このおかげで、`sum by (job) (rate(http_request_duration_seconds_count[5m]))`のような1つのPromQLクエリだけで、両サービスを`job`ラベルで並べて表示できる（サービスごとに別々のクエリ・別々のパネルを用意する必要が無い）。
+
+**認証・ポートの扱い**: JWT_SECRETと同じパターンを踏襲した。開発用は固定値（`docker-compose.yml`の`GF_SECURITY_ADMIN_PASSWORD: admin`）、本番相当は`.env.prod`の`GRAFANA_ADMIN_PASSWORD`を`${VAR:?...}`で必須指定させる。ポートは開発用3000番・本番相当3001番（Prometheusの9090/9091番と同じ「開発用と本番相当を同時に動かせるようにする」理由でずらした）。
+
+**イメージの選定**: `grafana/grafana-oss`（エンタープライズ機能を一切含まない、純粋なOSSビルド）を使った。`grafana/grafana`（無印）はエンタープライズプラグインを同梱しつつライセンス無しでは無効化される構成のため、「完全に無料の機能だけで構成している」ことを明確にするため`-oss`を明示的に選んだ。
+
+**データフロー**: `docs/architecture.md`「Grafana（可視化）」節・System Overview図に追加した。GrafanaはPrometheusへクエリを投げるだけで、backend・fastapi・MongoDBのリクエストフローには一切関与しない。
+
+**実行したテストと結果**:
+- Docker: 開発用・本番相当（ローカル再現）の両方でGrafanaを実際に起動し、`GET /api/health`が200を返すことを確認
+- データソース・ダッシュボードのプロビジョニングが実際に読み込まれているか、Grafana REST API（`GET /api/datasources`・`GET /api/search`）で両環境それぞれ確認した（uid`prometheus`のデータソース1件、uid`coffee-app-overview`のダッシュボード1件）
+- backend・fastapiへ実際にリクエストを送ってメトリクスを発生させたうえで、claude-in-chromeで開発用Grafana（`http://localhost:3000`）へ実際にログインし、ダッシュボードの「Targets Up」（backend=緑/UP）・「Request Rate」（backend・fastapiとも実測値を表示）パネルが実データで描画されることをブラウザで目視確認した
+- 単体テスト（backend/fastapi-service/frontend）はこの変更で対象コードに変更が無いため実行不要と判断（設定ファイル・docker-compose追加のみ）
+
+**未解決事項**: 実際のAWS本番でGrafanaをどう構成するか（Amazon Managed Grafana等）は未検討。ダッシュボードは3パネルの最小構成で、MongoDB自体のメトリクス（mongodb_exporter等）やアラート設定は未着手。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -4991,4 +5022,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 14. 2026-09-19のバックフィル（同エントリ参照）で発覚した「スキーマ変更時のバックフィル忘れ」を防ぐ一般的な運用（マイグレーション手順のチェックリスト化等）は未検討
 15. 2026-09-23、Docker本番化（該当エントリ参照）の次フェーズ: AWSアカウントの作成、ECS/ECR等へのIaC整備、Secrets Managerでの秘密情報管理、実際のAWSへのデプロイ
 16. 2026-09-25、Graph Communities機能（該当エントリ参照）の検討時に候補として挙がった「味覚ベクトル（6軸）の類似度計算」は今回見送った。fastAPIをさらに活用する2つ目の案として残っている
-17. 2026-09-27、Prometheus導入（該当エントリ参照）はローカルのDocker構成のみで、実際のAWS本番でどう監視を構成するか（Amazon Managed Service for Prometheus、VPN経由のアクセス制限等）・Grafana等の可視化ダッシュボード導入は未着手
+17. 2026-09-27〜28、Prometheus・Grafana導入（該当エントリ参照）はローカルのDocker構成のみで、実際のAWS本番でどう監視を構成するか（Amazon Managed Service for Prometheus/Grafana、VPN経由のアクセス制限等）は未着手。MongoDB自体のメトリクス（mongodb_exporter等）・アラート設定も未着手

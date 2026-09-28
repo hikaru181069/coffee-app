@@ -113,5 +113,26 @@ services:
       - fastapi
     restart: unless-stopped
 
+  # データソース・ダッシュボードは開発用と同じprovisioning設定を共用する
+  # （monitoring/grafana/provisioning/参照）。
+  grafana:
+    image: grafana/grafana-oss:13.0.2
+    container_name: coffee-app-grafana-prod
+    ports:
+      # 開発用（docker-compose.yml）のGrafanaが既にホスト側3000番を
+      # 使っているため、Prometheusと同じ理由で別番号を割り当てる。
+      - "3001:3000"
+    volumes:
+      - grafana_prod_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      # JWT_SECRETと同じ書き方: 値が渡されていなければ即エラーで止める
+      # （開発用のように値を直書きしない）。
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required. Copy .env.prod.example to .env.prod and set it.}
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 volumes:
   mongodb_prod_data:
+  grafana_prod_data:

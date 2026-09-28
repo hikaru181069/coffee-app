@@ -224,12 +224,13 @@ cd coffee-app
 docker compose up -d --build
 ```
 
-MongoDB / FastAPI / Backend / Frontend / Prometheus の5サービスが起動します。環境変数は `docker-compose.yml` にローカル開発専用の値が定義済みなので、`.env` の用意は不要です。
+MongoDB / FastAPI / Backend / Frontend / Prometheus / Grafana の6サービスが起動します。環境変数は `docker-compose.yml` にローカル開発専用の値が定義済みなので、`.env` の用意は不要です。
 
 - Frontend: http://localhost:5174
 - Backend: http://localhost:5002
 - FastAPI: http://localhost:8001
 - Prometheus: http://localhost:9090（backend・fastapiの`/metrics`を収集。`monitoring/prometheus/prometheus.yml`参照）
+- Grafana: http://localhost:3000（ログイン: `admin` / `admin`。Prometheusのダッシュボードをプロビジョニング済み、`monitoring/grafana/provisioning/`参照）
 
 > ポート番号は `docker-compose.yml` のホスト側ポートに合わせています。他のプロジェクトと被らなければ、5173/5001/8000のような一般的な番号に変更しても構いません。
 
@@ -240,7 +241,7 @@ MongoDB / FastAPI / Backend / Frontend / Prometheus の5サービスが起動し
 AWSへのリリース準備の一環で、`docker-compose.yml`（開発用）とは別に `docker-compose.prod.yml` を用意しています。frontendはVite開発サーバーではなくビルド済みファイルをnginxで配信し、backend/fastapiもホットリロード無しの本番相当の起動方法（`npm ci --omit=dev` / `--reload`無し）になります。**AWSアカウントは不要**で、手元のPCだけで完結します。
 
 ```bash
-cp .env.prod.example .env.prod   # JWT_SECRETを自分の値に書き換える
+cp .env.prod.example .env.prod   # JWT_SECRET・GRAFANA_ADMIN_PASSWORDを自分の値に書き換える
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 
 # 初回だけ、マスターデータ・デモデータを投入
@@ -251,6 +252,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend npm 
 - Frontend: http://localhost:8080（ブラウザから見えるのはこの1つだけ）
 - backend・fastapi・MongoDBはコンテナ間通信のみで、ホストへは公開しません。nginx（frontend）が`/api/`宛のリクエストをbackendへリバースプロキシするため、ブラウザからbackendへ直接アクセスする必要が無くなりました
 - Prometheus: http://localhost:9091（backend・fastapiの`/metrics`を収集。開発用`docker-compose.yml`のPrometheus（9090番）と同時に動かせるよう、本番相当の方はポートをずらしています）
+- Grafana: http://localhost:3001（ログイン: `admin` / `.env.prod`の`GRAFANA_ADMIN_PASSWORD`。開発用（3000番）と同時に動かせるようポートをずらしています）
 
 停止は `docker compose -f docker-compose.prod.yml --env-file .env.prod down`（`-v` を付けるとDBのデータも削除）。
 

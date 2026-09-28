@@ -8,6 +8,7 @@ react -> express -> MongoDB
            (fastAPI)
 
 prometheus --(scrape /metrics)--> express, fastAPI
+grafana --(query)--> prometheus
 ```
 
 ## Responsibility
@@ -59,6 +60,24 @@ nginxも`/metrics`を`/api/`同様にはプロキシしないため、外部か�
 ホスト9091番）の両方に追加している。実際のAWS本番でどう構成するか
 （Amazon Managed Service for Prometheus等）は未着手（IMPLEMENTATION.md
 参照）。
+
+### Grafana（可視化）
+
+2026-09、Prometheusが集めたメトリクスを見るために追加した。データ
+ソース（Prometheus）とダッシュボード（`monitoring/grafana/provisioning/
+dashboards/coffee-app-overview.json`）はどちらも起動時に自動で読み込む
+「プロビジョニング」で設定しており、GUIでの手動セットアップは不要
+（ブラウザでログインするだけでよい）。ダッシュボードは、backend・
+fastapiで同じメトリクス名（`http_request_duration_seconds`）を使って
+いることを利用し、1つのクエリで両サービスを並べて表示する
+（Targets Up・Request Rate・p95 Latencyの3パネル）。
+
+Grafana自体は`grafana-oss`イメージ（エンタープライズ機能を含まない、
+純粋なOSSビルド）を使う。管理者パスワードは開発用が固定値
+（`docker-compose.yml`の`admin`、JWT_SECRETの開発用値と同じ扱い）、
+本番相当は`.env.prod`の`GRAFANA_ADMIN_PASSWORD`で必須指定する
+（`${VAR:?...}`の書き方もJWT_SECRETと同じ）。開発用・本番相当は
+ホスト側ポート（3000番・3001番）を分けて両立できる。
 
 ## Request Flow: Create Record
 
