@@ -4,7 +4,7 @@
   "tags": ["coffee-app"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "10s",
   "time": { "from": "now-15m", "to": "now" },
   "panels": [
@@ -25,8 +25,14 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" } } },
-            { "type": "value", "options": { "1": { "text": "UP", "color": "green" } } }
+            {
+              "type": "value",
+              "options": { "0": { "text": "DOWN", "color": "red" } }
+            },
+            {
+              "type": "value",
+              "options": { "1": { "text": "UP", "color": "green" } }
+            }
           ],
           "thresholds": {
             "mode": "absolute",
@@ -79,6 +85,35 @@
       ],
       "fieldConfig": {
         "defaults": { "unit": "s" },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Backend Memory",
+      "description": "backendプロセスのメモリ使用量。RSS=OSから見た実際の使用量、Heap Total=V8が確保しているヒープ容量、Heap Used=実際に使用中のヒープ",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "process_resident_memory_bytes{job=\"backend\"}",
+          "legendFormat": "RSS"
+        },
+        {
+          "refId": "B",
+          "expr": "nodejs_heap_size_total_bytes{job=\"backend\"}",
+          "legendFormat": "Heap Total"
+        },
+        {
+          "refId": "C",
+          "expr": "nodejs_heap_size_used_bytes{job=\"backend\"}",
+          "legendFormat": "Heap Used"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" },
         "overrides": []
       }
     }

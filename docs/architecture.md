@@ -70,7 +70,7 @@ dashboards/coffee-app-overview.json`）はどちらも起動時に自動で読�
 （ブラウザでログインするだけでよい）。ダッシュボードは、backend・
 fastapiで同じメトリクス名（`http_request_duration_seconds`）を使って
 いることを利用し、1つのクエリで両サービスを並べて表示する
-（Targets Up・Request Rate・p95 Latencyの3パネル）。
+（Targets Up・Request Rate・p95 Latency・Backend Memoryの4パネル）。
 
 Grafana自体は`grafana-oss`イメージ（エンタープライズ機能を含まない、
 純粋なOSSビルド）を使う。管理者パスワードは開発用が固定値

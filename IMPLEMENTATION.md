@@ -4961,6 +4961,22 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-28（追記）: ダッシュボードへ「Backend Memory」パネルを追加
+
+**実装対象**: `coffee-app-overview.json`（Grafanaダッシュボード）に、backendプロセスのメモリ使用量を見る4枚目のパネルを追加した。
+
+**なぜ今実装するのか**: ユーザーから「backend memoryを追加してください」という明示的な依頼。
+
+**内容**: RSS（`process_resident_memory_bytes`、OSから見た実際のメモリ使用量）・Heap Total（`nodejs_heap_size_total_bytes`、V8が確保しているヒープ容量）・Heap Used（`nodejs_heap_size_used_bytes`、実際に使用中のヒープ）の3系列を1つの時系列パネルに重ねて表示する。単位は`bytes`（Grafanaが自動でKiB/MiB単位に換算して表示）。他のパネルの下（`gridPos.y: 14`）に全幅で配置した。`version`フィールドも1→2へ更新した。
+
+**変更ファイル**: `monitoring/grafana/provisioning/dashboards/coffee-app-overview.json`・`docs/architecture.md`（パネル数の記述を3→4へ修正）
+
+**実行したテストと結果**: JSONの構文検証（`python3 -m json.tool`）。Prometheusに`process_resident_memory_bytes{job="backend"}`が実際に値を持つことをAPIで確認。ダッシュボードのプロビジョニング再読み込み（`updateIntervalSeconds: 30`）を待ってGrafana APIでパネル数が4件になったことを確認。claude-in-chromeで開発用Grafanaを開き、「Backend Memory」パネルがRSS（約96MiB）・Heap Total（約32MiB）・Heap Used（約28MiB）の3本の線として実データで描画されることをブラウザで目視確認した。
+
+**未解決事項**: なし。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
