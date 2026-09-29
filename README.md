@@ -240,6 +240,9 @@ MongoDB / FastAPI / Backend / Frontend / Prometheus / Grafana の6サービス�
 
 ```bash
 docker compose run --rm k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+
+# 仮想ユーザー数・実行時間を変えたい場合（ファイルはコピーしない）
+docker compose run --rm -e VUS=20 -e DURATION=60s k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
 ```
 
 結果はGrafanaの「k6 Load Test」ダッシュボード（`monitoring/grafana/provisioning/dashboards/k6-load-test.json`）でリアルタイムに見られます。「Coffee App Overview」のBackend Memory・Request Rateと同時に見ると、負荷がbackend側にどう跳ね返るかも確認できます。

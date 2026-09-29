@@ -5007,6 +5007,38 @@ backend（Render, `coffee-app-backend-v6xq.onrender.com`）と同じDBを
 
 ---
 
+### 2026-09-29: k6のVU数・実行時間を環境変数で変更できるようにする
+
+**実装対象**: `smoke-test.js`の仮想ユーザー数（VU）・実行時間をハードコードではなく環境変数（`VUS`・`DURATION`）から読むように変更した。
+
+**なぜ今実装するのか**: ユーザーから「5VUから20VUに変えてみたいが、テストファイルをコピーした方が良いか」という質問。既存の`BASE_URL`・`DEMO_EMAIL`・`DEMO_PASSWORD`と同じ「環境変数で切り替える」パターンに揃え、ファイルをコピーせず1つのコマンドで済むようにすることを提案し、実装した。
+
+**変更内容**: `const VUS = Number(__ENV.VUS) || 5;`・`const DURATION = __ENV.DURATION || "30s";`を追加し、`options.scenarios.browsing`の`vus`・`duration`をこれらの変数から参照するようにした。
+
+```bash
+docker compose run --rm -e VUS=20 -e DURATION=60s k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+```
+
+**変更ファイル**: `monitoring/k6/scripts/smoke-test.js`・`README.md`
+
+**実行したテストと結果**: `docker compose run --rm -e VUS=20 k6 run -o experimental-prometheus-rw /scripts/smoke-test.js`を実際に実行し、`vus_max: 20`・`checks_succeeded: 100%`（2401件中2401件成功）を確認した。
+
+**未解決事項**: なし。
+
+---
+
+## 番外編（k6導入後のトラブルシューティング、2026-09-29）
+
+Prometheus/Grafana/k6を実際にユーザーが使い始めた際に発生した、実装バグではない運用上の混乱を記録として残す（今後同じ質問が出た際の参照用）。
+
+- **「`k6 version`がcommand not foundになる」**: k6はホストPCへは直接インストールしておらず、Dockerコンテナとしてのみ用意している。`docker compose run --rm k6 version`のように、必ず`docker compose run --rm k6`を先頭に付けて呼び出す必要がある。
+- **「Grafanaにログインできない」**: 開発用（3000番、`admin`/`admin`）と本番相当（3001番、`.env.prod`の`GRAFANA_ADMIN_PASSWORD`）でログイン情報が異なる。どちらのポートを開いているか確認する必要がある。
+- **「k6の結果がGrafanaのダッシュボードに出ない」**: k6は「実行している間だけ」Prometheusへ結果を送る仕組みで、Prometheusのスクレイピングのように継続送信されるものではない。ダッシュボードの既定表示範囲（Last 5 minutes等）に直近の実行が含まれていないと何も表示されない。
+- **「実行中のはずなのにRequests per secondだけNo dataだった」**: 実際に90秒の負荷テストを流しながら検証したが、パネル自体・PromQLクエリ自体には問題が無いことを確認した（同じ条件で再現せず、正常にリアルタイム描画された）。原因は「k6を実行→ブラウザでGrafanaを確認」という順番だと、通常のsmoke-test.js（30秒間しか実行されない）は確認する頃には終わっている、というタイミングの問題だった可能性が高い。ダッシュボードを先に開いてから負荷テストを実行する手順を案内した。
+- **「master-dataへのリクエストが401になっている」**: 上記のトラブルシューティング中に、認証を通さない使い捨ての診断用スクリプト（`diag-longrun.js`、既に削除済み）を90秒間実行してPrometheusへ送信してしまっていた。そのデータが「Last 1 hour」等の広い表示範囲に混在して見えていただけで、実際の`smoke-test.js`（ログイン処理を含む）には問題が無い。凡例の`scenario`ラベル（診断用は`default`、本物は`browsing`）で見分けられることを案内した。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証

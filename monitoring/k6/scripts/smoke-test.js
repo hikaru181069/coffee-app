@@ -20,14 +20,21 @@ const BASE_URL = __ENV.BASE_URL || "http://backend:5001/api";
 const DEMO_EMAIL = __ENV.DEMO_EMAIL || "demo@coffee-app.example";
 const DEMO_PASSWORD = __ENV.DEMO_PASSWORD || "coffeedemo123";
 
+// 仮想ユーザー数・実行時間も同様に環境変数で変えられるようにする。
+// 「もっと負荷をかけたい」ときにファイルをコピーせず、
+// 例: docker compose run --rm -e VUS=20 k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+// のようにコマンドだけで済ませるため。
+const VUS = Number(__ENV.VUS) || 5;
+const DURATION = __ENV.DURATION || "30s";
+
 // 「多人数で一気に叩く」ことより「実際に使われている状態を再現し続ける」
 // ことを目的にした軽めの設定（stress testではなくsmoke/load test）。
 export const options = {
   scenarios: {
     browsing: {
       executor: "constant-vus",
-      vus: 5,
-      duration: "30s",
+      vus: VUS,
+      duration: DURATION,
     },
   },
   thresholds: {
