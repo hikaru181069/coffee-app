@@ -1,7 +1,12 @@
-# Prometheusの設定ファイル。docker-compose.yml（開発用）・
-# docker-compose.prod.yml（本番相当のローカル再現）の両方から、
-# このファイルをそのままマウントして使う（環境ごとに内容を変える
-# 必要が無いため、1ファイルで共用している）。
+# Prometheusの設定ファイル（開発用docker-compose.yml専用）。
+#
+# 2026-09、本番相当（docker-compose.prod.yml）がbackendを3レプリカ
+# 構成にロードバランシングしたことで、スクレイピング対象のホスト名が
+# 開発用（backend:5001の1台）と異なってしまったため、
+# prometheus.prod.ymlへ分離した（docker-compose.yml/docker-compose.prod.yml
+# が既に別ファイルなのと同じ考え方）。job_name（"backend"等）は両ファイルで
+# 揃えているため、Grafanaのダッシュボード側（job="backend"で問い合わせる）
+# は変更不要。
 #
 # スクレイピング対象のホスト名（backend, fastapi）はDocker Composeの
 # サービス名。Prometheus自身も同じdocker composeネットワークの中で

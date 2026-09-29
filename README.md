@@ -268,6 +268,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend npm 
 
 - Frontend: http://localhost:8080（ブラウザから見えるのはこの1つだけ）
 - backend・fastapi・MongoDBはコンテナ間通信のみで、ホストへは公開しません。nginx（frontend）が`/api/`宛のリクエストをbackendへリバースプロキシするため、ブラウザからbackendへ直接アクセスする必要が無くなりました
+- backendは3レプリカ（backend1/2/3）構成で、nginxがラウンドロビンで振り分けます（`breakpoint-test.js`でVU100〜140あたりからレイテンシが悪化することが分かったため導入。効果は`docs/architecture.md`「k6（負荷テスト）」参照）
 - Prometheus: http://localhost:9091（backend・fastapiの`/metrics`を収集。開発用`docker-compose.yml`のPrometheus（9090番）と同時に動かせるよう、本番相当の方はポートをずらしています）
 - Grafana: http://localhost:3001（ログイン: `admin` / `.env.prod`の`GRAFANA_ADMIN_PASSWORD`。開発用（3000番）と同時に動かせるようポートをずらしています）
 

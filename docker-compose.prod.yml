@@ -28,6 +28,13 @@
 # 削除してから作り直してしまう（実機検証で実際に発生を確認した不具合）。
 # `name:`で別プロジェクト（コンテナ・ネットワーク・状態管理が別枠）に
 # することで、開発用と本番用を同時に安全に併存させられる。
+#
+# 2026-09、k6の負荷テスト（breakpoint-test.js）でVU100〜140あたりから
+# レイテンシが悪化することが分かったため、backendを3レプリカ
+# （backend1/2/3）構成にし、frontend（nginx）でロードバランシングする
+# ようにした（frontend/nginx.confのコメント参照）。開発用
+# docker-compose.ymlは引き続き単一のbackendのまま（ホットリロード中心の
+# 開発用途では複数台にする必要が無いため）。
 name: coffee-app-prod
 
 services:
@@ -50,21 +57,61 @@ services:
     container_name: coffee-app-fastapi-prod
     restart: unless-stopped
 
-  backend:
+  # 2026-09、負荷テスト（breakpoint-test.js）でVU100〜140あたりから
+  # レイテンシが悪化することが分かったため、ロードバランシングを
+  # 試すためにbackendを3つ（backend1/2/3）に増やした。以前は単一の
+  # `backend`サービスだったが、Composeの`--scale`はcontainer_name固定の
+  # サービスと相性が悪く、かつnginxのupstreamブロックは起動時に一度だけ
+  # DNS解決するため動的なレプリカ数と相性が悪い（Docker公式ドキュメントでも
+  # 既知の制約として説明されている）。そのため、台数をあらかじめ固定した
+  # 3つの独立したサービスとして明示的に定義する方式にした（YAMLの重複は
+  # 増えるが、確実に動く・挙動を説明しやすいという理由でこちらを選んだ）。
+  # 3つとも中身は完全に同一（同じイメージ・同じ環境変数）。
+  backend1:
     build:
       context: ./backend
       target: prod
     image: coffee-app-backend:prod
-    container_name: coffee-app-backend-prod
-    # ブラウザはfrontend（nginx）経由でしかbackendを呼ばなくなったため、
-    # ホストへポートを公開しない（コンテナ間通信のみ。上のコメント参照）。
+    container_name: coffee-app-backend1-prod
     environment:
       PORT: 5001
       MONGO_URI: mongodb://mongodb:27017/coffeeApp
       FASTAPI_URL: http://fastapi:8000
       FRONTEND_URL: http://localhost:8080
-      # ${JWT_SECRET:?...} は「JWT_SECRETが渡されていなければ即エラーで
-      # 止める」という書き方。開発用のようにファイルへ値を直書きしない。
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required. Copy .env.prod.example to .env.prod and set it.}
+    depends_on:
+      - mongodb
+      - fastapi
+    restart: unless-stopped
+
+  backend2:
+    build:
+      context: ./backend
+      target: prod
+    image: coffee-app-backend:prod
+    container_name: coffee-app-backend2-prod
+    environment:
+      PORT: 5001
+      MONGO_URI: mongodb://mongodb:27017/coffeeApp
+      FASTAPI_URL: http://fastapi:8000
+      FRONTEND_URL: http://localhost:8080
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required. Copy .env.prod.example to .env.prod and set it.}
+    depends_on:
+      - mongodb
+      - fastapi
+    restart: unless-stopped
+
+  backend3:
+    build:
+      context: ./backend
+      target: prod
+    image: coffee-app-backend:prod
+    container_name: coffee-app-backend3-prod
+    environment:
+      PORT: 5001
+      MONGO_URI: mongodb://mongodb:27017/coffeeApp
+      FASTAPI_URL: http://fastapi:8000
+      FRONTEND_URL: http://localhost:8080
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required. Copy .env.prod.example to .env.prod and set it.}
     depends_on:
       - mongodb
@@ -88,7 +135,9 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - backend
+      - backend1
+      - backend2
+      - backend3
     restart: unless-stopped
 
   # 2026-09、backend・fastapiの/metricsをスクレイピングするために追加
@@ -113,9 +162,15 @@ services:
       # 別番号を割り当てる（コンテナ内部は9090のまま）。
       - "9091:9090"
     volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # backendを3レプリカ構成にしたことで、開発用（backend:5001の1台）
+      # とスクレイピング対象のホスト名が変わったため、prometheus.ymlは
+      # 開発用・本番相当で別ファイルにした（docker-compose.ymlとdocker-
+      # compose.prod.ymlが既に別ファイルなのと同じ考え方）。
+      - ./monitoring/prometheus/prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
     depends_on:
-      - backend
+      - backend1
+      - backend2
+      - backend3
       - fastapi
     restart: unless-stopped
 

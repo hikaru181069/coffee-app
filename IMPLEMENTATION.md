@@ -5060,6 +5060,46 @@ Prometheus/Grafana/k6を実際にユーザーが使い始めた際に発生し�
 
 ---
 
+### 2026-09-29（追記2）: backendをロードバランシング（3レプリカ）し、breakpoint-test.jsで効果を実測
+
+**実装対象**: 上記のbreakpoint-test.jsで見つかった性能劣化（VU100〜140あたりからレイテンシ悪化）を実際に緩和できるか試すため、本番相当（`docker-compose.prod.yml`）のbackendを単一コンテナから3レプリカ（`backend1`/`backend2`/`backend3`）へ増やし、frontendのnginxでロードバランシング（ラウンドロビン）するようにした。
+
+**なぜ今実装するのか**: ユーザーから「ロードバランシングを試してみたいです。何をすれば良いですか？」という依頼。前日のbreakpoint-test.jsで実測した性能劣化に対する、具体的な対策の効果測定として位置付けた。
+
+**なぜレプリカを独立したサービスとして定義したか**: Docker Composeの`--scale`機能も検討したが、(1) `container_name`を固定しているサービスは`--scale`で複数台にできない、(2) nginxの静的`upstream`ブロックは起動時に1度だけDNS解決するため、動的に増減するレプリカ数（スケール後のコンテナ名はDocker Composeが動的に採番する）とは相性が悪い、という2点から、`backend1`/`backend2`/`backend3`という3つの独立したサービスをあらかじめ明示的に定義する方式にした。YAMLの重複は増えるが、確実に動作し、何が起きているか説明しやすいことを優先した。
+
+**変更内容**:
+- `docker-compose.prod.yml`: `backend`サービスを`backend1`/`backend2`/`backend3`（完全に同一の中身）へ複製。`frontend`・`prometheus`の`depends_on`を更新
+- `frontend/nginx.conf`: `upstream backend`ブロックに3台を列挙（nginxは既定でラウンドロビン。重み付け等の追加設定は無し）
+- `monitoring/prometheus/prometheus.yml`（開発用）・新規`monitoring/prometheus/prometheus.prod.yml`（本番相当）: スクレイピング対象ホスト名が開発用（`backend:5001`の1台）と本番相当（`backend1/2/3:5001`の3台）で異なるため分離。`job_name`は揃えているため、Grafanaダッシュボード側の変更は不要
+- `monitoring/grafana/provisioning/dashboards/coffee-app-overview.json`: 「Targets Up」パネルのlegendFormatに`{{instance}}`を追加（3レプリカが同じ`job=backend`の下に別々のタイルとして出るため、どれがどれか分かるように）
+
+**実機で見つかった不具合（nginxの静的DNS解決）**: backendを3レプリカ構成にして実際にnginx経由でリクエストを送ったところ、300リクエスト中backend1が受け取ったのはわずか1件だけという、著しい偏りが発生した。nginxのログ（`docker logs coffee-app-frontend-prod`）を確認したところ、`connect() failed (113: Host is unreachable)`というエラーが大量に出ていた。原因は、**nginxの静的な`upstream`ブロックは起動時に1度だけDockerの内部DNSでホスト名を解決し、それ以降は再解決しない**（動的な`resolver`ディレクティブを使わない限り）という既知の制約。backend1のコンテナを作り直した際、既に起動済みだったnginxが古いIPをキャッシュしたままだったため、接続が失敗し続けていた。`docker compose restart frontend`でnginxを再起動して新しいIPを解決し直すことで解消した。以降、**backendコンテナを作り直した場合は必ずnginx（frontend）コンテナも再起動する**という運用上の注意点として記録する。修正後、300リクエストを並列で送ると106/105/93と3台へほぼ均等に振り分けられることを確認した（小さいサンプル数だと、nginxのworker process（このコンテナでは15個）がそれぞれ別々のラウンドロビンカウンタを持つため偏って見えることがあるため、300件という十分な量で検証した）。
+
+**breakpoint-test.jsでの効果測定**: ロードバランシング前後で同じ負荷パターン（VU 10→20→40→80→160、3分間）を実行し比較した。
+
+| 指標 | 単一backend | backend 3台+LB |
+| --- | --- | --- |
+| エラー率 | 0% | 0% |
+| 平均応答時間 | 86.49ms | 7.6ms |
+| p95応答時間 | 376.73ms | 16.98ms |
+| 最大応答時間 | 556.87ms | 146.68ms |
+
+p95で約22倍、平均で約11倍の改善。「並行ユーザーが増えるとNode.jsの
+シングルスレッドがI/O待ちで詰まる」というボトルネックが、3プロセスへ
+分散されたことで大きく緩和されたことを実測で確認した。
+
+**変更ファイル**: `docker-compose.prod.yml`・`frontend/nginx.conf`・`monitoring/prometheus/prometheus.yml`・新規`monitoring/prometheus/prometheus.prod.yml`・`monitoring/grafana/provisioning/dashboards/coffee-app-overview.json`・`docs/architecture.md`（「ロードバランシング（backend 3レプリカ）」節を新設）・`README.md`
+
+**実行したテストと結果**:
+- `docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --remove-orphans`で3レプリカ構成を実際に起動し、3台とも`healthy`になることを確認
+- 上記の不具合（backend1が接続不能）を実機で発見・原因調査（`docker logs`でnginxのエラーログを確認）・修正（`docker compose restart frontend`）・再検証（300リクエストで106/105/93の均等な分散）まで一通り実施
+- `breakpoint-test.js`をロードバランシング前後で実際に実行し、上記の比較表の結果を得た
+
+**未解決事項**: nginxの静的DNS解決という制約自体は残っている（今回は手動での`restart frontend`で回避した）。頻繁にbackendコンテナを作り直す運用（実際のAWS ECS等でのローリングデプロイ等）では、nginxの`resolver`ディレクティブによる動的DNS解決、またはService Discovery機構（ECSのCloud Map等）への切り替えが必要になる。現時点ではローカルでの検証目的のため、この対応は見送った。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -5122,3 +5162,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 15. 2026-09-23、Docker本番化（該当エントリ参照）の次フェーズ: AWSアカウントの作成、ECS/ECR等へのIaC整備、Secrets Managerでの秘密情報管理、実際のAWSへのデプロイ
 16. 2026-09-25、Graph Communities機能（該当エントリ参照）の検討時に候補として挙がった「味覚ベクトル（6軸）の類似度計算」は今回見送った。fastAPIをさらに活用する2つ目の案として残っている
 17. 2026-09-27〜28、Prometheus・Grafana・k6導入（該当エントリ参照）はローカルのDocker構成のみで、実際のAWS本番でどう監視・負荷テストを構成するか（Amazon Managed Service for Prometheus/Grafana、VPN経由のアクセス制限等）は未着手。MongoDB自体のメトリクス（mongodb_exporter等）・アラート設定も未着手。k6はsmoke/load test程度の軽い負荷のみで、stress testシナリオは未作成
+18. 2026-09-29、backendのロードバランシング（3レプリカ、該当エントリ参照）はローカルでの検証目的の実装で、nginxの静的DNS解決という制約が残っている（backendコンテナを作り直すたびに`docker compose restart frontend`が必要）。実際のAWS ECS等でのローリングデプロイでは、動的なService Discovery機構への切り替えが必要になる

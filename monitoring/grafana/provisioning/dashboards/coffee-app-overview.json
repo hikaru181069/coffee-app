@@ -4,7 +4,7 @@
   "tags": ["coffee-app"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "10s",
   "time": { "from": "now-15m", "to": "now" },
   "panels": [
@@ -12,14 +12,14 @@
       "id": 1,
       "type": "stat",
       "title": "Targets Up",
-      "description": "backend・fastapiのPrometheusスクレイピングが成功しているか（1=UP, 0=DOWN）",
+      "description": "backend・fastapiのPrometheusスクレイピングが成功しているか（1=UP, 0=DOWN）。2026-09、backendを3レプリカ（backend1/2/3）へ増やしたため、instanceラベルごとに別々のタイルとして出る",
       "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
           "expr": "up{job=~\"backend|fastapi\"}",
-          "legendFormat": "{{job}}"
+          "legendFormat": "{{job}} ({{instance}})"
         }
       ],
       "fieldConfig": {
