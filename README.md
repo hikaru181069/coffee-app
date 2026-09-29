@@ -247,6 +247,12 @@ docker compose run --rm -e VUS=20 -e DURATION=60s k6 run -o experimental-prometh
 
 結果はGrafanaの「k6 Load Test」ダッシュボード（`monitoring/grafana/provisioning/dashboards/k6-load-test.json`）でリアルタイムに見られます。「Coffee App Overview」のBackend Memory・Request Rateと同時に見ると、負荷がbackend側にどう跳ね返るかも確認できます。
 
+「どのくらいの負荷から性能が崩れ始めるか」を探したい場合は、`breakpoint-test.js`を使います（VUを10→20→40→80→160と30秒おきに引き上げる。先にGrafanaのダッシュボードを開いておくと崩れる瞬間が見られます）。
+
+```bash
+docker compose run --rm k6 run -o experimental-prometheus-rw /scripts/breakpoint-test.js
+```
+
 ### 本番相当の動きをローカルで再現する
 
 AWSへのリリース準備の一環で、`docker-compose.yml`（開発用）とは別に `docker-compose.prod.yml` を用意しています。frontendはVite開発サーバーではなくビルド済みファイルをnginxで配信し、backend/fastapiもホットリロード無しの本番相当の起動方法（`npm ci --omit=dev` / `--reload`無し）になります。**AWSアカウントは不要**で、手元のPCだけで完結します。
