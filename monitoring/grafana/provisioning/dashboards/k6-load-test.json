@@ -4,7 +4,7 @@
   "tags": ["coffee-app", "k6"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "5s",
   "time": { "from": "now-5m", "to": "now" },
   "panels": [
@@ -66,7 +66,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "k6_http_req_duration_p99"
+          "expr": "k6_http_req_duration_p99 * 1000"
         }
       ],
       "fieldConfig": {

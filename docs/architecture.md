@@ -140,17 +140,50 @@ frontendのnginxでラウンドロビンさせるようにした（`frontend/ngi
 `prometheus.prod.yml`（本番相当）に分離した（`job_name`は揃えているため、
 Grafana側のダッシュボード定義は変更不要）。
 
-**実機で見つかった不具合**: nginxの静的な`upstream`ブロックは、起動時に
-1度だけDockerの内部DNSでホスト名を解決し、それ以降は再解決しない
-（動的な`resolver`ディレクティブを別途使わない限り）。backend1の
-コンテナを作り直した際、nginx（frontend）は既に起動済みで古いIPを
-キャッシュしたままだったため、`connect() failed (113: Host is
-unreachable)`というエラーで backend1 への接続が失敗し続け、実際に
-300リクエスト中backend1が受け取ったのはわずか1件だけ、という
-実質的な機能不全が発生した。**backendコンテナを作り直した後は、
-nginx（frontend）コンテナも再起動して新しいIPを解決し直す必要がある**
-（`docker compose restart frontend`）。修正後、300リクエストを送ると
-106/105/93と3台へほぼ均等に振り分けられることを確認した。
+**実機で見つかった不具合（2026-09-29、解消済み）**: nginxの静的な
+`upstream`ブロックは、起動時に1度だけDockerの内部DNSでホスト名を解決し、
+それ以降は再解決しない（動的な`resolver`ディレクティブを別途使わない
+限り）。backend1のコンテナを作り直した際、nginx（frontend）は既に
+起動済みで古いIPをキャッシュしたままだったため、`connect() failed
+(113: Host is unreachable)`というエラーで backend1 への接続が失敗し
+続け、実際に300リクエスト中backend1が受け取ったのはわずか1件だけ、
+という実質的な機能不全が発生した。当時は`docker compose restart
+frontend`で新しいIPを解決し直す運用でしのいでいた（後述の通り、
+2026-10-05にこの運用自体が不要になる形で解消した）。
+
+**さらに深刻な派生バグ（2026-10-05、発見・解消）**: 上記の障害実験を
+しているさなか、「backendが1台でも停止している状態でfrontendコンテナを
+作り直すと、nginxが`host not found in upstream`で起動自体に失敗し
+クラッシュループする」ことが判明した。IPが変わるだけなら「一部の
+リクエストが遅くなる」程度の被害だったが、このバグは**nginx自体が
+起動できず全トラフィックが止まる**、より重大な障害だった。原因は
+上記と同じ「静的upstreamは起動時に1度だけDNS解決する」という仕様で、
+Dockerの内部DNSは停止中のコンテナのホスト名を解決できないため。
+
+**根本解決（2026-10-05）**: 上記2つのバグはどちらも同じ原因（nginxの
+静的DNS解決）から来ていたため、仕組み自体を変更した。
+`docker-compose.prod.yml`でbackend1/2/3に共通のネットワークエイリアス
+`backend-pool`を付与し、`frontend/nginx.conf`の静的`upstream`ブロックを
+`resolver 127.0.0.11 valid=10s;` + 変数化`proxy_pass`
+（`set $backend_pool http://backend-pool:5001; proxy_pass
+$backend_pool;`）へ置き換えた。Dockerの内部DNSはこのエイリアスを
+引くたびに「今実際に起動しているコンテナ」のIPだけを返すため、
+nginxは10秒ごとに自動的に引き直すようになった。これにより
+**手動での`docker compose restart frontend`は不要になり**、backendが
+1台停止していてもfrontendの起動自体には影響しなくなった（実機で
+両方とも再現・修正を確認済み）。
+
+トレードオフとして、静的upstreamが持っていた`max_fails`/`fail_timeout`
+（直近失敗したサーバーを一時的に避ける、原始的なサーキットブレーカー）
+は、この方式とは併用できない（nginx OSSの制約。動的DNS解決と配下
+サーバーの障害追跡の両立にはnginx Plusの`server ... resolve`が必要）。
+「コンテナごと落ちている」場合はDocker DNSが自動的に除外するため実害は
+小さいが、「コンテナは生きているがアプリ層だけ壊れている」場合は
+知らずに踏みに行く可能性が残る。この防御は`proxy_connect_timeout 2s`
+（死んだ宛先への接続を2秒で諦める、フェイルファスト設定）のみに
+依存している状態で、より本格的な能動ヘルスチェックが必要になった
+場合は、nginx Plusか、Envoy/HAProxy等別のリバースプロキシへの移行を
+検討する必要がある（詳細はIMPLEMENTATION.mdの該当エントリ参照）。
 
 **breakpoint-test.jsでの効果測定**: ロードバランシング前後で同じ負荷
 パターン（VU 10→20→40→80→160）を実行し比較した。

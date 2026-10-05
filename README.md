@@ -253,6 +253,16 @@ docker compose run --rm -e VUS=20 -e DURATION=60s k6 run -o experimental-prometh
 docker compose run --rm k6 run -o experimental-prometheus-rw /scripts/breakpoint-test.js
 ```
 
+特定のVU数で止めて腰を据えて観測したい場合は、`capacity-test.js`を使います（指定したVU数へ一気に到達させたあと、一定時間（既定60秒）維持する階段状のテスト。`breakpoint-test.js`のように常にVUが動き続けないため、各レベルでの数値を読み取りやすい）。
+
+```bash
+docker compose run --rm k6 run -o experimental-prometheus-rw /scripts/capacity-test.js
+
+# 見たいVU・維持時間を変える場合（例: 崩れ始めたVU45〜58付近だけ細かく見る）
+docker compose run --rm -e STEPS=40,45,50,55,58,65 -e HOLD_DURATION=45s \
+  k6 run -o experimental-prometheus-rw /scripts/capacity-test.js
+```
+
 ### 本番相当の動きをローカルで再現する
 
 AWSへのリリース準備の一環で、`docker-compose.yml`（開発用）とは別に `docker-compose.prod.yml` を用意しています。frontendはVite開発サーバーではなくビルド済みファイルをnginxで配信し、backend/fastapiもホットリロード無しの本番相当の起動方法（`npm ci --omit=dev` / `--reload`無し）になります。**AWSアカウントは不要**で、手元のPCだけで完結します。
@@ -276,6 +286,14 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend npm 
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm k6 run -o experimental-prometheus-rw /scripts/smoke-test.js
+```
+
+ロードバランシングを外し、backend1台だけに直接負荷をかけて観測したい場合は`BASE_URL`を上書きします（`capacity-test.js`と組み合わせて、崩れ始めるVU帯をnginxを介さず再確認する例）。
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm \
+  -e BASE_URL=http://backend1:5001/api \
+  k6 run -o experimental-prometheus-rw /scripts/capacity-test.js
 ```
 
 停止は `docker compose -f docker-compose.prod.yml --env-file .env.prod down`（`-v` を付けるとDBのデータも削除）。

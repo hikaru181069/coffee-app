@@ -5100,6 +5100,114 @@ p95で約22倍、平均で約11倍の改善。「並行ユーザーが増える�
 
 ---
 
+### 2026-10-02: capacity-test.js（階段状のVU固定テスト）を追加し、backend1台の崩れ始めるVU帯を特定
+
+**実装対象**: `monitoring/k6/scripts/capacity-test.js`（新規）。`breakpoint-test.js`はVUを連続的にランプさせるため、特定のVU数での性能を腰を据えて観測できなかった。指定したVU数へ短時間で到達させたあと、一定時間（既定60秒）そのまま維持する「階段状（step load）」のテストを追加した。
+
+**なぜ今実装するのか**: ユーザーから「1 Backendは何VU付近から性能が崩れたのかを確かめたい」という依頼を受け、まず`backend1`へ直接（nginxのロードバランシングを迂回し`BASE_URL`を上書きして）`breakpoint-test.js`を再実行し、Prometheusの時系列データ（`k6_vus`と`max(k6_http_req_duration_p99{group!="::setup"})`をタイムスタンプで突き合わせ）から「VU45〜58付近から悪化が始まり、VU140以降で急激に悪化（p99が500ms超）する」ことを特定した。この過程で、特定のVU数に固定して観測する手段が無いことが分かったため、恒久的なツールとして`capacity-test.js`を追加した。これは`IMPLEMENTATION.md`未解決事項17「k6はsmoke/load test程度の軽い負荷のみで、stress testシナリオは未作成」に対応する。
+
+**実装内容**: `STEPS`（既定: `10,20,30,40,50,60,80,100,120,140,160`）・`HOLD_DURATION`（既定60秒）・`RAMP_DURATION`（既定5秒）を環境変数で指定できる。`ramping-vus`executorの「同じtargetを連続させると後半は変化が無い」という性質を利用し、各VUごとに「短いランプで一気に到達→長い維持」のstageペアを積み重ねる形で実装した（`buildStages()`）。ログインを`setup()`で1回だけ行う点、`http.batch()`で4エンドポイント（coffee-records/graph/stats/master-data）を叩く点は既存2スクリプトと同じ。
+
+**単一backend（backend1直接）での実測結果**（`breakpoint-test.js`を`-e BASE_URL=http://backend1:5001/api`で再実行し、PrometheusのVU×p99時系列から確認。集計値はエラー率0%・平均110.91ms・p95 477.83ms・最大673.6ms）:
+
+| VU | p99レイテンシ |
+| --- | --- |
+| 〜35 | 30〜80ms（安定） |
+| 45 | 67ms |
+| 58 | 107ms（悪化が明確になる境目） |
+| 71 | 142ms |
+| 117 | 185ms |
+| 143 | 374ms |
+| 144（ピーク） | 571ms |
+
+160VUまでエラー率は0%を維持しており、クラッシュではなくグレースフルな劣化であることは従来の結論と変わらない。ロードバランシング済み（backend3台）での同条件再実行では平均8.14ms・p95 18.87ms・最大119.52msで、160VUまでほとんど劣化しなかった（以前の計測結果と再現性を確認済み）。
+
+**なぜ単一backend直接のVU帯が以前の記載（VU70程度まで安定・VU100〜140で悪化）とやや異なるか**: 以前の数値はnginx経由（3レプリカ化前の単一backend時代）のCLIサマリー全体のp99だったのに対し、今回はPrometheusの時系列をエンドポイント横断で相関させた、より粒度の細かい値。計測条件（nginxを挟むか直接か）も異なるため、単純な数値の優劣比較ではなく「単一backendはどこかのタイミングで明確に崩れ始める」という結論自体は一貫している。
+
+**ハマった点**: `k6_http_req_duration_p99`はエンドポイントごと（`name`ラベル）に別系列で出力される。ラベルを絞らずクエリすると、たまたま先頭に返る`setup()`内のログインリクエストの系列（常に一定値）を拾ってしまい、「レイテンシが常に横ばい」という誤った結果になる。`group!="::setup"`で除外し、`max(...)`で実際の負荷対象エンドポイントを横断集約する必要がある。
+
+**変更ファイル**: 新規`monitoring/k6/scripts/capacity-test.js`、`README.md`（実行コマンドの追記）
+
+**実行したテストと結果**: 上記の通り、`breakpoint-test.js`をbackend1直接・backend3台(LB)の両方で実行し、Prometheusクエリで時系列相関を確認。`capacity-test.js`自体は作成のみで、まだ実行していない（次回、崩れ始めたVU45〜58付近を`STEPS=40,45,50,55,58,65`等で重点的に観測する想定）。
+
+**未解決事項**: `capacity-test.js`はまだ実際に実行して動作確認していない。IMPLEMENTATION.mdの未解決事項17「k6のstress testシナリオは未作成」は、ステップ負荷という手段は用意できたが、実際のstress test相当の長時間・高負荷シナリオとしての運用はまだ行っていない。
+
+---
+
+### 2026-10-02（追記）: capacity-test.jsを実行し、単一backendが崩れるVU帯をVU50まで絞り込み
+
+**実装対象**: コード変更は無し。上記で作成した`capacity-test.js`を実際に`backend1`へ直接（`BASE_URL`でnginxのロードバランシングを迂回）実行し、動作確認と計測を行った。
+
+**実行コマンド**: `STEPS=40,45,50,55,58,65 HOLD_DURATION=45s`で、`breakpoint-test.js`で見つかった「VU45〜58付近」という粗い帯域を重点的に観測した。
+
+**結果**（各VUの維持区間後半の安定値、Prometheusの`k6_vus`と`max(k6_http_req_duration_p99{group!="::setup"})`を時系列相関）:
+
+| VU | p99レイテンシ(安定区間平均) |
+| --- | --- |
+| 40 | 約40ms |
+| 45 | 約37ms |
+| 50 | 約100ms（ここで一段跳ね上がる） |
+| 55 | 約100ms |
+| 58 | 約101ms |
+| 65 | 約109ms |
+
+**結論**: 崩れ始める境目は**VU45→50の間**で非常に明確だった。VU45までは30〜40ms台で安定しているが、VU50に乗った瞬間に約100msへ約2.5〜3倍跳ね上がり、その後VU65まではなだらかに微増するだけ（100→109ms）。「じわじわ悪化」ではなく「VU50付近に明確な壁がある」という、`breakpoint-test.js`の粗い計測（VU45〜58全体を悪化帯としていた）よりも精度の高い結果が得られた。集計値はエラー率0%・平均16.5ms・p95 42.54ms・最大214.33ms（160件の瞬間的なVU変動を含む全体平均のため、上記の定常状態の値より低く出ている）。エラー率は今回も0%のまま（クラッシュではなくグレースフルな劣化という結論は変わらず）。
+
+**未解決事項**: 無し（`capacity-test.js`自体の動作確認は完了。IMPLEMENTATION.mdの未解決事項17「k6のstress testシナリオ」は、ステップ負荷という手段が実際に機能することを確認できたことで一歩前進したが、長時間・高負荷のstress test運用自体はまだ行っていない）。
+
+---
+
+### 2026-10-03: nginxの静的DNS解決バグを実験で再現・修正を確認
+
+**実装対象**: コード変更は無し。2026-09-29のロードバランシング導入時に発見した「nginxはbackendコンテナのIPが変わっても自動追従しない」という制約を、意図的に再現する実験を行い、記録として残す。
+
+**なぜ今実装するのか**: ユーザーから「コンテナのIPが変わった時に、nginxがちゃんと追従できるか確認する実験をします」という依頼。2026-09-29時点では本番運用中に偶然発生した不具合として発見・対処したが、今回は狙って再現し、挙動を裏付けるため。
+
+**実験手順と結果**:
+1. `docker inspect`で`backend1`の現在IP（`172.21.0.4`）を確認
+2. `backend1`を停止し、空いたIP(`172.21.0.4`)をダミーコンテナ（`alpine:3.20`、`--ip`指定）で占有。Dockerは同じIPを再割り当てする傾向があり、単純な`--force-recreate`だけではIPが変わらなかったため、確実に別IPを割り当てさせるためにこの手順を追加した
+3. `docker compose up -d --force-recreate --no-deps backend1`で`backend1`を作り直す → 新IP(`172.21.0.10`)が割り当てられたことを確認
+4. nginx（`frontend`）を再起動せずに300件のリクエストを送信 → `docker logs coffee-app-frontend-prod`に`connect() failed (111: Connection refused)`（ダミーコンテナは5001番で何もlistenしていないため）が大量発生。nginxは古いIP(`172.21.0.4`)を掴んだままだったことを確認。nginxの自動フェイルオーバー（`proxy_next_upstream`の既定動作）によりbackend2/3へ自動的にリトライされるため、クライアント側（curl）にはエラーが見えず、Prometheusの`http_request_duration_seconds_count{instance="backend1:5001"}`も増加しなかった（＝backend1が実質的にローテーションから脱落していたことをメトリクスで裏付け）
+5. `docker compose restart frontend`でnginxを再起動 → 300件のリクエストがbackend1/2/3へ約100/95/105件とほぼ均等に振り分けられることを確認（Prometheusのカウンタ差分で実測）。backend1が正常にローテーションへ復帰したことを確認
+
+**結論**: `docs/architecture.md`「ロードバランシング（backend 3レプリカ）」に記載済みの内容（nginxの静的`upstream`ブロックは起動時に1度だけDNS解決し、`resolver`ディレクティブが無い限り再解決しない）を、意図的な実験で再現・裏付けた。新しい発見ではないが、口頭の説明だけでなく実機で再現できることを確認した。
+
+**後片付け**: 実験用のダミーコンテナ（`ip-squatter`）は`docker rm -f`で削除済み。本番相当スタックは現在、`backend1`が新IP(`172.21.0.10`)のまま3台とも正常稼働している（IPが変わったこと自体はアプリの動作に影響しない。コンテナ名とDocker内部DNSで疎通するため）。
+
+**変更ファイル**: 無し（ドキュメントへの記録のみ、IMPLEMENTATION.md）
+
+**未解決事項**: 無し（既知の制約を再現・確認しただけで、対応自体は2026-09-29時点から変わらずnginxの`resolver`ディレクティブ導入またはService Discovery機構への切り替えが将来候補として残る）。
+
+---
+
+### 2026-10-05: フェイルファスト対応と、新たに発見したnginx起動時クラッシュバグの解消（resolverディレクティブへの移行）
+
+**実装対象**: `frontend/nginx.conf`・`docker-compose.prod.yml`の3段階の変更。(1)死んでいるbackendへの接続タイムアウトを短縮するフェイルファスト設定、(2)静的`upstream`ブロックを`resolver`ディレクティブ+変数化`proxy_pass`へ置き換え。
+
+**なぜ今実装するのか**: 「backendを3台から1台にしたらレイテンシに問題がある」というユーザー報告をきっかけに、死んだbackendへの接続が1台あたり約3秒かかること（Dockerブリッジネットワーク内のARP解決待ちに起因）を実測した。これに対しフェイルファスト（`proxy_connect_timeout`短縮）を導入して検証する過程で、**より深刻な別のバグ**を発見した: backendが1台でも停止している状態でfrontendコンテナを作り直すと、nginxが`host not found in upstream`で**起動自体に失敗してクラッシュループする**（2026-09-29から分かっていた「IPが変わっても再解決しない」問題と同根）。ユーザーから「それを解決すべきでは？」という明確な指示を受け、根本原因（nginxの静的DNS解決）ごと解消する方式へ切り替えた。
+
+**第1段階 - フェイルファスト**: `frontend/nginx.conf`の`upstream`ブロックに`max_fails=1 fail_timeout=10s`を明示し、`location /api/`に`proxy_connect_timeout 2s`・`proxy_next_upstream_timeout 5s`を追加。backend1/2が停止した状態（backend3のみ生存）で検証したところ、死んだサーバーに当たった場合の応答時間が**6.1〜6.2秒→4.0〜4.02秒**に短縮された（死んだ2台×3秒=6秒だったものが、死んだ2台×2秒=4秒になった、理論値と一致）。この比較は、修正前後で「backend1/2停止」という同一条件を保つため、`git stash`で設定を一時的に戻して計測し直し、公平な比較になるよう配慮した。
+
+**検証中に発見した新しいバグ**: 上記の比較実験中、backend1が停止した状態で`docker compose up -d --build --no-deps frontend`を実行したところ、nginxが`2026/10/05 05:22:57 [emerg] 1#1: host not found in upstream "backend1:5001"`でクラッシュループした（`docker compose ps`で`Restarting (1)`を確認）。原因: Dockerの内部DNSは「停止中のコンテナ」のホスト名を解決できず、nginxは`upstream`ブロック内の全サーバー名を起動時に解決できないと起動自体を拒否する仕様のため。IPが変わるだけの場合（2026-09-29）は「一部のリクエストが遅くなる」程度の被害だったが、このバグは**nginx自体が起動できず全トラフィックが止まる**、より重大な障害になる。
+
+**第2段階 - resolverディレクティブへの移行**: 上記2つのバグ（IPキャッシュ・起動時クラッシュ）はどちらも「nginxの静的upstreamが起動時に1度だけDNS解決し、以降キャッシュし続ける」という同じ根本原因から来ているため、仕組み自体を変更した。
+- `docker-compose.prod.yml`: backend1/2/3に共通のネットワークエイリアス`backend-pool`を付与（`networks: default: aliases: [backend-pool]`）。Dockerの内部DNSは、このエイリアスを引くたびに「今実際に起動しているコンテナ」のIPのみを返す
+- `frontend/nginx.conf`: 静的`upstream backend {}`ブロックを削除し、`resolver 127.0.0.11 valid=10s;`を追加。`location /api/`内で`set $backend_pool http://backend-pool:5001; proxy_pass $backend_pool;`という変数化proxy_passに変更（nginxは変数を含むproxy_passに対してのみ、resolverによる動的解決を行う仕様のため、変数化が必須）
+- `proxy_connect_timeout`・`proxy_next_upstream_timeout`は、変数化proxy_pass＋DNSラウンドロビン構成でも引き続き有効（nginxはDNSが複数IPを返す場合、1つが失敗すれば他のIPへ自動的にフェイルオーバーする）ため維持した
+
+**トレードオフ**: 静的upstreamが持っていた`max_fails`/`fail_timeout`（直近失敗したサーバーを一時的に避ける、第1段階で追加した原始的なサーキットブレーカー）は、この方式とは併用できない（nginx OSSの制約。動的DNS解決と配下サーバーの障害追跡の両立にはnginx Plusの`server ... resolve`が必要）。「コンテナごと落ちている」場合はDocker DNSが自動的に除外するため実害は小さいが、「コンテナは生きているがアプリ層だけ壊れている」場合は知らずに踏みに行く可能性が残る。そこは`proxy_connect_timeout`で被害を抑える方針を維持する。
+
+**実行したテストと結果**:
+- フェイルファスト効果測定: backend1/2停止・backend3のみ生存という同一条件で、修正前(6.1〜6.2秒)・修正後(4.0〜4.02秒)を`git stash`で切り替えながら比較測定
+- バグ②（起動時クラッシュ）の再現と修正確認: backend1停止状態で`docker compose up -d --force-recreate --no-deps frontend`を実行し、修正前はクラッシュループ、修正後は正常起動（ログに`host not found`が一切出ない）ことを確認
+- バグ①（IP変更への追従）の修正確認: 2026-10-03と同じ手順（ダミーコンテナでIPを占有→backend1を新IPで再作成）を再度実施し、**nginxを再起動せずに**新IP(`172.21.0.10`)へのリクエストが即座に成功し（0.003〜0.01秒、エラーログ0件）、Prometheusのメトリクスでもbackend1が新IPでトラフィックを受け取っていることを確認（backend1:26件・backend2:20件・backend3:37件、80件中）
+
+**変更ファイル**: `frontend/nginx.conf`、`docker-compose.prod.yml`
+
+**未解決事項**: 静的upstreamのmax_fails/fail_timeoutによる障害追跡（原始的なサーキットブレーカー）を手放したため、「コンテナは生きているがアプリ層だけ壊れている」場合の防御は`proxy_connect_timeout`のみに依存している。より本格的な能動ヘルスチェックが必要になった場合は、nginx Plusへの切り替えか、Envoy/HAProxy等別のリバースプロキシへの移行を検討する必要がある（docs/architecture.md参照）。
+
+---
+
 ## 未解決事項
 
 - 2026-08-26、収束後のグラフレイアウトが詰まって見える問題は、衝突半径をノードごとの実サイズ＋ラベル余白に連動させる（`nodeCollideRadius`）ことで対処した。`chargeStrength: -450`・`linkDistance: 100`・sqrtカーブの`DEGREE_SIZE_SCALE: 18`は実データ（記録15件）での目視確認に基づく値のため、記録数がさらに増えた場合の見え方は未検証
@@ -5161,5 +5269,7 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 14. 2026-09-19のバックフィル（同エントリ参照）で発覚した「スキーマ変更時のバックフィル忘れ」を防ぐ一般的な運用（マイグレーション手順のチェックリスト化等）は未検討
 15. 2026-09-23、Docker本番化（該当エントリ参照）の次フェーズ: AWSアカウントの作成、ECS/ECR等へのIaC整備、Secrets Managerでの秘密情報管理、実際のAWSへのデプロイ
 16. 2026-09-25、Graph Communities機能（該当エントリ参照）の検討時に候補として挙がった「味覚ベクトル（6軸）の類似度計算」は今回見送った。fastAPIをさらに活用する2つ目の案として残っている
-17. 2026-09-27〜28、Prometheus・Grafana・k6導入（該当エントリ参照）はローカルのDocker構成のみで、実際のAWS本番でどう監視・負荷テストを構成するか（Amazon Managed Service for Prometheus/Grafana、VPN経由のアクセス制限等）は未着手。MongoDB自体のメトリクス（mongodb_exporter等）・アラート設定も未着手。k6はsmoke/load test程度の軽い負荷のみで、stress testシナリオは未作成
-18. 2026-09-29、backendのロードバランシング（3レプリカ、該当エントリ参照）はローカルでの検証目的の実装で、nginxの静的DNS解決という制約が残っている（backendコンテナを作り直すたびに`docker compose restart frontend`が必要）。実際のAWS ECS等でのローリングデプロイでは、動的なService Discovery機構への切り替えが必要になる
+17. 2026-09-27〜28、Prometheus・Grafana・k6導入（該当エントリ参照）はローカルのDocker構成のみで、実際のAWS本番でどう監視・負荷テストを構成するか（Amazon Managed Service for Prometheus/Grafana、VPN経由のアクセス制限等）は未着手。MongoDB自体のメトリクス（mongodb_exporter等）・アラート設定も未着手
+18. ~~2026-09-29、backendのロードバランシング（3レプリカ、該当エントリ参照）はローカルでの検証目的の実装で、nginxの静的DNS解決という制約が残っている（backendコンテナを作り直すたびに`docker compose restart frontend`が必要）~~ → 2026-10-05、`resolver`ディレクティブ+共通ネットワークエイリアスへの移行で解消（該当エントリ参照）。ただし実際のAWS ECS等でのローリングデプロイでは、Dockerの内部DNSに相当する仕組みが無いため、動的なService Discovery機構（ECSのCloud Map等）への切り替えが別途必要になる
+19. ~~2026-10-02、`capacity-test.js`（該当エントリ参照）を追加したが、まだ実際に実行して動作確認していない~~ → 2026-10-02中に実行済み、VU50付近が単一backendの崩れる境目と特定（該当エントリ参照）
+20. 2026-10-05、`resolver`ディレクティブへの移行に伴い、静的upstreamが持っていたmax_fails/fail_timeoutによる障害追跡（原始的なサーキットブレーカー）を手放した。「コンテナは生きているがアプリ層だけ壊れている」場合の防御は`proxy_connect_timeout`のみに依存しており、より本格的な能動ヘルスチェックが必要になった場合はnginx PlusかEnvoy/HAProxy等への移行を検討する必要がある（該当エントリ参照）

@@ -79,6 +79,18 @@ services:
       FASTAPI_URL: http://fastapi:8000
       FRONTEND_URL: http://localhost:8080
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required. Copy .env.prod.example to .env.prod and set it.}
+    # 2026-10-05、backend1/2/3に共通のエイリアス`backend-pool`を付与した
+    # （frontend/nginx.confのコメント参照）。Dockerの内部DNSは、この
+    # エイリアスを引くたびに「今実際に起動しているコンテナ」のIPだけを
+    # 返す。nginx側をresolverディレクティブ+変数化proxy_passにしたことで
+    # 起動時の1回きりの解決ではなくリクエストのたびに引き直すようになり、
+    # (1)backendが1台でも起動時に解決できないとnginx自体が起動に失敗する
+    # バグ、(2)IPが変わっても再解決しないバグ、の両方を解消した
+    # （docs/architecture.md「ロードバランシング」節参照）。
+    networks:
+      default:
+        aliases:
+          - backend-pool
     depends_on:
       - mongodb
       - fastapi
@@ -96,6 +108,10 @@ services:
       FASTAPI_URL: http://fastapi:8000
       FRONTEND_URL: http://localhost:8080
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required. Copy .env.prod.example to .env.prod and set it.}
+    networks:
+      default:
+        aliases:
+          - backend-pool
     depends_on:
       - mongodb
       - fastapi
@@ -113,6 +129,10 @@ services:
       FASTAPI_URL: http://fastapi:8000
       FRONTEND_URL: http://localhost:8080
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required. Copy .env.prod.example to .env.prod and set it.}
+    networks:
+      default:
+        aliases:
+          - backend-pool
     depends_on:
       - mongodb
       - fastapi
