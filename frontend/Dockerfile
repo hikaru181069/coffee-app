@@ -1,7 +1,7 @@
 # 2026-09、AWS本番リリースに向けたDocker仕上げの一環で、1つのファイルに
 # 「開発用」「本番用」2つの作り方をまとめたmulti-stage構成へ変更した。
 # backend/Dockerfileと同じ考え方（詳細はそちらのコメント参照）。
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 
 # 依存関係だけ先にインストール（backendと同じ理由でキャッシュを効かせる）
