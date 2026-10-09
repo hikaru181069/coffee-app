@@ -1,4 +1,4 @@
-# Node.js 20 の軽量版(alpine = 最小構成のLinux)をベースにする
+# Node.js 22 の軽量版(alpine = 最小構成のLinux)をベースにする
 #
 # 2026-09、AWS本番リリースに向けたDocker仕上げの一環で、1つのファイルに
 # 「開発用」「本番用」2つの作り方をまとめたmulti-stage構成へ変更した。
@@ -6,7 +6,7 @@
 # `docker-compose.yml`(開発用)・`docker-compose.prod.yml`(本番用)がそれぞれ
 # どちらのステージを使うか指定する（compose側は`build.target`で指定する
 # ため、このファイル単体をdocker buildで叩くときだけ--targetの指定が必要）。
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 
 # package.json / package-lock.json だけ先にコピーしてインストールする。
@@ -36,7 +36,7 @@ RUN npm ci --omit=dev
 # 上のprod-depsで作ったnode_modulesとソースコードだけを、新しいまっさらな
 # レイヤーへコピーする（devの試行錯誤や中間ファイルを引きずらない、
 # 最終イメージを最小限に保つmulti-stageの狙い）。
-FROM node:20-alpine AS prod
+FROM node:22-alpine AS prod
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=prod-deps /app/node_modules ./node_modules

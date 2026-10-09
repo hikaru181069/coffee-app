@@ -302,7 +302,9 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm \
 
 ### Docker を使わない場合
 
-**必要なもの:** Node.js 20.11+ / Python 3.13+ / Docker（MongoDB用）
+**必要なもの:** Node.js 22 / Python 3.13 / Docker（MongoDB用）。版は Docker・CI と揃えています。
+
+[Nix](https://nixos.org/) と [direnv](https://direnv.net/) があれば、`direnv allow` するだけで Node.js 22 / Python 3.13 / uv / mongosh がそろい、`.venv` も自動で作られます（[`flake.nix`](flake.nix)・[`.envrc`](.envrc) 参照。direnv がなければ `nix develop` で同じ環境に入れます）。この場合、下の「依存関係」のうち Python 仮想環境の2行は不要です。
 
 ```bash
 # 依存関係
@@ -326,7 +328,7 @@ cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
-> Node.js は `import.meta.dirname` を使うため 20.11 以上が必要です。
+> Node.js は `import.meta.dirname` を使うため 20.11 以上が必要です（開発・Docker・CI では 22 を使用）。
 
 ### データの投入
 

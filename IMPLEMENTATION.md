@@ -5230,6 +5230,32 @@ p95で約22倍、平均で約11倍の改善。「並行ユーザーが増える�
 
 **未解決事項**: ⑤の残り「その他の障害パターン」（backend全台停止、backendは生きてるが異常に遅い場合、MongoDB接続断、fastapi停止時のグレースフルデグレード確認）は未実施。⑥「Load Balancingをさらに深掘り」は今回の一連の実験で概念的な部分（受動検知vs能動ヘルスチェック、サーキットブレーカー、タイムアウト予算）には触れたが、能動ヘルスチェックの実装（自前のヘルスチェッカー等）はまだ手を動かしていない。
 
+### 2026-10-10: Nixの開発環境（flake.nix・.envrc）を追加し、Node.jsを20から22へ上げる
+
+**実装対象**: 手元の開発環境（Node.js・Python・uv・mongosh）を`flake.nix`で宣言し、direnvでフォルダに入るだけで有効になるようにした。あわせて、Docker（frontend・backend）とCIのNode.jsを20から22へ上げた。アプリのコードは変更していない。
+
+**背景**: これまで手元の開発環境はnvm（Node.js）とpyenv（Python）で用意しており、版がDocker・CIと揃っている保証が無かった（2026-08の「CIのfrontend-buildが落ちる不具合」も、手元のNode 24とCIのNode 20の差で起きた）。Nixの`devShell`（Nixで作る開発用のシェル環境）は、使う版を`flake.lock`で固定するため、誰がいつ入っても同じ版になる。Node.js 20は2026-04にサポートが終了しており、Nixのパッケージ集（nixpkgs）からも削除されていたため、この機会にDocker・CIも含めて22へ揃えた。
+
+**仕組み**:
+- `flake.nix`: Node.js 22・Python 3.13・uv・mongoshを含む開発環境を定義。MongoDB等のサービスは引き続きDocker Composeで動かす
+- `.envrc`: direnv（フォルダごとに環境を切り替える道具）の設定。フォルダに入ると`flake.nix`の環境が有効になり、`.venv`が無ければuvで作って`fastapi-service/requirements-dev.txt`を入れる。requirementsが更新されたら入れ直す
+- direnvもNixも無い環境では、これらのファイルは無視されるだけで、従来の手順（READMEの「Docker を使わない場合」）はそのまま使える
+
+**代替案**: 開発環境の定義を個人の設定リポジトリ側に置く案もあったが、プロジェクトと一緒に版管理されないため採用しなかった。Node.jsは「devShellだけ22にする」「古いnixpkgsからNode 20を使う」案もあったが、前者は手元と本番で版がずれ、後者はサポート終了した版を使い続けることになるため採用しなかった。
+
+**変更ファイル**:
+- 新規: `flake.nix`、`flake.lock`、`.envrc`
+- 変更: `backend/Dockerfile`・`frontend/Dockerfile`（`node:20-alpine`→`node:22-alpine`）、`.github/workflows/test.yml`（`node-version: "22"`）、`README.md`（必要なものをNode.js 22に、Nixを使う場合の説明を追加）
+
+**テスト**（devShellのNode.js 22.23.3 / Python 3.13.15で実行）:
+- backend: `npm ci` → `npm run typecheck` 成功、`npm test` 580件すべて成功
+- frontend: `npm ci` → `npm run lint` 成功、`npm run test` 368件すべて成功、`npm run build` 成功（チャンクサイズの警告は従来どおり）
+- fastapi-service: `pytest` 10件すべて成功
+- Docker: backend・frontendとも`--target dev`・`--target prod`の4イメージがビルドでき、Node.jsが22.23.3であることを確認（確認後にイメージは削除）
+- direnv: 新しいフォルダで`direnv allow`すると、`.venv`が作られFastAPIが入ること、`node`・`python`がNixの版になることを確認
+
+**未解決事項**: 2026-08の「CIのfrontend-buildが落ちる不具合」で、Node 20に対応させるため`jsdom`等の依存を古い版へ固定した。Node 22になったので固定を外せる可能性があるが、今回は手を付けていない。`backend/package.json`の`engines`（`>=20.11`）も、最低限の要件としては正しいため変更していない。
+
 ---
 
 ## 未解決事項
@@ -5272,6 +5298,7 @@ p95で約22倍、平均で約11倍の改善。「並行ユーザーが増える�
 - 2026-08-30、診断の判定軸（焙煎度×フレーバーcategory）には`rating`（総合評価）を使っていない。ユーザーへの確認では選択肢に含めたが選ばれなかった（将来「高評価のタイプ」等のバッジを追加する場合の候補として残る）
 - 2026-09-20、RecordDetail/EntityDetailのダッシュボード化（該当エントリ参照）で踏んだ「同じ列内でflex-basis:0%の兄弟とauto（自然な高さ）の兄弟を混在させると、コンテナが不足したときauto側が空間を奪い0%側が潰れる」というflexboxの罠は、今後同種のレイアウトを他画面に広げる際に再発しうる一般的な注意点として残る
 - 2026-09-23〜25、Docker本番化・nginxのリバースプロキシ化（該当エントリ参照）はAWSリリースの第一段階のみで、AWSアカウント作成・実デプロイ（ECS/ECR/Secrets Manager等）はまだ着手していない。`docker-compose.prod.yml`のMongoDBを本番でもセルフホストするかAtlasを使い続けるかも未検討
+- 2026-10-10、Node.jsを22へ上げた（該当エントリ参照）が、2026-08にNode 20対応のため古い版へ固定した`jsdom`等の依存はそのまま。Node 22なら新しい版へ戻せる可能性がある
 
 ## 次に実装すべき最小単位
 
@@ -5297,3 +5324,4 @@ MVPの完了条件（`docs/mvp.md`）は満たしているため、次に着手�
 18. ~~2026-09-29、backendのロードバランシング（3レプリカ、該当エントリ参照）はローカルでの検証目的の実装で、nginxの静的DNS解決という制約が残っている（backendコンテナを作り直すたびに`docker compose restart frontend`が必要）~~ → 2026-10-05、`resolver`ディレクティブ+共通ネットワークエイリアスへの移行で解消（該当エントリ参照）。ただし実際のAWS ECS等でのローリングデプロイでは、Dockerの内部DNSに相当する仕組みが無いため、動的なService Discovery機構（ECSのCloud Map等）への切り替えが別途必要になる
 19. ~~2026-10-02、`capacity-test.js`（該当エントリ参照）を追加したが、まだ実際に実行して動作確認していない~~ → 2026-10-02中に実行済み、VU50付近が単一backendの崩れる境目と特定（該当エントリ参照）
 20. 2026-10-05、`resolver`ディレクティブへの移行に伴い、静的upstreamが持っていたmax_fails/fail_timeoutによる障害追跡（原始的なサーキットブレーカー）を手放した。「コンテナは生きているがアプリ層だけ壊れている」場合の防御は`proxy_connect_timeout`のみに依存しており、より本格的な能動ヘルスチェックが必要になった場合はnginx PlusかEnvoy/HAProxy等への移行を検討する必要がある（該当エントリ参照）
+21. 2026-10-10、Node 20対応のため古い版へ固定していた`jsdom`・`@testing-library/jest-dom`等を、Node 22を前提に最新版へ戻せるか確認する（CIのNodeも22になったため）
