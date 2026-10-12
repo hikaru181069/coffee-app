@@ -5256,6 +5256,29 @@ p95で約22倍、平均で約11倍の改善。「並行ユーザーが増える�
 
 **未解決事項**: 2026-08の「CIのfrontend-buildが落ちる不具合」で、Node 20に対応させるため`jsdom`等の依存を古い版へ固定した。Node 22になったので固定を外せる可能性があるが、今回は手を付けていない。`backend/package.json`の`engines`（`>=20.11`）も、最低限の要件としては正しいため変更していない。
 
+### 2026-10-12: Docker を使わず Mac 上でアプリを動かす手順を直す（MongoDB の番号）
+
+**実装対象**: frontend・backend・fastapi を Docker ではなく Mac 上（2026-10-10 の Nix の開発環境）で動かし、MongoDB だけを Docker で動かす手順を、実際に動かして確認し、ずれていた接続先を直した。アプリのコードは変更していない。
+
+**背景**: Docker で一括起動する方法では `node_modules` がコンテナの中（匿名volume）にしかなく、エディタの補完・型チェック（LSP）が依存パッケージの型を読めなかった。Mac 上で動かせば手元に `node_modules`・`.venv` ができる。README の「Docker を使わない場合」に手順はあったが、`backend/.env.example` の `MONGO_URI` が `127.0.0.1:27017` のままで、`docker-compose.yml` の MongoDB が公開しているホスト側の番号（27018。27017 は mlb-app の MongoDB が使う）と合っていなかった。そのままだと mlb-app のDBにつながる。
+
+**変更ファイル**:
+- `backend/.env.example`: `MONGO_URI` を `mongodb://127.0.0.1:27018/coffeeApp` に。27017 にしない理由と、Atlas などクラウドのDBを指すと開発中のデータがそちらに入る注意をコメントで追加
+- `README.md`: 「Docker を使わない場合」に、各サービスのURL、`MONGO_URI` の値、この方法の利点（LSP が型を読める）、Prometheus・Grafana はこの方法では使えないこと（スクレイピング対象がコンテナ名のため）を追加
+
+**データフロー**: ブラウザ → Vite（Mac、5173）→ Express（Mac、5001）→ MongoDB（Docker、ホスト側 27018）。Express → FastAPI（Mac、8000）は従来どおり予約のみ。
+
+**代替案**: Prometheus の設定を Mac 上のアプリ（`host.docker.internal:5001` など）向けにもう1つ用意する案もあったが、メトリクスを見る用途は「Docker で一括起動」で足りるため見送った。
+
+**テスト**（devShell の Node.js 22.23.3 / Python 3.13.15、新しい worktree で `direnv allow` → `npm ci`）:
+- 起動確認: `docker compose up -d mongodb` 相当で開発用 MongoDB を起動し、`.env.example` から作った `backend/.env` で `npm run dev` → `MongoDB connected: coffeeApp`。frontend（5173）・FastAPI（8000、`/`）も応答
+- API: register → login → `GET /api/coffee-records`・`GET /api/master-data`（200）→ `DELETE /api/users/me`（確認用ユーザーを削除）
+- backend: `npm run test` 580件すべて成功
+- frontend: `npm run lint` 成功、`npm run build` 成功（チャンクサイズの警告は従来どおり）、`npm run test` 368件すべて成功
+- fastapi-service: `pytest` 10件すべて成功
+
+**未解決事項**: 既存のクローンの `backend/.env`（Git 管理外）は Atlas を指したまま。Mac 上で開発するときは `MONGO_URI` を手元の MongoDB に向ける必要がある（各自の判断で書き換える）。
+
 ---
 
 ## 未解決事項
@@ -5299,6 +5322,7 @@ p95で約22倍、平均で約11倍の改善。「並行ユーザーが増える�
 - 2026-09-20、RecordDetail/EntityDetailのダッシュボード化（該当エントリ参照）で踏んだ「同じ列内でflex-basis:0%の兄弟とauto（自然な高さ）の兄弟を混在させると、コンテナが不足したときauto側が空間を奪い0%側が潰れる」というflexboxの罠は、今後同種のレイアウトを他画面に広げる際に再発しうる一般的な注意点として残る
 - 2026-09-23〜25、Docker本番化・nginxのリバースプロキシ化（該当エントリ参照）はAWSリリースの第一段階のみで、AWSアカウント作成・実デプロイ（ECS/ECR/Secrets Manager等）はまだ着手していない。`docker-compose.prod.yml`のMongoDBを本番でもセルフホストするかAtlasを使い続けるかも未検討
 - 2026-10-10、Node.jsを22へ上げた（該当エントリ参照）が、2026-08にNode 20対応のため古い版へ固定した`jsdom`等の依存はそのまま。Node 22なら新しい版へ戻せる可能性がある
+- 2026-10-12、Docker を使わない手順の `MONGO_URI` を 27018 に直した（該当エントリ参照）が、既存のクローンの `backend/.env` は Atlas を指したまま。Mac 上で開発するときは手元の MongoDB へ向けるか、各自で判断する
 
 ## 次に実装すべき最小単位
 

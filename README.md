@@ -322,11 +322,16 @@ cp backend/.env.example backend/.env   # 値を埋める
 起動（3つのターミナル）:
 
 ```bash
-docker compose up -d mongodb                                    # MongoDB
+docker compose up -d mongodb                                    # MongoDB（ホスト側は 27018 番）
 cd fastapi-service && ../.venv/bin/uvicorn main:app --reload --port 8000
 cd backend && npm run dev
 cd frontend && npm run dev
 ```
+
+- Frontend: http://localhost:5173 / Backend: http://localhost:5001 / FastAPI: http://localhost:8000
+- `backend/.env` の `MONGO_URI` は `mongodb://127.0.0.1:27018/coffeeApp`（`.env.example` のまま）。27017 は mlb-app の MongoDB、Atlas などクラウドのDBを指すと開発中のデータがそちらに入る
+- この方法では `node_modules`・`.venv` が手元にあるため、エディタの補完・型チェック（LSP）が依存パッケージの型まで読める（Docker で一括起動する場合はコンテナの中にしかない）
+- Prometheus・Grafana は Docker のコンテナ名（`backend:5001` など）で集めるため、この方法では使えない。メトリクスを見るときは「Docker で一括起動」を使う
 
 > Node.js は `import.meta.dirname` を使うため 20.11 以上が必要です（開発・Docker・CI では 22 を使用）。
 
